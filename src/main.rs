@@ -123,6 +123,68 @@ enum Commands {
         #[command(subcommand)]
         wasm: WasmCommands,
     },
+    /// Worktree management
+    ///
+    /// Commands for managing Git worktrees using WASM components that wrap
+    /// existing tools like wtp, wt, and Treekanga.
+    Worktree {
+        #[command(subcommand)]
+        worktree: WorktreeCommands,
+    },
+}
+
+/// Worktree management commands
+#[derive(Subcommand)]
+enum WorktreeCommands {
+    /// Create a new worktree
+    ///
+    /// Creates a new Git worktree using the best available tool (wtp, wt, treekanga, or git).
+    /// The WASM component automatically detects and uses the most appropriate tool.
+    Create {
+        /// Branch name for the new worktree
+        branch_name: String,
+        /// Preferred tool to use (wtp, wt, treekanga, git)
+        #[arg(long)]
+        tool: Option<String>,
+        /// Base directory for worktrees
+        #[arg(long, default_value = "../worktrees")]
+        base: String,
+    },
+    /// List all worktrees
+    ///
+    /// Lists all available worktrees using the configured tool.
+    List {
+        /// Preferred tool to use for listing
+        #[arg(long)]
+        tool: Option<String>,
+    },
+    /// Switch to a worktree
+    ///
+    /// Switches to the specified worktree using the configured tool.
+    Switch {
+        /// Name of the worktree to switch to
+        worktree_name: String,
+        /// Preferred tool to use for switching
+        #[arg(long)]
+        tool: Option<String>,
+    },
+    /// Remove a worktree
+    ///
+    /// Removes the specified worktree and optionally its branch.
+    Remove {
+        /// Name of the worktree to remove
+        worktree_name: String,
+        /// Also remove the branch
+        #[arg(long)]
+        with_branch: bool,
+        /// Preferred tool to use for removal
+        #[arg(long)]
+        tool: Option<String>,
+    },
+    /// Show available tools
+    ///
+    /// Lists all available worktree management tools on the system.
+    Tools,
 }
 
 /// WASM component management commands
@@ -237,6 +299,62 @@ async fn main() -> Result<()> {
                     // - Parse WIT interface
                     // - Generate Rust bindings
                     // - Generate other language bindings as needed
+                }
+            }
+        }
+        Commands::Worktree { worktree } => {
+            match worktree {
+                WorktreeCommands::Create { branch_name, tool, base } => {
+                    println!("{} {} {}", style("🌳").blue(), style("Creating worktree:").blue(), style(branch_name).yellow());
+                    if let Some(tool) = tool {
+                        println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
+                    }
+                    println!("{} {} {}", style("📁").blue(), style("Base directory:").blue(), style(base).yellow());
+                    // TODO: Implement worktree creation using WASM component
+                    // - Load worktree-runner WASM component
+                    // - Configure tool preferences
+                    // - Execute worktree creation
+                    // - Run post-create hooks
+                }
+                WorktreeCommands::List { tool } => {
+                    println!("{} {}", style("📋").blue(), style("Listing worktrees:").blue());
+                    if let Some(tool) = tool {
+                        println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
+                    }
+                    // TODO: Implement worktree listing using WASM component
+                    // - Load worktree-runner WASM component
+                    // - Execute list command
+                    // - Format and display results
+                }
+                WorktreeCommands::Switch { worktree_name, tool } => {
+                    println!("{} {} {}", style("🔄").blue(), style("Switching to worktree:").blue(), style(worktree_name).yellow());
+                    if let Some(tool) = tool {
+                        println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
+                    }
+                    // TODO: Implement worktree switching using WASM component
+                    // - Load worktree-runner WASM component
+                    // - Execute switch command
+                    // - Handle directory change
+                }
+                WorktreeCommands::Remove { worktree_name, with_branch, tool } => {
+                    println!("{} {} {}", style("🗑️").blue(), style("Removing worktree:").blue(), style(worktree_name).yellow());
+                    if with_branch {
+                        println!("{} {}", style("🌿").blue(), style("Also removing branch").blue());
+                    }
+                    if let Some(tool) = tool {
+                        println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
+                    }
+                    // TODO: Implement worktree removal using WASM component
+                    // - Load worktree-runner WASM component
+                    // - Execute removal command
+                    // - Clean up resources
+                }
+                WorktreeCommands::Tools => {
+                    println!("{} {}", style("🔧").blue(), style("Available worktree tools:").blue());
+                    // TODO: Implement tool detection using WASM component
+                    // - Load worktree-runner WASM component
+                    // - Check tool availability
+                    // - Display tool status
                 }
             }
         }

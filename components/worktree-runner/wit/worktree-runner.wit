@@ -1,0 +1,69 @@
+package hooksmith:worktree-runner;
+
+/// Configuration for worktree tools
+record tool-config {
+  /// Preferred tool to use (wtp, wt, treekanga, git)
+  preferred-tool: option<string>,
+  /// Base directory for worktrees
+  worktree-base: option<string>,
+  /// Whether to run setup commands after creation
+  run-setup: bool,
+  /// Setup commands to run (e.g., ["npm install", "cargo build"])
+  setup-commands: list<string>,
+  /// Whether to copy environment files
+  copy-env: bool,
+  /// Environment files to copy (e.g., [".env", ".env.local"])
+  env-files: list<string>,
+}
+
+/// Result of a worktree operation
+record worktree-result {
+  /// Whether the operation was successful
+  success: bool,
+  /// Output from the command
+  output: string,
+  /// Error message if failed
+  error: option<string>,
+  /// Worktree path if created
+  worktree-path: option<string>,
+  /// Branch name if created
+  branch-name: option<string>,
+}
+
+/// Available worktree tools
+enum worktree-tool {
+  wtp,
+  wt,
+  treekanga,
+  git,
+}
+
+/// Main worktree runner interface
+interface worktree-runner {
+  /// Create a new worktree runner with default configuration
+  constructor: func() -> worktree-runner;
+  
+  /// Create a new worktree runner with custom configuration
+  with-config: func(config: tool-config) -> result<worktree-runner, string>;
+  
+  /// Get available worktree tools
+  get-available-tools: func() -> result<list<worktree-tool>, string>;
+  
+  /// Create a new worktree
+  create-worktree: func(branch-name: string) -> result<worktree-result, string>;
+  
+  /// List all worktrees
+  list-worktrees: func() -> result<worktree-result, string>;
+  
+  /// Switch to a worktree
+  switch-worktree: func(worktree-name: string) -> result<worktree-result, string>;
+  
+  /// Remove a worktree
+  remove-worktree: func(worktree-name: string, with-branch: bool) -> result<worktree-result, string>;
+  
+  /// Update configuration
+  update-config: func(config: tool-config) -> result<unit, string>;
+}
+
+/// Export the worktree runner interface
+export worktree-runner; 

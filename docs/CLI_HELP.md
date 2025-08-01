@@ -1,0 +1,221 @@
+# CLI Help Documentation
+
+This document contains the help output for all CLI commands.
+
+## Main Help
+```
+Main CLI application for Hooksmith
+
+This CLI provides tools for building Rust binaries into Lefthook hooks with WASM components. It serves as a bridge between Git hooks management and WebAssembly-based functionality.
+
+Usage: hooksmith <COMMAND>
+
+Commands:
+  test      Test command to verify CLI functionality
+  build     Build Rust binaries for Git hooks
+  generate  Generate Lefthook configuration
+  install   Install hooks into Git repository
+  list      List available hooks
+  wasm      WASM component management
+  help      Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+```
+
+## Command Help
+
+### Test Command
+```
+Test command to verify CLI functionality
+
+Usage: hooksmith test [OPTIONS]
+
+Options:
+      --message <MESSAGE>  Custom test message [default: "Hello from Hooksmith"]
+  -h, --help               Print help
+  -V, --version            Print version
+```
+
+### Build Command
+```
+Build Rust binaries for Git hooks
+
+This command compiles Rust code into binary executables that can be used as Lefthook hooks. The binaries are optimized for performance and can integrate with WASM components.
+
+Usage: hooksmith build [OPTIONS] <HOOK_NAME>
+
+Arguments:
+  <HOOK_NAME>
+          Name of the hook to build
+
+Options:
+      --output <OUTPUT>
+          Output directory for built binaries
+          
+          [default: target/hooks]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+```
+
+### Generate Command
+```
+Generate Lefthook configuration
+
+Creates a lefthook.yml configuration file that integrates the built hooks with Git workflow. This enables automatic hook execution on Git events like pre-commit, pre-push, etc.
+
+Usage: hooksmith generate [OPTIONS]
+
+Options:
+      --output <OUTPUT>
+          Output file path for Lefthook configuration
+          
+          [default: lefthook.yml]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+```
+
+### Install Command
+```
+Install hooks into Git repository
+
+Installs the built hooks into the current Git repository's hooks directory, making them available for Lefthook to execute.
+
+Usage: hooksmith install [OPTIONS]
+
+Options:
+      --hooks <HOOKS>
+          Comma-separated list of hook names to install
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+```
+
+### List Command
+```
+List available hooks
+
+Displays all available hooks that can be built or installed.
+
+Usage: hooksmith list
+
+Options:
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+```
+
+### WASM Commands
+```
+WASM component management
+
+Commands for building, running, and managing WebAssembly components that can be integrated with the hooks.
+
+Usage: hooksmith wasm <COMMAND>
+
+Commands:
+  build     Build WASM component from WIT interface
+  run       Run WASM component
+  bindings  Generate bindings from WIT
+  help      Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+```
+
+### WASM Build Command
+```
+Build WASM component from WIT interface
+
+Compiles WIT (WebAssembly Interface Types) definitions into WASM components that can be used by the hooks for cross-language functionality.
+
+Usage: hooksmith wasm build [OPTIONS] <WIT_FILE>
+
+Arguments:
+  <WIT_FILE>
+          WIT interface file path
+
+Options:
+      --output <OUTPUT>
+          Output directory for WASM files
+          
+          [default: target/hooks]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+```
+
+### WASM Run Command
+```
+Run WASM component
+
+Executes a WASM component with specified function and arguments. Useful for testing WASM components before integration.
+
+Usage: hooksmith wasm run [OPTIONS] --function <FUNCTION> <WASM_FILE>
+
+Arguments:
+  <WASM_FILE>
+          WASM file to execute
+
+Options:
+      --function <FUNCTION>
+          Function name to call within the WASM component
+
+      --args <ARGS>
+          Arguments to pass to the WASM function
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+```
+
+### WASM Bindings Command
+```
+Generate bindings from WIT
+
+Creates language bindings from WIT interface definitions, enabling the use of WASM components in different programming languages.
+
+Usage: hooksmith wasm bindings [OPTIONS] <WIT_FILE>
+
+Arguments:
+  <WIT_FILE>
+          WIT interface file path
+
+Options:
+      --output <OUTPUT>
+          Output directory for generated bindings
+          
+          [default: target/bindings]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+```

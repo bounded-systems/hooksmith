@@ -14,6 +14,14 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}🔨 Building hooksmith workspace${NC}"
 
+# Generate repository structure documentation
+echo -e "${BLUE}📁 Generating repository structure...${NC}"
+if [ -f "scripts/generate-structure.sh" ]; then
+    ./scripts/generate-structure.sh
+else
+    echo -e "${YELLOW}⚠️  Structure generation script not found, skipping...${NC}"
+fi
+
 # Build the CLI binary
 echo -e "${BLUE}Building CLI binary...${NC}"
 cargo build --release --package hooksmith
