@@ -51,4 +51,4 @@ echo -e "${BLUE}Generating shell completions...${NC}"
 mkdir -p completions
 cargo run --package pushd-worktree-cli -- generate --completion bash > completions/pushd-worktree-cli.bash 2>/dev/null || echo "Shell completion generation not implemented yet"
 
-echo -e "${GREEN}✅ Build and test completed!${NC}" 
+echo -e "${GREEN}✅ Build and test completed!${NC}"

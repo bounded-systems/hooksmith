@@ -10,7 +10,7 @@ use modules::*;
 
 #[derive(Parser)]
 #[command(name = "hooksmith")]
-#[command(about = "Build Rust binaries into Lefthook hooks with WASM components")]
+#[command(about = "Build Rust binaries into Lefthook hooks")]
 #[command(version = "0.1.0")]
 struct Cli {
     #[command(subcommand)]
@@ -47,42 +47,6 @@ enum Commands {
     },
     /// List available hooks
     List,
-    /// WASM component management
-    Wasm {
-        #[command(subcommand)]
-        wasm: WasmCommands,
-    },
-}
-
-#[derive(Subcommand)]
-enum WasmCommands {
-    /// Build WASM component from WIT
-    Build {
-        /// WIT interface file
-        wit_file: String,
-        /// Output WASM file
-        #[arg(long, default_value = "target/hooks")]
-        output: String,
-    },
-    /// Run WASM component
-    Run {
-        /// WASM file to run
-        wasm_file: String,
-        /// Function name to call
-        #[arg(long)]
-        function: String,
-        /// Arguments to pass
-        #[arg(long)]
-        args: Vec<String>,
-    },
-    /// Generate bindings from WIT
-    Bindings {
-        /// WIT interface file
-        wit_file: String,
-        /// Output directory
-        #[arg(long, default_value = "target/bindings")]
-        output: String,
-    },
 }
 
 #[tokio::main]
@@ -111,26 +75,6 @@ async fn main() -> Result<()> {
         Commands::List => {
             println!("{} {}", style("📋").blue(), style("Available hooks:").blue());
             // TODO: Implement hook listing
-        }
-        Commands::Wasm { wasm } => {
-            match wasm {
-                WasmCommands::Build { wit_file, output } => {
-                    println!("{} {} {}", style("🔨").blue(), style("Building WASM from WIT:").blue(), style(wit_file).yellow());
-                    println!("{} {}", style("📁").blue(), style(format!("Output: {}", output)).blue());
-                    // TODO: Implement WASM building
-                }
-                WasmCommands::Run { wasm_file, function, args } => {
-                    println!("{} {} {}", style("⚡").blue(), style("Running WASM:").blue(), style(wasm_file).yellow());
-                    println!("{} {} {}", style("🔧").blue(), style("Function:").blue(), style(function).yellow());
-                    println!("{} {} {:?}", style("📝").blue(), style("Args:").blue(), args);
-                    // TODO: Implement WASM execution
-                }
-                WasmCommands::Bindings { wit_file, output } => {
-                    println!("{} {} {}", style("��").blue(), style("Generating bindings from WIT:").blue(), style(wit_file).yellow());
-                    println!("{} {}", style("📁").blue(), style(format!("Output: {}", output)).blue());
-                    // TODO: Implement bindings generation
-                }
-            }
         }
     }
 
