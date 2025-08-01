@@ -6,7 +6,7 @@
 
 /// Structured code generation
 pub mod generator;
-/// Lefthook configuration generation
-pub mod lefthook;
 /// Git file states, actions, and hooks model
 pub mod git_model;
+/// Lefthook configuration generation
+pub mod lefthook;
