@@ -1,3 +1,5 @@
+#![deny(missing_docs)]
+
 //! Hooksmith CLI Library
 //! 
 //! This library provides core functionality for building Rust binaries into Lefthook hooks with WASM components.
