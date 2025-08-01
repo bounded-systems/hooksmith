@@ -1,0 +1,62 @@
+package hooksmith:cli;
+
+/// Configuration for hook building
+record hook-config {
+  /// Name of the hook to build
+  name: string,
+  /// Source directory for the hook
+  source-dir: string,
+  /// Output directory for built binaries
+  output-dir: string,
+  /// Whether to include WASM components
+  include-wasm: bool,
+  /// WASM component paths to include
+  wasm-components: list<string>,
+}
+
+/// Result of a hook building operation
+record build-result {
+  /// Whether the build was successful
+  success: bool,
+  /// Output path of the built binary
+  binary-path: option<string>,
+  /// Error message if build failed
+  error: option<string>,
+  /// Build duration in milliseconds
+  duration-ms: u64,
+}
+
+/// Hook metadata information
+record hook-info {
+  /// Hook name
+  name: string,
+  /// Hook description
+  description: string,
+  /// Whether the hook is enabled
+  enabled: bool,
+  /// Hook file path
+  path: string,
+  /// Hook type (pre-commit, pre-push, etc.)
+  hook-type: string,
+}
+
+/// Main CLI interface for Hooksmith
+interface hooksmith-cli {
+  /// Build a hook from source
+  build-hook: func(config: hook-config) -> result<build-result, string>;
+  
+  /// List all available hooks
+  list-hooks: func() -> result<list<hook-info>, string>;
+  
+  /// Install hooks into Git repository
+  install-hooks: func(hook-names: list<string>) -> result<unit, string>;
+  
+  /// Generate Lefthook configuration
+  generate-config: func(output-path: string) -> result<unit, string>;
+  
+  /// Validate hook configuration
+  validate-config: func(config: hook-config) -> result<unit, string>;
+}
+
+/// Export the main CLI interface
+export hooksmith-cli; 

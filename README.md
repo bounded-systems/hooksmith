@@ -26,18 +26,61 @@ Hooksmith bridges the gap between modern Git workflow tools and WebAssembly comp
                        └─────────────────┘
 ```
 
-## 🚀 Current Status
+## 🚀 Current Status vs Intended Purpose
 
-**⚠️ This is a prototype/placeholder implementation**
+### 🎯 **Intended Purpose**
+Hooksmith is designed to be a **CLI tool that builds Rust binaries into Lefthook hooks with WASM components**. The goal is to:
+- Compile Rust code into optimized binary executables for Git hooks
+- Integrate WebAssembly components for cross-language functionality
+- Generate Lefthook configuration files automatically
+- Provide a unified interface for hook management
 
-The tool currently provides:
-- ✅ CLI structure and command parsing
-- ✅ Comprehensive documentation
-- ✅ Test suite
-- ✅ Build system
-- ❌ **Actual WASM compilation** (TODO)
-- ❌ **Lefthook integration** (TODO)
-- ❌ **Hook building logic** (TODO)
+### 📊 **Current State**
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **CLI Structure** | ✅ Complete | Full CLI with commands for building, generating, installing, and managing hooks |
+| **Documentation** | ✅ Complete | Comprehensive rustdoc comments, README, and generated documentation |
+| **Testing** | ✅ Complete | 16 integration tests, unit tests, and build verification |
+| **Build System** | ✅ Complete | Automated build script with component compilation |
+| **WASM Components** | 🚧 Scaffolded | Worktree-runner component created with WIT interfaces |
+| **Lefthook Integration** | 🚧 Scaffolded | Configuration generator module implemented |
+| **Hook Building** | ❌ TODO | Actual Rust-to-binary compilation logic |
+| **WASM Compilation** | ❌ TODO | WIT-to-WASM component building |
+| **Tool Integration** | ❌ TODO | Integration with existing worktree tools (wtp, wt, treekanga) |
+
+### 🚀 **Roadmap**
+
+#### **Phase 1: Foundation** ✅
+- [x] CLI structure and command parsing
+- [x] Documentation and testing framework
+- [x] Build system and component architecture
+- [x] Basic project structure
+
+#### **Phase 2: WASM Integration** 🚧
+- [x] WASM dependencies added (wasmtime, wit-bindgen)
+- [x] WIT interface definitions created
+- [x] Worktree-runner component scaffolded
+- [ ] Actual WASM component compilation
+- [ ] WASM runtime integration in hooks
+
+#### **Phase 3: Lefthook Integration** 🚧
+- [x] Lefthook configuration generator
+- [x] YAML configuration structure
+- [ ] Hook installation and management
+- [ ] Git integration and hook execution
+
+#### **Phase 4: Tool Integration** ❌
+- [ ] Integration with wtp, wt, treekanga
+- [ ] Worktree management automation
+- [ ] Cross-platform compatibility
+- [ ] Performance optimization
+
+#### **Phase 5: Production Ready** ❌
+- [ ] Error handling and recovery
+- [ ] Performance benchmarking
+- [ ] Security audit
+- [ ] Release preparation
 
 ## 📦 Installation
 
@@ -62,6 +105,31 @@ hooksmith test --message "Custom test message"
 
 # List available hooks
 hooksmith list
+
+# Show CLI help
+hooksmith --help
+
+# Show version
+hooksmith --version
+```
+
+### Worktree Management (New!)
+
+```bash
+# Create a new worktree
+hooksmith worktree create feature/new-feature
+
+# List all worktrees
+hooksmith worktree list
+
+# Switch to a worktree
+hooksmith worktree switch feature/new-feature
+
+# Remove a worktree
+hooksmith worktree remove feature/new-feature
+
+# Show available worktree tools
+hooksmith worktree tools
 ```
 
 ### Hook Building (Planned)
