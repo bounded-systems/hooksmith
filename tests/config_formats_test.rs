@@ -1,0 +1,262 @@
+use hooksmith::modules::lefthook::{self, ConfigFormat, LefthookConfig, LefthookHook, GlobalConfig};
+use tempfile::TempDir;
+use std::fs;
+
+#[test]
+fn test_config_file_names() {
+    // Test that we have all the required config file names
+    assert_eq!(lefthook::CONFIG_FILE_NAMES.len(), 12);
+    
+    // Test YAML formats
+    let yaml_files: Vec<_> = lefthook::CONFIG_FILE_NAMES
+        .iter()
+        .filter(|(_, format)| **format == ConfigFormat::YAML)
+        .map(|(name, _)| *name)
+        .collect();
+    
+    assert!(yaml_files.contains(&"lefthook.yml"));
+    assert!(yaml_files.contains(&".lefthook.yml"));
+    assert!(yaml_files.contains(&".config/lefthook.yml"));
+    assert!(yaml_files.contains(&"lefthook.yaml"));
+    assert!(yaml_files.contains(&".lefthook.yaml"));
+    assert!(yaml_files.contains(&".config/lefthook.yaml"));
+    
+    // Test TOML formats
+    let toml_files: Vec<_> = lefthook::CONFIG_FILE_NAMES
+        .iter()
+        .filter(|(_, format)| **format == ConfigFormat::TOML)
+        .map(|(name, _)| *name)
+        .collect();
+    
+    assert!(toml_files.contains(&"lefthook.toml"));
+    assert!(toml_files.contains(&".lefthook.toml"));
+    assert!(toml_files.contains(&".config/lefthook.toml"));
+    
+    // Test JSON formats
+    let json_files: Vec<_> = lefthook::CONFIG_FILE_NAMES
+        .iter()
+        .filter(|(_, format)| **format == ConfigFormat::JSON)
+        .map(|(name, _)| *name)
+        .collect();
+    
+    assert!(json_files.contains(&"lefthook.json"));
+    assert!(json_files.contains(&".lefthook.json"));
+    assert!(json_files.contains(&".config/lefthook.json"));
+}
+
+#[test]
+fn test_local_config_file_names() {
+    // Test that we have all the required local config file names
+    assert_eq!(lefthook::LOCAL_CONFIG_FILE_NAMES.len(), 12);
+    
+    // Test YAML formats
+    let yaml_files: Vec<_> = lefthook::LOCAL_CONFIG_FILE_NAMES
+        .iter()
+        .filter(|(_, format)| **format == ConfigFormat::YAML)
+        .map(|(name, _)| *name)
+        .collect();
+    
+    assert!(yaml_files.contains(&"lefthook-local.yml"));
+    assert!(yaml_files.contains(&".lefthook-local.yml"));
+    assert!(yaml_files.contains(&".config/lefthook-local.yml"));
+    assert!(yaml_files.contains(&"lefthook-local.yaml"));
+    assert!(yaml_files.contains(&".lefthook-local.yaml"));
+    assert!(yaml_files.contains(&".config/lefthook-local.yaml"));
+    
+    // Test TOML formats
+    let toml_files: Vec<_> = lefthook::LOCAL_CONFIG_FILE_NAMES
+        .iter()
+        .filter(|(_, format)| **format == ConfigFormat::TOML)
+        .map(|(name, _)| *name)
+        .collect();
+    
+    assert!(toml_files.contains(&"lefthook-local.toml"));
+    assert!(toml_files.contains(&".lefthook-local.toml"));
+    assert!(toml_files.contains(&".config/lefthook-local.toml"));
+    
+    // Test JSON formats
+    let json_files: Vec<_> = lefthook::LOCAL_CONFIG_FILE_NAMES
+        .iter()
+        .filter(|(_, format)| **format == ConfigFormat::JSON)
+        .map(|(name, _)| *name)
+        .collect();
+    
+    assert!(json_files.contains(&"lefthook-local.json"));
+    assert!(json_files.contains(&".lefthook-local.json"));
+    assert!(json_files.contains(&".config/lefthook-local.json"));
+}
+
+#[test]
+fn test_find_config_file() {
+    let temp_dir = TempDir::new().unwrap();
+    let dir_path = temp_dir.path();
+    
+    // Initially no config file should be found
+    assert!(lefthook::find_config_file(dir_path).is_none());
+    
+    // Create a YAML config file
+    let yaml_content = r#"
+pre-commit:
+  commands:
+    test:
+      run: "cargo test"
+"#;
+    fs::write(dir_path.join("lefthook.yml"), yaml_content).unwrap();
+    
+    // Should find the YAML config file
+    let result = lefthook::find_config_file(dir_path);
+    assert!(result.is_some());
+    let (path, format) = result.unwrap();
+    assert_eq!(format, ConfigFormat::YAML);
+    assert_eq!(path.file_name().unwrap(), "lefthook.yml");
+    
+    // Create a TOML config file (should not be found since YAML was found first)
+    let toml_content = r#"
+[pre-commit.commands.test]
+run = "cargo test"
+"#;
+    fs::write(dir_path.join("lefthook.toml"), toml_content).unwrap();
+    
+    // Should still find the YAML file (first in priority)
+    let result = lefthook::find_config_file(dir_path);
+    assert!(result.is_some());
+    let (path, format) = result.unwrap();
+    assert_eq!(format, ConfigFormat::YAML);
+    assert_eq!(path.file_name().unwrap(), "lefthook.yml");
+}
+
+#[test]
+fn test_load_and_save_yaml() {
+    let temp_dir = TempDir::new().unwrap();
+    let config_path = temp_dir.path().join("test.yml");
+    
+    // Create a test configuration
+    let mut config = LefthookConfig::default();
+    let mut hooks = std::collections::HashMap::new();
+    hooks.insert("test".to_string(), LefthookHook::new("cargo test".to_string()));
+    config.pre_commit = Some(hooks);
+    
+    // Save as YAML
+    lefthook::save_config_to_file(&config, &config_path, ConfigFormat::YAML).unwrap();
+    
+    // Load from YAML
+    let loaded_config = lefthook::load_config_from_file(&config_path, ConfigFormat::YAML).unwrap();
+    
+    // Verify the configuration was preserved
+    assert!(loaded_config.pre_commit.is_some());
+    let hooks = loaded_config.pre_commit.unwrap();
+    assert!(hooks.contains_key("test"));
+    assert_eq!(hooks["test"].run, "cargo test");
+}
+
+#[test]
+fn test_load_and_save_toml() {
+    let temp_dir = TempDir::new().unwrap();
+    let config_path = temp_dir.path().join("test.toml");
+    
+    // Create a test configuration
+    let mut config = LefthookConfig::default();
+    let mut hooks = std::collections::HashMap::new();
+    hooks.insert("test".to_string(), LefthookHook::new("cargo test".to_string()));
+    config.pre_commit = Some(hooks);
+    
+    // Save as TOML
+    lefthook::save_config_to_file(&config, &config_path, ConfigFormat::TOML).unwrap();
+    
+    // Load from TOML
+    let loaded_config = lefthook::load_config_from_file(&config_path, ConfigFormat::TOML).unwrap();
+    
+    // Verify the configuration was preserved
+    assert!(loaded_config.pre_commit.is_some());
+    let hooks = loaded_config.pre_commit.unwrap();
+    assert!(hooks.contains_key("test"));
+    assert_eq!(hooks["test"].run, "cargo test");
+}
+
+#[test]
+fn test_load_and_save_json() {
+    let temp_dir = TempDir::new().unwrap();
+    let config_path = temp_dir.path().join("test.json");
+    
+    // Create a test configuration
+    let mut config = LefthookConfig::default();
+    let mut hooks = std::collections::HashMap::new();
+    hooks.insert("test".to_string(), LefthookHook::new("cargo test".to_string()));
+    config.pre_commit = Some(hooks);
+    
+    // Save as JSON
+    lefthook::save_config_to_file(&config, &config_path, ConfigFormat::JSON).unwrap();
+    
+    // Load from JSON
+    let loaded_config = lefthook::load_config_from_file(&config_path, ConfigFormat::JSON).unwrap();
+    
+    // Verify the configuration was preserved
+    assert!(loaded_config.pre_commit.is_some());
+    let hooks = loaded_config.pre_commit.unwrap();
+    assert!(hooks.contains_key("test"));
+    assert_eq!(hooks["test"].run, "cargo test");
+}
+
+#[test]
+fn test_global_config() {
+    let mut global_config = GlobalConfig::default();
+    
+    // Set some global options
+    global_config.min_version = Some("1.0.0".to_string());
+    global_config.source_dir = Some(".lefthook".to_string());
+    global_config.skip_lfs = Some(true);
+    
+    // Test serialization and deserialization
+    let json = serde_json::to_string(&global_config).unwrap();
+    let deserialized: GlobalConfig = serde_json::from_str(&json).unwrap();
+    
+    assert_eq!(deserialized.min_version, Some("1.0.0".to_string()));
+    assert_eq!(deserialized.source_dir, Some(".lefthook".to_string()));
+    assert_eq!(deserialized.skip_lfs, Some(true));
+}
+
+#[test]
+fn test_remote_config() {
+    use lefthook::RemoteConfig;
+    
+    let remote_config = RemoteConfig {
+        git_url: "https://github.com/example/lefthook-config.git".to_string(),
+        ref_: Some("main".to_string()),
+        refetch: Some(true),
+        refetch_frequency: Some("24h".to_string()),
+        configs: Some(vec!["lefthook.yml".to_string()]),
+    };
+    
+    // Test serialization and deserialization
+    let json = serde_json::to_string(&remote_config).unwrap();
+    let deserialized: RemoteConfig = serde_json::from_str(&json).unwrap();
+    
+    assert_eq!(deserialized.git_url, "https://github.com/example/lefthook-config.git");
+    assert_eq!(deserialized.ref_, Some("main".to_string()));
+    assert_eq!(deserialized.refetch, Some(true));
+    assert_eq!(deserialized.refetch_frequency, Some("24h".to_string()));
+    assert_eq!(deserialized.configs, Some(vec!["lefthook.yml".to_string()]));
+}
+
+#[test]
+fn test_config_with_global_options() {
+    let temp_dir = TempDir::new().unwrap();
+    let config_path = temp_dir.path().join("test.yml");
+    
+    // Create a configuration with global options
+    let mut config = LefthookConfig::default();
+    let mut global_config = GlobalConfig::default();
+    global_config.min_version = Some("1.0.0".to_string());
+    global_config.source_dir = Some(".lefthook".to_string());
+    config.config = Some(global_config);
+    
+    // Save and load
+    lefthook::save_config_to_file(&config, &config_path, ConfigFormat::YAML).unwrap();
+    let loaded_config = lefthook::load_config_from_file(&config_path, ConfigFormat::YAML).unwrap();
+    
+    // Verify global config was preserved
+    assert!(loaded_config.config.is_some());
+    let global = loaded_config.config.unwrap();
+    assert_eq!(global.min_version, Some("1.0.0".to_string()));
+    assert_eq!(global.source_dir, Some(".lefthook".to_string()));
+} 

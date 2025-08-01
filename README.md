@@ -179,6 +179,81 @@ hooksmith wasm bindings interface.wit --output target/bindings
 
 ## 🏗️ Development
 
+### Prerequisites
+
+- **Rust**: Latest stable version (1.75+)
+- **Git**: Latest version
+- **Lefthook**: For pre-commit hooks (optional but recommended)
+
+### Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/hooksmith.git
+   cd hooksmith
+   ```
+
+2. **Install dependencies**
+   ```bash
+   # Install Lefthook (optional but recommended)
+   npm install -g @evilmartians/lefthook
+   
+   # Or using Homebrew on macOS
+   brew install lefthook
+   ```
+
+3. **Install pre-commit hooks**
+   ```bash
+   lefthook install
+   ```
+
+4. **Generate code and build the project**
+   ```bash
+   # Generate all code and documentation
+   ./xtask.sh gen-all --overwrite
+   
+   # Or use the build script
+   ./build.sh
+   ```
+
+5. **Run tests**
+   ```bash
+   cargo test --all-targets --all-features
+   ```
+
+### Xtask Commands
+
+This project uses **xtask** for structured code generation and build tasks, replacing shell scripts and raw echo statements:
+
+```bash
+# Build the project and all components
+./xtask.sh build --target all --release
+
+# Generate WIT interface definitions
+./xtask.sh gen-wit --overwrite
+
+# Generate Lefthook configuration
+./xtask.sh gen-lefthook --validate
+
+# Generate documentation
+./xtask.sh gen-docs --open
+
+# Run all code generation tasks
+./xtask.sh gen-all --overwrite
+
+# Check if generated files are up to date
+./xtask.sh check --strict
+```
+
+**Benefits of Xtask:**
+- ✅ **No shell scripts** - All tasks are Rust-based
+- ✅ **Structured code generation** - WIT files generated from Rust structs
+- ✅ **Type-safe configuration** - All configs are strongly typed
+- ✅ **Deterministic builds** - Same input always produces same output
+- ✅ **CI integration** - Automated checks ensure generated files are up to date
+
+### Traditional Commands
+
 ```bash
 # Build workspace
 ./build.sh
