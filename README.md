@@ -1,20 +1,21 @@
-# Pushd Worktree CLI
+# Hooksmith
 
-CLI tools for Git worktree management and safety.
+CLI tools for building Rust binaries into Lefthook hooks with WASM components.
 
 ## Overview
 
 This CLI provides tools for:
-- **Worktree Management**: Create, list, remove, and check worktrees
-- **Safety Hooks**: Generate and install Git hooks for worktree safety
-- **Status Monitoring**: Check worktree status and safety
+- **Hook Building**: Build Rust binaries for Git hooks
+- **WASM Components**: Build and manage WASM components from WIT interfaces
+- **Lefthook Integration**: Generate and install Lefthook configurations
+- **Hook Management**: List and manage available hooks
 
 ## Architecture
 
 This is a Rust workspace with the following structure:
 
 ```
-pushd-worktree-cli/
+hooksmith/
 ├── Cargo.toml               # Workspace manifest
 ├── build.sh                 # Build script
 ├── README.md                # This file
@@ -24,9 +25,7 @@ pushd-worktree-cli/
 │   ├── commands/            # Command implementations
 │   └── modules/             # Core functionality
 ├── components/              # Modular components
-│   ├── cli-core/            # Core CLI functionality
-│   ├── worktree-manager/    # Git worktree operations
-│   └── git-validator/       # Git validation tools
+│   └── cli-core/            # Core CLI functionality
 ├── hooks/                   # Hook scripts
 ├── docs/                    # Documentation
 └── tests/                   # Test files
@@ -44,50 +43,62 @@ cargo install --path .
 
 ## Usage
 
-### Worktree Management
+### Basic Commands
 
 ```bash
-# Create a new worktree
-pushd-worktree-cli worktree create my-feature
+# Test the CLI
+hooksmith test
 
-# Create from specific branch
-pushd-worktree-cli worktree create my-feature --branch develop
+# Test with custom message
+hooksmith test --message "Custom test message"
 
-# List all worktrees
-pushd-worktree-cli worktree list
-
-# Remove a worktree
-pushd-worktree-cli worktree remove my-feature
-
-# Check worktree status
-pushd-worktree-cli worktree check
-pushd-worktree-cli worktree check my-feature
+# List available hooks
+hooksmith list
 ```
 
-### Hook Management
+### Hook Building
 
 ```bash
-# Generate worktree safety hooks
-pushd-worktree-cli hooks generate
+# Build a hook binary
+hooksmith build my-hook
+
+# Build with custom output directory
+hooksmith build my-hook --output target/custom-hooks
+```
+
+### Lefthook Integration
+
+```bash
+# Generate Lefthook configuration
+hooksmith generate
+
+# Generate with custom output file
+hooksmith generate --output custom-lefthook.yml
 
 # Install hooks
-pushd-worktree-cli hooks install
+hooksmith install
 
-# Run a specific hook
-pushd-worktree-cli hooks run pre-commit
-
-# Check hook status
-pushd-worktree-cli hooks status
+# Install specific hooks
+hooksmith install --hooks pre-commit,pre-push
 ```
 
-### Status and Safety
+### WASM Component Management
 
 ```bash
-# Check worktree status
-pushd-worktree-cli status
+# Build WASM component from WIT
+hooksmith wasm build interface.wit
 
-# Run safety checks
-pushd-worktree-cli status --safety
+# Build with custom output
+hooksmith wasm build interface.wit --output target/wasm
+
+# Run WASM component
+hooksmith wasm run component.wasm --function validate --args arg1 arg2
+
+# Generate bindings from WIT
+hooksmith wasm bindings interface.wit
+
+# Generate bindings with custom output
+hooksmith wasm bindings interface.wit --output target/bindings
 ```
 
 ## Development
@@ -103,24 +114,26 @@ cargo build --package cli-core
 cargo test --workspace
 
 # Run CLI
-cargo run --package pushd-worktree-cli -- test
+cargo run -- test
 ```
 
 ## Components
 
 - **cli-core**: Core CLI functionality and utilities
-- **worktree-manager**: Git worktree creation, management, and safety
-- **git-validator**: Git validation and safety checks
+- **hooksmith**: Main CLI binary for hook building and WASM management
 
 ## Integration
 
-This CLI is designed to be used as a Git submodule in the main Pushd repository:
+This CLI is designed to integrate with Lefthook for Git hook management:
 
 ```bash
-git submodule add git@github.com:bdelanghe/pushd-worktree-cli.git .cli-helper
+# Generate Lefthook config
+hooksmith generate > lefthook.yml
+
+# Install hooks
+hooksmith install
 ```
 
 ## License
 
-MIT 
-# Updated from ~/dev/repos/hooksmith
+MIT

@@ -31,4 +31,4 @@ impl HookManager {
         // TODO: Implement hook installation
         Ok(())
     }
-} 
+}

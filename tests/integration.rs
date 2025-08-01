@@ -1,157 +1,142 @@
-//! Integration tests for pushd-cli
+//! Integration tests for hooksmith
 //! 
-//! These tests verify the CLI behavior end-to-end using assert_cmd.
+//! These tests verify the CLI behavior end-to-end.
 
-use assert_cmd::prelude::*;
-use predicates::prelude::*;
 use std::process::Command;
 
 #[test]
 fn test_cli_help() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.arg("--help");
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Unified CLI for pushd-web development workflows"));
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "--help"]);
+    let output = cmd.output()?;
+    
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Build Rust binaries into Lefthook hooks with WASM components"));
     Ok(())
 }
 
 #[test]
 fn test_cli_version() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.arg("--version");
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("pushd-cli 0.1.0"));
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "--version"]);
+    let output = cmd.output()?;
+    
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("hooksmith 0.1.0"));
     Ok(())
 }
 
 #[test]
-fn test_worktree_help() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["worktree", "--help"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Worktree management"));
+fn test_test_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "test"]);
+    let output = cmd.output()?;
+    
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Test successful"));
     Ok(())
 }
 
 #[test]
-fn test_daemon_help() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["daemon", "--help"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Daemon operations"));
+fn test_test_command_with_message() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "test", "--message", "Custom message"]);
+    let output = cmd.output()?;
+    
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Custom message"));
     Ok(())
 }
 
 #[test]
-fn test_docker_help() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["docker", "--help"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Docker operations"));
+fn test_list_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "list"]);
+    let output = cmd.output()?;
+    
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Available hooks"));
     Ok(())
 }
 
 #[test]
-fn test_git_help() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["git", "--help"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Git safety and validation"));
+fn test_build_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "build", "test-hook"]);
+    let output = cmd.output()?;
+    
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Building hook"));
+    assert!(stdout.contains("test-hook"));
     Ok(())
 }
 
 #[test]
-fn test_setup_help() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["setup", "--help"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Environment setup"));
+fn test_generate_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "generate"]);
+    let output = cmd.output()?;
+    
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Generating Lefthook config"));
     Ok(())
 }
 
 #[test]
-fn test_component_help() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["component", "--help"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Component management"));
+fn test_install_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "install"]);
+    let output = cmd.output()?;
+    
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Installing hooks"));
     Ok(())
 }
 
 #[test]
-fn test_worktree_list() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["worktree", "list"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Available worktrees"));
+fn test_wasm_build_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "wasm", "build", "test.wit"]);
+    let output = cmd.output()?;
+    
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Building WASM from WIT"));
+    assert!(stdout.contains("test.wit"));
     Ok(())
 }
 
 #[test]
-fn test_daemon_list() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["daemon", "list"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Available daemons"));
+fn test_wasm_run_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "wasm", "run", "test.wasm", "--function", "test", "--args", "arg1", "arg2"]);
+    let output = cmd.output()?;
+    
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Running WASM"));
+    assert!(stdout.contains("test.wasm"));
+    assert!(stdout.contains("test"));
     Ok(())
 }
 
 #[test]
-fn test_config_show() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["config"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Configuration"));
-    Ok(())
-}
-
-#[test]
-fn test_invalid_command() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.arg("invalid-command");
-    cmd.assert()
-        .failure()
-        .stderr(predicates::str::contains("error"));
-    Ok(())
-}
-
-#[test]
-fn test_dry_run_flag() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["--dry-run", "daemon", "list"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Available daemons"));
-    Ok(())
-}
-
-#[test]
-fn test_aws_profile_flag() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["--aws-profile", "test-profile", "config"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Configuration"));
-    Ok(())
-}
-
-#[test]
-fn test_target_env_flag() -> anyhow::Result<()> {
-    let mut cmd = Command::cargo_bin("pushd-cli")?;
-    cmd.args(&["--target-env", "development", "config"]);
-    cmd.assert()
-        .success()
-        .stdout(predicates::str::contains("Configuration"));
+fn test_wasm_bindings_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "wasm", "bindings", "test.wit"]);
+    let output = cmd.output()?;
+    
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Generating bindings from WIT"));
+    assert!(stdout.contains("test.wit"));
     Ok(())
 } 

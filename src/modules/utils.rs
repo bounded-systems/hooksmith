@@ -28,4 +28,4 @@ pub fn print_worktree(message: &str) {
 /// Print safety-specific message
 pub fn print_safety(message: &str) {
     println!("��️  {}", message);
-} 
+}

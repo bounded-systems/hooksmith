@@ -30,4 +30,4 @@ pub fn check_worktree(name: Option<&str>) -> Result<()> {
     println!("Checking worktree: {}", target);
     // TODO: Implement worktree checking
     Ok(())
-} 
+}

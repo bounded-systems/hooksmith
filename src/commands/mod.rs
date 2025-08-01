@@ -1,7 +1,7 @@
 //! Command implementations for the worktree CLI
 
-pub mod worktree;
 pub mod hooks;
+pub mod worktree;
 
+pub use hooks::*;
 pub use worktree::*;
-pub use hooks::*; 

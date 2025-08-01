@@ -28,4 +28,4 @@ pub fn check_hook_status() -> Result<()> {
     println!("Checking hook status...");
     // TODO: Implement hook status check
     Ok(())
-} 
+}

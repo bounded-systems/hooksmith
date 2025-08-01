@@ -32,4 +32,4 @@ impl WorktreeManager {
         // TODO: Implement safety checks
         Ok(())
     }
-} 
+}
