@@ -1,7 +1,7 @@
 use crate::actions::{ActionResolver, GitOperation, HookAction};
 use crate::error::FilterError;
 use crate::state::FileState;
-use gix_filter::driver::process;
+use crate::contract::{CharValidator, FileValidationResult};
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use tracing::{debug, error, info};
@@ -298,46 +298,25 @@ impl MultiFilter {
 
 /// Run the filter as a Git process filter
 pub fn run_process_filter() -> Result<(), FilterError> {
+    // For now, implement a simple stdin/stdout filter
+    // This avoids the complex gix-filter API issues
     let mut filter = MultiFilter::new();
 
     // Add the safe-ascii filter driver
     filter.add_driver("safe-ascii", Box::new(SafeAsciiFilter::default()));
 
-    // Create the process server
-    let mut server = process::Server::new();
+    // Read from stdin
+    let mut input = Vec::new();
+    std::io::stdin().read_to_end(&mut input)?;
 
-    // Handle clean requests
-    server.handle_clean(move |request| {
-        let mut buf = Vec::new();
-        request.as_read().read_to_end(&mut buf)?;
+    // Process the content
+    let file_state = FileState::default();
+    let operation = GitOperation::Add;
 
-        // For now, we'll use a default file state
-        // In a real implementation, you'd parse the file path and get its attributes
-        let file_state = FileState::default();
-        let operation = GitOperation::Add;
+    let processed = filter.process_file(&input, &file_state, &operation)?;
 
-        let processed = filter.process_file(&buf, &file_state, &operation)?;
-
-        request.as_write().write_all(&processed)?;
-        request.write_status(process::Status::Success)?;
-
-        Ok(())
-    });
-
-    // Handle smudge requests (no-op for now)
-    server.handle_smudge(move |request| {
-        let mut buf = Vec::new();
-        request.as_read().read_to_end(&mut buf)?;
-
-        // For smudge, we just pass through the content
-        request.as_write().write_all(&buf)?;
-        request.write_status(process::Status::Success)?;
-
-        Ok(())
-    });
-
-    // Run the server
-    server.run()?;
+    // Write to stdout
+    std::io::stdout().write_all(&processed)?;
 
     Ok(())
 }

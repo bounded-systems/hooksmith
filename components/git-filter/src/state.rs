@@ -76,14 +76,17 @@ impl FileState {
         let mut state = FileState::default();
 
         // Map standard attributes
-        state.text = attributes.get("text").cloned().into();
-        state.eol = attributes.get("eol").cloned().into();
-        state.filter = attributes.get("filter").cloned().into();
-        state.diff = attributes.get("diff").cloned().into();
-        state.merge = attributes.get("merge").cloned().into();
-        state.encoding = attributes.get("working-tree-encoding").cloned().into();
-        state.export_ignore = attributes.get("export-ignore").cloned().into();
-        state.export_subst = attributes.get("export-subst").cloned().into();
+        state.text = attributes.get("text").and_then(|v| *v).into();
+        state.eol = attributes.get("eol").and_then(|v| *v).into();
+        state.filter = attributes.get("filter").and_then(|v| *v).into();
+        state.diff = attributes.get("diff").and_then(|v| *v).into();
+        state.merge = attributes.get("merge").and_then(|v| *v).into();
+        state.encoding = attributes
+            .get("working-tree-encoding")
+            .and_then(|v| *v)
+            .into();
+        state.export_ignore = attributes.get("export-ignore").and_then(|v| *v).into();
+        state.export_subst = attributes.get("export-subst").and_then(|v| *v).into();
 
         // Map custom attributes
         for (key, value) in attributes {
@@ -98,7 +101,9 @@ impl FileState {
                     | "export-ignore"
                     | "export-subst"
             ) {
-                state.custom.insert(key.clone(), value.clone().into());
+                state
+                    .custom
+                    .insert(key.clone(), value.and_then(|v| Some(v)).into());
             }
         }
 

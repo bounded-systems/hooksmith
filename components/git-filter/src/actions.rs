@@ -1,4 +1,3 @@
-use crate::error::FilterError;
 use crate::state::FileState;
 use std::collections::HashMap;
 

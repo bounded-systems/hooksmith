@@ -1,6 +1,6 @@
 use git_filter::filter::run_process_filter;
 use git_filter::error::FilterError;
-use tracing::{error, info};
+use tracing::info;
 
 fn main() -> Result<(), FilterError> {
     // Initialize tracing

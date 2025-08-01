@@ -23,4 +23,7 @@ pub enum FilterError {
 
     #[error("Unsupported attribute: {0}")]
     UnsupportedAttribute(String),
+
+    #[error("Git filter handshake error: {0}")]
+    HandshakeError(#[from] gix_filter::driver::process::server::handshake::Error),
 }

@@ -7,16 +7,19 @@ pub mod state;
 pub mod actions;
 pub mod filter;
 pub mod error;
+pub mod contract;
 
 pub use state::{FileState, AttributeState};
 pub use actions::{ActionResolver, HookAction};
 pub use filter::{SafeAsciiFilter, FilterDriver};
 pub use error::FilterError;
+pub use contract::{CharacterContract, CharClass, CharAction, CharValidator, FileValidationResult};
 
 /// Re-export common types for convenience
 pub mod prelude {
     pub use super::{
         FileState, AttributeState, ActionResolver, HookAction,
-        SafeAsciiFilter, FilterDriver, FilterError
+        SafeAsciiFilter, FilterDriver, FilterError,
+        CharacterContract, CharClass, CharAction, CharValidator, FileValidationResult
     };
 } 

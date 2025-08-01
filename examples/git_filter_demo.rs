@@ -1,4 +1,6 @@
 use git_filter::prelude::*;
+use git_filter::actions::{GitOperation, HookAction};
+use git_filter::filter::MultiFilter;
 use std::collections::HashMap;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
