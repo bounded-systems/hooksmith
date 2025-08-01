@@ -1,5 +1,5 @@
 [package]
-name = "pushd-worktree-cli"
+name = "hooksmith"
 version = "0.1.0"
 edition = "2021"
 authors = ["Pushd Team"]
@@ -10,8 +10,6 @@ license = "MIT"
 members = [
     ".",
     "components/cli-core",
-    "components/worktree-manager",
-    "components/git-validator",
 ]
 
 [workspace.package]
@@ -44,11 +42,11 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 
 [[bin]]
-name = "pushd-worktree-cli"
+name = "hooksmith"
 path = "src/main.rs"
 
 [lib]
-name = "pushd_worktree_cli"
+name = "hooksmith"
 path = "src/lib.rs"
 
 [dependencies]
@@ -68,8 +66,6 @@ tracing-subscriber.workspace = true
 
 # Internal component dependencies
 cli-core = { path = "components/cli-core" }
-worktree-manager = { path = "components/worktree-manager" }
-git-validator = { path = "components/git-validator" }
 
 [dev-dependencies]
 tempfile = "3.0"
