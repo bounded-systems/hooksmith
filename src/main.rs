@@ -295,7 +295,7 @@ async fn main() -> Result<()> {
             }
             
             // Import the lefthook module
-            use crate::modules::lefthook;
+            use hooksmith::modules::lefthook;
             
             // Generate configuration with schema validation
             match lefthook::generate_lefthook_config(
@@ -318,7 +318,7 @@ async fn main() -> Result<()> {
             }
             
             // Import the lefthook module
-            use crate::modules::lefthook;
+            use hooksmith::modules::lefthook;
             
             // Generate comprehensive configuration with all hooks
             match lefthook::generate_comprehensive_config(
