@@ -86,7 +86,7 @@ pub async fn install() -> Result<()> {
         .context("Failed to execute lefthook install")?;
 
     if !status.success() {
-        anyhow::bail!("Lefthook install failed with status: {}", status);
+        return Err(LefthookError::Installation(format!("Lefthook install failed with status: {}", status)));
     }
 
     Ok(())
@@ -120,7 +120,7 @@ pub async fn run_hook(hook_name: &str) -> Result<()> {
         .context(format!("Failed to execute lefthook run {}", hook_name))?;
 
     if !status.success() {
-        anyhow::bail!("Lefthook run {} failed with status: {}", hook_name, status);
+        return Err(LefthookError::CommandExecution(format!("Lefthook run {} failed with status: {}", hook_name, status)));
     }
 
     Ok(())
@@ -195,7 +195,7 @@ pub async fn get_version() -> Result<String> {
         .context("Failed to execute lefthook version")?;
 
     if !output.status.success() {
-        anyhow::bail!("Lefthook version failed with status: {}", output.status);
+        return Err(LefthookError::Version(format!("Lefthook version failed with status: {}", output.status)));
     }
 
     let version = String::from_utf8(output.stdout)

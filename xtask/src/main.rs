@@ -574,81 +574,52 @@ fn generate_lefthook_config(output: &str, validate: bool) -> Result<()> {
     println!("📝 Generating Lefthook configuration...");
     println!("   Output: {}", output);
 
-    let mut config = LefthookConfig::default();
+    // Use lefthook-rs to generate configuration
+    let mut config = lefthook_rs::HookConfig::default();
 
     // Pre-commit hooks
-    let mut pre_commit_hooks = HashMap::new();
-    pre_commit_hooks.insert(
+    config.add_pre_commit_hook(
         "hooksmith-fmt".to_string(),
-        LefthookHook {
-            run: "cargo fmt --all -- --check".to_string(),
-            files: Some("*.rs".to_string()),
-            parallel: Some(false),
-            env: None,
-        },
+        lefthook_rs::JobConfig::new("cargo fmt --all -- --check")
+            .with_files("*.rs"),
     );
-    pre_commit_hooks.insert(
+    config.add_pre_commit_hook(
         "hooksmith-clippy".to_string(),
-        LefthookHook {
-            run: "cargo clippy --all-targets --all-features -- -D warnings".to_string(),
-            files: Some("*.rs".to_string()),
-            parallel: Some(false),
-            env: None,
-        },
+        lefthook_rs::JobConfig::new("cargo clippy --all-targets --all-features -- -D warnings")
+            .with_files("*.rs"),
     );
-    pre_commit_hooks.insert(
+    config.add_pre_commit_hook(
         "hooksmith-test".to_string(),
-        LefthookHook {
-            run: "cargo test --all-targets --all-features".to_string(),
-            files: Some("*.rs".to_string()),
-            parallel: Some(false),
-            env: None,
-        },
+        lefthook_rs::JobConfig::new("cargo test --all-targets --all-features")
+            .with_files("*.rs"),
     );
-    pre_commit_hooks.insert(
+    config.add_pre_commit_hook(
         "hooksmith-gen-wit".to_string(),
-        LefthookHook {
-            run: "cargo xtask gen-wit".to_string(),
-            files: Some("*.rs".to_string()),
-            parallel: Some(false),
-            env: None,
-        },
+        lefthook_rs::JobConfig::new("cargo xtask gen-wit")
+            .with_files("*.rs"),
     );
-
-    config.pre_commit = Some(pre_commit_hooks);
 
     // Pre-push hooks
-    let mut pre_push_hooks = HashMap::new();
-    pre_push_hooks.insert(
+    config.add_pre_push_hook(
         "hooksmith-audit".to_string(),
-        LefthookHook {
-            run: "cargo audit".to_string(),
-            files: None,
-            parallel: Some(false),
-            env: None,
-        },
+        lefthook_rs::JobConfig::new("cargo audit"),
     );
-    pre_push_hooks.insert(
+    config.add_pre_push_hook(
         "hooksmith-check-generated".to_string(),
-        LefthookHook {
-            run: "cargo xtask check --strict".to_string(),
-            files: None,
-            parallel: Some(false),
-            env: None,
-        },
+        lefthook_rs::JobConfig::new("cargo xtask check --strict"),
     );
 
-    config.pre_push = Some(pre_push_hooks);
-
-    // Write configuration
-    let yaml_content = serde_yaml::to_string(&config).context("Failed to serialize config")?;
-    fs::write(output, yaml_content).context("Failed to write config file")?;
+    // Write configuration using lefthook-rs
+    tokio::runtime::Runtime::new()?.block_on(async {
+        config.write_to_file(output).await
+    })?;
 
     if validate {
         println!("   Validating configuration...");
-        // Basic validation - check that the file can be parsed
-        let content = fs::read_to_string(output).context("Failed to read config file")?;
-        let _parsed: LefthookConfig = serde_yaml::from_str(&content).context("Failed to parse config")?;
+        // Use lefthook-rs validation
+        tokio::runtime::Runtime::new()?.block_on(async {
+            lefthook_rs::validate_config(std::path::Path::new(output)).await
+        })?;
         println!("   Configuration validation passed");
     }
 

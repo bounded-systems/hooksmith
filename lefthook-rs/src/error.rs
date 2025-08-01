@@ -54,8 +54,9 @@ impl From<anyhow::Error> for LefthookError {
     }
 }
 
+#[cfg(feature = "download")]
 impl From<reqwest::Error> for LefthookError {
     fn from(err: reqwest::Error) -> Self {
         LefthookError::Download(err.to_string())
     }
-} 
+}
