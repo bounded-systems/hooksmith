@@ -13,13 +13,28 @@ This document shows the complete file structure of the repository.
 ├── build.sh
 ├── Cargo.toml
 ├── components
-│   └── cli-core
+│   ├── cli-core
+│   │   ├── Cargo.toml
+│   │   └── src
+│   │       └── lib.rs
+│   └── worktree-runner
 │       ├── Cargo.toml
-│       └── src
-│           └── lib.rs
+│       ├── src
+│       │   └── lib.rs
+│       └── wit
+│           └── worktree-runner.wit
+├── docs
+│   ├── CLI_HELP.md
+│   ├── DEVELOPMENT.md
+│   ├── README.md
+│   ├── STRUCTURE.md
+│   └── TEST_SUMMARY.md
 ├── hooks
 │   └── README.md
 ├── README.md
+├── scripts
+│   ├── generate-docs.sh
+│   └── generate-structure.sh
 ├── src
 │   ├── commands
 │   │   └── mod.rs
@@ -27,21 +42,22 @@ This document shows the complete file structure of the repository.
 │   ├── main.rs
 │   └── modules
 │       └── mod.rs
+├── STRUCTURE.md
 └── tests
     ├── hooks_test.rs
     └── integration.rs
 
-11 directories, 14 files
+16 directories, 25 files
 ```
 
 ## 📊 File Count Summary
 
-- **Total Files**:       18
-- **Rust Files**:        7 (.rs)
-- **Configuration Files**:        5 (.toml, .yaml, .rc)
-- **Documentation**:        2 (.md)
-- **Scripts**:        1 (.sh)
+- **Total Files**:       30
+- **Rust Files**:        8 (.rs)
+- **Configuration Files**:        7 (.toml, .yaml, .rc)
+- **Documentation**:        8 (.md)
+- **Scripts**:        3 (.sh)
 
 ---
 
-*Generated on Fri Aug  1 17:41:20 EDT 2025 using `git ls-tree -r HEAD`*
+*Generated on Fri Aug  1 17:45:21 EDT 2025 using `git ls-tree -r HEAD`*

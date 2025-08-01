@@ -139,4 +139,67 @@ fn test_wasm_bindings_command() -> anyhow::Result<()> {
     assert!(stdout.contains("Generating bindings from WIT"));
     assert!(stdout.contains("test.wit"));
     Ok(())
+}
+
+#[test]
+fn test_worktree_create_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "worktree", "create", "feature/test"]);
+    let output = cmd.output()?;
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Creating worktree"));
+    assert!(stdout.contains("feature/test"));
+    Ok(())
+}
+
+#[test]
+fn test_worktree_list_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "worktree", "list"]);
+    let output = cmd.output()?;
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Listing worktrees"));
+    Ok(())
+}
+
+#[test]
+fn test_worktree_switch_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "worktree", "switch", "test-worktree"]);
+    let output = cmd.output()?;
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Switching to worktree"));
+    assert!(stdout.contains("test-worktree"));
+    Ok(())
+}
+
+#[test]
+fn test_worktree_remove_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "worktree", "remove", "test-worktree"]);
+    let output = cmd.output()?;
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Removing worktree"));
+    assert!(stdout.contains("test-worktree"));
+    Ok(())
+}
+
+#[test]
+fn test_worktree_tools_command() -> anyhow::Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args(&["run", "--", "worktree", "tools"]);
+    let output = cmd.output()?;
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Available worktree tools"));
+    Ok(())
 } 

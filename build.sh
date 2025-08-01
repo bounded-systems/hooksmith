@@ -31,6 +31,7 @@ echo -e "${BLUE}Building components...${NC}"
 
 COMPONENTS=(
     "cli-core"
+    "worktree-runner"
 )
 
 for component in "${COMPONENTS[@]}"; do
