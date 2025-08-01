@@ -105,6 +105,18 @@ enum Commands {
         #[arg(long, default_value = "true")]
         validate_schema: bool,
     },
+    /// Generate comprehensive Lefthook configuration
+    ///
+    /// Creates a template lefthook.yml file with all available Git hooks
+    /// for documentation or as a starting point.
+    GenerateComprehensive {
+        /// Output file path for Lefthook configuration
+        #[arg(long, default_value = "lefthook-comprehensive.yml")]
+        output: String,
+        /// Whether to validate against the official Lefthook schema
+        #[arg(long, default_value = "true")]
+        validate_schema: bool,
+    },
     /// Generate structured code and documentation
     ///
     /// Uses structured code generation with WIT schemas to create
@@ -295,6 +307,27 @@ async fn main() -> Result<()> {
                 Ok(()) => println!("{} {}", style("✅").green(), style("Configuration generated successfully").green()),
                 Err(e) => {
                     eprintln!("{} {}", style("❌").red(), style(format!("Failed to generate configuration: {}", e)).red());
+                    std::process::exit(1);
+                }
+            }
+        }
+        Commands::GenerateComprehensive { output, validate_schema } => {
+            println!("{} {} {}", style("📋").blue(), style("Generating comprehensive Lefthook config:").blue(), style(output).yellow());
+            if validate_schema {
+                println!("{} {}", style("🔍").blue(), style("Schema validation enabled").blue());
+            }
+            
+            // Import the lefthook module
+            use crate::modules::lefthook;
+            
+            // Generate comprehensive configuration with all hooks
+            match lefthook::generate_comprehensive_config(
+                std::path::Path::new(&output),
+                validate_schema,
+            ).await {
+                Ok(()) => println!("{} {}", style("✅").green(), style("Comprehensive configuration generated successfully").green()),
+                Err(e) => {
+                    eprintln!("{} {}", style("❌").red(), style(format!("Failed to generate comprehensive configuration: {}", e)).red());
                     std::process::exit(1);
                 }
             }

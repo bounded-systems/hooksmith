@@ -15,22 +15,17 @@ pre-commit:
       glob: "*.rs"
       run: cargo clippy --all-targets --all-features -- -D warnings
 
-    # Documentation check
-    docs:
-      glob: "*.rs"
-      run: cargo doc --no-deps --document-private-items
-
     # Run tests
     test:
       run: cargo test --all-targets --all-features
 
-    # Security audit
-    audit:
-      run: cargo audit
+    # Generate WIT interfaces
+    gen-wit:
+      run: cargo xtask gen-wit --overwrite
 
-    # Check for missing documentation
-    missing-docs:
-      run: cargo doc --no-deps --document-private-items
+    # Check generated files are up to date
+    check-generated:
+      run: cargo xtask check --strict
 
 # Pre-push hooks run before pushing to remote
 pre-push:
@@ -41,13 +36,15 @@ pre-push:
 
     # Build check
     build:
-      run: cargo build --release
+      run: cargo xtask build --target all --release
 
     # WASM component build
     wasm-build:
-      run: |
-        cd components/worktree-runner
-        cargo build --target wasm32-unknown-unknown
+      run: cargo xtask build --target wasm --release
+
+    # Security audit
+    audit:
+      run: cargo audit
 
 # Commit-msg hooks run after commit message is written
 commit-msg:

@@ -41,8 +41,11 @@ jobs:
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
-      - name: Check for missing documentation
-        run: cargo doc --no-deps --document-private-items
+      - name: Generate WIT interfaces
+        run: cargo xtask gen-wit --overwrite
+
+      - name: Check generated files are up to date
+        run: cargo xtask check --strict
 
   # Test on multiple platforms
   test:
@@ -137,14 +140,10 @@ jobs:
             ${{ runner.os }}-wasm-cargo-
 
       - name: Build WASM components
-        run: |
-          cd components/worktree-runner
-          cargo build --target wasm32-unknown-unknown
+        run: cargo xtask build --target wasm
 
       - name: Test WASM components
-        run: |
-          cd components/worktree-runner
-          cargo test --target wasm32-unknown-unknown
+        run: cargo test --target wasm32-unknown-unknown
 
   # Documentation
   docs:

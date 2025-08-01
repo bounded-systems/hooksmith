@@ -4,7 +4,7 @@
 //!
 //! This module contains core functionality modules for the Hooksmith CLI.
 
-/// Lefthook configuration generation
-pub mod lefthook;
 /// Structured code generation
 pub mod generator;
+/// Lefthook configuration generation
+pub mod lefthook;

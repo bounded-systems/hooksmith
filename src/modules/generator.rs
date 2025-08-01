@@ -1,5 +1,5 @@
 //! Structured code generator for Hooksmith
-//! 
+//!
 //! This module provides structured code generation capabilities that replace
 //! shell scripts and raw echo statements with proper Rust-based generation
 //! using WIT schemas.
@@ -8,7 +8,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// WIT schema for code generation configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -159,7 +159,10 @@ impl CodeGenerator {
         // Generate worktree runner interface
         let worktree_wit = self.generate_worktree_wit()?;
         let worktree_file = GeneratedFile {
-            path: PathBuf::from("components").join("worktree-runner").join("wit").join("worktree-runner.wit"),
+            path: PathBuf::from("components")
+                .join("worktree-runner")
+                .join("wit")
+                .join("worktree-runner.wit"),
             content: worktree_wit,
             file_type: "wit".to_string(),
             overwritten: true,
@@ -225,7 +228,7 @@ impl CodeGenerator {
     pub fn write_files(&self, result: &GenerationResult) -> Result<()> {
         for file in &result.files {
             let full_path = self.config.output_dir.join(&file.path);
-            
+
             // Create parent directories if they don't exist
             if let Some(parent) = full_path.parent() {
                 fs::create_dir_all(parent)?;
@@ -242,12 +245,12 @@ impl CodeGenerator {
 
     fn generate_repository_structure(&self) -> Result<String> {
         let mut content = String::new();
-        
+
         content.push_str("# Repository Structure\n\n");
         content.push_str("This document shows the complete file structure of the repository.\n\n");
         content.push_str("## 📁 File Structure\n\n");
         content.push_str("```\n");
-        
+
         // This would be generated from actual file system scan
         content.push_str("hooksmith/\n");
         content.push_str("├── .editorconfig\n");
@@ -266,7 +269,7 @@ impl CodeGenerator {
         content.push_str("├── tests/\n");
         content.push_str("└── wit/\n");
         content.push_str("```\n\n");
-        
+
         content.push_str("## 📊 File Count Summary\n\n");
         content.push_str("- **Total Files**: Generated dynamically\n");
         content.push_str("- **Rust Files**: Generated dynamically\n");
@@ -301,7 +304,8 @@ use cli_core::CliCore;
 let core = CliCore::new();
 let result = core.execute_command("test");
 ```
-"#.to_string();
+"#
+        .to_string();
 
         docs.insert("CLI_CORE".to_string(), cli_core_doc);
 
@@ -325,7 +329,8 @@ use worktree_runner::WorktreeRunner;
 let runner = WorktreeRunner::new();
 let result = runner.create_worktree("feature/new-feature").await;
 ```
-"#.to_string();
+"#
+        .to_string();
 
         docs.insert("WORKTREE_RUNNER".to_string(), worktree_doc);
 
@@ -395,7 +400,8 @@ interface hooksmith-cli {
 
 /// Export the main CLI interface
 export hooksmith-cli;
-"#.to_string();
+"#
+        .to_string();
 
         Ok(wit_content)
     }
@@ -477,7 +483,7 @@ export worktree-runner;
 
     fn generate_cli_help_docs(&self) -> Result<String> {
         let mut content = String::new();
-        
+
         content.push_str("# CLI Help Documentation\n\n");
         content.push_str("This document contains the help output for all CLI commands.\n\n");
         content.push_str("## Main Help\n\n");
@@ -493,7 +499,7 @@ export worktree-runner;
         content.push_str("  wasm      WASM component management\n");
         content.push_str("  worktree  Worktree management\n");
         content.push_str("```\n\n");
-        
+
         content.push_str("## Command Help\n\n");
         content.push_str("### Test Command\n\n");
         content.push_str("```\n");
@@ -503,7 +509,7 @@ export worktree-runner;
         content.push_str("  -m, --message <MESSAGE>  Custom test message\n");
         content.push_str("  -h, --help              Print help\n");
         content.push_str("```\n\n");
-        
+
         content.push_str("### Worktree Commands\n\n");
         content.push_str("```\n");
         content.push_str("Worktree management\n\n");
@@ -574,7 +580,8 @@ This project uses structured code generation and WIT schemas:
 - API docs: `cargo doc --no-deps --open`
 - CLI help: `cargo run -- --help`
 - Project docs: `docs/` directory
-"#.to_string();
+"#
+        .to_string();
 
         Ok(content)
     }
@@ -615,7 +622,8 @@ cargo test test_worktree_create_command
 - **Unit Tests**: 2 tests for core functionality
 - **WASM Tests**: Component-specific tests
 - **Documentation Tests**: API documentation validation
-"#.to_string();
+"#
+        .to_string();
 
         Ok(content)
     }
@@ -636,10 +644,10 @@ mod tests {
     fn test_structure_generation() -> Result<()> {
         let generator = CodeGenerator::new();
         let result = generator.generate_structure_docs()?;
-        
+
         assert!(result.success);
         assert!(!result.files.is_empty());
-        
+
         Ok(())
     }
 
@@ -647,10 +655,10 @@ mod tests {
     fn test_wit_generation() -> Result<()> {
         let generator = CodeGenerator::new();
         let result = generator.generate_wit_interfaces()?;
-        
+
         assert!(result.success);
         assert_eq!(result.files.len(), 2); // CLI and worktree interfaces
-        
+
         Ok(())
     }
 
@@ -659,16 +667,16 @@ mod tests {
         let temp_dir = TempDir::new()?;
         let mut config = GeneratorConfig::default();
         config.output_dir = temp_dir.path().to_path_buf();
-        
+
         let generator = CodeGenerator::with_config(config);
         let result = generator.generate_structure_docs()?;
-        
+
         generator.write_files(&result)?;
-        
+
         // Verify files were written
         let structure_file = temp_dir.path().join("STRUCTURE.md");
         assert!(structure_file.exists());
-        
+
         Ok(())
     }
-} 
+}

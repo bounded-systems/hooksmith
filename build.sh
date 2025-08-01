@@ -14,10 +14,10 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}🔨 Building hooksmith workspace${NC}"
 
-# Generate repository structure documentation using structured code generation
-echo -e "${BLUE}📁 Generating repository structure...${NC}"
-cargo run -- generate-code --type structure --output-dir . || {
-    echo -e "${YELLOW}⚠️  Structure generation failed, skipping...${NC}"
+# Generate all code and documentation using xtask
+echo -e "${BLUE}📁 Generating code and documentation...${NC}"
+cargo xtask gen-all --overwrite || {
+    echo -e "${YELLOW}⚠️  Code generation failed, skipping...${NC}"
 }
 
 # Build the CLI binary

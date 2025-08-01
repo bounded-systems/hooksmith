@@ -14,7 +14,7 @@ categories = ["command-line-utilities", "development-tools"]
 members = [
     ".",
     "components/cli-core",
-    "components/worktree-runner",
+    "components/worktree-runner", "xtask",
 ]
 
 [workspace.package]
