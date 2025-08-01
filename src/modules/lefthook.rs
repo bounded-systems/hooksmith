@@ -611,8 +611,8 @@ async fn get_lefthook_schema() -> Result<&'static JSONSchema> {
 /// # Returns
 ///
 /// Returns `Ok(())` if the configuration is valid according to the schema.
-pub async fn validate_against_schema(config_json: &serde_json::Value) -> Result<()> {
-    let schema = get_lefthook_schema().await?;
+pub async fn validate_against_schema(config_json: &serde_json::Value) -> LefthookResult<()> {
+    let schema = get_lefthook_schema().await.map_err(|e| LefthookError::SchemaValidation(e.to_string()))?;
 
     match schema.validate(config_json) {
         Ok(_) => {
@@ -631,7 +631,7 @@ pub async fn validate_against_schema(config_json: &serde_json::Value) -> Result<
                 .collect();
 
             let error_summary = error_messages.join("\n");
-            anyhow::bail!("Configuration failed schema validation:\n{}", error_summary);
+            Err(LefthookError::SchemaValidation(error_summary))
         }
     }
 }
