@@ -41,23 +41,26 @@ This document shows the complete file structure of the repository.
 │   ├── lib.rs
 │   ├── main.rs
 │   └── modules
+│       ├── lefthook.rs
 │       └── mod.rs
 ├── STRUCTURE.md
-└── tests
-    ├── hooks_test.rs
-    └── integration.rs
+├── tests
+│   ├── hooks_test.rs
+│   └── integration.rs
+└── wit
+    └── hooksmith.wit
 
-16 directories, 25 files
+17 directories, 27 files
 ```
 
 ## 📊 File Count Summary
 
-- **Total Files**:       30
-- **Rust Files**:        8 (.rs)
+- **Total Files**:       32
+- **Rust Files**:        9 (.rs)
 - **Configuration Files**:        7 (.toml, .yaml, .rc)
 - **Documentation**:        8 (.md)
 - **Scripts**:        3 (.sh)
 
 ---
 
-*Generated on Fri Aug  1 17:46:36 EDT 2025 using `git ls-tree -r HEAD`*
+*Generated on Fri Aug  1 17:50:49 EDT 2025 using `git ls-tree -r HEAD`*
