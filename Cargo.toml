@@ -3,8 +3,12 @@ name = "hooksmith"
 version = "0.1.0"
 edition = "2021"
 authors = ["Pushd Team"]
-description = "CLI tools for Git worktree management and safety"
+description = "CLI tool for building Rust binaries into Lefthook hooks with WASM components"
 license = "MIT"
+documentation = "https://docs.rs/hooksmith"
+repository = "https://github.com/bdelanghe/hooksmith"
+keywords = ["cli", "hooks", "lefthook", "wasm", "git"]
+categories = ["command-line-utilities", "development-tools"]
 
 [workspace]
 members = [
@@ -41,6 +45,9 @@ which = "5.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 
+# Documentation
+rustdoc-stripper = "0.1"
+
 [[bin]]
 name = "hooksmith"
 path = "src/main.rs"
@@ -69,3 +76,7 @@ cli-core = { path = "components/cli-core" }
 
 [dev-dependencies]
 tempfile = "3.0"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

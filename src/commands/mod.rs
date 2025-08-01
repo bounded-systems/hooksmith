@@ -1,7 +1,3 @@
-//! Command implementations for the worktree CLI
+//! Command implementations for the hooksmith CLI
 
-pub mod hooks;
-pub mod worktree;
-
-pub use hooks::*;
-pub use worktree::*;
+// No commands currently implemented - all functionality is in main.rs

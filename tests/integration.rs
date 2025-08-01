@@ -12,7 +12,7 @@ fn test_cli_help() -> anyhow::Result<()> {
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("Build Rust binaries into Lefthook hooks with WASM components"));
+    assert!(stdout.contains("Main CLI application for Hooksmith"));
     Ok(())
 }
 

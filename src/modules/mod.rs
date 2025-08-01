@@ -1,9 +1,3 @@
-//! Core functionality modules for the worktree CLI
+//! Core modules for the hooksmith CLI
 
-pub mod hooks;
-pub mod utils;
-pub mod worktree;
-
-pub use hooks::*;
-pub use utils::*;
-pub use worktree::*;
+// No modules currently implemented - all functionality is in main.rs

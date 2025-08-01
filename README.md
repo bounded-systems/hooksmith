@@ -1,37 +1,45 @@
 # Hooksmith
 
-CLI tools for building Rust binaries into Lefthook hooks with WASM components.
+A CLI tool for building Rust binaries into Lefthook hooks with WASM components.
 
-## Overview
+## 🎯 Purpose
 
-This CLI provides tools for:
-- **Hook Building**: Build Rust binaries for Git hooks
-- **WASM Components**: Build and manage WASM components from WIT interfaces
-- **Lefthook Integration**: Generate and install Lefthook configurations
-- **Hook Management**: List and manage available hooks
+Hooksmith bridges the gap between modern Git workflow tools and WebAssembly components, enabling:
 
-## Architecture
+- **High-performance Git hooks** written in Rust
+- **Cross-language functionality** via WASM components
+- **Type-safe interfaces** using WIT (WebAssembly Interface Types)
+- **Seamless integration** with Lefthook for Git workflow management
 
-This is a Rust workspace with the following structure:
+## 🏗️ Architecture
 
 ```
-hooksmith/
-├── Cargo.toml               # Workspace manifest
-├── build.sh                 # Build script
-├── README.md                # This file
-├── src/                     # Main CLI binary
-│   ├── main.rs              # CLI entry point
-│   ├── lib.rs               # Library exports
-│   ├── commands/            # Command implementations
-│   └── modules/             # Core functionality
-├── components/              # Modular components
-│   └── cli-core/            # Core CLI functionality
-├── hooks/                   # Hook scripts
-├── docs/                    # Documentation
-└── tests/                   # Test files
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Lefthook      │    │   Hooksmith     │    │   WASM          │
+│   (Git Hooks)   │◄──►│   (CLI Tool)    │◄──►│   Components    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐
+                       │   Rust          │
+                       │   Binaries      │
+                       └─────────────────┘
 ```
 
-## Installation
+## 🚀 Current Status
+
+**⚠️ This is a prototype/placeholder implementation**
+
+The tool currently provides:
+- ✅ CLI structure and command parsing
+- ✅ Comprehensive documentation
+- ✅ Test suite
+- ✅ Build system
+- ❌ **Actual WASM compilation** (TODO)
+- ❌ **Lefthook integration** (TODO)
+- ❌ **Hook building logic** (TODO)
+
+## 📦 Installation
 
 ```bash
 # Build from source
@@ -41,7 +49,7 @@ hooksmith/
 cargo install --path .
 ```
 
-## Usage
+## 🛠️ Usage
 
 ### Basic Commands
 
@@ -56,7 +64,7 @@ hooksmith test --message "Custom test message"
 hooksmith list
 ```
 
-### Hook Building
+### Hook Building (Planned)
 
 ```bash
 # Build a hook binary
@@ -66,7 +74,7 @@ hooksmith build my-hook
 hooksmith build my-hook --output target/custom-hooks
 ```
 
-### Lefthook Integration
+### Lefthook Integration (Planned)
 
 ```bash
 # Generate Lefthook configuration
@@ -82,7 +90,7 @@ hooksmith install
 hooksmith install --hooks pre-commit,pre-push
 ```
 
-### WASM Component Management
+### WASM Component Management (Planned)
 
 ```bash
 # Build WASM component from WIT
@@ -92,7 +100,7 @@ hooksmith wasm build interface.wit
 hooksmith wasm build interface.wit --output target/wasm
 
 # Run WASM component
-hooksmith wasm run component.wasm --function validate --args arg1 arg2
+hooksmith wasm run component.wasm --function validate --args arg1,arg2
 
 # Generate bindings from WIT
 hooksmith wasm bindings interface.wit
@@ -101,7 +109,7 @@ hooksmith wasm bindings interface.wit
 hooksmith wasm bindings interface.wit --output target/bindings
 ```
 
-## Development
+## 🏗️ Development
 
 ```bash
 # Build workspace
@@ -115,14 +123,36 @@ cargo test --workspace
 
 # Run CLI
 cargo run -- test
+
+# Generate documentation
+cargo doc --no-deps --open
 ```
 
-## Components
+## 📁 Project Structure
 
-- **cli-core**: Core CLI functionality and utilities
+```
+hooksmith/
+├── Cargo.toml               # Workspace manifest
+├── build.sh                 # Build script
+├── README.md                # This file
+├── src/                     # Main CLI binary
+│   ├── main.rs              # CLI entry point (documented)
+│   ├── lib.rs               # Library exports
+│   ├── commands/            # Command structure
+│   └── modules/             # Module structure
+├── components/              # Modular components
+│   └── cli-core/            # Core CLI functionality
+├── hooks/                   # Hook scripts directory
+├── tests/                   # Test files
+└── target/doc/              # Generated documentation
+```
+
+## 🔧 Components
+
 - **hooksmith**: Main CLI binary for hook building and WASM management
+- **cli-core**: Core CLI functionality and utilities
 
-## Integration
+## 🔗 Integration
 
 This CLI is designed to integrate with Lefthook for Git hook management:
 
@@ -134,6 +164,49 @@ hooksmith generate > lefthook.yml
 hooksmith install
 ```
 
-## License
+## 📚 Documentation
+
+- **API Documentation**: `cargo doc --no-deps --open`
+- **CLI Help**: `hooksmith --help`
+- **Command Help**: `hooksmith <command> --help`
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+cargo test
+
+# Run specific test
+cargo test test_cli_help
+
+# Run integration tests
+cargo test --test integration
+```
+
+## 🚧 Implementation Status
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| CLI Structure | ✅ Complete | Full command parsing and help |
+| Documentation | ✅ Complete | Comprehensive docs and examples |
+| Tests | ✅ Complete | 14 tests passing |
+| Build System | ✅ Complete | Workspace builds successfully |
+| WASM Compilation | ❌ TODO | Need WASM toolchain integration |
+| WIT Processing | ❌ TODO | Need WIT parser and compiler |
+| Lefthook Integration | ❌ TODO | Need YAML generation and hook installation |
+| Hook Building | ❌ TODO | Need Rust compilation pipeline |
+
+## 🎯 Next Steps
+
+To make this a fully functional Lefthook + WASM integration tool:
+
+1. **Add WASM toolchain dependencies** (wasmtime, wit-bindgen, etc.)
+2. **Implement WIT parsing and compilation**
+3. **Add Rust compilation pipeline for hooks**
+4. **Implement Lefthook YAML generation**
+5. **Add hook installation logic**
+6. **Create example WIT interfaces and WASM components**
+
+## 📄 License
 
 MIT
