@@ -120,7 +120,7 @@ impl FilterDriver for SafeAsciiFilter {
     fn process(
         &self,
         content: &[u8],
-        file_state: &FileState,
+        _file_state: &FileState,
         operation: &GitOperation,
     ) -> Result<Vec<u8>, FilterError> {
         debug!(
