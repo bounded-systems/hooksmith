@@ -336,7 +336,7 @@ async fn main() -> Result<()> {
             println!("{} {} {}", style("🔧").blue(), style("Generating structured code:").blue(), style(type_).yellow());
             println!("{} {} {}", style("📁").blue(), style("Output directory:").blue(), style(output_dir).yellow());
             
-            use crate::modules::generator::{CodeGenerator, GeneratorConfig};
+            use hooksmith::modules::generator::{CodeGenerator, GeneratorConfig};
             use std::path::PathBuf;
             
             let config = GeneratorConfig {
@@ -400,7 +400,7 @@ async fn main() -> Result<()> {
             println!("{} {} {}", style("🔍").blue(), style("Validating Lefthook config:").blue(), style(config_path).yellow());
             
             // Import the lefthook module
-            use crate::modules::lefthook;
+            use hooksmith::modules::lefthook;
             
             // Validate existing configuration against schema
             match lefthook::validate_existing_config(std::path::Path::new(&config_path)).await {
