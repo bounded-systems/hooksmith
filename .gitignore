@@ -17,3 +17,20 @@ Thumbs.db
 
 # Generated files
 completions/
+
+# Generated documentation
+docs/
+STRUCTURE.md
+
+# EditorConfig
+.editorconfig.bak
+
+# Lefthook
+.lefthook/
+
+# GitHub Pages
+.github/pages/
+
+# Release artifacts
+*.tar.gz
+*.zip

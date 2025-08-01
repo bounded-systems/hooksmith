@@ -1,0 +1,39 @@
+# Code owners for Hooksmith project
+# This file defines who is responsible for different parts of the codebase
+
+# Global project maintainers
+* @bdelanghe
+
+# Core CLI functionality
+/src/ @bdelanghe
+/src/main.rs @bdelanghe
+/src/lib.rs @bdelanghe
+
+# Command implementations
+/src/commands/ @bdelanghe
+
+# Core modules
+/src/modules/ @bdelanghe
+
+# WASM components
+/components/ @bdelanghe
+/wit/ @bdelanghe
+
+# Tests
+/tests/ @bdelanghe
+
+# Documentation
+/docs/ @bdelanghe
+/README.md @bdelanghe
+/CHANGELOG.md @bdelanghe
+
+# Build and CI configuration
+/build.sh @bdelanghe
+/.github/ @bdelanghe
+/.trunk/ @bdelanghe
+/lefthook.yml @bdelanghe
+
+# Project configuration
+/Cargo.toml @bdelanghe
+/.editorconfig @bdelanghe
+/.gitignore @bdelanghe 

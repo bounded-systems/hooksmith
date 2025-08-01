@@ -1,0 +1,72 @@
+# Lefthook configuration for Hooksmith
+# This file configures pre-commit hooks to ensure code quality
+
+# Pre-commit hooks run before each commit
+pre-commit:
+  commands:
+    # Rust formatting check
+    rustfmt:
+      glob: "*.rs"
+      run: cargo fmt --all -- --check
+      stage_fixed: all
+
+    # Rust linting
+    clippy:
+      glob: "*.rs"
+      run: cargo clippy --all-targets --all-features -- -D warnings
+
+    # Documentation check
+    docs:
+      glob: "*.rs"
+      run: cargo doc --no-deps --document-private-items
+
+    # Run tests
+    test:
+      run: cargo test --all-targets --all-features
+
+    # Security audit
+    audit:
+      run: cargo audit
+
+    # Check for missing documentation
+    missing-docs:
+      run: cargo doc --no-deps --document-private-items
+
+# Pre-push hooks run before pushing to remote
+pre-push:
+  commands:
+    # Full test suite
+    test:
+      run: cargo test --all-targets --all-features --release
+
+    # Build check
+    build:
+      run: cargo build --release
+
+    # WASM component build
+    wasm-build:
+      run: |
+        cd components/worktree-runner
+        cargo build --target wasm32-unknown-unknown
+
+# Commit-msg hooks run after commit message is written
+commit-msg:
+  commands:
+    # Check conventional commit format
+    conventional-commits:
+      run: |
+        # Check if commit message follows conventional commit format
+        # This is a simple check - you might want to use a more robust tool
+        if ! echo "$1" | grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+"; then
+          echo "Commit message must follow conventional commit format:"
+          echo "  <type>(<scope>): <description>"
+          echo "  Examples:"
+          echo "    feat(cli): add new command"
+          echo "    fix(wasm): correct parsing bug"
+          echo "    docs: update README"
+          exit 1
+        fi
+
+# Note: Global configuration options are set via environment variables
+# LEFTHOOK_SKIP_OUTPUT=meta,success
+# LEFTHOOK_SHOW_TIME=true 

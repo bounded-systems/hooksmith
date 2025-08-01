@@ -54,6 +54,10 @@ rustdoc-stripper = "0.1"
 wasmtime = "18.0"
 wit-bindgen = "0.20"
 
+# JSON Schema validation
+jsonschema = "0.17"
+reqwest = { version = "0.11", features = ["json"] }
+
 [[bin]]
 name = "hooksmith"
 path = "src/main.rs"
@@ -84,6 +88,10 @@ cli-core = { path = "components/cli-core" }
 # WASM dependencies
 wasmtime.workspace = true
 wit-bindgen.workspace = true
+
+# JSON Schema validation
+jsonschema.workspace = true
+reqwest.workspace = true
 
 [dev-dependencies]
 tempfile = "3.0"

@@ -101,6 +101,22 @@ enum Commands {
         /// Output file path for Lefthook configuration
         #[arg(long, default_value = "lefthook.yml")]
         output: String,
+        /// Whether to validate against the official Lefthook schema
+        #[arg(long, default_value = "true")]
+        validate_schema: bool,
+    },
+    /// Generate structured code and documentation
+    ///
+    /// Uses structured code generation with WIT schemas to create
+    /// documentation, WIT interfaces, and other generated files.
+    /// Replaces shell scripts and raw echo statements with type-safe generation.
+    GenerateCode {
+        /// Type of generation to perform
+        #[arg(long, default_value = "all")]
+        type_: String,
+        /// Output directory for generated files
+        #[arg(long, default_value = ".")]
+        output_dir: String,
     },
     /// Install hooks into Git repository
     ///
@@ -115,6 +131,15 @@ enum Commands {
     ///
     /// Displays all available hooks that can be built or installed.
     List,
+    /// Validate Lefthook configuration
+    ///
+    /// Validates an existing lefthook.yml file against the official
+    /// Lefthook JSON schema to ensure compliance.
+    Validate {
+        /// Path to the lefthook.yml file to validate
+        #[arg(long, default_value = "lefthook.yml")]
+        config_path: String,
+    },
     /// WASM component management
     ///
     /// Commands for building, running, and managing WebAssembly components
@@ -251,12 +276,77 @@ async fn main() -> Result<()> {
             // - Link with WASM components if specified
             // - Optimize for hook execution
         }
-        Commands::Generate { output } => {
+        Commands::Generate { output, validate_schema } => {
             println!("{} {} {}", style("📝").blue(), style("Generating Lefthook config:").blue(), style(output).yellow());
-            // TODO: Implement config generation
-            // - Create lefthook.yml with hook definitions
-            // - Configure parallel execution where appropriate
-            // - Set up proper file patterns and stages
+            if validate_schema {
+                println!("{} {}", style("🔍").blue(), style("Schema validation enabled").blue());
+            }
+            
+            // Import the lefthook module
+            use crate::modules::lefthook;
+            
+            // Generate configuration with schema validation
+            match lefthook::generate_lefthook_config(
+                std::path::Path::new(&output),
+                "target/hooks",
+                Some(vec!["components/worktree-runner".to_string()]),
+                validate_schema,
+            ).await {
+                Ok(()) => println!("{} {}", style("✅").green(), style("Configuration generated successfully").green()),
+                Err(e) => {
+                    eprintln!("{} {}", style("❌").red(), style(format!("Failed to generate configuration: {}", e)).red());
+                    std::process::exit(1);
+                }
+            }
+        }
+        Commands::GenerateCode { type_, output_dir } => {
+            println!("{} {} {}", style("🔧").blue(), style("Generating structured code:").blue(), style(type_).yellow());
+            println!("{} {} {}", style("📁").blue(), style("Output directory:").blue(), style(output_dir).yellow());
+            
+            use crate::modules::generator::{CodeGenerator, GeneratorConfig};
+            use std::path::PathBuf;
+            
+            let config = GeneratorConfig {
+                output_dir: PathBuf::from(output_dir),
+                ..Default::default()
+            };
+            
+            let generator = CodeGenerator::with_config(config);
+            
+            match type_.as_str() {
+                "structure" => {
+                    let result = generator.generate_structure_docs()?;
+                    generator.write_files(&result)?;
+                    println!("{} Generated {} structure files", style("✅").green(), result.files.len());
+                }
+                "wit" => {
+                    let result = generator.generate_wit_interfaces()?;
+                    generator.write_files(&result)?;
+                    println!("{} Generated {} WIT interface files", style("✅").green(), result.files.len());
+                }
+                "docs" => {
+                    let result = generator.generate_documentation()?;
+                    generator.write_files(&result)?;
+                    println!("{} Generated {} documentation files", style("✅").green(), result.files.len());
+                }
+                "all" => {
+                    let structure_result = generator.generate_structure_docs()?;
+                    generator.write_files(&structure_result)?;
+                    
+                    let wit_result = generator.generate_wit_interfaces()?;
+                    generator.write_files(&wit_result)?;
+                    
+                    let docs_result = generator.generate_documentation()?;
+                    generator.write_files(&docs_result)?;
+                    
+                    let total_files = structure_result.files.len() + wit_result.files.len() + docs_result.files.len();
+                    println!("{} Generated {} total files", style("✅").green(), total_files);
+                }
+                _ => {
+                    println!("{} Unknown generation type: {}", style("❌").red(), type_);
+                    println!("Available types: structure, wit, docs, all");
+                }
+            }
         }
         Commands::Install { hooks } => {
             let hook_list = hooks.unwrap_or_else(|| "all".to_string());
@@ -272,6 +362,21 @@ async fn main() -> Result<()> {
             // - Scan hooks directory
             // - Parse hook metadata
             // - Display available options
+        }
+        Commands::Validate { config_path } => {
+            println!("{} {} {}", style("🔍").blue(), style("Validating Lefthook config:").blue(), style(config_path).yellow());
+            
+            // Import the lefthook module
+            use crate::modules::lefthook;
+            
+            // Validate existing configuration against schema
+            match lefthook::validate_existing_config(std::path::Path::new(&config_path)).await {
+                Ok(()) => println!("{} {}", style("✅").green(), style("Configuration is valid").green()),
+                Err(e) => {
+                    eprintln!("{} {}", style("❌").red(), style(format!("Configuration validation failed: {}", e)).red());
+                    std::process::exit(1);
+                }
+            }
         }
         Commands::Wasm { wasm } => {
             match wasm {

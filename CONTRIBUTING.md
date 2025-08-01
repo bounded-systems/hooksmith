@@ -1,0 +1,248 @@
+# Contributing to Hooksmith
+
+Thank you for your interest in contributing to Hooksmith! This document provides guidelines and information for contributors.
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Rust**: Latest stable version (1.75+)
+- **Git**: Latest version
+- **Lefthook**: For pre-commit hooks (optional but recommended)
+
+### Setup
+
+1. **Fork and clone the repository**
+   ```bash
+   git clone https://github.com/your-username/hooksmith.git
+   cd hooksmith
+   ```
+
+2. **Install dependencies**
+   ```bash
+   # Install Lefthook (optional but recommended)
+   npm install -g @evilmartians/lefthook
+   
+   # Or using Homebrew on macOS
+   brew install lefthook
+   ```
+
+3. **Install pre-commit hooks**
+   ```bash
+   lefthook install
+   ```
+
+4. **Build the project**
+   ```bash
+   ./build.sh
+   ```
+
+5. **Run tests**
+   ```bash
+   cargo test --all-targets --all-features
+   ```
+
+## 📋 Development Workflow
+
+### Branching Strategy
+
+We use a **trunk-based development** approach:
+
+- **`main`**: Always deployable, contains the latest stable code
+- **`feature/*`**: New features (e.g., `feature/wasm-integration`)
+- **`fix/*`**: Bug fixes (e.g., `fix/cli-parsing-bug`)
+- **`chore/*`**: Infrastructure and tooling updates (e.g., `chore/ci-updates`)
+
+### Commit Messages
+
+We follow the **Conventional Commits** specification:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+**Types:**
+- `feat`: New features
+- `fix`: Bug fixes
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, etc.)
+- `refactor`: Code refactoring
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks
+
+**Examples:**
+```bash
+feat(cli): add worktree management commands
+fix(wasm): correct WIT parsing error
+docs: update README with usage examples
+chore(ci): add GitHub Actions workflow
+```
+
+### Pull Request Process
+
+1. **Create a feature branch** from `main`
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make your changes** following the coding standards below
+
+3. **Run the full test suite**
+   ```bash
+   ./build.sh
+   ```
+
+4. **Commit your changes** with conventional commit messages
+
+5. **Push and create a PR**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+6. **Wait for review** - at least one maintainer must approve
+
+## 🛠️ Coding Standards
+
+### Rust Code
+
+- **Formatting**: Use `cargo fmt` (automatically checked by pre-commit hooks)
+- **Linting**: Use `cargo clippy` (automatically checked by pre-commit hooks)
+- **Documentation**: All public APIs must have rustdoc comments
+- **Tests**: Add tests for new functionality
+
+### Code Organization
+
+- **CLI commands**: Add to `src/commands/`
+- **Core logic**: Add to `src/modules/`
+- **WASM components**: Add to `components/`
+- **WIT interfaces**: Add to `wit/`
+- **Tests**: Unit tests in the same file, integration tests in `tests/`
+
+### Documentation
+
+- **API documentation**: Use rustdoc comments (`///`)
+- **README updates**: Update README.md for user-facing changes
+- **Architecture docs**: Add to `docs/` for complex features
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# All tests
+cargo test --all-targets --all-features
+
+# Specific test file
+cargo test --test integration
+
+# Specific test
+cargo test test_worktree_create_command
+
+# With output
+cargo test -- --nocapture
+```
+
+### Test Guidelines
+
+- **Unit tests**: Test individual functions and modules
+- **Integration tests**: Test CLI commands and workflows
+- **Coverage**: Aim for high test coverage (80%+)
+- **Mocking**: Use mocks for external dependencies
+
+## 🔧 Development Tools
+
+### Pre-commit Hooks
+
+Lefthook automatically runs these checks before each commit:
+
+- **Formatting**: `cargo fmt --all -- --check`
+- **Linting**: `cargo clippy --all-targets --all-features -- -D warnings`
+- **Documentation**: `cargo doc --no-deps --document-private-items`
+- **Tests**: `cargo test --all-targets --all-features`
+- **Security**: `cargo audit`
+
+### Useful Commands
+
+```bash
+# Check formatting
+cargo fmt --all
+
+# Run linter
+cargo clippy --all-targets --all-features
+
+# Generate documentation
+cargo doc --no-deps --open
+
+# Check for security vulnerabilities
+cargo audit
+
+# Build WASM components
+cd components/worktree-runner
+cargo build --target wasm32-unknown-unknown
+```
+
+## 🐛 Bug Reports
+
+When reporting bugs, please include:
+
+1. **Environment**: OS, Rust version, Hooksmith version
+2. **Steps to reproduce**: Clear, step-by-step instructions
+3. **Expected behavior**: What you expected to happen
+4. **Actual behavior**: What actually happened
+5. **Additional context**: Logs, error messages, etc.
+
+## 💡 Feature Requests
+
+When requesting features, please include:
+
+1. **Problem description**: What problem are you trying to solve?
+2. **Proposed solution**: How would you like it to work?
+3. **Use cases**: Examples of how you would use this feature
+4. **Alternatives considered**: Other approaches you've considered
+
+## 📝 Release Process
+
+### For Maintainers
+
+1. **Update version** in `Cargo.toml`
+2. **Update CHANGELOG.md** with new features/fixes
+3. **Create release branch** (optional)
+4. **Run full test suite**
+5. **Create Git tag**: `git tag v1.2.3`
+6. **Push tag**: `git push origin v1.2.3`
+7. **Create GitHub release** (automated via CI)
+
+### Versioning
+
+We follow **Semantic Versioning** (SemVer):
+
+- **Major** (1.0.0): Breaking changes
+- **Minor** (1.1.0): New features, backward compatible
+- **Patch** (1.0.1): Bug fixes, backward compatible
+
+## 🤝 Community
+
+### Getting Help
+
+- **Issues**: Use GitHub Issues for bugs and feature requests
+- **Discussions**: Use GitHub Discussions for questions and ideas
+- **Code of Conduct**: Be respectful and inclusive
+
+### Recognition
+
+Contributors will be recognized in:
+- **README.md**: Contributors section
+- **CHANGELOG.md**: For significant contributions
+- **GitHub**: Contributor graph and releases
+
+## 📄 License
+
+By contributing to Hooksmith, you agree that your contributions will be licensed under the MIT License.
+
+---
+
+Thank you for contributing to Hooksmith! 🎉 

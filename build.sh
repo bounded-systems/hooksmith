@@ -14,13 +14,11 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}🔨 Building hooksmith workspace${NC}"
 
-# Generate repository structure documentation
+# Generate repository structure documentation using structured code generation
 echo -e "${BLUE}📁 Generating repository structure...${NC}"
-if [ -f "scripts/generate-structure.sh" ]; then
-    ./scripts/generate-structure.sh
-else
-    echo -e "${YELLOW}⚠️  Structure generation script not found, skipping...${NC}"
-fi
+cargo run -- generate-code --type structure --output-dir . || {
+    echo -e "${YELLOW}⚠️  Structure generation failed, skipping...${NC}"
+}
 
 # Build the CLI binary
 echo -e "${BLUE}Building CLI binary...${NC}"
