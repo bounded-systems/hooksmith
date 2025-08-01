@@ -23,6 +23,9 @@ wit/*.wit
 lefthook.yml
 docs/
 STRUCTURE.md
+hooks/README.md
+src/commands/mod.rs
+src/modules/mod.rs
 
 # EditorConfig
 .editorconfig.bak

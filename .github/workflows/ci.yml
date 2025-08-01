@@ -47,6 +47,9 @@ jobs:
       - name: Check generated files are up to date
         run: cargo xtask check --strict
 
+      - name: Validate project configuration
+        run: cargo xtask validate --all
+
   # Test on multiple platforms
   test:
     name: Test
