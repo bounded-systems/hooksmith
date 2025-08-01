@@ -289,7 +289,7 @@ async fn main() -> Result<()> {
             // - Optimize for hook execution
         }
         Commands::Generate { output, validate_schema } => {
-            println!("{} {} {}", style("📝").blue(), style("Generating Lefthook config:").blue(), style(output).yellow());
+            println!("{} {} {}", style("📝").blue(), style("Generating Lefthook config:").blue(), style(&output).yellow());
             if validate_schema {
                 println!("{} {}", style("🔍").blue(), style("Schema validation enabled").blue());
             }
@@ -312,7 +312,7 @@ async fn main() -> Result<()> {
             }
         }
         Commands::GenerateComprehensive { output, validate_schema } => {
-            println!("{} {} {}", style("📋").blue(), style("Generating comprehensive Lefthook config:").blue(), style(output).yellow());
+            println!("{} {} {}", style("📋").blue(), style("Generating comprehensive Lefthook config:").blue(), style(&output).yellow());
             if validate_schema {
                 println!("{} {}", style("🔍").blue(), style("Schema validation enabled").blue());
             }
@@ -333,8 +333,8 @@ async fn main() -> Result<()> {
             }
         }
         Commands::GenerateCode { type_, output_dir } => {
-            println!("{} {} {}", style("🔧").blue(), style("Generating structured code:").blue(), style(type_).yellow());
-            println!("{} {} {}", style("📁").blue(), style("Output directory:").blue(), style(output_dir).yellow());
+            println!("{} {} {}", style("🔧").blue(), style("Generating structured code:").blue(), style(&type_).yellow());
+            println!("{} {} {}", style("📁").blue(), style("Output directory:").blue(), style(&output_dir).yellow());
             
             use hooksmith::modules::generator::{CodeGenerator, GeneratorConfig};
             use std::path::PathBuf;
@@ -397,7 +397,7 @@ async fn main() -> Result<()> {
             // - Display available options
         }
         Commands::Validate { config_path } => {
-            println!("{} {} {}", style("🔍").blue(), style("Validating Lefthook config:").blue(), style(config_path).yellow());
+            println!("{} {} {}", style("🔍").blue(), style("Validating Lefthook config:").blue(), style(&config_path).yellow());
             
             // Import the lefthook module
             use hooksmith::modules::lefthook;

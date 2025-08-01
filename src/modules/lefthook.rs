@@ -47,20 +47,6 @@ impl Default for LefthookConfig {
 }
 
 /// Generate a Lefthook configuration file
-///
-/// This function creates a lefthook.yml file that integrates the built hooks
-/// with the Git workflow.
-///
-/// # Arguments
-///
-/// * `output_path` - Path where the lefthook.yml file should be written
-/// * `hooks_dir` - Directory containing the built hooks
-/// * `wasm_components` - Optional list of WASM component paths to include
-/// * `validate_schema` - Whether to validate against schema (currently ignored)
-///
-/// # Returns
-///
-/// Returns `Ok(())` if the configuration was generated successfully.
 pub async fn generate_lefthook_config(
     output_path: &Path,
     _hooks_dir: &str,
@@ -141,18 +127,6 @@ pub async fn generate_lefthook_config(
 }
 
 /// Generate comprehensive Lefthook configuration
-///
-/// This function creates a comprehensive lefthook.yml file with all available
-/// Git hooks for documentation or as a starting point.
-///
-/// # Arguments
-///
-/// * `output_path` - Path where the lefthook.yml file should be written
-/// * `validate_schema` - Whether to validate against schema (currently ignored)
-///
-/// # Returns
-///
-/// Returns `Ok(())` if the configuration was generated successfully.
 pub async fn generate_comprehensive_config(
     output_path: &Path,
     _validate_schema: bool,
@@ -262,17 +236,6 @@ fi"#.to_string(),
 }
 
 /// Validate an existing Lefthook configuration file
-///
-/// This function validates that a lefthook.yml file is properly formatted
-/// and contains valid hook configurations.
-///
-/// # Arguments
-///
-/// * `config_path` - Path to the lefthook.yml file to validate
-///
-/// # Returns
-///
-/// Returns `Ok(())` if the configuration is valid.
 pub async fn validate_existing_config(config_path: &Path) -> Result<()> {
     let content = fs::read_to_string(config_path)?;
     let _config: LefthookConfig = serde_yaml::from_str(&content)?;
@@ -322,4 +285,4 @@ mod tests {
         validate_existing_config(temp_file.path()).await?;
         Ok(())
     }
-}
+} 
