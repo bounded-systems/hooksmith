@@ -1,0 +1,22 @@
+# Git Commit Workflow
+
+```mermaid
+stateDiagram-v2
+    [*] --> Staged
+
+    Staged --> PreCommit : Commit
+    PreCommit --> PrepareCommitMsg : PreCommit passes
+    PrepareCommitMsg --> CommitMsg : PrepareCommitMsg passes
+    CommitMsg --> Committed : CommitMsg passes
+    Committed --> PostCommit : Commit created
+    PostCommit --> Clean : PostCommit completes
+
+    PreCommit --> [*] : PreCommit fails
+    CommitMsg --> [*] : CommitMsg fails
+
+    note right of PreCommit : Can block commit
+    note right of PrepareCommitMsg : Can modify message
+    note right of CommitMsg : Can block commit
+    note right of PostCommit : Cannot block
+
+```
