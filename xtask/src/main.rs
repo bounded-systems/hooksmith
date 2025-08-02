@@ -361,7 +361,9 @@ async fn main() -> Result<()> {
             generate_wit_interfaces(&output_dir, overwrite)?;
         }
         Commands::GenLefthook { output, validate } => {
-            generate_lefthook_config(&output, validate)?;
+            println!("⚠️  Lefthook generation disabled - lefthook_rs dependency missing");
+            println!("   Output: {}", output);
+            println!("   Validate: {}", validate);
         }
         Commands::GenDocs { output_dir, open } => {
             generate_documentation(&output_dir, open)?;
@@ -392,7 +394,7 @@ async fn main() -> Result<()> {
         Commands::GenHooksReadme { output, overwrite } => {
             generate_hooks_readme(&output, overwrite)?;
         }
-        Commands::GenAll { overwrite } => {
+        Commands::GenAllLegacy { overwrite } => {
             generate_all(overwrite).await?;
         }
         Commands::Check { strict } => {

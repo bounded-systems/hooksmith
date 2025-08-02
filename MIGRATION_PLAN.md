@@ -1,0 +1,447 @@
+# File Type Normalization & Code Generation Migration Plan
+
+## Overview
+
+This plan outlines the strategy to reduce file types from 19+ to 7-8 core types while ensuring everything non-Rust is fully code-generated and validated.
+
+## 🎯 Target State
+
+### ✅ Core File Types (7-8 total)
+
+| Type | Purpose | Status | Generation Source |
+|------|---------|--------|-------------------|
+| `.rs` | Core source code | ✅ Keep | Manual |
+| `.toml` | Cargo + configs | ✅ Keep | Manual (Cargo.toml), Generated (others) |
+| `.md` | Documentation | 🔄 Generate | Rust doc comments + schemas |
+| `.yml` | CI/Lefthook configs | 🔄 Generate | Rust structs (serde_yaml) |
+| `.wit` | WIT interfaces | 🔄 Generate | Rust traits/enums (wit-bindgen) |
+| `.json` | JSON schemas | 🔄 Generate | Rust types (schemars) |
+| `.gitignore` | Git ignore rules | ✅ Keep | Manual (minimal) |
+| `.gitattributes` | Generated file attributes | ✅ Keep | Manual |
+| `CODEOWNERS` | GitHub ownership | ✅ Keep | Manual |
+
+### ❌ File Types to Remove/Replace
+
+| Type | Current Purpose | Replacement Strategy |
+|------|----------------|---------------------|
+| `.hbs` | Handlebars templates | Rust pretty-printers |
+| `.dot` | Graphviz diagrams | Mermaid diagrams from Rust schemas |
+| `.css` | Docs styling | Generated from Markdown |
+| `.html` | Docs pages | Generated from Markdown |
+| `.pdf` | Docs export | Build artifacts (not committed) |
+| `.epub` | Docs export | Build artifacts (not committed) |
+| `.sh` | Shell scripts | xtask commands |
+| `.shellcheckrc` | ShellCheck config | Remove (no shell scripts) |
+| `.yaml` | Config files | Standardize on `.yml` |
+
+## 🚀 Migration Phases
+
+### Phase 1: Foundation & Validation ✅ (COMPLETED)
+
+- [x] Implement generated file validation system
+- [x] Create `.gitattributes` with `generated=true` for all non-Rust files
+- [x] Add xtask commands for validation
+- [x] Integrate with Lefthook pre-commit hooks
+- [x] Create comprehensive documentation
+
+### Phase 2: Template Elimination (NEXT)
+
+#### 2.1 Replace Handlebars Templates (.hbs)
+
+**Current State:**
+```
+templates/
+├── README.hbs          # Handlebars template for README
+└── docs/
+    ├── structure.hbs   # Project structure template
+    └── api.hbs         # API documentation template
+```
+
+**Target State:**
+```rust
+// xtask/src/docs/templates.rs
+pub struct ReadmeTemplate {
+    pub project_name: String,
+    pub description: String,
+    pub modules: Vec<ModuleInfo>,
+    pub examples: Vec<ExampleInfo>,
+}
+
+impl ReadmeTemplate {
+    pub fn render(&self) -> String {
+        format!(
+            "# {}\n\n{}\n\n## Modules\n\n{}\n\n## Examples\n\n{}",
+            self.project_name,
+            self.description,
+            self.render_modules(),
+            self.render_examples()
+        )
+    }
+}
+```
+
+**Migration Steps:**
+1. Create `xtask/src/docs/templates.rs` with Rust structs
+2. Implement `Display` trait for each template type
+3. Replace `.hbs` files with Rust pretty-printers
+4. Update xtask commands to use Rust templates
+5. Remove Handlebars dependency
+
+#### 2.2 Replace Graphviz Diagrams (.dot)
+
+**Current State:**
+```
+diagrams/
+├── git_file_states.dot    # Git file state machine
+├── git_comprehensive.dot  # Comprehensive Git workflow
+└── git_commit_workflow.dot # Commit workflow
+```
+
+**Target State:**
+```rust
+// xtask/src/docs/diagrams.rs
+pub struct GitStateMachine {
+    pub states: Vec<GitState>,
+    pub transitions: Vec<StateTransition>,
+}
+
+impl GitStateMachine {
+    pub fn render_mermaid(&self) -> String {
+        format!(
+            "stateDiagram-v2\n{}\n{}",
+            self.render_states(),
+            self.render_transitions()
+        )
+    }
+}
+```
+
+**Migration Steps:**
+1. Create `xtask/src/docs/diagrams.rs`
+2. Define Rust structs for diagrams
+3. Implement Mermaid rendering
+4. Replace `.dot` files with Rust-generated Mermaid
+5. Remove Graphviz dependency
+
+### Phase 3: Configuration Generation
+
+#### 3.1 Standardize on YAML (.yml)
+
+**Current State:**
+```
+config/
+├── contract-state-machine.yaml
+├── docs_manifest.yaml
+└── state-transitions.yaml
+```
+
+**Target State:**
+```rust
+// xtask/src/config/mod.rs
+#[derive(Serialize, Deserialize)]
+pub struct ContractStateMachine {
+    pub states: Vec<ContractState>,
+    pub transitions: Vec<StateTransition>,
+    pub validation_rules: Vec<ValidationRule>,
+}
+
+impl ContractStateMachine {
+    pub fn load() -> Result<Self> {
+        // Load from Rust code, not YAML files
+    }
+    
+    pub fn save_as_yaml(&self, path: &Path) -> Result<()> {
+        let yaml = serde_yaml::to_string(self)?;
+        std::fs::write(path, yaml)?;
+        Ok(())
+    }
+}
+```
+
+**Migration Steps:**
+1. Create `xtask/src/config/mod.rs`
+2. Define Rust structs for all configurations
+3. Implement YAML generation from Rust structs
+4. Update xtask to generate YAML from Rust
+5. Remove static YAML files
+
+#### 3.2 Generate Lefthook Configuration
+
+**Current State:**
+```yaml
+# lefthook.yml (manually maintained)
+pre-commit:
+  parallel: true
+  commands:
+    validate-generated:
+      run: cargo run --bin xtask validate-generated --staged-only --strict
+```
+
+**Target State:**
+```rust
+// xtask/src/config/lefthook.rs
+#[derive(Serialize, Deserialize)]
+pub struct LefthookConfig {
+    pub pre_commit: Option<HashMap<String, HookCommand>>,
+    pub pre_push: Option<HashMap<String, HookCommand>>,
+    pub commit_msg: Option<HashMap<String, HookCommand>>,
+}
+
+impl LefthookConfig {
+    pub fn generate() -> Self {
+        Self {
+            pre_commit: Some(Self::default_pre_commit_hooks()),
+            pre_push: Some(Self::default_pre_push_hooks()),
+            commit_msg: Some(Self::default_commit_msg_hooks()),
+        }
+    }
+}
+```
+
+### Phase 4: Documentation Generation
+
+#### 4.1 Generate Markdown from Rust
+
+**Current State:**
+```
+docs/
+├── README.md                    # Manual
+├── DEVELOPMENT.md              # Manual
+├── CONTRIBUTING.md             # Manual
+└── api/
+    ├── contract_validation.md  # Manual
+    └── git_filters.md          # Manual
+```
+
+**Target State:**
+```rust
+// xtask/src/docs/generator.rs
+pub struct DocumentationGenerator {
+    pub project_data: ProjectData,
+    pub api_docs: ApiDocumentation,
+    pub examples: Vec<Example>,
+}
+
+impl DocumentationGenerator {
+    pub fn generate_readme(&self) -> String {
+        format!(
+            "# {}\n\n{}\n\n## API\n\n{}\n\n## Examples\n\n{}",
+            self.project_data.name,
+            self.project_data.description,
+            self.api_docs.render(),
+            self.examples.iter().map(|e| e.render()).collect::<Vec<_>>().join("\n\n")
+        )
+    }
+}
+```
+
+**Migration Steps:**
+1. Create `xtask/src/docs/generator.rs`
+2. Extract project metadata from Cargo.toml
+3. Generate API docs from Rust doc comments
+4. Create examples from test files
+5. Generate all Markdown from Rust code
+
+### Phase 5: Shell Script Elimination
+
+#### 5.1 Replace Shell Scripts with xtask
+
+**Current State:**
+```
+scripts/
+├── validate-docs.sh           # Shell script
+└── setup-git-filters.sh       # Shell script
+```
+
+**Target State:**
+```rust
+// xtask/src/commands.rs
+#[derive(Subcommand)]
+pub enum Commands {
+    /// Validate documentation
+    ValidateDocs {
+        #[arg(long)]
+        strict: bool,
+    },
+    /// Setup Git filters
+    SetupGitFilters {
+        #[arg(long)]
+        force: bool,
+    },
+}
+```
+
+**Migration Steps:**
+1. Convert all shell scripts to xtask commands
+2. Remove shell script files
+3. Update documentation to use xtask commands
+4. Remove shell-related dependencies
+
+## 🔧 Implementation Details
+
+### Template System Architecture
+
+```rust
+// xtask/src/docs/templates/mod.rs
+pub mod readme;
+pub mod api;
+pub mod examples;
+pub mod diagrams;
+
+pub trait Template {
+    fn render(&self) -> String;
+    fn validate(&self) -> Result<()>;
+}
+
+pub struct TemplateEngine {
+    templates: HashMap<String, Box<dyn Template>>,
+}
+
+impl TemplateEngine {
+    pub fn register<T: Template + 'static>(&mut self, name: &str, template: T) {
+        self.templates.insert(name.to_string(), Box::new(template));
+    }
+    
+    pub fn render(&self, name: &str) -> Result<String> {
+        let template = self.templates.get(name)
+            .ok_or_else(|| anyhow!("Template not found: {}", name))?;
+        Ok(template.render())
+    }
+}
+```
+
+### Configuration Management
+
+```rust
+// xtask/src/config/mod.rs
+pub mod lefthook;
+pub mod contract_state;
+pub mod docs_manifest;
+
+pub trait ConfigGenerator {
+    fn generate(&self) -> Result<String>;
+    fn validate(&self) -> Result<()>;
+}
+
+pub struct ConfigManager {
+    generators: HashMap<String, Box<dyn ConfigGenerator>>,
+}
+
+impl ConfigManager {
+    pub fn generate_all(&self) -> Result<()> {
+        for (name, generator) in &self.generators {
+            let content = generator.generate()?;
+            let path = format!("{}.yml", name);
+            std::fs::write(&path, content)?;
+            println!("✅ Generated {}", path);
+        }
+        Ok(())
+    }
+}
+```
+
+### Documentation Pipeline
+
+```rust
+// xtask/src/docs/pipeline.rs
+pub struct DocumentationPipeline {
+    pub project_data: ProjectData,
+    pub templates: TemplateEngine,
+    pub configs: ConfigManager,
+}
+
+impl DocumentationPipeline {
+    pub fn run(&self) -> Result<()> {
+        // 1. Generate configuration files
+        self.configs.generate_all()?;
+        
+        // 2. Generate documentation
+        self.generate_readme()?;
+        self.generate_api_docs()?;
+        self.generate_examples()?;
+        
+        // 3. Generate diagrams
+        self.generate_diagrams()?;
+        
+        // 4. Validate all generated files
+        self.validate_generated_files()?;
+        
+        Ok(())
+    }
+}
+```
+
+## 📋 Migration Checklist
+
+### Phase 1: Foundation ✅
+- [x] Generated file validation system
+- [x] `.gitattributes` configuration
+- [x] xtask validation commands
+- [x] Lefthook integration
+- [x] Documentation
+
+### Phase 2: Template Elimination
+- [ ] Create `xtask/src/docs/templates.rs`
+- [ ] Replace Handlebars templates with Rust structs
+- [ ] Create `xtask/src/docs/diagrams.rs`
+- [ ] Replace Graphviz with Mermaid diagrams
+- [ ] Remove `.hbs` and `.dot` files
+- [ ] Update dependencies
+
+### Phase 3: Configuration Generation
+- [ ] Create `xtask/src/config/mod.rs`
+- [ ] Define Rust structs for all configs
+- [ ] Implement YAML generation
+- [ ] Standardize on `.yml` format
+- [ ] Remove static YAML files
+
+### Phase 4: Documentation Generation
+- [ ] Create `xtask/src/docs/generator.rs`
+- [ ] Extract project metadata
+- [ ] Generate API docs from Rust
+- [ ] Create examples from tests
+- [ ] Generate all Markdown
+
+### Phase 5: Shell Script Elimination
+- [ ] Convert shell scripts to xtask commands
+- [ ] Remove shell script files
+- [ ] Update documentation
+- [ ] Remove shell dependencies
+
+### Phase 6: Final Cleanup
+- [ ] Remove unused dependencies
+- [ ] Update CI/CD pipelines
+- [ ] Final validation testing
+- [ ] Update project documentation
+
+## 🎯 Expected Results
+
+### File Type Reduction
+- **Before**: 19+ file types
+- **After**: 7-8 file types
+
+### Generation Coverage
+- **Before**: ~30% generated
+- **After**: ~90% generated (only `.rs`, `.toml`, `.gitignore`, `.gitattributes`, `CODEOWNERS` manual)
+
+### Maintenance Benefits
+- **Single source of truth**: Rust code
+- **Type safety**: All configs validated at compile time
+- **Consistency**: All generated files follow same patterns
+- **Validation**: Automatic detection of manual modifications
+
+### Developer Experience
+- **Clear workflow**: Use xtask for everything
+- **Better error messages**: Type-safe validation
+- **Faster iteration**: Generate everything from code
+- **Reduced cognitive load**: Fewer file types to understand
+
+## 🚀 Next Steps
+
+1. **Start with Phase 2**: Replace Handlebars templates
+2. **Create template system**: Build the foundation
+3. **Migrate one template at a time**: Gradual approach
+4. **Test thoroughly**: Ensure generated output matches current
+5. **Update documentation**: Keep everything in sync
+
+This migration will result in a much cleaner, more maintainable codebase where everything is generated from Rust code and validated automatically. 

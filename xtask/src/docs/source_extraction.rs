@@ -27,7 +27,7 @@ pub struct ProjectData {
 }
 
 /// Component data extracted from component directories
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ComponentData {
     pub name: String,
     pub description: String,
@@ -91,12 +91,12 @@ fn extract_dependencies(
     let mut dependencies = HashMap::new();
 
     // Extract direct dependencies
-    for (name, dep) in &root_package.dependencies {
-        let version = match &dep.req {
-            cargo_metadata::DependencyKind::Normal(req) => req.to_string(),
+    for dep in &root_package.dependencies {
+        let version = match &dep.kind {
+            cargo_metadata::DependencyKind::Normal => dep.req.to_string(),
             _ => "dev".to_string(),
         };
-        dependencies.insert(name.to_string(), version);
+        dependencies.insert(dep.name.clone(), version);
     }
 
     Ok(dependencies)
@@ -137,7 +137,8 @@ fn extract_project_structure() -> Result<String> {
                 .context(format!("Failed to read directory: {:?}", path))?
                 .filter_map(|e| e.ok())
                 .filter(|e| {
-                    let name = e.file_name().to_string_lossy();
+                    let binding = e.file_name();
+                    let name = binding.to_string_lossy();
                     !name.starts_with('.') && name != "target" && name != "node_modules"
                 })
                 .collect::<Vec<_>>();

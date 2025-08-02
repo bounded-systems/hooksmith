@@ -168,7 +168,7 @@ pub async fn generate_all_docs(output_dir: &str, validate: bool) -> anyhow::Resu
 
 /// Generate additional documentation files
 fn generate_additional_docs(
-    project_data: &crate::source_extraction::ProjectData,
+    project_data: &crate::docs::source_extraction::ProjectData,
 ) -> Result<Vec<(String, String)>> {
     let mut additional_files = Vec::new();
 
@@ -197,7 +197,7 @@ fn generate_additional_docs(
 
 /// Generate API documentation
 fn generate_api_documentation(
-    project_data: &crate::source_extraction::ProjectData,
+    project_data: &crate::docs::source_extraction::ProjectData,
 ) -> Result<String> {
     let mut content = String::new();
 
@@ -236,7 +236,7 @@ fn generate_api_documentation(
 
 /// Generate development guide
 fn generate_development_guide(
-    project_data: &crate::source_extraction::ProjectData,
+    project_data: &crate::docs::source_extraction::ProjectData,
 ) -> Result<String> {
     let mut content = String::new();
 
@@ -271,7 +271,9 @@ fn generate_development_guide(
 }
 
 /// Generate testing guide
-fn generate_testing_guide(project_data: &crate::source_extraction::ProjectData) -> Result<String> {
+fn generate_testing_guide(
+    project_data: &crate::docs::source_extraction::ProjectData,
+) -> Result<String> {
     let mut content = String::new();
 
     content.push_str("# Testing Guide\n\n");
@@ -305,7 +307,7 @@ fn generate_testing_guide(project_data: &crate::source_extraction::ProjectData) 
 
 /// Generate contribution guide
 fn generate_contribution_guide(
-    project_data: &crate::source_extraction::ProjectData,
+    project_data: &crate::docs::source_extraction::ProjectData,
 ) -> Result<String> {
     let mut content = String::new();
 
@@ -342,7 +344,7 @@ fn generate_contribution_guide(
 
 /// Generate architecture documentation
 fn generate_architecture_docs(
-    project_data: &crate::source_extraction::ProjectData,
+    project_data: &crate::docs::source_extraction::ProjectData,
 ) -> Result<String> {
     let mut content = String::new();
 
@@ -383,7 +385,7 @@ fn generate_architecture_docs(
 
 /// Generate README from extracted source data
 fn generate_readme_from_source(
-    project_data: &crate::source_extraction::ProjectData,
+    project_data: &crate::docs::source_extraction::ProjectData,
 ) -> Result<String> {
     let mut content = String::new();
 
