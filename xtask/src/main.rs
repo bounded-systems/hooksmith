@@ -10,6 +10,8 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use jsonschema::JSONSchema;
+use schemars::JsonSchema;
 
 mod hierarchical_validation;
 
@@ -56,6 +58,24 @@ enum Commands {
         /// Output directory for documentation
         #[arg(long, default_value = "docs")]
         output_dir: String,
+        /// Whether to open docs in browser
+        #[arg(long)]
+        open: bool,
+    },
+    /// Generate schema and WIT documentation
+    GenSchemaDocs {
+        /// Output directory for documentation
+        #[arg(long, default_value = "docs")]
+        output_dir: String,
+        /// Whether to generate PDF output
+        #[arg(long)]
+        pdf: bool,
+        /// Whether to generate HTML output
+        #[arg(long)]
+        html: bool,
+        /// Whether to generate EPUB output
+        #[arg(long)]
+        epub: bool,
         /// Whether to open docs in browser
         #[arg(long)]
         open: bool,
@@ -248,6 +268,9 @@ async fn main() -> Result<()> {
         }
         Commands::GenDocs { output_dir, open } => {
             generate_documentation(&output_dir, open)?;
+        }
+        Commands::GenSchemaDocs { output_dir, pdf, html, epub, open } => {
+            generate_schema_documentation(&output_dir, *pdf, *html, *epub, *open).await?;
         }
         Commands::GenReadme { output, overwrite } => {
             generate_readme(&output, overwrite)?;
@@ -679,6 +702,54 @@ fn generate_documentation(output_dir: &str, open: bool) -> Result<()> {
     }
 
     println!("✅ Documentation generated successfully");
+    Ok(())
+}
+
+/// Generate schema and WIT documentation with Pandoc integration
+async fn generate_schema_documentation(
+    output_dir: &str,
+    pdf: bool,
+    html: bool,
+    epub: bool,
+    open: bool,
+) -> Result<()> {
+    println!("📚 Generating schema and WIT documentation...");
+    println!("   Output directory: {}", output_dir);
+    println!("   PDF: {}, HTML: {}, EPUB: {}", pdf, html, epub);
+
+    let output_path = Path::new(output_dir);
+    if !output_path.exists() {
+        fs::create_dir_all(output_path).context("Failed to create output directory")?;
+    }
+
+    // Generate JSON Schema documentation
+    let schema_docs = generate_json_schema_documentation()?;
+    fs::write(output_path.join("SCHEMA_DOCUMENTATION.md"), schema_docs)
+        .context("Failed to write schema documentation")?;
+
+    // Generate WIT documentation
+    let wit_docs = generate_wit_documentation()?;
+    fs::write(output_path.join("WIT_DOCUMENTATION.md"), wit_docs)
+        .context("Failed to write WIT documentation")?;
+
+    // Generate combined documentation
+    let combined_docs = generate_combined_documentation(&schema_docs, &wit_docs)?;
+    fs::write(output_path.join("CONTRACT_STATE_MACHINE.md"), combined_docs)
+        .context("Failed to write combined documentation")?;
+
+    // Generate Pandoc outputs if requested
+    if pdf || html || epub {
+        generate_pandoc_outputs(output_path, pdf, html, epub)?;
+    }
+
+    if open {
+        println!("   Opening documentation in browser...");
+        let _ = Command::new("open")
+            .arg(output_path.join("CONTRACT_STATE_MACHINE.md"))
+            .status();
+    }
+
+    println!("✅ Schema and WIT documentation generated successfully");
     Ok(())
 }
 
