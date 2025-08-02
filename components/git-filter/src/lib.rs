@@ -43,8 +43,7 @@ pub mod prelude {
         CharacterContract, CharClass, CharAction, CharValidator, FileValidationResult,
         BlobContract, BlobAction, BlobByteAudit, ByteClass, BlobValidator,
         BlobLineContract, LineAction, LineValidator,
-        GitObjectContract, GitObjectValidator,
-        BlobChunkContract, DiffLine, DiffLineType,
+        GitObjectContract, GitObjectType, GitObjectValidator,
         TreeMode, TreeObjectType, TreeEntryContract, TreeObjectContract, TreeValidator,
         FilenameContract, FilenameValidator,
         CharContract, TreeFilenameContractChars, TreeFilenameCharsValidator
