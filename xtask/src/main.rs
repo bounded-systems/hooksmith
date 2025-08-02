@@ -319,7 +319,7 @@ async fn main() -> Result<()> {
             output_dir,
             validate,
         } => {
-            generate_comprehensive_documentation(&all, &file, &output_dir, validate).await?;
+            generate_comprehensive_documentation(all, &file, &output_dir, validate).await?;
         }
         Commands::GenSchemaDocs {
             output_dir,
@@ -778,20 +778,20 @@ fn generate_documentation(output_dir: &str, open: bool) -> Result<()> {
 
 /// Generate comprehensive documentation from Rust code and templates
 async fn generate_comprehensive_documentation(
-    all: &bool,
+    all: bool,
     file: &Option<String>,
     output_dir: &str,
-    validate: &bool,
+    validate: bool,
 ) -> Result<()> {
     println!("📚 Generating comprehensive documentation...");
     println!("   Output directory: {}", output_dir);
     println!("   All: {}, File: {:?}, Validate: {}", all, file, validate);
 
     // Use the new docs module system
-    docs::generate_all_docs(output_dir, *validate).await?;
+    docs::generate_all_docs(output_dir, validate).await?;
 
     // Generate additional documentation if requested
-    if *all {
+    if all {
         // Generate JSON Schema documentation
         let schema_docs = generate_json_schema_documentation()?;
         fs::write(Path::new(output_dir).join("SCHEMA_DOCUMENTATION.md"), &schema_docs)
@@ -840,7 +840,7 @@ async fn generate_comprehensive_documentation(
         }
     }
 
-    if *all || file.is_some() {
+    if all || file.is_some() {
         println!("   Opening documentation in browser...");
         let _ = Command::new("open")
             .arg(Path::new(output_dir).join("README.md"))

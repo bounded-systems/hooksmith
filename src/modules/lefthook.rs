@@ -31,6 +31,9 @@ pub struct LefthookConfig {
     /// Pre-push hooks
     #[serde(rename = "pre-push")]
     pub pre_push: Option<HashMap<String, LefthookHook>>,
+    /// Post-push hooks
+    #[serde(rename = "post-push")]
+    pub post_push: Option<HashMap<String, LefthookHook>>,
     /// Commit-msg hooks
     #[serde(rename = "commit-msg")]
     pub commit_msg: Option<HashMap<String, LefthookHook>>,
@@ -41,6 +44,7 @@ impl Default for LefthookConfig {
         Self {
             pre_commit: None,
             pre_push: None,
+            post_push: None,
             commit_msg: None,
         }
     }
@@ -118,6 +122,20 @@ pub async fn generate_lefthook_config(
     );
 
     config.pre_push = Some(pre_push_hooks);
+
+    // Add post-push hooks
+    let mut post_push_hooks = HashMap::new();
+    post_push_hooks.insert(
+        "verify-hooksmith".to_string(),
+        LefthookHook {
+            run: "cargo run --bin hooksmith -- verify-hooks --check-installation".to_string(),
+            files: None,
+            parallel: Some(false),
+            env: None,
+        },
+    );
+
+    config.post_push = Some(post_push_hooks);
 
     // Write the configuration to file
     let yaml_content = serde_yaml::to_string(&config)?;
@@ -227,6 +245,20 @@ fi"#.to_string(),
     );
 
     config.commit_msg = Some(commit_msg_hooks);
+
+    // Add post-push hooks
+    let mut post_push_hooks = HashMap::new();
+    post_push_hooks.insert(
+        "verify-hooksmith".to_string(),
+        LefthookHook {
+            run: "cargo run --bin hooksmith -- verify-hooks --check-installation".to_string(),
+            files: None,
+            parallel: Some(false),
+            env: None,
+        },
+    );
+
+    config.post_push = Some(post_push_hooks);
 
     // Write the configuration to file
     let yaml_content = serde_yaml::to_string(&config)?;

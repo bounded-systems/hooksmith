@@ -1,29 +1,39 @@
 pre-commit:
-  parallel: true
-  commands:
-    hooksmith-clippy:
-      run: cargo clippy --all-targets --all-features -- -D warnings
-      glob: "*.rs"
-    hooksmith-gen-wit:
-      run: cargo xtask gen-wit
-      glob: "*.rs"
-    hooksmith-test:
-      run: cargo test --all-targets --all-features
-      glob: "*.rs"
-    hooksmith-fmt:
-      run: cargo fmt --all -- --check
-      glob: "*.rs"
-
+  hooksmith-fmt:
+    run: cargo fmt --all -- --check
+    files: '*.rs'
+    parallel: false
+    env: null
+  hooksmith-test:
+    run: cargo test --all-targets --all-features
+    files: '*.rs'
+    parallel: false
+    env: null
+  hooksmith-gen-wit:
+    run: cargo xtask gen-wit
+    files: '*.rs'
+    parallel: false
+    env: null
+  hooksmith-clippy:
+    run: cargo clippy --all-targets --all-features -- -D warnings
+    files: '*.rs'
+    parallel: false
+    env: null
 pre-push:
-  parallel: true
-  commands:
-    hooksmith-audit:
-      run: cargo audit
-    hooksmith-check-generated:
-      run: cargo xtask check --strict
-
+  hooksmith-check-generated:
+    run: cargo xtask check --strict
+    files: null
+    parallel: false
+    env: null
+  hooksmith-audit:
+    run: cargo audit
+    files: null
+    parallel: false
+    env: null
 post-push:
-  commands:
-    verify-hooksmith:
-      run: cargo run --bin hooksmith -- verify-hooks --check-installation
-      description: "Verify Hooksmith hooks are properly configured"
+  verify-hooksmith:
+    run: cargo run --bin hooksmith -- verify-hooks --check-installation
+    files: null
+    parallel: false
+    env: null
+commit-msg: null
