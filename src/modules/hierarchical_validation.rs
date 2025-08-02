@@ -18,11 +18,17 @@ use sha2::{Sha256, Digest};
 /// Validation scope levels in hierarchical order
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ValidationScope {
+    /// Character-level validation scope
     Char,
+    /// Line-level validation scope
     Line,
+    /// Chunk-level validation scope (function/block)
     Chunk,
+    /// File-level validation scope
     File,
+    /// Directory-level validation scope
     Directory,
+    /// Repository-level validation scope
     Repository,
 }
 
@@ -79,65 +85,104 @@ impl ValidationScope {
 /// Content range for validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContentRange {
+    /// Starting line number (1-indexed)
     pub start_line: usize,
+    /// Ending line number (1-indexed)
     pub end_line: usize,
+    /// Starting character position (0-indexed)
     pub start_char: Option<usize>,
+    /// Ending character position (0-indexed)
     pub end_char: Option<usize>,
 }
 
 /// Git Notes validation record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationNote {
+    /// The validation scope level
     pub scope: String,
+    /// The file path relative to repository root
     pub file: String,
+    /// The range of content being validated
     pub range: Option<ContentRange>,
+    /// SHA256 hash of the validated content
     pub hash: String,
+    /// The parent scope that contains this scope
     pub parent_scope: Option<String>,
+    /// SHA256 hash of the parent scope content
     pub parent_hash: Option<String>,
+    /// Array of child scope hashes that contribute to this scope
     pub child_scopes: Vec<ChildScope>,
+    /// Whether the content passed validation
     pub validated: bool,
+    /// Array of validation errors if validation failed
     pub validation_errors: Vec<ValidationError>,
+    /// Type of contract being validated
     pub contract_type: String,
+    /// Name and version of the validation tool
     pub tool: String,
+    /// ISO 8601 timestamp of when validation was performed
     pub timestamp: String,
+    /// Git commit hash where this validation was performed
     pub commit_hash: Option<String>,
+    /// Time taken for validation in milliseconds
     pub validation_duration_ms: u64,
+    /// Additional metadata about the validation
     pub metadata: HashMap<String, serde_json::Value>,
 }
 
+/// Child scope reference in validation hierarchy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChildScope {
+    /// The scope type
     pub scope: String,
+    /// SHA256 hash of the child scope content
     pub hash: String,
 }
 
+/// Validation error information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationError {
+    /// Error message
     pub message: String,
+    /// Error severity level
     pub severity: String,
+    /// Line number where error occurred
     pub line: Option<usize>,
+    /// Character position where error occurred
     pub char: Option<usize>,
 }
 
 /// Change detection result
 #[derive(Debug, Clone)]
 pub struct ChangeScope {
+    /// The file that was changed
     pub file: PathBuf,
+    /// The scope level of the change
     pub scope: ValidationScope,
+    /// The range of content that was changed
     pub range: Option<ContentRange>,
+    /// The content of the changed file
     pub content: String,
 }
 
 /// Hierarchical validation result
 #[derive(Debug, Clone)]
 pub struct ValidationResult {
+    /// The scope that was validated
     pub scope: ValidationScope,
+    /// The file that was validated
     pub file: PathBuf,
+    /// The range of content that was validated
     pub range: Option<ContentRange>,
+    /// SHA256 hash of the validated content
     pub hash: String,
+    /// Whether the validation passed
     pub validated: bool,
+    /// List of validation errors
     pub errors: Vec<ValidationError>,
+    /// Time taken for validation in milliseconds
     pub duration_ms: u64,
+    /// Results from child scope validations
     pub child_results: Vec<ValidationResult>,
 }
 
@@ -310,7 +355,7 @@ impl HierarchicalValidator {
                     range: change.range.clone(),
                     hash: self.get_content_hash(&change.content, &change.range),
                     validated: validation_result.validated,
-                    errors: validation_result.validation_errors,
+                    errors: validation_result.validation_errors.clone(),
                     duration_ms: duration.as_millis() as u64,
                     child_results: current_result.map(|r| vec![r]).unwrap_or_default(),
                 };
@@ -510,16 +555,16 @@ impl HierarchicalValidator {
     fn get_content_hash(&self, content: &str, range: &Option<ContentRange>) -> String {
         let mut hasher = Sha256::new();
         hasher.update(content.as_bytes());
-        
+
         if let Some(range) = range {
-            hasher.update(format!("{}:{}:{}:{}", 
-                range.start_line, 
-                range.end_line, 
-                range.start_char.unwrap_or(0), 
+            hasher.update(format!("{}:{}:{}:{}",
+                range.start_line,
+                range.end_line,
+                range.start_char.unwrap_or(0),
                 range.end_char.unwrap_or(0)
             ).as_bytes());
         }
-        
+
         format!("sha256:{:x}", hasher.finalize())
     }
 
@@ -543,7 +588,7 @@ impl HierarchicalValidator {
         let note_json = serde_json::to_string_pretty(note)?;
         
         // Create a unique note reference
-        let note_ref = format!("refs/notes/contract-validation/{}", result.hash);
+        let _note_ref = format!("refs/notes/contract-validation/{}", result.hash);
         
         // Store the note
         let output = Command::new("git")

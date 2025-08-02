@@ -112,6 +112,9 @@ chrono.workspace = true
 jsonschema.workspace = true
 reqwest.workspace = true
 
+# Cryptographic hashing
+sha2.workspace = true
+
 [dev-dependencies]
 tempfile = "3.0"
 
