@@ -1,0 +1,210 @@
+package hooksmith:hook-builder;
+
+/// Configuration for building a hook
+record build-config {
+  /// Source path for the hook
+  source-path: string,
+  /// Output path for the built binary
+  output-path: string,
+  /// Target triple for compilation (e.g., "x86_64-unknown-linux-gnu")
+  target-triple: option<string>,
+  /// Optimization level (0-3)
+  optimization-level: u8,
+  /// Whether to include debug symbols
+  debug-symbols: bool,
+  /// Additional cargo features to enable
+  features: list<string>,
+  /// Whether to enable all features
+  all-features: bool,
+  /// Additional environment variables
+  env-vars: list<env-var>,
+  /// Whether to run tests after building
+  run-tests: bool,
+  /// Whether to run clippy checks
+  run-clippy: bool,
+}
+
+/// Environment variable for build process
+record env-var {
+  /// Variable name
+  name: string,
+  /// Variable value
+  value: string,
+}
+
+/// Result of a hook build operation
+record build-result {
+  /// Whether the build was successful
+  success: bool,
+  /// Path to the built binary
+  binary-path: option<string>,
+  /// Build artifacts (additional files)
+  artifacts: list<string>,
+  /// Build logs
+  build-logs: string,
+  /// Error message if build failed
+  error: option<string>,
+  /// Build duration in milliseconds
+  duration-ms: u64,
+  /// Binary size in bytes
+  binary-size: option<u64>,
+  /// Build metadata
+  metadata: build-metadata,
+}
+
+/// Metadata about the build
+record build-metadata {
+  /// Rust version used
+  rust-version: string,
+  /// Cargo version used
+  cargo-version: string,
+  /// Target triple used
+  target-triple: string,
+  /// Build timestamp
+  timestamp: string,
+  /// Build hash for caching
+  build-hash: string,
+}
+
+/// Configuration for source validation
+record validation-config {
+  /// Source path to validate
+  source-path: string,
+  /// Validation rules to apply
+  rules: list<validation-rule>,
+  /// Whether to check for common issues
+  check-common-issues: bool,
+  /// Whether to validate dependencies
+  validate-dependencies: bool,
+}
+
+/// Validation rule to apply
+record validation-rule {
+  /// Rule name
+  name: string,
+  /// Rule description
+  description: string,
+  /// Whether the rule is enabled
+  enabled: bool,
+  /// Rule severity
+  severity: rule-severity,
+}
+
+/// Severity of a validation rule
+enum rule-severity {
+  /// Information only
+  info,
+  /// Warning
+  warning,
+  /// Error
+  error,
+}
+
+/// Result of source validation
+record validation-result {
+  /// Whether validation was successful
+  success: bool,
+  /// Validation errors
+  errors: list<validation-error>,
+  /// Validation warnings
+  warnings: list<validation-warning>,
+  /// Validation information
+  info: list<validation-info>,
+  /// Validation duration in milliseconds
+  duration-ms: u64,
+}
+
+/// Validation error
+record validation-error {
+  /// Error message
+  message: string,
+  /// Error location (file:line:column)
+  location: option<string>,
+  /// Error code
+  code: option<string>,
+  /// Suggested fix
+  suggestion: option<string>,
+}
+
+/// Validation warning
+record validation-warning {
+  /// Warning message
+  message: string,
+  /// Warning location (file:line:column)
+  location: option<string>,
+  /// Warning code
+  code: option<string>,
+  /// Suggested fix
+  suggestion: option<string>,
+}
+
+/// Validation information
+record validation-info {
+  /// Information message
+  message: string,
+  /// Information location (file:line:column)
+  location: option<string>,
+  /// Information code
+  code: option<string>,
+}
+
+/// Configuration for binary optimization
+record optimization-config {
+  /// Binary path to optimize
+  binary-path: string,
+  /// Optimization level (0-3)
+  level: u8,
+  /// Whether to strip debug symbols
+  strip-debug: bool,
+  /// Whether to strip symbols
+  strip-symbols: bool,
+  /// Whether to compress the binary
+  compress: bool,
+  /// Target file size (in bytes)
+  target-size: option<u64>,
+}
+
+/// Result of binary optimization
+record optimization-result {
+  /// Whether optimization was successful
+  success: bool,
+  /// Original binary size
+  original-size: u64,
+  /// Optimized binary size
+  optimized-size: u64,
+  /// Size reduction percentage
+  reduction-percentage: f64,
+  /// Optimization techniques applied
+  techniques-applied: list<string>,
+  /// Error message if optimization failed
+  error: option<string>,
+  /// Optimization duration in milliseconds
+  duration-ms: u64,
+}
+
+/// Hook builder interface
+interface hook-builder {
+  /// Build a hook from source
+  build-hook: func(config: build-config) -> result<build-result, string>;
+  
+  /// Validate hook source code
+  validate-source: func(config: validation-config) -> result<validation-result, string>;
+  
+  /// Optimize a built binary
+  optimize-binary: func(config: optimization-config) -> result<optimization-result, string>;
+  
+  /// Get build information
+  get-build-info: func() -> result<build-metadata, string>;
+  
+  /// Clean build artifacts
+  clean-build: func(build-path: string) -> result<unit, string>;
+  
+  /// Get available targets
+  get-available-targets: func() -> result<list<string>, string>;
+  
+  /// Check if target is supported
+  is-target-supported: func(target: string) -> result<bool, string>;
+}
+
+/// Export the hook builder interface
+export hook-builder; 

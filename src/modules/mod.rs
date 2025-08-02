@@ -10,3 +10,7 @@ pub mod generator;
 pub mod git_model;
 /// Lefthook configuration generation
 pub mod lefthook;
+/// WASM component management
+pub mod wasm;
+/// Hook building and compilation
+pub mod hook_builder;

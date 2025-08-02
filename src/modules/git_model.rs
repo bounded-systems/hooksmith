@@ -40,7 +40,9 @@ impl FileStateKind {
             FileStateKind::Clean => "Same in HEAD, index, and worktree",
             FileStateKind::ModifiedUnstaged => "Different in worktree but not staged",
             FileStateKind::Staged => "Added/changed in index but not committed yet",
-            FileStateKind::StagedAndModified => "Staged changes exist, but the file has further modifications in worktree",
+            FileStateKind::StagedAndModified => {
+                "Staged changes exist, but the file has further modifications in worktree"
+            }
             FileStateKind::Added => "Exists in index, not in HEAD",
             FileStateKind::DeletedStaged => "Deleted from index, still in HEAD",
             FileStateKind::Untracked => "Exists in worktree, not in index or HEAD",
@@ -374,7 +376,10 @@ impl LefthookCommand {
 
         // Check glob patterns
         if !self.glob.is_empty() {
-            let matches_glob = self.glob.iter().any(|pattern| self.matches_pattern(file_path, pattern));
+            let matches_glob = self
+                .glob
+                .iter()
+                .any(|pattern| self.matches_pattern(file_path, pattern));
             if !matches_glob {
                 return false;
             }
@@ -384,7 +389,10 @@ impl LefthookCommand {
         if let Some(exclude) = &self.exclude {
             match exclude {
                 ExcludeCondition::Patterns(patterns) => {
-                    if patterns.iter().any(|pattern| self.matches_pattern(file_path, pattern)) {
+                    if patterns
+                        .iter()
+                        .any(|pattern| self.matches_pattern(file_path, pattern))
+                    {
                         return false;
                     }
                 }
@@ -505,7 +513,7 @@ impl LefthookHookConfig {
         commands
     }
 
-        /// Check if any command has incompatible file types
+    /// Check if any command has incompatible file types
     pub fn has_incompatible_file_types(&self) -> bool {
         // In a real implementation, this would check for actual incompatibilities
         // For now, we'll consider it incompatible if there are no file types defined
@@ -605,11 +613,7 @@ impl FileActionInfo {
     pub fn blocking_hooks(&self) -> Vec<HookKind> {
         self.actions
             .iter()
-            .flat_map(|(_, hooks)| {
-                hooks.iter()
-                    .filter(|h| h.can_block)
-                    .map(|h| h.hook)
-            })
+            .flat_map(|(_, hooks)| hooks.iter().filter(|h| h.can_block).map(|h| h.hook))
             .collect()
     }
 
@@ -617,11 +621,7 @@ impl FileActionInfo {
     pub fn non_blocking_hooks(&self) -> Vec<HookKind> {
         self.actions
             .iter()
-            .flat_map(|(_, hooks)| {
-                hooks.iter()
-                    .filter(|h| !h.can_block)
-                    .map(|h| h.hook)
-            })
+            .flat_map(|(_, hooks)| hooks.iter().filter(|h| !h.can_block).map(|h| h.hook))
             .collect()
     }
 
@@ -708,7 +708,8 @@ pub mod file_substitutions {
 
 /// Check if run command is compatible with file substitutions
 pub fn is_run_files_compatible(run: &str) -> bool {
-    !run.contains(file_substitutions::SUB_STAGED_FILES) || !run.contains(file_substitutions::SUB_PUSH_FILES)
+    !run.contains(file_substitutions::SUB_STAGED_FILES)
+        || !run.contains(file_substitutions::SUB_PUSH_FILES)
 }
 
 /// File substitution context for Lefthook commands
@@ -767,12 +768,18 @@ impl FileSubstitutionContext {
 
         // Replace {staged_files} with staged files
         if result.contains(file_substitutions::SUB_STAGED_FILES) {
-            result = result.replace(file_substitutions::SUB_STAGED_FILES, &self.staged_files.join(" "));
+            result = result.replace(
+                file_substitutions::SUB_STAGED_FILES,
+                &self.staged_files.join(" "),
+            );
         }
 
         // Replace {push_files} with push files
         if result.contains(file_substitutions::SUB_PUSH_FILES) {
-            result = result.replace(file_substitutions::SUB_PUSH_FILES, &self.push_files.join(" "));
+            result = result.replace(
+                file_substitutions::SUB_PUSH_FILES,
+                &self.push_files.join(" "),
+            );
         }
 
         result
@@ -906,7 +913,11 @@ impl GitState {
     }
 
     /// Create a Git state with additional information
-    pub fn with_info(repo_state: GitRepoState, branch: String, additional_info: HashMap<String, String>) -> Self {
+    pub fn with_info(
+        repo_state: GitRepoState,
+        branch: String,
+        additional_info: HashMap<String, String>,
+    ) -> Self {
         Self {
             repo_state,
             branch,
@@ -986,7 +997,11 @@ impl SkipChecker {
     }
 
     /// Check if execution should be skipped based on skip/only conditions
-    pub fn check(&self, skip: Option<&AdvancedSkipCondition>, only: Option<&AdvancedOnlyCondition>) -> bool {
+    pub fn check(
+        &self,
+        skip: Option<&AdvancedSkipCondition>,
+        only: Option<&AdvancedOnlyCondition>,
+    ) -> bool {
         if skip.is_none() && only.is_none() {
             return false;
         }
@@ -1133,9 +1148,7 @@ pub fn hooks_for_action(action: ActionKind) -> Vec<HookInfo> {
             HookInfo::new(PreRebase, true),
             HookInfo::new(PostRewrite, false),
         ],
-        Push => vec![
-            HookInfo::new(PrePush, true),
-        ],
+        Push => vec![HookInfo::new(PrePush, true)],
         ReceivePush => vec![
             HookInfo::new(PreReceive, true),
             HookInfo::new(ProcReceive, true),
@@ -1145,32 +1158,22 @@ pub fn hooks_for_action(action: ActionKind) -> Vec<HookInfo> {
             HookInfo::new(ReferenceTransaction, false),
             HookInfo::new(PushToCheckout, true),
         ],
-        Checkout => vec![
-            HookInfo::new(PostCheckout, false),
-        ],
+        Checkout => vec![HookInfo::new(PostCheckout, false)],
         ApplyPatch => vec![
             HookInfo::new(ApplyPatchMsg, true),
             HookInfo::new(PreApplyPatch, true),
             HookInfo::new(PostApplyPatch, false),
         ],
-        GarbageCollect => vec![
-            HookInfo::new(PreAutoGc, true),
-        ],
-        EmailSend => vec![
-            HookInfo::new(SendEmailValidate, true),
-        ],
-        FsMonitor => vec![
-            HookInfo::new(FsMonitorWatchman, false),
-        ],
+        GarbageCollect => vec![HookInfo::new(PreAutoGc, true)],
+        EmailSend => vec![HookInfo::new(SendEmailValidate, true)],
+        FsMonitor => vec![HookInfo::new(FsMonitorWatchman, false)],
         P4Operations => vec![
             HookInfo::new(P4Changelist, true),
             HookInfo::new(P4PrepareChangelist, true),
             HookInfo::new(P4PostChangelist, false),
             HookInfo::new(P4PreSubmit, true),
         ],
-        IndexChange => vec![
-            HookInfo::new(PostIndexChange, false),
-        ],
+        IndexChange => vec![HookInfo::new(PostIndexChange, false)],
     }
 }
 
@@ -1180,7 +1183,15 @@ pub fn allowed_actions(state: FileStateKind) -> Vec<ActionKind> {
     use FileStateKind::*;
 
     match state {
-        Clean => vec![Commit, Checkout, Push, Merge, Rebase, FsMonitor, IndexChange],
+        Clean => vec![
+            Commit,
+            Checkout,
+            Push,
+            Merge,
+            Rebase,
+            FsMonitor,
+            IndexChange,
+        ],
         ModifiedUnstaged => vec![], // must be staged first
         Staged => vec![Commit, Push, IndexChange],
         StagedAndModified => vec![Commit, Push, IndexChange],
@@ -1282,7 +1293,9 @@ impl ContractValidation {
     /// Get a human-readable description
     pub fn description(&self) -> &'static str {
         match self {
-            ContractValidation::Valid => "Valid contract: Hook can block this action for this file state",
+            ContractValidation::Valid => {
+                "Valid contract: Hook can block this action for this file state"
+            }
             ContractValidation::ActionNotAllowed => "Action not allowed for this file state",
             ContractValidation::HookNotRelevant => "Hook does not run for this action",
             ContractValidation::HookCannotBlock => "Hook runs but cannot block the action",
@@ -1320,7 +1333,9 @@ pub fn validate_contract_with_repo_state(
                     .map(|s| {
                         // Check if this looks like a branch pattern (contains * or /)
                         if s.contains('*') || s.contains('/') {
-                            ConditionValue::Reference { ref_pattern: s.clone() }
+                            ConditionValue::Reference {
+                                ref_pattern: s.clone(),
+                            }
                         } else {
                             ConditionValue::String(s.clone())
                         }
@@ -1338,7 +1353,9 @@ pub fn validate_contract_with_repo_state(
                     .map(|s| {
                         // Check if this looks like a branch pattern (contains * or /)
                         if s.contains('*') || s.contains('/') {
-                            ConditionValue::Reference { ref_pattern: s.clone() }
+                            ConditionValue::Reference {
+                                ref_pattern: s.clone(),
+                            }
                         } else {
                             ConditionValue::String(s.clone())
                         }
@@ -1379,8 +1396,12 @@ pub mod diagrams {
             FileStateKind::Untracked,
             FileStateKind::Ignored,
         ] {
-            dot.push_str(&format!("  \"{:?}\" [label=\"{:?}\\n{}\"];\n", 
-                state, state, state.description()));
+            dot.push_str(&format!(
+                "  \"{:?}\" [label=\"{:?}\\n{}\"];\n",
+                state,
+                state,
+                state.description()
+            ));
         }
 
         dot.push_str("\n");
@@ -1402,15 +1423,17 @@ pub mod diagrams {
                     .iter()
                     .map(|h| format!("{:?}{}", h.hook, if h.can_block { "*" } else { "" }))
                     .collect();
-                
+
                 let edge_label = if hook_labels.is_empty() {
                     format!("{:?}", action)
                 } else {
                     format!("{:?}\\n[{}]", action, hook_labels.join(", "))
                 };
 
-                dot.push_str(&format!("  \"{:?}\" -> \"{:?}\" [label=\"{}\"];\n", 
-                    state, state, edge_label));
+                dot.push_str(&format!(
+                    "  \"{:?}\" -> \"{:?}\" [label=\"{}\"];\n",
+                    state, state, edge_label
+                ));
             }
         }
 
@@ -1442,15 +1465,17 @@ pub mod diagrams {
                         .iter()
                         .map(|h| format!("{:?}{}", h.hook, if h.can_block { "*" } else { "" }))
                         .collect();
-                    
+
                     let transition_label = if hook_labels.is_empty() {
                         format!("{:?}", action)
                     } else {
                         format!("{:?} [{}]", action, hook_labels.join(", "))
                     };
 
-                    mermaid.push_str(&format!("    {:?} --> {:?} : {}\n", 
-                        state, state, transition_label));
+                    mermaid.push_str(&format!(
+                        "    {:?} --> {:?} : {}\n",
+                        state, state, transition_label
+                    ));
                 }
             }
         }
@@ -1475,7 +1500,10 @@ pub mod diagrams {
             FileStateKind::Untracked,
             FileStateKind::Ignored,
         ] {
-            mermaid.push_str(&format!("        FS_{:?}[{:?}]:::fileState\n", state, state));
+            mermaid.push_str(&format!(
+                "        FS_{:?}[{:?}]:::fileState\n",
+                state, state
+            ));
         }
 
         mermaid.push_str("    end\n\n");
@@ -1496,7 +1524,10 @@ pub mod diagrams {
             GitRepoState::Amend,
             GitRepoState::DetachedHead,
         ] {
-            mermaid.push_str(&format!("        RS_{:?}[{:?}]:::repoState\n", state, state));
+            mermaid.push_str(&format!(
+                "        RS_{:?}[{:?}]:::repoState\n",
+                state, state
+            ));
         }
 
         mermaid.push_str("    end\n\n");
@@ -1560,8 +1591,12 @@ pub mod diagrams {
             let can_block = hooks_for_action(ActionKind::Commit) // Just check one action
                 .iter()
                 .any(|h| h.hook == hook && h.can_block);
-            
-            let style = if can_block { ":::blockingHook" } else { ":::nonBlockingHook" };
+
+            let style = if can_block {
+                ":::blockingHook"
+            } else {
+                ":::nonBlockingHook"
+            };
             mermaid.push_str(&format!("        H_{:?}[{:?}]{}\n", hook, hook, style));
         }
 
@@ -1569,7 +1604,7 @@ pub mod diagrams {
 
         // Add relationships
         mermaid.push_str("    %% Relationships\n");
-        
+
         // File states to actions
         for state in [
             FileStateKind::Clean,
@@ -1602,8 +1637,15 @@ pub mod diagrams {
             ActionKind::IndexChange,
         ] {
             for hook_info in hooks_for_action(action) {
-                let style = if hook_info.can_block { ":::blocking" } else { ":::nonBlocking" };
-                mermaid.push_str(&format!("        A_{:?} --> H_{:?}{}\n", action, hook_info.hook, style));
+                let style = if hook_info.can_block {
+                    ":::blocking"
+                } else {
+                    ":::nonBlocking"
+                };
+                mermaid.push_str(&format!(
+                    "        A_{:?} --> H_{:?}{}\n",
+                    action, hook_info.hook, style
+                ));
             }
         }
 
@@ -1612,8 +1654,11 @@ pub mod diagrams {
         mermaid.push_str("    classDef fileState fill:#e1f5fe,stroke:#01579b,stroke-width:2px\n");
         mermaid.push_str("    classDef repoState fill:#f3e5f5,stroke:#4a148c,stroke-width:2px\n");
         mermaid.push_str("    classDef action fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px\n");
-        mermaid.push_str("    classDef blockingHook fill:#ffebee,stroke:#c62828,stroke-width:3px\n");
-        mermaid.push_str("    classDef nonBlockingHook fill:#f1f8e9,stroke:#33691e,stroke-width:2px\n");
+        mermaid
+            .push_str("    classDef blockingHook fill:#ffebee,stroke:#c62828,stroke-width:3px\n");
+        mermaid.push_str(
+            "    classDef nonBlockingHook fill:#f1f8e9,stroke:#33691e,stroke-width:2px\n",
+        );
         mermaid.push_str("    classDef blocking stroke:#c62828,stroke-width:3px\n");
         mermaid.push_str("    classDef nonBlocking stroke:#33691e,stroke-width:2px\n");
 

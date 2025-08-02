@@ -16,6 +16,7 @@ members = [
     "components/cli-core",
     "components/worktree-runner",
     "components/git-filter",
+    "components/hook-builder",
     "lefthook-rs", "xtask",
 ]
 
@@ -55,6 +56,14 @@ rustdoc-stripper = "0.1"
 # WASM and WIT support
 wasmtime = "18.0"
 wit-bindgen = "0.20"
+wasmtime-wasi = "18.0"
+wit-parser = "0.12"
+wit-component = "0.12"
+wat = "1.0"
+wasmparser = "0.120"
+
+# Time and date handling
+chrono = { version = "0.4", features = ["serde"] }
 
 # JSON Schema validation
 jsonschema = "0.17"
@@ -91,6 +100,10 @@ git-filter = { path = "components/git-filter" }
 # WASM dependencies
 wasmtime.workspace = true
 wit-bindgen.workspace = true
+wasmtime-wasi.workspace = true
+
+# Time and date handling
+chrono.workspace = true
 
 # JSON Schema validation
 jsonschema.workspace = true

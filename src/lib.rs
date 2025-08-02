@@ -8,10 +8,22 @@
 pub mod commands;
 /// Core modules for CLI functionality
 pub mod modules;
+/// Orchestrator for WASM component management
+pub mod orchestrator;
 
-// Re-export main types (currently empty as all functionality is in main.rs)
-// pub use commands::{};
-// pub use modules::{};
+// Re-export main types
+pub use orchestrator::{
+    HooksmithOrchestrator,
+    CommandResult,
+    BuildConfig,
+    BuildResult,
+    LefthookConfig,
+    LefthookResult,
+    WorktreeOperation,
+    WorktreeResult,
+    ValidationConfig,
+    ValidationResult,
+};
 
 /// Result type for CLI operations
 pub type CliResult<T> = anyhow::Result<T>;
