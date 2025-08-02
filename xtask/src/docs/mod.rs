@@ -33,12 +33,15 @@ pub fn write_markdown_file_safely(
 ) -> Result<()> {
     // Validate that this is a legitimate documentation generation
     validate_generation_context()?;
-    
+
     // Ensure content has proper codegen markers
     if !content.contains("auto-generated") {
-        anyhow::bail!("Attempted to write markdown file without codegen markers: {:?}", file_path);
+        anyhow::bail!(
+            "Attempted to write markdown file without codegen markers: {:?}",
+            file_path
+        );
     }
-    
+
     // Ensure parent directory exists
     if let Some(parent) = file_path.parent() {
         fs::create_dir_all(parent).context(format!(
@@ -46,11 +49,15 @@ pub fn write_markdown_file_safely(
             file_path
         ))?;
     }
-    
+
     // Write the file
     fs::write(file_path, content).context(format!("Failed to write {:?}", file_path))?;
-    
-    println!("   ✅ Generated: {} (via {})", file_path.display(), generator_name);
+
+    println!(
+        "   ✅ Generated: {} (via {})",
+        file_path.display(),
+        generator_name
+    );
     Ok(())
 }
 
@@ -59,11 +66,11 @@ fn validate_generation_context() -> Result<()> {
     // Check if we're running through the proper xtask command
     let args: Vec<String> = std::env::args().collect();
     let is_xtask_gen_docs = args.iter().any(|arg| arg.contains("gen-docs"));
-    
+
     if !is_xtask_gen_docs {
         anyhow::bail!("Direct markdown file writing is not allowed. Use 'cargo xtask gen-docs-comprehensive' instead.");
     }
-    
+
     Ok(())
 }
 
