@@ -2448,3 +2448,75 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
 
     Ok(())
 }
+
+/// Generate documentation using Rust templates
+fn generate_templates(template: Option<String>, output_dir: &str, overwrite: bool) -> Result<()> {
+    use crate::docs::templates::{TemplateEngine, ReadmeTemplate, ApiTemplate, ExamplesTemplate, GitStateMachine, GitWorkflowDiagram};
+    use std::path::Path;
+
+    println!("🔧 Generating documentation using Rust templates...");
+
+    let output_path = Path::new(output_dir);
+    if !output_path.exists() {
+        std::fs::create_dir_all(output_path)?;
+    }
+
+    let mut engine = TemplateEngine::new();
+
+    // Register all templates
+    let readme_template = ReadmeTemplate::new()?;
+    engine.register(readme_template);
+
+    let api_template = ApiTemplate::new("API Reference", "Complete API documentation for Hooksmith");
+    engine.register(api_template);
+
+    let examples_template = ExamplesTemplate::new("Examples", "Code examples and usage patterns");
+    engine.register(examples_template);
+
+    let git_state_machine = GitStateMachine::default_git_file_states();
+    engine.register(git_state_machine);
+
+    let git_workflow = GitWorkflowDiagram::default_commit_workflow();
+    engine.register(git_workflow);
+
+    // Validate all templates
+    engine.validate_all()?;
+    println!("✅ All templates validated successfully");
+
+    // Generate specific template or all templates
+    if let Some(template_name) = template {
+        if engine.has_template(&template_name) {
+            let content = engine.render(&template_name)?;
+            let file_path = output_path.join(format!("{}.md", template_name));
+            
+            if file_path.exists() && !overwrite {
+                println!("⚠️  File {} already exists, use --overwrite to replace", file_path.display());
+                return Ok(());
+            }
+
+            std::fs::write(&file_path, content)?;
+            println!("✅ Generated {}", file_path.display());
+        } else {
+            println!("❌ Template '{}' not found", template_name);
+            println!("Available templates: {}", engine.template_names().join(", "));
+            return Err(anyhow::anyhow!("Template not found"));
+        }
+    } else {
+        // Generate all templates
+        for template_name in engine.template_names() {
+            let content = engine.render(template_name)?;
+            let file_path = output_path.join(format!("{}.md", template_name));
+            
+            if file_path.exists() && !overwrite {
+                println!("⚠️  File {} already exists, skipping", file_path.display());
+                continue;
+            }
+
+            std::fs::write(&file_path, content)?;
+            println!("✅ Generated {}", file_path.display());
+        }
+    }
+
+    println!("🎉 Template generation completed!");
+    Ok(())
+}
