@@ -20,6 +20,7 @@ mod file_audit;
 mod config;
 mod contract;
 mod status;
+mod code_stats;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -284,6 +285,11 @@ enum Commands {
     Status {
         #[command(subcommand)]
         command: status::StatusCommands,
+    },
+    /// Analyze code statistics and quality
+    CodeStats {
+        #[command(subcommand)]
+        command: code_stats::CodeStatsCommands,
     },
 }
 
