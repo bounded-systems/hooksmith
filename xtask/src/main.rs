@@ -270,7 +270,7 @@ async fn main() -> Result<()> {
             generate_documentation(&output_dir, open)?;
         }
         Commands::GenSchemaDocs { output_dir, pdf, html, epub, open } => {
-            generate_schema_documentation(&output_dir, *pdf, *html, *epub, *open).await?;
+            generate_schema_documentation(&output_dir, pdf, html, epub, open).await?;
         }
         Commands::GenReadme { output, overwrite } => {
             generate_readme(&output, overwrite)?;
@@ -1125,7 +1125,7 @@ cargo xtask validate --all
 }
 
 /// Generate all code generation tasks
-fn generate_all(overwrite: bool) -> Result<()> {
+async fn generate_all(overwrite: bool) -> Result<()> {
     println!("🚀 Running all code generation tasks...");
 
     generate_wit_interfaces("wit", overwrite)?;
