@@ -17,7 +17,8 @@ members = [
     "components/worktree-runner",
     "components/git-filter",
     "components/hook-builder",
-    "lefthook-rs", "xtask",
+    "lefthook-rs",
+    "xtask",
 ]
 
 [workspace.package]

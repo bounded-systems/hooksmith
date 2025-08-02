@@ -1,21 +1,15 @@
 [package]
 name = "worktree-runner"
-version = "0.1.0"
-edition = "2021"
-
-[lib]
-crate-type = ["cdylib"]
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
 
 [dependencies]
-wasm-bindgen = "0.2"
-serde = { version = "1.0", features = ["derive"] }
-serde-wasm-bindgen = "0.6"
-anyhow = "1.0"
-tokio = { version = "1.0", features = ["full"] }
-which = "6.0"
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-futures = "0.4"
-js-sys = "0.3"
-web-sys = { version = "0.3", features = ["console"] }
-console_error_panic_hook = "0.1" 
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+git2.workspace = true
+which.workspace = true
+tracing.workspace = true
