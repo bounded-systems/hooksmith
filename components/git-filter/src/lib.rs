@@ -24,7 +24,7 @@ pub use contract::{CharacterContract, CharClass, CharAction, CharValidator, File
 pub use blob_contract::{BlobContract, BlobAction, BlobByteAudit, ByteClass, BlobValidator};
 pub use line_contract::{BlobLineContract, LineAction, LineValidator};
 pub use git_object_contract::{
-    GitObjectContract, GitObjectValidator
+    GitObjectContract, GitObjectType, GitObjectValidator
 };
 pub use tree_contract::{
     TreeMode, TreeObjectType, TreeEntryContract, TreeObjectContract, TreeValidator
@@ -34,13 +34,6 @@ pub use filename_contract::{
 };
 pub use tree_filename_chars_contract::{
     CharContract, TreeFilenameContractChars, TreeFilenameCharsValidator
-};
-pub use unified_contracts::{
-    SHA1_RE, VALID_FILENAME_RE, VALID_CHAR_RE,
-    BlobLineContract as UnifiedBlobLineContract, BlobContract as UnifiedBlobContract,
-    TreeMode as UnifiedTreeMode, TreeEntryContract as UnifiedTreeEntryContract, TreeContract as UnifiedTreeContract,
-    CommitContract, TagContract,
-    GitObject, UnifiedValidator
 };
 
 /// Re-export common types for convenience
