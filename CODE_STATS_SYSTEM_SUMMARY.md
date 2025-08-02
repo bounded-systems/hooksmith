@@ -122,13 +122,16 @@ cargo run -- code-stats report --timing false
 Based on our testing, the Hooksmith project shows:
 
 ### **Code Statistics**
-- **Total Lines of Rust Code**: 11,986 lines
-- **Functions**: 0 (pattern matching needs improvement)
-- **Structs**: 0 (pattern matching needs improvement)
-- **Enums**: 0 (pattern matching needs improvement)
-- **Modules**: 0 (pattern matching needs improvement)
-- **Traits**: 0 (pattern matching needs improvement)
-- **Implementations**: 52
+- **Total Lines of Rust Code**: 39,072 lines (corrected)
+- **Functions**: 576 (corrected)
+- **Structs**: 18 (corrected)
+- **Enums**: 7 (corrected)
+- **Modules**: 48 (corrected)
+- **Traits**: 0
+- **Implementations**: 185 (corrected)
+- **Constants**: 3
+- **Type Aliases**: 1
+- **Macros**: 0
 
 ### **Clippy Analysis**
 - **Warnings**: 131 (in normal mode)
@@ -141,14 +144,14 @@ Based on our testing, the Hooksmith project shows:
   - Correctness improvements
 
 ### **Build Performance**
-- **Total Build Time**: ~0.2 seconds
+- **Total Build Time**: ~0.25 seconds
 - **Crates Compiled**: 0 (parsing needs improvement)
 - **Time per Crate**: 0.0 seconds
 
 ### **Quality Metrics**
 - **Documentation Coverage**: 0.0% (needs improvement)
 - **Average Function Length**: 0.0 lines (pattern matching needs improvement)
-- **Module Count**: 0 (pattern matching needs improvement)
+- **Module Count**: 48 (corrected)
 
 ### **Overall Quality**
 - **Quality Score**: 0.0/100

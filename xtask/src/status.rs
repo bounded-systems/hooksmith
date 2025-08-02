@@ -10,7 +10,7 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -78,6 +78,59 @@ pub struct FileTypeStats {
     pub manual: usize,
     /// Rust count
     pub rust: usize,
+}
+
+/// File type migration status
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum MigrationStatus {
+    /// Keep as-is (.rs files)
+    Keep,
+    /// Generate from Rust (.md, .toml, .yml)
+    Generate,
+    /// Remove entirely (.sh, .shellcheckrc)
+    Remove,
+    /// Consolidate to another format (.pdf -> .md + CI)
+    Consolidate,
+}
+
+/// File type information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileTypeInfo {
+    /// File extension
+    pub extension: String,
+    /// Total count
+    pub count: usize,
+    /// Whether it's generated
+    pub is_generated: bool,
+    /// Migration status
+    pub migration_status: MigrationStatus,
+    /// Target action description
+    pub target_action: String,
+    /// Priority (1-10, higher = more important)
+    pub priority: u8,
+    /// Estimated effort
+    pub estimated_effort: String,
+}
+
+/// File type migration progress
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileTypeMigrationProgress {
+    /// Total file types
+    pub total_types: usize,
+    /// Approved types (keep)
+    pub approved_types: usize,
+    /// Types to generate
+    pub types_to_generate: usize,
+    /// Types to remove
+    pub types_to_remove: usize,
+    /// Types to consolidate
+    pub types_to_consolidate: usize,
+    /// Migration progress percentage
+    pub migration_progress: f64,
+    /// File type details
+    pub file_types: Vec<FileTypeInfo>,
+    /// Migration recommendations
+    pub recommendations: Vec<String>,
 }
 
 /// Status command configuration
@@ -162,6 +215,24 @@ pub enum StatusCommands {
         #[arg(long, default_value = "status-trends")]
         output_dir: String,
     },
+    /// Show file type breakdown
+    FileTypes {
+        /// Show detailed breakdown
+        #[arg(long)]
+        detailed: bool,
+        /// Output format (table, json, markdown)
+        #[arg(long, default_value = "table")]
+        format: String,
+    },
+    /// Show migration progress
+    MigrationProgress {
+        /// Show detailed breakdown
+        #[arg(long)]
+        detailed: bool,
+        /// Output format (table, json, markdown)
+        #[arg(long, default_value = "table")]
+        format: String,
+    },
 }
 
 /// Run a status command
@@ -185,6 +256,14 @@ pub async fn run_status_command(command: StatusCommands) -> Result<()> {
         }
         StatusCommands::Badge { goal, output } => generate_status_badge(goal, &output).await,
         StatusCommands::Trend { output_dir } => track_status_trend(&output_dir).await,
+        StatusCommands::FileTypes { detailed, format } => {
+            let format = parse_output_format(&format)?;
+            analyze_file_types(detailed, format).await
+        }
+        StatusCommands::MigrationProgress { detailed, format } => {
+            let format = parse_output_format(&format)?;
+            analyze_migration_progress(detailed, format).await
+        }
     }
 }
 
@@ -646,6 +725,359 @@ fn add_json_codegen_marker(content: &mut String, file_path: &str) {
         file_path
     );
     content.insert_str(0, &marker);
+}
+
+/// Analyze file types and their migration status
+async fn analyze_file_types(detailed: bool, format: OutputFormat) -> Result<()> {
+    println!("📁 Hooksmith File Type Analysis");
+    println!("===============================");
+
+    let file_types = get_file_type_analysis().await?;
+
+    match format {
+        OutputFormat::Table => print_file_types_table(&file_types, detailed)?,
+        OutputFormat::Json => print_file_types_json(&file_types)?,
+        OutputFormat::Markdown => print_file_types_markdown(&file_types, detailed)?,
+    }
+
+    Ok(())
+}
+
+/// Analyze migration progress
+async fn analyze_migration_progress(detailed: bool, format: OutputFormat) -> Result<()> {
+    println!("🔄 Hooksmith File Type Migration Progress");
+    println!("=========================================");
+
+    let progress = get_migration_progress().await?;
+
+    match format {
+        OutputFormat::Table => print_migration_progress_table(&progress, detailed)?,
+        OutputFormat::Json => print_migration_progress_json(&progress)?,
+        OutputFormat::Markdown => print_migration_progress_markdown(&progress, detailed)?,
+    }
+
+    Ok(())
+}
+
+/// Get file type analysis
+async fn get_file_type_analysis() -> Result<Vec<FileTypeInfo>> {
+    let files = get_tracked_files().await?;
+    let mut extension_counts: HashMap<String, usize> = HashMap::new();
+    let mut generated_extensions: HashSet<String> = HashSet::new();
+
+    // Count files by extension
+    for file in &files {
+        if let Some(ext) = std::path::Path::new(file).extension() {
+            let ext_str = ext.to_string_lossy().to_string();
+            *extension_counts.entry(ext_str.clone()).or_insert(0) += 1;
+            
+            // Check if file is generated
+            if check_if_generated(file).await? {
+                generated_extensions.insert(ext_str);
+            }
+        }
+    }
+
+    // Create file type info
+    let mut file_types = Vec::new();
+    for (extension, count) in extension_counts {
+        let (migration_status, target_action, priority, estimated_effort) = 
+            get_migration_info(&extension, count);
+        
+        file_types.push(FileTypeInfo {
+            extension: extension.clone(),
+            count,
+            is_generated: generated_extensions.contains(&extension),
+            migration_status,
+            target_action,
+            priority,
+            estimated_effort,
+        });
+    }
+
+    // Sort by priority (highest first)
+    file_types.sort_by(|a, b| b.priority.cmp(&a.priority));
+
+    Ok(file_types)
+}
+
+/// Get migration progress
+async fn get_migration_progress() -> Result<FileTypeMigrationProgress> {
+    let file_types = get_file_type_analysis().await?;
+    
+    let mut approved_types = 0;
+    let mut types_to_generate = 0;
+    let mut types_to_remove = 0;
+    let mut types_to_consolidate = 0;
+
+    for file_type in &file_types {
+        match file_type.migration_status {
+            MigrationStatus::Keep => approved_types += 1,
+            MigrationStatus::Generate => types_to_generate += 1,
+            MigrationStatus::Remove => types_to_remove += 1,
+            MigrationStatus::Consolidate => types_to_consolidate += 1,
+        }
+    }
+
+    let total_types = file_types.len();
+    let migration_progress = if total_types > 0 {
+        (approved_types as f64 / total_types as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    let recommendations = generate_migration_recommendations(&file_types);
+
+    Ok(FileTypeMigrationProgress {
+        total_types,
+        approved_types,
+        types_to_generate,
+        types_to_remove,
+        types_to_consolidate,
+        migration_progress,
+        file_types,
+        recommendations,
+    })
+}
+
+/// Get migration information for a file extension
+fn get_migration_info(extension: &str, _count: usize) -> (MigrationStatus, String, u8, String) {
+    match extension {
+        "rs" => (MigrationStatus::Keep, "Keep as Rust source".to_string(), 1, "N/A".to_string()),
+        "md" => (MigrationStatus::Generate, "Generate from Rust doc comments".to_string(), 8, "Medium".to_string()),
+        "toml" => (MigrationStatus::Generate, "Generate from workspace config".to_string(), 7, "Low".to_string()),
+        "yml" | "yaml" => (MigrationStatus::Generate, "Generate from Rust structs".to_string(), 6, "Medium".to_string()),
+        "json" => (MigrationStatus::Generate, "Generate from Rust structs with serde".to_string(), 5, "Low".to_string()),
+        "wit" => (MigrationStatus::Generate, "Generate from Rust types using wit-bindgen".to_string(), 4, "Medium".to_string()),
+        "gitattributes" | "gitignore" => (MigrationStatus::Generate, "Generate at bootstrap".to_string(), 3, "Low".to_string()),
+        "sh" | "shellcheckrc" => (MigrationStatus::Remove, "Replace with xtask commands".to_string(), 9, "High".to_string()),
+        "pdf" | "html" | "epub" => (MigrationStatus::Consolidate, "Generate in CI from .md".to_string(), 2, "Medium".to_string()),
+        "dot" | "hbs" | "css" => (MigrationStatus::Consolidate, "Generate via schema + pretty-printer".to_string(), 2, "Medium".to_string()),
+        "CODEOWNERS" => (MigrationStatus::Generate, "Generate from team config".to_string(), 3, "Low".to_string()),
+        _ => (MigrationStatus::Remove, "Remove or consolidate".to_string(), 10, "High".to_string()),
+    }
+}
+
+/// Generate migration recommendations
+fn generate_migration_recommendations(file_types: &[FileTypeInfo]) -> Vec<String> {
+    let mut recommendations = Vec::new();
+    
+    // High priority items
+    let high_priority: Vec<_> = file_types.iter()
+        .filter(|ft| ft.priority >= 8)
+        .collect();
+    
+    if !high_priority.is_empty() {
+        recommendations.push(format!("High priority: Migrate {} file types (priority 8+)", high_priority.len()));
+    }
+
+    // Shell scripts
+    let shell_files: Vec<_> = file_types.iter()
+        .filter(|ft| ft.extension == "sh" || ft.extension == "shellcheckrc")
+        .collect();
+    
+    if !shell_files.is_empty() {
+        recommendations.push("Replace shell scripts with xtask commands".to_string());
+    }
+
+    // Documentation consolidation
+    let doc_files: Vec<_> = file_types.iter()
+        .filter(|ft| ft.extension == "pdf" || ft.extension == "html" || ft.extension == "epub")
+        .collect();
+    
+    if !doc_files.is_empty() {
+        recommendations.push("Consolidate documentation formats to .md + CI generation".to_string());
+    }
+
+    // Generated files
+    let manual_files: Vec<_> = file_types.iter()
+        .filter(|ft| !ft.is_generated && ft.migration_status != MigrationStatus::Keep)
+        .collect();
+    
+    if !manual_files.is_empty() {
+        recommendations.push(format!("Convert {} manual files to generated from Rust", manual_files.len()));
+    }
+
+    if recommendations.is_empty() {
+        recommendations.push("All file types are properly managed!".to_string());
+    }
+
+    recommendations
+}
+
+/// Print file types table
+fn print_file_types_table(file_types: &[FileTypeInfo], detailed: bool) -> Result<()> {
+    println!("\n📊 File Type Breakdown");
+    println!("======================");
+    println!("{:<15} {:<8} {:<12} {:<15} {:<10}", "Extension", "Count", "Generated", "Status", "Priority");
+    println!("{:-<15} {:-<8} {:-<12} {:-<15} {:-<10}", "", "", "", "", "");
+
+    for file_type in file_types {
+        let status = match file_type.migration_status {
+            MigrationStatus::Keep => "Keep",
+            MigrationStatus::Generate => "Generate",
+            MigrationStatus::Remove => "Remove",
+            MigrationStatus::Consolidate => "Consolidate",
+        };
+
+        println!(
+            "{:<15} {:<8} {:<12} {:<15} {:<10}",
+            file_type.extension,
+            file_type.count,
+            if file_type.is_generated { "Yes" } else { "No" },
+            status,
+            file_type.priority
+        );
+    }
+
+    if detailed {
+        println!("\n📋 Detailed Migration Plan");
+        println!("==========================");
+        for file_type in file_types {
+            println!("• {} ({} files): {}", 
+                file_type.extension, 
+                file_type.count, 
+                file_type.target_action
+            );
+        }
+    }
+
+    Ok(())
+}
+
+/// Print file types JSON
+fn print_file_types_json(file_types: &[FileTypeInfo]) -> Result<()> {
+    let json = serde_json::to_string_pretty(file_types)?;
+    println!("{}", json);
+    Ok(())
+}
+
+/// Print file types markdown
+fn print_file_types_markdown(file_types: &[FileTypeInfo], detailed: bool) -> Result<()> {
+    println!("# File Type Analysis\n");
+    println!("| Extension | Count | Generated | Status | Priority |");
+    println!("|-----------|-------|-----------|--------|----------|");
+
+    for file_type in file_types {
+        let status = match file_type.migration_status {
+            MigrationStatus::Keep => "Keep",
+            MigrationStatus::Generate => "Generate",
+            MigrationStatus::Remove => "Remove",
+            MigrationStatus::Consolidate => "Consolidate",
+        };
+
+        println!(
+            "| {} | {} | {} | {} | {} |",
+            file_type.extension,
+            file_type.count,
+            if file_type.is_generated { "Yes" } else { "No" },
+            status,
+            file_type.priority
+        );
+    }
+
+    if detailed {
+        println!("\n## Migration Plan\n");
+        for file_type in file_types {
+            println!("- **{}** ({} files): {}", 
+                file_type.extension, 
+                file_type.count, 
+                file_type.target_action
+            );
+        }
+    }
+
+    Ok(())
+}
+
+/// Print migration progress table
+fn print_migration_progress_table(progress: &FileTypeMigrationProgress, detailed: bool) -> Result<()> {
+    println!("\n🔄 Migration Progress");
+    println!("====================");
+    println!("Total file types: {}", progress.total_types);
+    println!("Approved types: {}", progress.approved_types);
+    println!("Types to generate: {}", progress.types_to_generate);
+    println!("Types to remove: {}", progress.types_to_remove);
+    println!("Types to consolidate: {}", progress.types_to_consolidate);
+    println!("Migration progress: {:.1}%", progress.migration_progress);
+
+    if !progress.recommendations.is_empty() {
+        println!("\n💡 Recommendations");
+        println!("==================");
+        for (i, rec) in progress.recommendations.iter().enumerate() {
+            println!("{}. {}", i + 1, rec);
+        }
+    }
+
+    if detailed {
+        println!("\n📊 Detailed File Types");
+        println!("=====================");
+        for file_type in &progress.file_types {
+            let status = match file_type.migration_status {
+                MigrationStatus::Keep => "Keep",
+                MigrationStatus::Generate => "Generate",
+                MigrationStatus::Remove => "Remove",
+                MigrationStatus::Consolidate => "Consolidate",
+            };
+
+            println!("• {} ({} files): {} - {}", 
+                file_type.extension, 
+                file_type.count, 
+                status,
+                file_type.target_action
+            );
+        }
+    }
+
+    Ok(())
+}
+
+/// Print migration progress JSON
+fn print_migration_progress_json(progress: &FileTypeMigrationProgress) -> Result<()> {
+    let json = serde_json::to_string_pretty(progress)?;
+    println!("{}", json);
+    Ok(())
+}
+
+/// Print migration progress markdown
+fn print_migration_progress_markdown(progress: &FileTypeMigrationProgress, detailed: bool) -> Result<()> {
+    println!("# File Type Migration Progress\n");
+    println!("| Metric | Count |");
+    println!("|--------|-------|");
+    println!("| Total file types | {} |", progress.total_types);
+    println!("| Approved types | {} |", progress.approved_types);
+    println!("| Types to generate | {} |", progress.types_to_generate);
+    println!("| Types to remove | {} |", progress.types_to_remove);
+    println!("| Types to consolidate | {} |", progress.types_to_consolidate);
+    println!("| Migration progress | {:.1}% |", progress.migration_progress);
+
+    if !progress.recommendations.is_empty() {
+        println!("\n## Recommendations\n");
+        for (i, rec) in progress.recommendations.iter().enumerate() {
+            println!("{}. {}", i + 1, rec);
+        }
+    }
+
+    if detailed {
+        println!("\n## File Type Details\n");
+        for file_type in &progress.file_types {
+            let status = match file_type.migration_status {
+                MigrationStatus::Keep => "Keep",
+                MigrationStatus::Generate => "Generate",
+                MigrationStatus::Remove => "Remove",
+                MigrationStatus::Consolidate => "Consolidate",
+            };
+
+            println!("- **{}** ({} files): {} - {}", 
+                file_type.extension, 
+                file_type.count, 
+                status,
+                file_type.target_action
+            );
+        }
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
