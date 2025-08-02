@@ -129,6 +129,17 @@ impl GitObjectContract {
                     // This is a warning, not necessarily an error
                 }
             }
+        } else {
+            // Check if this is a generated file that needs linguist-generated=true
+            if let Some(path) = filepath {
+                if Self::is_generated_file(path) {
+                    self.errors.push(format!(
+                        "Generated file '{}' must have 'linguist-generated=true' attribute",
+                        path
+                    ));
+                    valid = false;
+                }
+            }
         }
 
         if !valid {
