@@ -212,10 +212,10 @@ fn demo_complete_workflow() -> Result<(), Box<dyn std::error::Error>> {
         if let Some(attrs) = attributes {
             let mut blob_with_attrs = blob_contract.clone();
             blob_with_attrs.add_attributes(attrs);
-            
+
             // Validate attributes for the filepath
             blob_with_attrs.validate_attributes_for_path(filepath);
-            
+
             // Create tree entry
             let tree_entry = TreeEntryContract::new_with_attributes(
                 "100644",
@@ -226,7 +226,7 @@ fn demo_complete_workflow() -> Result<(), Box<dyn std::error::Error>> {
 
             // Create git object contract
             let git_contract = git_validator.validate_blob(&blob_with_attrs, Some(filepath));
-            
+
             all_contracts.push(git_contract);
             tree_entries.push(tree_entry);
         } else {
