@@ -103,9 +103,14 @@ impl TreeEntryContract {
     }
 
     /// Create a new tree entry contract with explicit type validation
-    pub fn new_with_type(mode: &str, filename: String, object_id: String, object_type: TreeObjectType) -> Self {
+    pub fn new_with_type(
+        mode: &str,
+        filename: String,
+        object_id: String,
+        object_type: TreeObjectType,
+    ) -> Self {
         let (mode_enum, mut valid, mut errors) = Self::validate_entry(mode, &filename, &object_id);
-        
+
         // Validate that the explicit type matches the mode
         let expected_type = mode_enum.object_type();
         if object_type != expected_type {
@@ -212,7 +217,10 @@ impl TreeObjectContract {
         if valid_entries == total_entries {
             format!("✅ Tree valid ({} entries)", total_entries)
         } else {
-            format!("❌ Tree invalid ({} valid / {} total entries)", valid_entries, total_entries)
+            format!(
+                "❌ Tree invalid ({} valid / {} total entries)",
+                valid_entries, total_entries
+            )
         }
     }
 

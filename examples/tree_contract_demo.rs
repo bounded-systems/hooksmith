@@ -98,10 +98,9 @@ fn demo_tree_object_contracts() -> Result<(), Box<dyn std::error::Error>> {
         ("100644".to_string(), "README.md".to_string(), "b2c3d4e5f6789012345678901234567890abcde".to_string()),
         ("040000".to_string(), "src".to_string(), "c3d4e5f6789012345678901234567890abcdef".to_string()),
         ("100755".to_string(), "scripts/build.sh".to_string(), "d4e5f6789012345678901234567890abcdef0".to_string()),
-        ("120000".to_string(), "link.txt".to_string(), "e5f6789012345678901234567890abcdef01".to_string()),
     ];
 
-    let tree = validator.create_tree_object("tree123", raw_entries);
+    let tree = validator.create_tree_object(raw_entries);
 
     println!("  {}", tree.summary());
     println!("    ID: {}", tree.id);
