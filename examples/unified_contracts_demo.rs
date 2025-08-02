@@ -144,7 +144,7 @@ fn demo_tree_contracts() -> Result<(), Box<dyn std::error::Error>> {
     // Test tree modes
     println!("  Tree modes:");
     for mode_str in &["100644", "100755", "040000", "invalid"] {
-        match UnifiedTreeMode::from_str(mode_str) {
+        match UnifiedTreeMode::parse_from_str(mode_str) {
             Some(mode) => println!(
                 "    '{}' -> {} ({})",
                 mode_str,

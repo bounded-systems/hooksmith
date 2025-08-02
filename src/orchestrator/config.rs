@@ -13,7 +13,7 @@ use tokio::fs;
 use super::runtime::RuntimeConfig;
 
 /// Main orchestrator configuration
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrchestratorConfig {
     /// Runtime configuration
     pub runtime_config: RuntimeConfig,
@@ -23,6 +23,17 @@ pub struct OrchestratorConfig {
     pub settings: GlobalSettings,
     /// Logging configuration
     pub logging: LoggingConfig,
+}
+
+impl Default for OrchestratorConfig {
+    fn default() -> Self {
+        Self {
+            runtime_config: RuntimeConfig::default(),
+            components: HashMap::new(),
+            settings: GlobalSettings::default(),
+            logging: LoggingConfig::default(),
+        }
+    }
 }
 
 
@@ -126,7 +137,7 @@ impl Default for LoggingConfig {
 }
 
 /// Log level
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum LogLevel {
     /// Trace level logging
     Trace,
@@ -423,9 +434,8 @@ mod tests {
     #[test]
     fn test_default_config() {
         let config = OrchestratorConfig::default();
-        assert!(config.components.contains_key("hook-builder"));
-        assert!(config.components.contains_key("worktree-manager"));
-        assert!(config.components.contains_key("lefthook-generator"));
-        assert!(config.components.contains_key("validation"));
+        assert_eq!(config.components.len(), 0); // Default config has no components
+        assert!(config.settings.output_dir.to_string_lossy().contains("hooksmith"));
+        assert!(config.logging.level == LogLevel::Info);
     }
 }

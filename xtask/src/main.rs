@@ -286,6 +286,24 @@ enum Commands {
         #[command(subcommand)]
         command: status::StatusCommands,
     },
+    /// Comprehensive contract validation and status check
+    ContractCheck {
+        /// Whether to check only staged files
+        #[arg(long)]
+        staged_only: bool,
+        /// Whether to exit with error on violations
+        #[arg(long)]
+        strict: bool,
+        /// Whether to generate trend data
+        #[arg(long)]
+        trend: bool,
+        /// Output directory for trend data
+        #[arg(long, default_value = "status-trends")]
+        trend_output: String,
+        /// Whether to show detailed output
+        #[arg(long)]
+        verbose: bool,
+    },
     /// Analyze code statistics and quality
     CodeStats {
         #[command(subcommand)]
@@ -524,6 +542,15 @@ async fn main() -> Result<()> {
         }
         Commands::Status { command } => {
             status::run_status_command(command).await?;
+        }
+        Commands::ContractCheck {
+            staged_only,
+            strict,
+            trend,
+            trend_output,
+            verbose,
+        } => {
+            run_contract_check(staged_only, strict, trend, &trend_output, verbose).await?;
         }
         Commands::CodeStats { command } => {
             code_stats::run_code_stats_command(command).await?;
@@ -3057,4 +3084,123 @@ fn validate_config(strict: bool) -> Result<()> {
             }
         }
     }
+}
+
+/// Comprehensive contract validation and status check
+async fn run_contract_check(
+    staged_only: bool,
+    strict: bool,
+    trend: bool,
+    trend_output: &str,
+    verbose: bool,
+) -> Result<()> {
+    println!("🔗 Hooksmith Contract Check");
+    println!("==========================");
+
+    let mut all_passed = true;
+    let mut errors = Vec::new();
+
+    // Step 1: Validate generated files
+    println!("\n1️⃣ Validating generated files...");
+    match validate_generated_files(staged_only, strict, None) {
+        Ok(_) => {
+            println!("   ✅ Generated files validation passed");
+        }
+        Err(e) => {
+            let error_msg = format!("   ❌ Generated files validation failed: {}", e);
+            errors.push(error_msg.clone());
+            if strict {
+                all_passed = false;
+            }
+            if verbose {
+                println!("{}", error_msg);
+            }
+        }
+    }
+
+    // Step 2: Check migration progress
+    println!("\n2️⃣ Checking migration progress...");
+    match status::run_migration_progress_check(strict).await {
+        Ok(_) => {
+            println!("   ✅ Migration progress check passed");
+        }
+        Err(e) => {
+            let error_msg = format!("   ❌ Migration progress check failed: {}", e);
+            errors.push(error_msg.clone());
+            if strict {
+                all_passed = false;
+            }
+            if verbose {
+                println!("{}", error_msg);
+            }
+        }
+    }
+
+    // Step 3: Generate trend data (optional)
+    if trend {
+        println!("\n3️⃣ Generating trend data...");
+        match status::run_trend_generation(trend_output).await {
+            Ok(_) => {
+                println!("   ✅ Trend data generated successfully");
+            }
+            Err(e) => {
+                let error_msg = format!("   ⚠️  Trend generation failed: {}", e);
+                errors.push(error_msg.clone());
+                if verbose {
+                    println!("{}", error_msg);
+                }
+                // Trend generation failure is not critical
+            }
+        }
+    }
+
+    // Step 4: Show file type breakdown (informational)
+    println!("\n4️⃣ File type analysis...");
+    match status::run_file_types_analysis("json").await {
+        Ok(_) => {
+            println!("   ✅ File type analysis completed");
+        }
+        Err(e) => {
+            let error_msg = format!("   ⚠️  File type analysis failed: {}", e);
+            errors.push(error_msg.clone());
+            if verbose {
+                println!("{}", error_msg);
+            }
+            // File type analysis failure is not critical
+        }
+    }
+
+    // Summary
+    println!("\n📊 Contract Check Summary");
+    println!("========================");
+    
+    if all_passed {
+        println!("✅ All critical checks passed!");
+        if !errors.is_empty() {
+            println!("\n⚠️  Non-critical warnings:");
+            for error in &errors {
+                println!("   {}", error);
+            }
+        }
+    } else {
+        println!("❌ Some critical checks failed!");
+        println!("\n❌ Critical errors:");
+        for error in &errors {
+            if error.contains("❌") {
+                println!("   {}", error);
+            }
+        }
+        if strict {
+            return Err(anyhow::anyhow!("Contract check failed - see errors above"));
+        }
+    }
+
+    println!("\n🎯 Next Steps:");
+    println!("   • Run 'cargo xtask status migration-progress --format markdown' for detailed report");
+    println!("   • Run 'cargo xtask status file-types --format json' for file type breakdown");
+    if trend {
+        println!("   • Check '{}' directory for trend data", trend_output);
+    }
+
+    Ok(())
 }

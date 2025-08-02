@@ -625,7 +625,7 @@ fn main() {
     let mut test_cmd = LefthookCommand::new("cargo test {staged_files}".to_string());
     test_cmd.priority = Some(1);
 
-    let mut incompatible_cmd =
+    let incompatible_cmd =
         LefthookCommand::new("cargo fmt {staged_files} {push_files}".to_string());
 
     println!("  Rustfmt Command:");

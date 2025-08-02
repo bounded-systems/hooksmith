@@ -71,7 +71,7 @@ fn demo_eol_normalization() -> Result<(), Box<dyn std::error::Error>> {
     // Content with mixed line endings
     let mixed_content = b"Line 1\r\nLine 2\nLine 3\rLine 4\n";
 
-    let mut filter = MultiFilter::new();
+    let filter = MultiFilter::new();
 
     match filter.process_file(mixed_content, &file_state, &operation) {
         Ok(normalized) => {

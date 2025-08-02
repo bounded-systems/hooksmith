@@ -316,7 +316,7 @@ async fn generate_code_analysis_report(config: CodeStatsConfig) -> Result<()> {
 async fn analyze_code_stats() -> Result<CodeStats> {
     // Count lines of Rust code
     let rust_lines = count_rust_lines().await?;
-    
+
     // Count code elements using grep
     let functions = count_pattern("^ *fn ").await?;
     let structs = count_pattern("^ *struct ").await?;
@@ -404,7 +404,13 @@ async fn count_pattern(pattern: &str) -> Result<usize> {
 
     let count = String::from_utf8_lossy(&output.stdout)
         .lines()
-        .map(|line| line.split(':').last().unwrap_or("0").parse::<usize>().unwrap_or(0))
+        .map(|line| {
+            line.split(':')
+                .last()
+                .unwrap_or("0")
+                .parse::<usize>()
+                .unwrap_or(0)
+        })
         .sum();
 
     Ok(count)
@@ -413,14 +419,12 @@ async fn count_pattern(pattern: &str) -> Result<usize> {
 /// Run clippy analysis
 async fn run_clippy_analysis(strict: bool) -> Result<ClippyAnalysis> {
     let mut args = vec!["clippy", "--all-targets", "--all-features"];
-    
+
     if strict {
         args.extend_from_slice(&["--", "-D", "warnings"]);
     }
 
-    let output = Command::new("cargo")
-        .args(&args)
-        .output();
+    let output = Command::new("cargo").args(&args).output();
 
     let mut analysis = ClippyAnalysis {
         warnings: 0,
@@ -437,13 +441,13 @@ async fn run_clippy_analysis(strict: bool) -> Result<ClippyAnalysis> {
     match output {
         Ok(output) => {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            
+
             // Parse clippy output
             for line in stderr.lines() {
                 if line.contains("warning:") {
                     analysis.warnings += 1;
                     analysis.warning_details.push(line.to_string());
-                    
+
                     if line.contains("dead_code") {
                         analysis.dead_code += 1;
                     } else if line.contains("unused_imports") || line.contains("unused_import") {
@@ -465,7 +469,9 @@ async fn run_clippy_analysis(strict: bool) -> Result<ClippyAnalysis> {
         }
         Err(_) => {
             // If clippy fails, return empty analysis
-            analysis.warning_details.push("Clippy analysis failed - clippy may not be installed".to_string());
+            analysis
+                .warning_details
+                .push("Clippy analysis failed - clippy may not be installed".to_string());
         }
     }
 
@@ -475,7 +481,7 @@ async fn run_clippy_analysis(strict: bool) -> Result<ClippyAnalysis> {
 /// Analyze build timing
 async fn analyze_build_timing() -> Result<BuildTiming> {
     let start = std::time::Instant::now();
-    
+
     let output = Command::new("cargo")
         .args(&["build", "--timings"])
         .output()
@@ -494,7 +500,8 @@ async fn analyze_build_timing() -> Result<BuildTiming> {
     };
 
     // Count crates compiled
-    timing.crates_compiled = output_str.lines()
+    timing.crates_compiled = output_str
+        .lines()
         .filter(|line| line.contains("Compiling"))
         .count();
 
@@ -614,19 +621,31 @@ fn generate_recommendations(report: &CodeAnalysisReport) -> Vec<String> {
     }
 
     if report.clippy.dead_code > 0 {
-        recommendations.push(format!("Remove {} dead code items", report.clippy.dead_code));
+        recommendations.push(format!(
+            "Remove {} dead code items",
+            report.clippy.dead_code
+        ));
     }
 
     if report.clippy.unused_imports > 0 {
-        recommendations.push(format!("Remove {} unused imports", report.clippy.unused_imports));
+        recommendations.push(format!(
+            "Remove {} unused imports",
+            report.clippy.unused_imports
+        ));
     }
 
     if report.quality.doc_coverage < 80.0 {
-        recommendations.push(format!("Improve documentation coverage (currently {:.1}%)", report.quality.doc_coverage));
+        recommendations.push(format!(
+            "Improve documentation coverage (currently {:.1}%)",
+            report.quality.doc_coverage
+        ));
     }
 
     if report.quality.avg_function_length > 30.0 {
-        recommendations.push(format!("Reduce average function length (currently {:.1} lines)", report.quality.avg_function_length));
+        recommendations.push(format!(
+            "Reduce average function length (currently {:.1} lines)",
+            report.quality.avg_function_length
+        ));
     }
 
     if recommendations.is_empty() {
@@ -657,8 +676,14 @@ fn print_analysis_table(report: &CodeAnalysisReport, config: &CodeStatsConfig) -
         println!("Unused imports: {}", report.clippy.unused_imports);
         println!("Style warnings: {}", report.clippy.style_warnings);
         println!("Complexity warnings: {}", report.clippy.complexity_warnings);
-        println!("Performance warnings: {}", report.clippy.performance_warnings);
-        println!("Correctness warnings: {}", report.clippy.correctness_warnings);
+        println!(
+            "Performance warnings: {}",
+            report.clippy.performance_warnings
+        );
+        println!(
+            "Correctness warnings: {}",
+            report.clippy.correctness_warnings
+        );
     }
 
     if config.timing {
@@ -671,8 +696,14 @@ fn print_analysis_table(report: &CodeAnalysisReport, config: &CodeStatsConfig) -
 
     println!("\n📈 Quality Metrics");
     println!("==================");
-    println!("Documentation coverage: {:.1}%", report.quality.doc_coverage);
-    println!("Average function length: {:.1} lines", report.quality.avg_function_length);
+    println!(
+        "Documentation coverage: {:.1}%",
+        report.quality.doc_coverage
+    );
+    println!(
+        "Average function length: {:.1} lines",
+        report.quality.avg_function_length
+    );
     println!("Module count: {}", report.quality.module_count);
 
     println!("\n🎯 Overall Quality");
@@ -722,25 +753,49 @@ fn print_analysis_markdown(report: &CodeAnalysisReport, config: &CodeStatsConfig
         println!("| Dead code | {} |", report.clippy.dead_code);
         println!("| Unused imports | {} |", report.clippy.unused_imports);
         println!("| Style warnings | {} |", report.clippy.style_warnings);
-        println!("| Complexity warnings | {} |", report.clippy.complexity_warnings);
-        println!("| Performance warnings | {} |", report.clippy.performance_warnings);
-        println!("| Correctness warnings | {} |", report.clippy.correctness_warnings);
+        println!(
+            "| Complexity warnings | {} |",
+            report.clippy.complexity_warnings
+        );
+        println!(
+            "| Performance warnings | {} |",
+            report.clippy.performance_warnings
+        );
+        println!(
+            "| Correctness warnings | {} |",
+            report.clippy.correctness_warnings
+        );
     }
 
     if config.timing {
         println!("\n## Build Timing\n");
         println!("| Metric | Value |");
         println!("|--------|-------|");
-        println!("| Total build time | {:.2}s |", report.build_timing.total_time);
-        println!("| Crates compiled | {} |", report.build_timing.crates_compiled);
-        println!("| Time per crate | {:.2}s |", report.build_timing.time_per_crate);
+        println!(
+            "| Total build time | {:.2}s |",
+            report.build_timing.total_time
+        );
+        println!(
+            "| Crates compiled | {} |",
+            report.build_timing.crates_compiled
+        );
+        println!(
+            "| Time per crate | {:.2}s |",
+            report.build_timing.time_per_crate
+        );
     }
 
     println!("\n## Quality Metrics\n");
     println!("| Metric | Value |");
     println!("|--------|-------|");
-    println!("| Documentation coverage | {:.1}% |", report.quality.doc_coverage);
-    println!("| Average function length | {:.1} lines |", report.quality.avg_function_length);
+    println!(
+        "| Documentation coverage | {:.1}% |",
+        report.quality.doc_coverage
+    );
+    println!(
+        "| Average function length | {:.1} lines |",
+        report.quality.avg_function_length
+    );
     println!("| Module count | {} |", report.quality.module_count);
 
     println!("\n## Overall Quality\n");
@@ -800,8 +855,14 @@ fn print_clippy_markdown(analysis: &ClippyAnalysis) -> Result<()> {
     println!("| Unused imports | {} |", analysis.unused_imports);
     println!("| Style warnings | {} |", analysis.style_warnings);
     println!("| Complexity warnings | {} |", analysis.complexity_warnings);
-    println!("| Performance warnings | {} |", analysis.performance_warnings);
-    println!("| Correctness warnings | {} |", analysis.correctness_warnings);
+    println!(
+        "| Performance warnings | {} |",
+        analysis.performance_warnings
+    );
+    println!(
+        "| Correctness warnings | {} |",
+        analysis.correctness_warnings
+    );
 
     if !analysis.warning_details.is_empty() {
         println!("\n## Warning Details\n");
@@ -981,4 +1042,4 @@ mod tests {
         let score = calculate_quality_score(&report);
         assert!(score > 90.0); // Should be high for clean code
     }
-} 
+}

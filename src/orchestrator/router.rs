@@ -451,8 +451,7 @@ impl Default for CommandOptions {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::orchestrator::components::ComponentHandle;
-    use wasmtime::Engine;
+
 
     #[test]
     fn test_command_router_creation() {

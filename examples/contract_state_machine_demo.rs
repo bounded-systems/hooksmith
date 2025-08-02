@@ -283,7 +283,7 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
             let state_note = ContractStateNote {
                 file: file_path.to_string_lossy().to_string(),
                 contract: "blob".to_string(),
-                state: target_state.to_string(),
+                state: target_state.to_string().to_string(),
                 hash,
                 validated_by: "xtask-contract-validate 0.1.0".to_string(),
                 timestamp: Utc::now().to_rfc3339(),
@@ -334,7 +334,7 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
             let state_note = ContractStateNote {
                 file: file_path.to_string_lossy().to_string(),
                 contract: "blob".to_string(),
-                state: target_state.to_string(),
+                state: target_state.to_string().to_string(),
                 hash,
                 validated_by: "xtask-contract-validate 0.1.0".to_string(),
                 timestamp: Utc::now().to_rfc3339(),

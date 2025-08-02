@@ -1232,7 +1232,7 @@ async fn main() -> Result<()> {
                             let list_cmd = Command::new("git").args(&["worktree", "list"]).output();
 
                             if let Ok(output) = list_cmd {
-                                let stdout = String::from_utf8_lossy(&output.stdout);
+                                let _stdout = String::from_utf8_lossy(&output.stdout);
                                 // Parse the worktree list to find the path
                                 // This is a simplified implementation
                                 eprintln!(

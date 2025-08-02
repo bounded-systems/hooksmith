@@ -3,7 +3,7 @@
 //! This example shows how to use the generated file validation system
 //! to prevent manual modifications to files that are automatically generated.
 
-use std::path::PathBuf;
+
 use std::process::Command;
 
 /// Simple implementation of generated file validation
