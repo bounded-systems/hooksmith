@@ -62,6 +62,21 @@ enum Commands {
         #[arg(long)]
         open: bool,
     },
+    /// Generate comprehensive documentation from Rust code and templates
+    GenDocsComprehensive {
+        /// Generate all documentation
+        #[arg(long)]
+        all: bool,
+        /// Specific file to generate
+        #[arg(long)]
+        file: Option<String>,
+        /// Output directory for documentation
+        #[arg(long, default_value = "docs")]
+        output_dir: String,
+        /// Whether to validate generated files
+        #[arg(long)]
+        validate: bool,
+    },
     /// Generate schema and WIT documentation
     GenSchemaDocs {
         /// Output directory for documentation
@@ -296,6 +311,14 @@ async fn main() -> Result<()> {
         }
         Commands::GenDocs { output_dir, open } => {
             generate_documentation(&output_dir, open)?;
+        }
+        Commands::GenDocsComprehensive {
+            all,
+            file,
+            output_dir,
+            validate,
+        } => {
+            generate_comprehensive_documentation(&all, &file, &output_dir, validate).await?;
         }
         Commands::GenSchemaDocs {
             output_dir,
@@ -749,6 +772,69 @@ fn generate_documentation(output_dir: &str, open: bool) -> Result<()> {
     }
 
     println!("✅ Documentation generated successfully");
+    Ok(())
+}
+
+/// Generate comprehensive documentation from Rust code and templates
+async fn generate_comprehensive_documentation(
+    all: &bool,
+    file: &Option<String>,
+    output_dir: &str,
+    validate: &bool,
+) -> Result<()> {
+    println!("📚 Generating comprehensive documentation...");
+    println!("   Output directory: {}", output_dir);
+    println!("   All: {}, File: {:?}, Validate: {}", all, file, validate);
+
+    let output_path = Path::new(output_dir);
+    if !output_path.exists() {
+        fs::create_dir_all(output_path).context("Failed to create output directory")?;
+    }
+
+    // Generate JSON Schema documentation
+    let schema_docs = generate_json_schema_documentation()?;
+    fs::write(output_path.join("SCHEMA_DOCUMENTATION.md"), &schema_docs)
+        .context("Failed to write schema documentation")?;
+
+    // Generate WIT documentation
+    let wit_docs = generate_wit_documentation()?;
+    fs::write(output_path.join("WIT_DOCUMENTATION.md"), &wit_docs)
+        .context("Failed to write WIT documentation")?;
+
+    // Generate combined documentation
+    let combined_docs = generate_combined_documentation(&schema_docs, &wit_docs)?;
+    fs::write(output_path.join("CONTRACT_STATE_MACHINE.md"), combined_docs)
+        .context("Failed to write combined documentation")?;
+
+    // Generate Pandoc outputs if requested
+    if *validate {
+        generate_pandoc_outputs(output_path, false, false, false)?; // No PDF/HTML/EPUB by default for validation
+    }
+
+    if *all {
+        // Generate PDF, HTML, EPUB if all is true
+        generate_pandoc_outputs(output_path, true, true, true)?;
+    } else if let Some(f) = file {
+        // Generate specific file if a file is specified
+        if f == "schema" {
+            generate_pandoc_outputs(output_path, true, false, false)?; // PDF only
+        } else if f == "wit" {
+            generate_pandoc_outputs(output_path, false, true, false)?; // HTML only
+        } else if f == "epub" {
+            generate_pandoc_outputs(output_path, false, false, true)?; // EPUB only
+        } else {
+            println!("   ⚠️  Unknown file type: {}", f);
+        }
+    }
+
+    if *all || file.is_some() {
+        println!("   Opening documentation in browser...");
+        let _ = Command::new("open")
+            .arg(output_path.join("CONTRACT_STATE_MACHINE.md"))
+            .status();
+    }
+
+    println!("✅ Comprehensive documentation generated successfully");
     Ok(())
 }
 

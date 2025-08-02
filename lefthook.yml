@@ -3,68 +3,33 @@
 
 # Pre-commit hooks run before each commit
 pre-commit:
+  parallel: true
   commands:
-    # Rust formatting check
-    rustfmt:
+    hooksmith-fmt:
       glob: "*.rs"
       run: cargo fmt --all -- --check
-      stage_fixed: all
-
-    # Rust linting
-    clippy:
+    hooksmith-clippy:
       glob: "*.rs"
       run: cargo clippy --all-targets --all-features -- -D warnings
-
-    # Run tests
-    test:
+    hooksmith-test:
       run: cargo test --all-targets --all-features
+    hooksmith-gen-wit:
+      run: cargo xtask gen-wit
 
-    # Generate WIT interfaces
-    gen-wit:
-      run: cargo xtask gen-wit --overwrite
-
-    # Check generated files are up to date
-    check-generated:
+pre-push:
+  parallel: true
+  commands:
+    hooksmith-audit:
+      run: cargo audit
+    hooksmith-check-generated:
       run: cargo xtask check --strict
 
-    # Validate project configuration
-    validate-config:
-      run: cargo xtask validate --all
-
-# Pre-push hooks run before pushing to remote
-pre-push:
-  commands:
-    # Full test suite
-    test:
-      run: cargo test --all-targets --all-features --release
-
-    # Build check
-    build:
-      run: cargo xtask build --target all --release
-
-    # WASM component build
-    wasm-build:
-      run: cargo xtask build --target wasm --release
-
-    # Security audit
-    audit:
-      run: cargo audit
-
-# Commit-msg hooks run after commit message is written
 commit-msg:
   commands:
-    # Check conventional commit format
-    conventional-commits:
+    hooksmith-conventional:
       run: |
-        # Check if commit message follows conventional commit format
-        # This is a simple check - you might want to use a more robust tool
-        if ! echo "$1" | grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+"; then
-          echo "Commit message must follow conventional commit format:"
-          echo "  <type>(<scope>): <description>"
-          echo "  Examples:"
-          echo "    feat(cli): add new command"
-          echo "    fix(wasm): correct parsing bug"
-          echo "    docs: update README"
+        if ! grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+" "$1"; then
+          echo "Error: Commit message must follow conventional commit format"
           exit 1
         fi
 

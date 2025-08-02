@@ -1458,135 +1458,125 @@ enum HookStatus {
     ConfigMissing,
 }
 
-/// Verify Git hooks registration
+/// Verify Hooksmith hooks registration
 ///
-/// Checks if Hooksmith is properly registered in all Git hooks.
-/// Enumerates all hooks in .git/hooks/ and verifies Hooksmith invocation.
-async fn verify_git_hooks(repo_path: &str, verbose: bool) -> Result<HookVerificationSummary> {
+/// Checks if Hooksmith hooks are properly defined in Lefthook configuration
+/// and verifies that Lefthook is installed and hooks are active.
+async fn verify_hooksmith_hooks(
+    repo_path: &str,
+    verbose: bool,
+    check_installation: bool,
+) -> Result<HookVerificationSummary> {
     use std::path::Path;
     use tokio::fs;
+    use serde_yaml;
 
     let repo_path = Path::new(repo_path);
-    let hooks_dir = repo_path.join(".git").join("hooks");
+    let lefthook_config_path = repo_path.join("lefthook.yml");
 
-    if !hooks_dir.exists() {
-        return Err(anyhow::anyhow!("Git hooks directory not found: {:?}", hooks_dir));
+    if !lefthook_config_path.exists() {
+        return Err(anyhow::anyhow!(
+            "Lefthook configuration not found: {:?}",
+            lefthook_config_path
+        ));
     }
 
-    // Common Git hook names to check
-    let hook_names = vec![
-        "pre-commit",
-        "pre-push",
-        "commit-msg",
-        "post-commit",
-        "pre-rebase",
-        "post-merge",
-        "post-checkout",
-        "prepare-commit-msg",
-        "pre-merge-commit",
-        "post-rewrite",
-        "pre-auto-gc",
-        "fsmonitor-watchman",
-        "p4-changelist",
-        "p4-prepare-changelist",
-        "p4-post-changelist",
-        "p4-pre-submit",
-        "post-index-change",
-        "pre-receive",
-        "update",
-        "proc-receive",
-        "post-receive",
-        "post-update",
-        "reference-transaction",
-        "push-to-checkout",
-        "applypatch-msg",
-        "pre-applypatch",
-        "post-applypatch",
-        "sendemail-validate",
+    // Expected Hooksmith hooks
+    let expected_hooks = vec![
+        ("pre-commit", vec!["hooksmith-fmt", "hooksmith-clippy", "hooksmith-test", "hooksmith-gen-wit"]),
+        ("pre-push", vec!["hooksmith-audit", "hooksmith-check-generated"]),
+        ("commit-msg", vec!["hooksmith-conventional"]),
     ];
 
     let mut summary = HookVerificationSummary {
         total_hooks: 0,
-        registered_hooks: 0,
+        configured_hooks: 0,
         missing_hooks: Vec::new(),
         hook_details: Vec::new(),
+        lefthook_installed: false,
+        lefthook_active: false,
     };
 
-    for hook_name in hook_names {
-        let hook_path = hooks_dir.join(hook_name);
+    // Check Lefthook installation if requested
+    if check_installation {
+        summary.lefthook_installed = which::which("lefthook").is_ok();
 
-        if hook_path.exists() {
-            summary.total_hooks += 1;
+        if summary.lefthook_installed {
+            // Check if hooks are active by looking for .git/hooks/lefthook
+            let lefthook_hook_path = repo_path.join(".git").join("hooks").join("lefthook");
+            summary.lefthook_active = lefthook_hook_path.exists();
+        }
+    }
 
-            match fs::read_to_string(&hook_path).await {
-                Ok(content) => {
-                    let has_hooksmith = content.contains("hooksmith")
-                        || content.contains("Hooksmith")
-                        || content.contains("HOOKSMITH");
+    // Read and parse Lefthook configuration
+    let config_content = fs::read_to_string(&lefthook_config_path).await?;
+    let config: serde_yaml::Value = serde_yaml::from_str(&config_content)?;
 
-                    let status = if has_hooksmith {
-                        summary.registered_hooks += 1;
-                        HookStatus::Registered
-                    } else {
-                        summary.missing_hooks.push(hook_name.to_string());
-                        HookStatus::Missing
-                    };
+    // Verify each hook section
+    for (hook_type, expected_hook_names) in expected_hooks {
+        if let Some(hook_section) = config.get(hook_type) {
+            if let Some(commands) = hook_section.get("commands") {
+                for expected_hook_name in expected_hook_names {
+                    summary.total_hooks += 1;
 
-                    let content_preview = if verbose {
-                        let preview = content.lines().take(5).collect::<Vec<_>>().join("\n");
-                        if content.lines().count() > 5 {
-                            Some(format!("{}\n...", preview))
-                        } else {
+                    if let Some(hook_config) = commands.get(expected_hook_name) {
+                        summary.configured_hooks += 1;
+
+                        let config_preview = if verbose {
+                            let preview = serde_yaml::to_string(hook_config)?;
                             Some(preview)
+                        } else {
+                            None
+                        };
+
+                        summary.hook_details.push(HookDetail {
+                            name: format!("{}/{}", hook_type, expected_hook_name),
+                            status: HookStatus::Configured,
+                            config_preview: config_preview.clone(),
+                        });
+
+                        println!("✔ {}/{} ✅ Hooksmith hook configured", hook_type, expected_hook_name);
+
+                        if verbose && config_preview.is_some() {
+                            println!("   Configuration:");
+                            for line in config_preview.as_ref().unwrap().lines() {
+                                println!("   {}", line);
+                            }
+                            println!();
                         }
                     } else {
-                        None
-                    };
+                        summary.missing_hooks.push(format!("{}/{}", hook_type, expected_hook_name));
 
-                    summary.hook_details.push(HookDetail {
-                        name: hook_name.to_string(),
-                        status,
-                        content_preview: content_preview.clone(),
-                    });
+                        summary.hook_details.push(HookDetail {
+                            name: format!("{}/{}", hook_type, expected_hook_name),
+                            status: HookStatus::Missing,
+                            config_preview: None,
+                        });
 
-                    // Print status for each hook
-                    let status_icon = match status {
-                        HookStatus::Registered => "✔",
-                        HookStatus::Missing => "✖",
-                        HookStatus::FileMissing => "❓",
-                    };
-
-                    let status_text = match status {
-                        HookStatus::Registered => "✅ Hooksmith registered",
-                        HookStatus::Missing => "❌ Missing Hooksmith",
-                        HookStatus::FileMissing => "❓ Hook file missing",
-                    };
-
-                    println!("{} {} {}", status_icon, hook_name, status_text);
-
-                    if verbose && content_preview.is_some() {
-                        println!("   Content preview:");
-                        for line in content_preview.as_ref().unwrap().lines() {
-                            println!("   {}", line);
-                        }
-                        println!();
+                        println!("✖ {}/{} ❌ Missing Hooksmith hook", hook_type, expected_hook_name);
                     }
-                }
-                Err(e) => {
-                    summary.hook_details.push(HookDetail {
-                        name: hook_name.to_string(),
-                        status: HookStatus::FileMissing,
-                        content_preview: None,
-                    });
-
-                    println!("❓ {} ❓ Hook file unreadable: {}", hook_name, e);
                 }
             }
         }
     }
 
+    // Print Lefthook status if checking installation
+    if check_installation {
+        println!();
+        if summary.lefthook_installed {
+            println!("✅ Lefthook is installed");
+            if summary.lefthook_active {
+                println!("✅ Lefthook hooks are active");
+            } else {
+                println!("⚠️  Lefthook hooks are not active (run 'lefthook install')");
+            }
+        } else {
+            println!("❌ Lefthook is not installed");
+        }
+    }
+
     if summary.total_hooks == 0 {
-        println!("ℹ️  No Git hooks found in {:?}", hooks_dir);
+        println!("ℹ️  No Hooksmith hooks found in {:?}", lefthook_config_path);
     }
 
     Ok(summary)
