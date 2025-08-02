@@ -1521,46 +1521,51 @@ async fn verify_hooksmith_hooks(
     // Verify each hook section
     for (hook_type, expected_hook_names) in expected_hooks {
         if let Some(hook_section) = config.get(hook_type) {
-            if let Some(commands) = hook_section.get("commands") {
-                for expected_hook_name in expected_hook_names {
-                    summary.total_hooks += 1;
+            // Try both formats: direct hooks and hooks under "commands"
+            let hooks_map = if let Some(commands) = hook_section.get("commands") {
+                commands
+            } else {
+                hook_section
+            };
 
-                    if let Some(hook_config) = commands.get(expected_hook_name) {
-                        summary.configured_hooks += 1;
+            for expected_hook_name in expected_hook_names {
+                summary.total_hooks += 1;
 
-                        let config_preview = if verbose {
-                            let preview = serde_yaml::to_string(hook_config)?;
-                            Some(preview)
-                        } else {
-                            None
-                        };
+                if let Some(hook_config) = hooks_map.get(expected_hook_name) {
+                    summary.configured_hooks += 1;
 
-                        summary.hook_details.push(HookDetail {
-                            name: format!("{}/{}", hook_type, expected_hook_name),
-                            status: HookStatus::Configured,
-                            config_preview: config_preview.clone(),
-                        });
-
-                        println!("✔ {}/{} ✅ Hooksmith hook configured", hook_type, expected_hook_name);
-
-                        if verbose && config_preview.is_some() {
-                            println!("   Configuration:");
-                            for line in config_preview.as_ref().unwrap().lines() {
-                                println!("   {}", line);
-                            }
-                            println!();
-                        }
+                    let config_preview = if verbose {
+                        let preview = serde_yaml::to_string(hook_config)?;
+                        Some(preview)
                     } else {
-                        summary.missing_hooks.push(format!("{}/{}", hook_type, expected_hook_name));
+                        None
+                    };
 
-                        summary.hook_details.push(HookDetail {
-                            name: format!("{}/{}", hook_type, expected_hook_name),
-                            status: HookStatus::Missing,
-                            config_preview: None,
-                        });
+                    summary.hook_details.push(HookDetail {
+                        name: format!("{}/{}", hook_type, expected_hook_name),
+                        status: HookStatus::Configured,
+                        config_preview: config_preview.clone(),
+                    });
 
-                        println!("✖ {}/{} ❌ Missing Hooksmith hook", hook_type, expected_hook_name);
+                    println!("✔ {}/{} ✅ Hooksmith hook configured", hook_type, expected_hook_name);
+
+                    if verbose && config_preview.is_some() {
+                        println!("   Configuration:");
+                        for line in config_preview.as_ref().unwrap().lines() {
+                            println!("   {}", line);
+                        }
+                        println!();
                     }
+                } else {
+                    summary.missing_hooks.push(format!("{}/{}", hook_type, expected_hook_name));
+
+                    summary.hook_details.push(HookDetail {
+                        name: format!("{}/{}", hook_type, expected_hook_name),
+                        status: HookStatus::Missing,
+                        config_preview: None,
+                    });
+
+                    println!("✖ {}/{} ❌ Missing Hooksmith hook", hook_type, expected_hook_name);
                 }
             }
         }
