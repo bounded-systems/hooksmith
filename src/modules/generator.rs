@@ -82,6 +82,12 @@ pub struct CodeGenerator {
     templates: HashMap<String, TemplateConfig>,
 }
 
+impl Default for CodeGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CodeGenerator {
     /// Create a new code generator with default configuration
     pub fn new() -> Self {

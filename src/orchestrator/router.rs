@@ -21,6 +21,12 @@ pub struct CommandRouter {
 /// Command handler function type
 type CommandHandler = fn(Vec<String>, &HashMap<String, ComponentHandle>) -> Result<CommandResult>;
 
+impl Default for CommandRouter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CommandRouter {
     /// Create a new command router
     pub fn new() -> Self {
@@ -123,7 +129,7 @@ impl CommandRouter {
         args: Vec<String>,
         _components: &HashMap<String, ComponentHandle>,
     ) -> Result<CommandResult> {
-        let output_file = args.get(0).unwrap_or(&"lefthook.yml".to_string()).clone();
+        let output_file = args.first().unwrap_or(&"lefthook.yml".to_string()).clone();
 
         // Create lefthook configuration
         let _config = LefthookConfig {
@@ -278,7 +284,7 @@ impl CommandRouter {
         args: Vec<String>,
         _components: &HashMap<String, ComponentHandle>,
     ) -> Result<CommandResult> {
-        let config_path = args.get(0).unwrap_or(&"lefthook.yml".to_string()).clone();
+        let config_path = args.first().unwrap_or(&"lefthook.yml".to_string()).clone();
 
         let _config = ValidationConfig {
             validation_type: super::ValidationType::LefthookConfig,
@@ -297,7 +303,7 @@ impl CommandRouter {
 
     /// Handle list command
     fn handle_list(
-        args: Vec<String>,
+        _args: Vec<String>,
         components: &HashMap<String, ComponentHandle>,
     ) -> Result<CommandResult> {
         let mut output = String::new();
@@ -329,7 +335,7 @@ impl CommandRouter {
     /// Handle install command
     fn handle_install(
         args: Vec<String>,
-        components: &HashMap<String, ComponentHandle>,
+        _components: &HashMap<String, ComponentHandle>,
     ) -> Result<CommandResult> {
         let hooks = if args.is_empty() {
             vec!["pre-commit".to_string(), "pre-push".to_string()]
@@ -355,10 +361,10 @@ impl CommandRouter {
     /// Handle test command
     fn handle_test(
         args: Vec<String>,
-        components: &HashMap<String, ComponentHandle>,
+        _components: &HashMap<String, ComponentHandle>,
     ) -> Result<CommandResult> {
         let message = args
-            .get(0)
+            .first()
             .unwrap_or(&"Hello from Hooksmith".to_string())
             .clone();
 

@@ -13,7 +13,7 @@ use tokio::fs;
 use super::runtime::RuntimeConfig;
 
 /// Main orchestrator configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OrchestratorConfig {
     /// Runtime configuration
     pub runtime_config: RuntimeConfig,
@@ -24,6 +24,8 @@ pub struct OrchestratorConfig {
     /// Logging configuration
     pub logging: LoggingConfig,
 }
+
+
 
 impl Default for OrchestratorConfig {
     fn default() -> Self {
@@ -325,6 +327,12 @@ impl ConfigManager {
 /// Configuration builder for creating configurations programmatically
 pub struct ConfigBuilder {
     config: OrchestratorConfig,
+}
+
+impl Default for ConfigBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ConfigBuilder {

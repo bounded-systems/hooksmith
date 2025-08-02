@@ -173,6 +173,12 @@ pub struct ComponentRegistry {
     components: HashMap<String, ComponentHandle>,
 }
 
+impl Default for ComponentRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ComponentRegistry {
     /// Create a new component registry
     pub fn new() -> Self {

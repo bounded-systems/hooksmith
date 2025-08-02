@@ -104,6 +104,12 @@ pub struct HookBuilder {
     config: HookBuildConfig,
 }
 
+impl Default for HookBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HookBuilder {
     /// Create a new hook builder with default configuration
     pub fn new() -> Self {
