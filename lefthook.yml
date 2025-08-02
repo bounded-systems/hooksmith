@@ -17,3 +17,4 @@ pre_push:
 commit_msg:
   validate-commit-msg:
     run: cargo run -p xtask -- validate-commit-msg
+# This is a test modification
