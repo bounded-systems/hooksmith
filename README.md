@@ -134,6 +134,30 @@ hooksmith worktree remove feature/new-feature
 hooksmith worktree tools
 ```
 
+### Hierarchical Contract Validation (New!)
+
+```bash
+# Validate changes in a commit range
+./xtask.sh contract-validate validate --range HEAD~1..HEAD
+
+# Verify validation chain integrity
+./xtask.sh contract-validate verify <commit-hash>
+
+# Show validation notes for a commit
+./xtask.sh contract-validate show <commit-hash>
+
+# Run pre-commit validation
+./xtask.sh contract-validate pre-commit
+
+# Run post-commit validation
+./xtask.sh contract-validate post-commit
+
+# Git filter operations
+./xtask.sh contract-validate clean <file>
+./xtask.sh contract-validate smudge <file>
+./xtask.sh contract-validate diff <file>
+```
+
 ### Hook Building (Planned)
 
 ```bash

@@ -633,7 +633,7 @@ impl HierarchicalValidator {
     }
 
     /// Get validation notes for a commit
-    async fn get_validation_notes(&self, commit_hash: &str) -> Result<Vec<ValidationNote>> {
+    pub async fn get_validation_notes(&self, commit_hash: &str) -> Result<Vec<ValidationNote>> {
         let output = Command::new("git")
             .args(&["notes", "--ref=contract-validation", "show", commit_hash])
             .current_dir(&self.repo_path)

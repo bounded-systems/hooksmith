@@ -131,7 +131,7 @@ async fn clean_operation(file: &PathBuf) -> Result<()> {
 }
 
 /// Git filter smudge operation
-async fn smudge_operation(file: &PathBuf) -> Result<()> {
+async fn smudge_operation(_file: &PathBuf) -> Result<()> {
     // Read the file content from stdin (Git filter input)
     let mut content = String::new();
     std::io::Read::read_to_string(&mut std::io::stdin(), &mut content)
@@ -313,10 +313,8 @@ async fn pre_commit_hook(repo: &PathBuf) -> Result<()> {
         );
     }
 
-    let staged_files: Vec<&str> = String::from_utf8_lossy(&output.stdout)
-        .lines()
-        .filter(|line| !line.is_empty())
-        .collect();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let staged_files: Vec<&str> = stdout.lines().filter(|line| !line.is_empty()).collect();
 
     if staged_files.is_empty() {
         println!("✅ No staged changes to validate");

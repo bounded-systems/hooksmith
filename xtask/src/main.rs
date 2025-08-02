@@ -593,26 +593,21 @@ fn generate_lefthook_config(output: &str, validate: bool) -> Result<()> {
     let mut config = lefthook_rs::HookConfig::default();
 
     // Pre-commit hooks
-    config.add_pre_commit_hook(
-        "hooksmith-fmt".to_string(),
-        lefthook_rs::JobConfig::new("cargo fmt --all -- --check")
-            .with_files("*.rs"),
-    );
-    config.add_pre_commit_hook(
-        "hooksmith-clippy".to_string(),
-        lefthook_rs::JobConfig::new("cargo clippy --all-targets --all-features -- -D warnings")
-            .with_files("*.rs"),
-    );
-    config.add_pre_commit_hook(
-        "hooksmith-test".to_string(),
-        lefthook_rs::JobConfig::new("cargo test --all-targets --all-features")
-            .with_files("*.rs"),
-    );
-    config.add_pre_commit_hook(
-        "hooksmith-gen-wit".to_string(),
-        lefthook_rs::JobConfig::new("cargo xtask gen-wit")
-            .with_files("*.rs"),
-    );
+    let mut fmt_job = lefthook_rs::JobConfig::new("cargo fmt --all -- --check");
+    fmt_job.with_files("*.rs");
+    config.add_pre_commit_hook("hooksmith-fmt".to_string(), fmt_job);
+
+    let mut clippy_job = lefthook_rs::JobConfig::new("cargo clippy --all-targets --all-features -- -D warnings");
+    clippy_job.with_files("*.rs");
+    config.add_pre_commit_hook("hooksmith-clippy".to_string(), clippy_job);
+
+    let mut test_job = lefthook_rs::JobConfig::new("cargo test --all-targets --all-features");
+    test_job.with_files("*.rs");
+    config.add_pre_commit_hook("hooksmith-test".to_string(), test_job);
+
+    let mut gen_wit_job = lefthook_rs::JobConfig::new("cargo xtask gen-wit");
+    gen_wit_job.with_files("*.rs");
+    config.add_pre_commit_hook("hooksmith-gen-wit".to_string(), gen_wit_job);
 
     // Pre-push hooks
     config.add_pre_push_hook(
