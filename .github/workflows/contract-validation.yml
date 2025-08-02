@@ -1,0 +1,374 @@
+name: Contract Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate-contracts:
+    name: Validate Contract State Machine
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for Git notes
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
+      - name: Build project
+        run: cargo build --release
+      
+      - name: Install xtask
+        run: cargo install --path xtask
+      
+      - name: Validate contract state machine
+        run: |
+          echo "🔍 Validating contract state machine..."
+          ./xtask.sh contract-validate verify --commit ${{ github.sha }}
+      
+      - name: Check Merkle chain integrity
+        run: |
+          echo "🔗 Verifying Merkle chain integrity..."
+          ./xtask.sh contract-validate merkle --verify --commit ${{ github.sha }}
+      
+      - name: Audit state transitions
+        run: |
+          echo "📋 Auditing state transitions..."
+          ./xtask.sh contract-validate audit --commit ${{ github.sha }}
+      
+      - name: Generate validation report
+        run: |
+          echo "📊 Generating validation report..."
+          ./xtask.sh contract-validate report --commit ${{ github.sha }} --output validation-report.json
+      
+      - name: Upload validation report
+        uses: actions/upload-artifact@v3
+        with:
+          name: contract-validation-report
+          path: validation-report.json
+          retention-days: 30
+
+  verify-git-notes:
+    name: Verify Git Notes Integrity
+    runs-on: ubuntu-latest
+    needs: validate-contracts
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Verify Git notes structure
+        run: |
+          echo "🔍 Verifying Git notes structure..."
+          
+          # Check if contract notes exist
+          if git notes --ref=refs/notes/contracts show ${{ github.sha }} 2>/dev/null; then
+            echo "✅ Contract notes found"
+          else
+            echo "⚠️  No contract notes found for commit"
+          fi
+          
+          # Check if transition log exists
+          if git notes --ref=refs/notes/contracts-log show ${{ github.sha }} 2>/dev/null; then
+            echo "✅ Transition log found"
+          else
+            echo "⚠️  No transition log found for commit"
+          fi
+          
+          # Check if Merkle chain notes exist
+          if git notes --ref=refs/notes/merkle-chain show ${{ github.sha }} 2>/dev/null; then
+            echo "✅ Merkle chain notes found"
+          else
+            echo "⚠️  No Merkle chain notes found for commit"
+          fi
+      
+      - name: Validate note schemas
+        run: |
+          echo "📋 Validating note schemas..."
+          
+          # Validate contract notes against schema
+          if git notes --ref=refs/notes/contracts show ${{ github.sha }} 2>/dev/null | jq -e . >/dev/null; then
+            echo "✅ Contract notes schema is valid JSON"
+          else
+            echo "❌ Contract notes schema is invalid JSON"
+            exit 1
+          fi
+          
+          # Validate transition log against schema
+          if git notes --ref=refs/notes/contracts-log show ${{ github.sha }} 2>/dev/null | jq -e . >/dev/null; then
+            echo "✅ Transition log schema is valid JSON"
+          else
+            echo "❌ Transition log schema is invalid JSON"
+            exit 1
+          fi
+
+  enforce-state-transitions:
+    name: Enforce State Transitions
+    runs-on: ubuntu-latest
+    needs: [validate-contracts, verify-git-notes]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Check modified files
+        run: |
+          echo "🔍 Checking modified files for contract validation..."
+          
+          # Get list of modified files
+          MODIFIED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          
+          if [ -n "$MODIFIED_FILES" ]; then
+            echo "Modified files:"
+            echo "$MODIFIED_FILES"
+            
+            # Check each file for contract attributes
+            for file in $MODIFIED_FILES; do
+              if git check-attr filter $file | grep -q "contract-validate"; then
+                echo "✅ File $file has contract validation attribute"
+                
+                # Check if file has been validated
+                if git notes --ref=refs/notes/contracts show ${{ github.sha }} 2>/dev/null | jq -e ".[] | select(.file == \"$file\")" >/dev/null; then
+                  echo "✅ File $file has validation note"
+                else
+                  echo "❌ File $file missing validation note"
+                  exit 1
+                fi
+              else
+                echo "ℹ️  File $file has no contract validation attribute"
+              fi
+            done
+          else
+            echo "ℹ️  No files modified in this commit"
+          fi
+      
+      - name: Verify state machine compliance
+        run: |
+          echo "🔗 Verifying state machine compliance..."
+          
+          # Check if all state transitions are valid
+          ./xtask.sh contract-validate audit --strict --commit ${{ github.sha }}
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ All state transitions are valid"
+          else
+            echo "❌ Invalid state transitions detected"
+            exit 1
+          fi
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    needs: [validate-contracts, verify-git-notes, enforce-state-transitions]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Check for tampering
+        run: |
+          echo "🔒 Checking for tampering..."
+          
+          # Verify that all hashes match their content
+          ./xtask.sh contract-validate verify --security --commit ${{ github.sha }}
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ No tampering detected"
+          else
+            echo "❌ Potential tampering detected"
+            exit 1
+          fi
+      
+      - name: Verify Merkle chain integrity
+        run: |
+          echo "🔗 Verifying Merkle chain integrity..."
+          
+          # Verify that parent hashes include child hashes
+          ./xtask.sh contract-validate merkle --verify-chain --commit ${{ github.sha }}
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ Merkle chain integrity verified"
+          else
+            echo "❌ Merkle chain integrity compromised"
+            exit 1
+          fi
+      
+      - name: Check access control
+        run: |
+          echo "🔐 Checking access control..."
+          
+          # Verify that only authorized tools can modify notes
+          ./xtask.sh contract-validate audit --access-control --commit ${{ github.sha }}
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ Access control verified"
+          else
+            echo "❌ Access control violations detected"
+            exit 1
+          fi
+
+  performance-check:
+    name: Performance Check
+    runs-on: ubuntu-latest
+    needs: [validate-contracts]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Measure validation performance
+        run: |
+          echo "⚡ Measuring validation performance..."
+          
+          # Time the validation process
+          start_time=$(date +%s.%N)
+          ./xtask.sh contract-validate validate --range HEAD~1..HEAD
+          end_time=$(date +%s.%N)
+          
+          duration=$(echo "$end_time - $start_time" | bc)
+          echo "Validation took ${duration} seconds"
+          
+          # Check if performance is acceptable (less than 30 seconds)
+          if (( $(echo "$duration < 30" | bc -l) )); then
+            echo "✅ Validation performance is acceptable"
+          else
+            echo "⚠️  Validation performance is slow (${duration}s)"
+          fi
+      
+      - name: Check memory usage
+        run: |
+          echo "💾 Checking memory usage..."
+          
+          # Monitor memory usage during validation
+          /usr/bin/time -v ./xtask.sh contract-validate validate --range HEAD~1..HEAD 2>&1 | grep "Maximum resident set size"
+          
+          echo "✅ Memory usage check completed"
+
+  report-generation:
+    name: Generate Final Report
+    runs-on: ubuntu-latest
+    needs: [validate-contracts, verify-git-notes, enforce-state-transitions, security-audit, performance-check]
+    if: always()
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Generate comprehensive report
+        run: |
+          echo "📊 Generating comprehensive validation report..."
+          
+          # Generate detailed report
+          ./xtask.sh contract-validate report --comprehensive --commit ${{ github.sha }} --output comprehensive-report.json
+          
+          # Convert to human-readable format
+          jq '.' comprehensive-report.json > comprehensive-report-pretty.json
+          
+          echo "✅ Report generated successfully"
+      
+      - name: Upload comprehensive report
+        uses: actions/upload-artifact@v3
+        with:
+          name: comprehensive-validation-report
+          path: |
+            comprehensive-report.json
+            comprehensive-report-pretty.json
+          retention-days: 90
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('comprehensive-report-pretty.json', 'utf8'));
+            
+            const summary = `
+            ## Contract Validation Report
+            
+            ### Summary
+            - **Status**: ${report.summary.status}
+            - **Files Validated**: ${report.summary.files_validated}
+            - **Validation Errors**: ${report.summary.validation_errors}
+            - **Performance**: ${report.summary.performance.duration_ms}ms
+            
+            ### Details
+            ${report.details.map(detail => `- ${detail.file}: ${detail.status}`).join('\n')}
+            
+            ### Security
+            - **Tamper Detection**: ${report.security.tamper_detected ? '❌' : '✅'}
+            - **Merkle Chain**: ${report.security.merkle_chain_valid ? '✅' : '❌'}
+            - **Access Control**: ${report.security.access_control_valid ? '✅' : '❌'}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            }); 

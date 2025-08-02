@@ -16,3 +16,5 @@ pub mod wasm;
 pub mod hook_builder;
 /// Hierarchical contract validation
 pub mod hierarchical_validation;
+/// Contract state machine for validation lifecycle
+pub mod contract_state_machine;
