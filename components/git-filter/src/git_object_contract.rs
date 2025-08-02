@@ -429,12 +429,8 @@ impl GitObjectValidator {
     }
 
     /// Validate a tree object
-    pub fn validate_tree_object(
-        &self,
-        id: &str,
-        entries: Vec<TreeEntryContract>,
-    ) -> GitObjectContract {
-        let tree = TreeObjectContract::new(id.to_string(), entries);
+    pub fn validate_tree_object(&self, entries: Vec<TreeEntryContract>) -> GitObjectContract {
+        let tree = TreeObjectContract::new(entries);
         GitObjectContract::Tree(tree)
     }
 
