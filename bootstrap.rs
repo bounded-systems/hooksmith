@@ -33,11 +33,16 @@ fn main() -> Result<()> {
     println!("🔨 Building xtask...");
     build_xtask()?;
 
+    // Step 5: Generate documentation using existing doc gen system
+    println!("📚 Generating documentation...");
+    generate_documentation()?;
+
     println!("\n🎉 Hooksmith project bootstrapped successfully!");
     println!("Next steps:");
     println!("  • Run 'cargo build' to build the project");
     println!("  • Run 'cargo test' to run tests");
     println!("  • Run './target/debug/xtask --help' to see available xtask commands");
+    println!("  • Run './target/debug/xtask gen-docs-comprehensive --all' to regenerate all docs");
 
     Ok(())
 }
@@ -342,6 +347,38 @@ fn build_xtask() -> Result<()> {
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         anyhow::bail!("Failed to build xtask: {}", stderr);
+    }
+
+    Ok(())
+}
+
+fn generate_documentation() -> Result<()> {
+    // Generate README using the existing doc gen system
+    let output = Command::new("./target/debug/xtask")
+        .args(&["gen-readme", "--overwrite"])
+        .output()
+        .context("Failed to execute xtask gen-readme")?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        println!("⚠️  Warning: Failed to generate README: {}", stderr);
+        // Don't fail the bootstrap if doc generation fails
+    } else {
+        println!("   ✅ Generated README.md");
+    }
+
+    // Try to generate comprehensive documentation if possible
+    let output = Command::new("./target/debug/xtask")
+        .args(&["gen-docs-comprehensive", "--all"])
+        .output()
+        .context("Failed to execute xtask gen-docs-comprehensive")?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        println!("⚠️  Warning: Failed to generate comprehensive docs: {}", stderr);
+        println!("   You can run './target/debug/xtask gen-docs-comprehensive --all' manually later");
+    } else {
+        println!("   ✅ Generated comprehensive documentation");
     }
 
     Ok(())
