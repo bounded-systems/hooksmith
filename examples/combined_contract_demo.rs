@@ -211,7 +211,7 @@ fn demo_complete_workflow() -> Result<(), Box<dyn std::error::Error>> {
         // Add attributes to blob
         if let Some(attrs) = attributes {
             let mut blob_with_attrs = blob_contract.clone();
-            blob_with_attrs.add_attributes(attrs);
+            blob_with_attrs.add_attributes(attrs.clone());
 
             // Validate attributes for the filepath
             blob_with_attrs.validate_attributes_for_path(filepath);
