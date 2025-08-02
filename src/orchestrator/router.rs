@@ -218,7 +218,7 @@ impl CommandRouter {
                 }
 
                 let worktree_name = &operation_args[0];
-                let op = WorktreeOperation::Switch {
+                let _op = WorktreeOperation::Switch {
                     worktree_name: worktree_name.clone(),
                     tool: None,
                 };
@@ -247,7 +247,7 @@ impl CommandRouter {
                     .map(|arg| arg == "--with-branch")
                     .unwrap_or(false);
 
-                let op = WorktreeOperation::Remove {
+                let _op = WorktreeOperation::Remove {
                     worktree_name: worktree_name.clone(),
                     with_branch,
                     tool: None,
