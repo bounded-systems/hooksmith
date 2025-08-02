@@ -24,14 +24,7 @@ pub fn generate_cli_help() -> Result<String> {
     content.push_str("```\n\n");
 
     // Get help for each subcommand
-    let subcommands = vec![
-        "test",
-        "build", 
-        "generate",
-        "install",
-        "list",
-        "wasm",
-    ];
+    let subcommands = vec!["test", "build", "generate", "install", "list", "wasm"];
 
     content.push_str("## Command Help\n\n");
 
@@ -69,7 +62,7 @@ pub fn generate_cli_help() -> Result<String> {
     let xtask_subcommands = vec![
         "build",
         "gen-wit",
-        "gen-lefthook", 
+        "gen-lefthook",
         "gen-docs",
         "gen-schema-docs",
         "gen-readme",

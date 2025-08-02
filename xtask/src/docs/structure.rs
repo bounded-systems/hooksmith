@@ -93,7 +93,11 @@ pub fn generate_structure_docs() -> Result<String> {
 
     content.push_str("\n---\n\n");
     content.push_str("*Generated on ");
-    content.push_str(&chrono::Utc::now().format("%a %b %e %H:%M:%S %Z %Y").to_string());
+    content.push_str(
+        &chrono::Utc::now()
+            .format("%a %b %e %H:%M:%S %Z %Y")
+            .to_string(),
+    );
     content.push_str(" using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*\n");
 
     Ok(content)

@@ -98,7 +98,7 @@ tracing-subscriber.workspace = true
 
 # Internal component dependencies
 cli-core = { path = "components/cli-core" }
-# git-filter = { path = "components/git-filter" }
+git-filter = { path = "components/git-filter" }
 
 # WASM dependencies
 wasmtime.workspace = true
