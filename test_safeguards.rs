@@ -87,7 +87,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo xtask gen-docs-comprehensive --all --validate");
     println!("");
     println!("To validate existing documentation:");
-    println!("./scripts/validate-docs.sh");
+    println!("cargo run -p xtask -- validate-docs");
     println!("");
     println!("To check for direct markdown creation:");
     println!("git diff --cached --name-only | grep '\\.md$'");
