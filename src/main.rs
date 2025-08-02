@@ -152,6 +152,21 @@ enum Commands {
         #[arg(long, default_value = "lefthook.yml")]
         config_path: String,
     },
+    /// Verify Hooksmith hooks registration
+    ///
+    /// Checks if Hooksmith hooks are properly defined in Lefthook configuration
+    /// and verifies that Lefthook is installed and hooks are active.
+    VerifyHooks {
+        /// Git repository root directory
+        #[arg(long, default_value = ".")]
+        repo_path: String,
+        /// Show detailed information about each hook
+        #[arg(long)]
+        verbose: bool,
+        /// Check if Lefthook is installed and hooks are active
+        #[arg(long)]
+        check_installation: bool,
+    },
     /// WASM component management
     ///
     /// Commands for building, running, and managing WebAssembly components
@@ -700,6 +715,41 @@ async fn main() -> Result<()> {
                         "{} {}",
                         style("❌").red(),
                         style(format!("Configuration validation failed: {}", e)).red()
+                    );
+                    std::process::exit(1);
+                }
+            }
+        }
+        Commands::VerifyHooks { repo_path, verbose, check_installation } => {
+            println!(
+                "{} {} {}",
+                style("🔍").blue(),
+                style("Verifying Hooksmith hooks registration:").blue(),
+                style(&repo_path).yellow()
+            );
+
+            match verify_hooksmith_hooks(&repo_path, verbose, check_installation).await {
+                Ok(summary) => {
+                    println!(
+                        "{} {}",
+                        style("✅").green(),
+                        style("Hook verification completed").green()
+                    );
+
+                    if summary.total_hooks > 0 {
+                        println!(
+                            "{} {} / {} hooks have Hooksmith properly configured",
+                            style("📊").blue(),
+                            style(summary.configured_hooks).green(),
+                            style(summary.total_hooks).blue()
+                        );
+                    }
+                }
+                Err(e) => {
+                    eprintln!(
+                        "{} {}",
+                        style("❌").red(),
+                        style(format!("Hook verification failed: {}", e)).red()
                     );
                     std::process::exit(1);
                 }
@@ -1379,4 +1429,165 @@ async fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Summary of Hooksmith hooks verification results
+#[derive(Debug)]
+struct HookVerificationSummary {
+    total_hooks: usize,
+    configured_hooks: usize,
+    missing_hooks: Vec<String>,
+    hook_details: Vec<HookDetail>,
+    lefthook_installed: bool,
+    lefthook_active: bool,
+}
+
+/// Detailed information about a specific hook
+#[derive(Debug)]
+struct HookDetail {
+    name: String,
+    status: HookStatus,
+    config_preview: Option<String>,
+}
+
+/// Status of a Hooksmith hook
+#[derive(Debug, Clone, Copy)]
+enum HookStatus {
+    Configured,
+    Missing,
+    ConfigMissing,
+}
+
+/// Verify Git hooks registration
+///
+/// Checks if Hooksmith is properly registered in all Git hooks.
+/// Enumerates all hooks in .git/hooks/ and verifies Hooksmith invocation.
+async fn verify_git_hooks(repo_path: &str, verbose: bool) -> Result<HookVerificationSummary> {
+    use std::path::Path;
+    use tokio::fs;
+
+    let repo_path = Path::new(repo_path);
+    let hooks_dir = repo_path.join(".git").join("hooks");
+
+    if !hooks_dir.exists() {
+        return Err(anyhow::anyhow!("Git hooks directory not found: {:?}", hooks_dir));
+    }
+
+    // Common Git hook names to check
+    let hook_names = vec![
+        "pre-commit",
+        "pre-push",
+        "commit-msg",
+        "post-commit",
+        "pre-rebase",
+        "post-merge",
+        "post-checkout",
+        "prepare-commit-msg",
+        "pre-merge-commit",
+        "post-rewrite",
+        "pre-auto-gc",
+        "fsmonitor-watchman",
+        "p4-changelist",
+        "p4-prepare-changelist",
+        "p4-post-changelist",
+        "p4-pre-submit",
+        "post-index-change",
+        "pre-receive",
+        "update",
+        "proc-receive",
+        "post-receive",
+        "post-update",
+        "reference-transaction",
+        "push-to-checkout",
+        "applypatch-msg",
+        "pre-applypatch",
+        "post-applypatch",
+        "sendemail-validate",
+    ];
+
+    let mut summary = HookVerificationSummary {
+        total_hooks: 0,
+        registered_hooks: 0,
+        missing_hooks: Vec::new(),
+        hook_details: Vec::new(),
+    };
+
+    for hook_name in hook_names {
+        let hook_path = hooks_dir.join(hook_name);
+
+        if hook_path.exists() {
+            summary.total_hooks += 1;
+
+            match fs::read_to_string(&hook_path).await {
+                Ok(content) => {
+                    let has_hooksmith = content.contains("hooksmith")
+                        || content.contains("Hooksmith")
+                        || content.contains("HOOKSMITH");
+
+                    let status = if has_hooksmith {
+                        summary.registered_hooks += 1;
+                        HookStatus::Registered
+                    } else {
+                        summary.missing_hooks.push(hook_name.to_string());
+                        HookStatus::Missing
+                    };
+
+                    let content_preview = if verbose {
+                        let preview = content.lines().take(5).collect::<Vec<_>>().join("\n");
+                        if content.lines().count() > 5 {
+                            Some(format!("{}\n...", preview))
+                        } else {
+                            Some(preview)
+                        }
+                    } else {
+                        None
+                    };
+
+                    summary.hook_details.push(HookDetail {
+                        name: hook_name.to_string(),
+                        status,
+                        content_preview: content_preview.clone(),
+                    });
+
+                    // Print status for each hook
+                    let status_icon = match status {
+                        HookStatus::Registered => "✔",
+                        HookStatus::Missing => "✖",
+                        HookStatus::FileMissing => "❓",
+                    };
+
+                    let status_text = match status {
+                        HookStatus::Registered => "✅ Hooksmith registered",
+                        HookStatus::Missing => "❌ Missing Hooksmith",
+                        HookStatus::FileMissing => "❓ Hook file missing",
+                    };
+
+                    println!("{} {} {}", status_icon, hook_name, status_text);
+
+                    if verbose && content_preview.is_some() {
+                        println!("   Content preview:");
+                        for line in content_preview.as_ref().unwrap().lines() {
+                            println!("   {}", line);
+                        }
+                        println!();
+                    }
+                }
+                Err(e) => {
+                    summary.hook_details.push(HookDetail {
+                        name: hook_name.to_string(),
+                        status: HookStatus::FileMissing,
+                        content_preview: None,
+                    });
+
+                    println!("❓ {} ❓ Hook file unreadable: {}", hook_name, e);
+                }
+            }
+        }
+    }
+
+    if summary.total_hooks == 0 {
+        println!("ℹ️  No Git hooks found in {:?}", hooks_dir);
+    }
+
+    Ok(summary)
 }

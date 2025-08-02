@@ -1,0 +1,38 @@
+# Example Lefthook configuration with Hooksmith verify-hooks integration
+# This file demonstrates how to automatically verify Hooksmith registration after push
+
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      glob: "*.rs"
+      run: cargo fmt --all -- --check
+    clippy:
+      glob: "*.rs"
+      run: cargo clippy --all-targets --all-features -- -D warnings
+    test:
+      run: cargo test --all-targets --all-features
+
+pre-push:
+  parallel: true
+  commands:
+    audit:
+      run: cargo audit
+    check-generated:
+      run: cargo xtask check --strict
+
+# Post-push hook to verify Hooksmith registration
+post-push:
+  commands:
+    verify-hooksmith:
+      run: hooksmith verify-hooks
+      description: "Verify Hooksmith is properly registered in all Git hooks"
+
+commit-msg:
+  commands:
+    conventional:
+      run: |
+        if ! grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+" "$1"; then
+          echo "Error: Commit message must follow conventional commit format"
+          exit 1
+        fi 
