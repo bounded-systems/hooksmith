@@ -66,11 +66,12 @@ fn test_tree_entry_attributes() -> Result<(), Box<dyn std::error::Error>> {
     let entry3 = TreeEntryContract::new_with_attributes(
         "100644",
         "src/main.rs".to_string(),
-        "c3d4e5f6789012345678901234567890abcdef1".to_string(),
-        Some(vec!["text".to_string()]),
+        "c3d4e5f6789012345678901234567890abcde1".to_string(),
+        Some(vec!["text=true".to_string()]),
     );
 
     println!("  ✅ Source file without linguist-generated: {}", entry3.is_valid());
+    println!("    Entry3 errors: {:?}", entry3.errors);
     assert!(entry3.is_valid());
 
     println!();

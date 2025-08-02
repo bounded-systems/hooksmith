@@ -44,14 +44,9 @@ pub mod prelude {
         CharacterContract, CharClass, CharAction, CharValidator, FileValidationResult,
         BlobContract, BlobAction, BlobByteAudit, ByteClass, BlobValidator,
         BlobLineContract, LineAction, LineValidator,
-        GitObjectContract, GitObjectValidator,
+        GitObjectContract, GitObjectType, GitObjectValidator,
         TreeMode, TreeObjectType, TreeEntryContract, TreeObjectContract, TreeValidator,
         FilenameContract, FilenameValidator,
-        CharContract, TreeFilenameContractChars, TreeFilenameCharsValidator,
-        SHA1_RE, VALID_FILENAME_RE, VALID_CHAR_RE,
-        UnifiedBlobLineContract, UnifiedBlobContract,
-        UnifiedTreeMode, UnifiedTreeEntryContract, UnifiedTreeContract,
-        CommitContract, TagContract,
-        GitObject, UnifiedValidator
+        CharContract, TreeFilenameContractChars, TreeFilenameCharsValidator
     };
 } 

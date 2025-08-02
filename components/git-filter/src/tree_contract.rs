@@ -241,6 +241,9 @@ impl TreeEntryContract {
                 "-diff" | "-merge" | "-export-ignore" | "-export-subst" => {
                     // These are valid negative attributes
                 }
+                "text" | "text=true" | "text=false" => {
+                    // Text attribute is valid
+                }
                 attr if attr.starts_with("linguist-") => {
                     // Other linguist attributes are valid
                 }
