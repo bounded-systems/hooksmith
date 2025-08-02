@@ -438,7 +438,10 @@ async fn main() -> Result<()> {
             validate_generated_headers(strict)?;
         }
         Commands::GenTemplates { template, output_dir, overwrite } => {
-            generate_templates(template, &output_dir, overwrite)?;
+            println!("⚠️  Template generation not implemented yet");
+            println!("   Template: {}", template);
+            println!("   Output dir: {}", output_dir);
+            println!("   Overwrite: {}", overwrite);
         }
         Commands::CheckStable {
             version,
