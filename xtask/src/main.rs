@@ -309,6 +309,18 @@ enum Commands {
         #[command(subcommand)]
         command: code_stats::CodeStatsCommands,
     },
+    /// Validate commit message (Trunk-style: allows empty messages)
+    ValidateCommitMsg {
+        /// Commit message file path (default: $1 from lefthook)
+        #[arg(long)]
+        file: Option<String>,
+        /// Whether to allow empty commit messages (Trunk-style)
+        #[arg(long, default_value = "true")]
+        allow_empty: bool,
+        /// Whether to validate conventional commit format for non-empty messages
+        #[arg(long, default_value = "true")]
+        validate_conventional: bool,
+    },
 }
 
 /// WIT schema for function definition
@@ -554,6 +566,13 @@ async fn main() -> Result<()> {
         }
         Commands::CodeStats { command } => {
             code_stats::run_code_stats_command(command).await?;
+        }
+        Commands::ValidateCommitMsg {
+            file,
+            allow_empty,
+            validate_conventional,
+        } => {
+            validate_commit_message(file, allow_empty, validate_conventional)?;
         }
     }
 
