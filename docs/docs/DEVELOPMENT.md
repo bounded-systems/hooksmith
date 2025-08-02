@@ -26,6 +26,7 @@ cargo build
 └── ?/
 │   ├── PHASE_5_CI_ENFORCEMENT_SUMMARY.md
 │   ├── Cargo.toml
+│   ├── WARNING_AND_VALIDATION_FIXES.md
 │   ├── CODEGEN_MARKERS.md
 │   ├── ARCHITECTURE.md
 │   ├── STRUCTURE.md
@@ -215,11 +216,6 @@ cargo build
 │   │   ├── tree_contract_demo.rs
 │       └── git_model_demo.rs
 │   ├── scripts/
-│   │   ├── git-trunk-commit.sh
-│   │   ├── setup-pre-commit.sh
-│   │   ├── validate-docs.sh
-│   │   ├── setup-git-aliases.sh
-│       └── pre-commit
 │   ├── lefthook.yml
 │   ├── BOOTSTRAP.md
 │   ├── templates/
@@ -284,6 +280,7 @@ cargo build
 │   ├── test_comprehensive_docs.rs
 │   ├── SHELL_SCRIPT_MIGRATION_SUMMARY.md
 │   ├── TEMPLATE_SYSTEM_SUMMARY.md
+│   ├── SHELL_SCRIPT_MIGRATION_COMPLETE.md
 │   ├── test_safeguards.rs
 │   ├── generated_file_demo
 │   ├── bootstrap-test.rs

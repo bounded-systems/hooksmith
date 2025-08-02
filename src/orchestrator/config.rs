@@ -13,7 +13,7 @@ use tokio::fs;
 use super::runtime::RuntimeConfig;
 
 /// Main orchestrator configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OrchestratorConfig {
     /// Runtime configuration
     pub runtime_config: RuntimeConfig,
@@ -24,21 +24,6 @@ pub struct OrchestratorConfig {
     /// Logging configuration
     pub logging: LoggingConfig,
 }
-
-impl Default for OrchestratorConfig {
-    fn default() -> Self {
-        Self {
-            runtime_config: RuntimeConfig::default(),
-            components: HashMap::new(),
-            settings: GlobalSettings::default(),
-            logging: LoggingConfig::default(),
-        }
-    }
-}
-
-
-
-
 
 /// Configuration for individual components
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -435,7 +420,11 @@ mod tests {
     fn test_default_config() {
         let config = OrchestratorConfig::default();
         assert_eq!(config.components.len(), 0); // Default config has no components
-        assert!(config.settings.output_dir.to_string_lossy().contains("hooksmith"));
+        assert!(config
+            .settings
+            .output_dir
+            .to_string_lossy()
+            .contains("hooksmith"));
         assert!(config.logging.level == LogLevel::Info);
     }
 }

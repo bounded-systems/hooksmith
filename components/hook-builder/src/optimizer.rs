@@ -6,6 +6,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 /// Binary optimizer
+#[allow(dead_code)]
 pub struct BinaryOptimizer {
     /// Optimizer configuration
     config: OptimizerConfig,
@@ -13,6 +14,7 @@ pub struct BinaryOptimizer {
 
 /// Optimizer configuration
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct OptimizerConfig {
     /// Whether to enable optimization
     pub enable_optimization: bool,
@@ -80,12 +82,13 @@ impl BinaryOptimizer {
     }
 
     /// Create a new binary optimizer with custom configuration
+    #[allow(dead_code)]
     pub fn with_config(config: OptimizerConfig) -> Self {
         Self { config }
     }
 
     /// Optimize a binary
-    pub async fn optimize_binary(&self, config: OptimizationConfig) -> Result<OptimizationResult> {
+    pub async fn optimize_binary(&self, _config: OptimizationConfig) -> Result<OptimizationResult> {
         let start_time = std::time::Instant::now();
 
         // TODO: Implement actual optimization

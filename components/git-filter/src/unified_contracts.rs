@@ -644,8 +644,14 @@ mod tests {
     #[test]
     fn test_tree_mode() {
         assert_eq!(TreeMode::parse_from_str("100644"), Some(TreeMode::File));
-        assert_eq!(TreeMode::parse_from_str("100755"), Some(TreeMode::Executable));
-        assert_eq!(TreeMode::parse_from_str("040000"), Some(TreeMode::Directory));
+        assert_eq!(
+            TreeMode::parse_from_str("100755"),
+            Some(TreeMode::Executable)
+        );
+        assert_eq!(
+            TreeMode::parse_from_str("040000"),
+            Some(TreeMode::Directory)
+        );
         assert_eq!(TreeMode::parse_from_str("invalid"), None);
     }
 

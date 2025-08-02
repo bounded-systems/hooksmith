@@ -8,9 +8,7 @@ use anyhow::Result;
 use std::collections::HashMap;
 
 use super::components::ComponentHandle;
-use super::{
-    BuildConfig, CommandResult, LefthookConfig, ValidationConfig, WorktreeOperation,
-};
+use super::{BuildConfig, CommandResult, LefthookConfig, ValidationConfig, WorktreeOperation};
 
 /// Command router for handling CLI commands
 pub struct CommandRouter {
@@ -451,7 +449,6 @@ impl Default for CommandOptions {
 #[cfg(test)]
 mod tests {
     use super::*;
-
 
     #[test]
     fn test_command_router_creation() {

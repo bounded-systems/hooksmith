@@ -78,9 +78,7 @@ impl FileState {
                     | "export-ignore"
                     | "export-subst"
             ) {
-                state
-                    .custom
-                    .insert(key.clone(), (*value).into());
+                state.custom.insert(key.clone(), (*value).into());
             }
         }
 
@@ -95,10 +93,7 @@ impl FileState {
             "filter" => matches!(self.filter, AttributeState::Set | AttributeState::Unset),
             "diff" => matches!(self.diff, AttributeState::Set | AttributeState::Unset),
             "merge" => matches!(self.merge, AttributeState::Set | AttributeState::Unset),
-            "encoding" => matches!(
-                self.encoding,
-                AttributeState::Set | AttributeState::Unset
-            ),
+            "encoding" => matches!(self.encoding, AttributeState::Set | AttributeState::Unset),
             "export-ignore" => matches!(self.export_ignore, AttributeState::Set),
             "export-subst" => matches!(self.export_subst, AttributeState::Set),
             _ => self

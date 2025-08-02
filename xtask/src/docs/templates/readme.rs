@@ -134,7 +134,7 @@ impl ReadmeTemplate {
             ));
             roadmap.push_str(&format!("{}\n\n", item.description));
 
-            for (i, task) in item.items.iter().enumerate() {
+            for (_i, task) in item.items.iter().enumerate() {
                 let status = match item.status {
                     RoadmapStatus::Complete => "✅",
                     RoadmapStatus::InProgress => "🔄",
@@ -142,7 +142,7 @@ impl ReadmeTemplate {
                 };
                 roadmap.push_str(&format!("- [{}] {}\n", status, task));
             }
-            roadmap.push_str("\n");
+            roadmap.push('\n');
         }
 
         roadmap

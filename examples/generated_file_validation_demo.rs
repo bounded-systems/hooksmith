@@ -3,7 +3,6 @@
 //! This example shows how to use the generated file validation system
 //! to prevent manual modifications to files that are automatically generated.
 
-
 use std::process::Command;
 
 /// Simple implementation of generated file validation
@@ -88,7 +87,8 @@ impl GeneratedFileValidator {
     /// Format a user-friendly error message
     fn format_error_message(modified_files: &[String]) -> String {
         let mut message = String::new();
-        message.push_str("The following files are generated and should not be manually modified:\n\n");
+        message
+            .push_str("The following files are generated and should not be manually modified:\n\n");
 
         for file in modified_files {
             message.push_str(&format!("  • {}\n", file));
@@ -163,14 +163,18 @@ fn main() {
 
     // Example 3: Check specific files
     println!("3. Checking specific files...");
-    let test_files = vec!["lefthook.yml", "docs/GENERATED_FILE_VALIDATION.md", "src/main.rs"];
-    
+    let test_files = vec![
+        "lefthook.yml",
+        "docs/GENERATED_FILE_VALIDATION.md",
+        "src/main.rs",
+    ];
+
     for file in test_files {
         match GeneratedFileValidator::is_file_generated(file) {
             Ok(is_generated) => {
                 if is_generated {
                     println!("  • {}: 🔒 Generated file", file);
-                    
+
                     // Check if it has a header
                     match GeneratedFileValidator::has_generated_header(file) {
                         Ok(has_header) => {
@@ -195,7 +199,7 @@ fn main() {
     // Example 4: Add headers to generated files
     println!("4. Adding headers to generated files...");
     let generated_files = vec!["lefthook.yml", "docs/GENERATED_FILE_VALIDATION.md"];
-    
+
     for file in generated_files {
         if let Ok(is_generated) = GeneratedFileValidator::is_file_generated(file) {
             if is_generated {
@@ -230,4 +234,4 @@ fn main() {
     println!("  2. Run validation in your CI/CD pipeline");
     println!("  3. Integrate with your pre-commit hooks");
     println!("  4. Use the full xtask implementation for production");
-} 
+}

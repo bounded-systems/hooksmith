@@ -90,6 +90,7 @@ pub struct HookBuilder {
 
 /// Builder configuration
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct BuilderConfig {
     /// Whether to enable caching
     pub enable_caching: bool,
@@ -125,6 +126,7 @@ impl HookBuilder {
     }
 
     /// Create a new hook builder with custom configuration
+    #[allow(dead_code)]
     pub fn with_config(config: BuilderConfig) -> Self {
         Self {
             cache: HashMap::new(),
@@ -161,7 +163,8 @@ impl HookBuilder {
         }
 
         // Create output directory
-        let output_dir = PathBuf::from(&config.output_path)
+        let output_path = PathBuf::from(&config.output_path);
+        let output_dir = output_path
             .parent()
             .ok_or_else(|| anyhow::anyhow!("Invalid output path"))?;
         fs::create_dir_all(output_dir).await?;
@@ -222,7 +225,7 @@ impl HookBuilder {
 
         // Set target if specified
         if let Some(ref target) = config.target_triple {
-            cargo_cmd.args(&["--target", target]);
+            cargo_cmd.args(["--target", target]);
         }
 
         // Set optimization level
@@ -260,8 +263,8 @@ impl HookBuilder {
 
         if output.status.success() {
             // Build successful
-            let binary_path = self.find_built_binary(&config).await?;
-            let artifacts = self.collect_artifacts(&config).await?;
+            let binary_path = self.find_built_binary(config).await?;
+            let artifacts = self.collect_artifacts(config).await?;
 
             Ok(BuildResult {
                 success: true,
@@ -271,7 +274,7 @@ impl HookBuilder {
                 error: None,
                 duration_ms: 0,
                 binary_size: None,
-                metadata: self.get_build_metadata(&config).await?,
+                metadata: self.get_build_metadata(config).await?,
             })
         } else {
             // Build failed
@@ -386,7 +389,7 @@ impl HookBuilder {
     }
 
     /// Clean build artifacts
-    pub fn clean_build(&self, build_path: &str) -> Result<()> {
+    pub fn clean_build(&self, _build_path: &str) -> Result<()> {
         // This is a simplified implementation
         // In a real implementation, you'd clean the build artifacts
         Ok(())
@@ -442,7 +445,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_available_targets() {
         let builder = HookBuilder::new();
-        let targets = builder.get_available_targets().await.unwrap();
+        let targets = builder.get_available_targets().unwrap();
         assert!(!targets.is_empty());
     }
 }

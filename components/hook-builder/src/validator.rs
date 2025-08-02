@@ -6,6 +6,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 /// Source validator
+#[allow(dead_code)]
 pub struct SourceValidator {
     /// Validator configuration
     config: ValidatorConfig,
@@ -13,6 +14,7 @@ pub struct SourceValidator {
 
 /// Validator configuration
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ValidatorConfig {
     /// Whether to enable strict validation
     pub strict: bool,
@@ -130,12 +132,13 @@ impl SourceValidator {
     }
 
     /// Create a new source validator with custom configuration
+    #[allow(dead_code)]
     pub fn with_config(config: ValidatorConfig) -> Self {
         Self { config }
     }
 
     /// Validate source code
-    pub async fn validate_source(&self, config: ValidationConfig) -> Result<ValidationResult> {
+    pub async fn validate_source(&self, _config: ValidationConfig) -> Result<ValidationResult> {
         let start_time = std::time::Instant::now();
 
         // TODO: Implement actual validation

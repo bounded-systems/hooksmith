@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::blob_contract::BlobContract;
 use crate::tree_contract::{TreeEntryContract, TreeValidator};
+use serde::{Deserialize, Serialize};
 
 /// Git object contract - represents the validation contract for Git objects with attributes
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -402,7 +402,7 @@ mod tests {
     fn test_git_object_contract_with_attributes() {
         let attributes = vec!["linguist-generated=true".to_string(), "-diff".to_string()];
 
-        let mut contract = GitObjectContract::new_with_attributes(
+        let contract = GitObjectContract::new_with_attributes(
             GitObjectType::Blob,
             "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
             1024,
@@ -459,7 +459,7 @@ mod tests {
     #[test]
     fn test_git_object_validator() {
         let tree_validator = TreeValidator::new(true, true, true);
-        let validator = GitObjectValidator::new(true, true, true, tree_validator);
+        let validator = GitObjectValidator::new(true, true, true, true, tree_validator);
 
         let contract = validator.validate_object(
             GitObjectType::Blob,

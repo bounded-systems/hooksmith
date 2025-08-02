@@ -136,7 +136,7 @@ impl WasmManager {
 
         // Generate bindings if requested
         let bindings_path = if config.generate_bindings {
-            let bindings = self.generate_placeholder_bindings(&wasm_filename)?;
+            let bindings = self.generate_placeholder_bindings(wasm_filename)?;
             let bindings_filename = format!("{}_bindings.rs", wasm_filename);
             let bindings_path = config.output_dir.join(bindings_filename);
             fs::write(&bindings_path, bindings)
@@ -193,8 +193,7 @@ impl WasmManager {
 
         // For now, just call the function without arguments
         // In a real implementation, you would handle different argument types
-        let _results = func
-            .call(&mut store, &[], &mut vec![])
+        func.call(&mut store, &[], &mut [])
             .context("Failed to call WASM function")?;
 
         let execution_time = start_time.elapsed();

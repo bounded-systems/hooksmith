@@ -257,7 +257,6 @@ pub async fn download_lefthook_binary(version: &str, target_dir: &PathBuf) -> Re
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
 
     #[tokio::test]
     async fn test_find_lefthook_binary() {

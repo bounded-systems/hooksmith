@@ -8,29 +8,29 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **jsonschema**: ^0.17
-- **console**: ^0.15
+- **chrono**: ^0.4
 - **sha2**: ^0.10
-- **tracing**: ^0.1
+- **toml**: ^0.8
 - **tracing-subscriber**: ^0.3
+- **reqwest**: ^0.11
+- **serde_json**: ^1.0
+- **tempfile**: dev
+- **serde**: ^1.0
+- **serde_yaml**: ^0.9
+- **git2**: ^0.18
+- **which**: ^5.0
 - **wit-bindgen**: ^0.20
 - **indicatif**: ^0.17
-- **wasmtime-wasi**: ^18.0
-- **which**: ^5.0
-- **serde_yaml**: ^0.9
-- **chrono**: ^0.4
-- **anyhow**: ^1.0
-- **clap**: ^4.0
-- **git2**: ^0.18
-- **serde**: ^1.0
-- **tokio**: ^1.0
-- **reqwest**: ^0.11
-- **wasmtime**: ^18.0
+- **console**: ^0.15
 - **git-filter**: *
-- **tempfile**: dev
-- **toml**: ^0.8
+- **jsonschema**: ^0.17
+- **tracing**: ^0.1
 - **cli-core**: *
-- **serde_json**: ^1.0
+- **anyhow**: ^1.0
+- **wasmtime-wasi**: ^18.0
+- **clap**: ^4.0
+- **tokio**: ^1.0
+- **wasmtime**: ^18.0
 
 ## Installation
 
@@ -50,6 +50,7 @@ hooksmith --help
 └── ?/
 │   ├── PHASE_5_CI_ENFORCEMENT_SUMMARY.md
 │   ├── Cargo.toml
+│   ├── WARNING_AND_VALIDATION_FIXES.md
 │   ├── CODEGEN_MARKERS.md
 │   ├── ARCHITECTURE.md
 │   ├── STRUCTURE.md
@@ -239,11 +240,6 @@ hooksmith --help
 │   │   ├── tree_contract_demo.rs
 │       └── git_model_demo.rs
 │   ├── scripts/
-│   │   ├── git-trunk-commit.sh
-│   │   ├── setup-pre-commit.sh
-│   │   ├── validate-docs.sh
-│   │   ├── setup-git-aliases.sh
-│       └── pre-commit
 │   ├── lefthook.yml
 │   ├── BOOTSTRAP.md
 │   ├── templates/
@@ -308,6 +304,7 @@ hooksmith --help
 │   ├── test_comprehensive_docs.rs
 │   ├── SHELL_SCRIPT_MIGRATION_SUMMARY.md
 │   ├── TEMPLATE_SYSTEM_SUMMARY.md
+│   ├── SHELL_SCRIPT_MIGRATION_COMPLETE.md
 │   ├── test_safeguards.rs
 │   ├── generated_file_demo
 │   ├── bootstrap-test.rs
@@ -342,7 +339,7 @@ hooksmith --help
 
 
 
-**Dependencies:** anyhow, serde, serde_json, tokio, tracing, wasmparser, wasmtime, wat, wit-bindgen, wit-component, wit-parser
+**Dependencies:** anyhow, chrono, serde, serde_json, tokio, tracing, wasmparser, wasmtime, wat, which, wit-bindgen, wit-component, wit-parser
 
 ### cli-core
 
@@ -354,7 +351,7 @@ hooksmith --help
 
 
 
-**Dependencies:** anyhow, chrono, futures-io, git2, gix-filter, jsonschema, once_cell, regex, serde, serde_json, serde_yaml, sha2, thiserror, tracing
+**Dependencies:** anyhow, chrono, futures-io, git2, gix-filter, jsonschema, once_cell, regex, serde, serde_json, serde_yaml, sha2, thiserror, tracing, tracing-subscriber
 
 ### worktree-runner
 

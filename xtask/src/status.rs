@@ -1229,9 +1229,9 @@ fn generate_main_migration_script(
     script.push_str("# Generated automatically by xtask status generate-migration-scripts\n");
     script.push_str("# Current progress: ");
     script.push_str(&format!("{:.1}%\n", progress.migration_progress));
-    script.push_str("\n");
+    script.push('\n');
     script.push_str("set -euo pipefail\n");
-    script.push_str("\n");
+    script.push('\n');
     script.push_str("echo \"🔄 Starting Hooksmith File Type Migration\"\n");
     script.push_str("echo \"Current progress: ");
     script.push_str(&format!("{:.1}%", progress.migration_progress));
@@ -1249,7 +1249,7 @@ fn generate_main_migration_script(
             file_type.extension
         ));
         script.push_str(&format!("bash migrate-{}.sh\n", file_type.extension));
-        script.push_str("\n");
+        script.push('\n');
     }
 
     script.push_str("echo \"✅ Migration complete!\"\n");
@@ -1271,9 +1271,9 @@ fn generate_file_type_migration_script(file_type: &FileTypeInfo) -> Result<Strin
         "# Priority: {}, Effort: {}\n",
         file_type.priority, file_type.estimated_effort
     ));
-    script.push_str("\n");
+    script.push('\n');
     script.push_str("set -euo pipefail\n");
-    script.push_str("\n");
+    script.push('\n');
 
     match file_type.migration_status {
         MigrationStatus::Remove => {
@@ -1339,14 +1339,14 @@ fn generate_migration_readme(
 
     readme.push_str("# Hooksmith File Type Migration Scripts\n\n");
     readme.push_str("This directory contains automatically generated migration scripts for normalizing file types in the Hooksmith project.\n\n");
-    readme.push_str(&format!("## Current Status\n\n"));
+    readme.push_str("## Current Status\n\n");
     readme.push_str(&format!(
         "- **Progress**: {:.1}%\n",
         progress.migration_progress
     ));
     readme.push_str(&format!("- **Total Types**: {}\n", progress.total_types));
     readme.push_str(&format!("- **Types to Migrate**: {}\n", file_types.len()));
-    readme.push_str("\n");
+    readme.push('\n');
 
     readme.push_str("## Usage\n\n");
     readme.push_str("### Run All Migrations\n");
@@ -1357,10 +1357,10 @@ fn generate_migration_readme(
 
     readme.push_str("### Run Individual Migrations\n");
     for file_type in file_types {
-        readme.push_str(&format!("```bash\n"));
+        readme.push_str("```bash\n");
         readme.push_str(&format!("chmod +x migrate-{}.sh\n", file_type.extension));
         readme.push_str(&format!("./migrate-{}.sh\n", file_type.extension));
-        readme.push_str(&format!("```\n\n"));
+        readme.push_str("```\n\n");
     }
 
     readme.push_str("## Migration Details\n\n");

@@ -216,7 +216,7 @@ fn generate_api_documentation(
             for dep in &component.dependencies {
                 content.push_str(&format!("- {}\n", dep));
             }
-            content.push_str("\n");
+            content.push('\n');
         }
 
         content.push_str("### Usage\n\n");
@@ -306,7 +306,7 @@ fn generate_testing_guide(
 
 /// Generate contribution guide
 fn generate_contribution_guide(
-    project_data: &crate::docs::source_extraction::ProjectData,
+    _project_data: &crate::docs::source_extraction::ProjectData,
 ) -> Result<String> {
     let mut content = String::new();
 
@@ -398,7 +398,7 @@ fn generate_readme_from_source(
         for feature in &project_data.features {
             content.push_str(&format!("- {}\n", feature));
         }
-        content.push_str("\n");
+        content.push('\n');
     }
 
     // Dependencies from Cargo.toml
@@ -407,13 +407,13 @@ fn generate_readme_from_source(
         for (name, version) in &project_data.dependencies {
             content.push_str(&format!("- **{}**: {}\n", name, version));
         }
-        content.push_str("\n");
+        content.push('\n');
     }
 
     // Installation from Cargo.toml
     content.push_str("## Installation\n\n");
     content.push_str("```bash\n");
-    content.push_str(&format!("cargo install --path .\n"));
+    content.push_str("cargo install --path .\n");
     content.push_str("```\n\n");
 
     // Usage from CLI help

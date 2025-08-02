@@ -36,7 +36,7 @@ pub fn generate_component_docs(component_path: &str, project_data: &ProjectData)
             for dep in &component.dependencies {
                 content.push_str(&format!("- {}\n", dep));
             }
-            content.push_str("\n");
+            content.push('\n');
         }
 
         // Features from actual Cargo.toml
@@ -45,7 +45,7 @@ pub fn generate_component_docs(component_path: &str, project_data: &ProjectData)
             for feature in &component.features {
                 content.push_str(&format!("- {}\n", feature));
             }
-            content.push_str("\n");
+            content.push('\n');
         }
 
         // Usage examples from actual source code
@@ -62,7 +62,7 @@ pub fn generate_component_docs(component_path: &str, project_data: &ProjectData)
         if let Some(api_docs) = extract_api_documentation(&component.path)? {
             content.push_str("## API Reference\n\n");
             content.push_str(&api_docs);
-            content.push_str("\n");
+            content.push('\n');
         }
 
         // Integration with main project
@@ -161,7 +161,7 @@ fn extract_api_documentation(component_path: &Path) -> Result<Option<String>> {
                     for doc in &docs {
                         api_docs.push_str(&format!("{}\n", doc));
                     }
-                    api_docs.push_str("\n");
+                    api_docs.push('\n');
                 }
 
                 // Add the item signature

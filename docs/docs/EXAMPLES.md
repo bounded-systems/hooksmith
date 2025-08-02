@@ -1207,14 +1207,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 Contract Workflow Demo  This example demonstrates how to use the unified contract-driven bootstrap & validation workflow for Hooksmith projects.
 
-### Dependencies
-
-- std::process::Command
-
 ### Code
 
 ```rust
-use std::process::Command;
 fn main() {
     println!("🔨 Hooksmith Contract Workflow Demo");
     println!("=====================================");
@@ -1293,7 +1288,7 @@ fn main() {
     println!("  ✅ Perfect for CI/CD pipelines");
     println!("\n🚀 Ready to try it?");
     println!("Run: cargo xtask contract build --commit");
-} 
+}
 ```
 
 ---
@@ -1564,7 +1559,8 @@ impl GeneratedFileValidator {
     }
     fn format_error_message(modified_files: &[String]) -> String {
         let mut message = String::new();
-        message.push_str("The following files are generated and should not be manually modified:\n\n");
+        message
+            .push_str("The following files are generated and should not be manually modified:\n\n");
         for file in modified_files {
             message.push_str(&format!("  • {}\n", file));
         }
@@ -1619,7 +1615,11 @@ fn main() {
     println!();
     // Example 3: Check specific files
     println!("3. Checking specific files...");
-    let test_files = vec!["lefthook.yml", "docs/GENERATED_FILE_VALIDATION.md", "src/main.rs"];
+    let test_files = vec![
+        "lefthook.yml",
+        "docs/GENERATED_FILE_VALIDATION.md",
+        "src/main.rs",
+    ];
     for file in test_files {
         match GeneratedFileValidator::is_file_generated(file) {
             Ok(is_generated) => {
@@ -1678,7 +1678,7 @@ fn main() {
     println!("  2. Run validation in your CI/CD pipeline");
     println!("  3. Integrate with your pre-commit hooks");
     println!("  4. Use the full xtask implementation for production");
-} 
+}
 ```
 
 ---

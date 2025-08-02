@@ -102,14 +102,14 @@ impl FileAuditResult {
         println!("Allowed files: {}", self.allowed_files);
         println!("Generated files: {}", self.generated_files);
         println!("Manual files: {}", self.manual_files);
-        println!("");
+        println!();
 
         if !self.forbidden_files.is_empty() {
             println!("❌ Forbidden file types:");
             for file in &self.forbidden_files {
                 println!("   - {}", file);
             }
-            println!("");
+            println!();
         }
 
         if !self.missing_markers.is_empty() {
@@ -117,7 +117,7 @@ impl FileAuditResult {
             for file in &self.missing_markers {
                 println!("   - {}", file);
             }
-            println!("");
+            println!();
         }
 
         if !self.errors.is_empty() {
@@ -125,7 +125,7 @@ impl FileAuditResult {
             for error in &self.errors {
                 println!("   - {}", error);
             }
-            println!("");
+            println!();
         }
 
         if self.has_errors() {
@@ -381,11 +381,8 @@ pub fn list_missing_markers() -> Result<Vec<String>> {
             .to_lowercase();
 
         if config.is_generated_type(&extension) {
-            match check_generation_marker(file_path, &config, &extension) {
-                Ok(false) => {
-                    missing_markers.push(file_path.to_string());
-                }
-                _ => {}
+            if let Ok(false) = check_generation_marker(file_path, &config, &extension) {
+                missing_markers.push(file_path.to_string());
             }
         }
     }

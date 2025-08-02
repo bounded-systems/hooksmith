@@ -1,4 +1,9 @@
 pre_commit:
+  clippy:
+    run: cargo clippy --workspace --fix --allow-dirty --allow-staged
+  git-add:
+    run: git add .
+    stage_fixed: true
   validate-extensions:
     run: cargo run -p xtask -- validate-extensions
   contract-validate:

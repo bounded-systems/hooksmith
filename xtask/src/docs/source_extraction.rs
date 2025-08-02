@@ -85,7 +85,7 @@ pub fn extract_project_data() -> Result<ProjectData> {
 
 /// Extract dependencies from Cargo.toml
 fn extract_dependencies(
-    metadata: &Metadata,
+    _metadata: &Metadata,
     root_package: &Package,
 ) -> Result<HashMap<String, String>> {
     let mut dependencies = HashMap::new();
@@ -107,7 +107,7 @@ fn extract_features(root_package: &Package) -> Result<Vec<String>> {
     let mut features = Vec::new();
 
     // Extract features from Cargo.toml
-    for (name, _) in &root_package.features {
+    for name in root_package.features.keys() {
         features.push(name.to_string());
     }
 
@@ -153,7 +153,7 @@ fn extract_project_structure() -> Result<String> {
                 result.push_str(&build_tree(&entry.path(), &new_prefix, is_last)?);
             }
         } else {
-            result.push_str("\n");
+            result.push('\n');
         }
 
         Ok(result)

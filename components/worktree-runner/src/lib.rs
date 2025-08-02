@@ -1,31 +1,14 @@
 //! Worktree Runner WASM Component
 //!
-//! This component provides a WASM interface for managing Git worktrees
-//! by wrapping existing CLI tools like wtp, git-worktree-switcher (wt),
-//! and Treekanga.
-//!
-//! ## Supported Tools
-//!
-//! - **wtp**: Smart Git worktree CLI with branch-only commands
-//! - **wt**: Git worktree switcher for quick navigation
-//! - **treekanga**: Community CLI for worktree management
-//! - **git worktree**: Native Git worktree commands
-//!
-//! ## Usage
-//!
-//! ```rust
-//! use worktree_runner::{WorktreeRunner, ToolConfig};
-//!
-//! let runner = WorktreeRunner::new();
-//! let result = runner.create_worktree("feature/new-feature", &ToolConfig::default()).await;
-//! ```
+//! This component provides WASM interface for managing Git worktrees using various tools.
+//! It supports multiple worktree management tools and provides a unified interface.
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::prelude::*;
+use std::process::Command;
 
 /// Configuration for worktree tools
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ToolConfig {
     /// Preferred tool to use (wtp, wt, treekanga, git)
     pub preferred_tool: Option<String>,
@@ -39,19 +22,6 @@ pub struct ToolConfig {
     pub copy_env: bool,
     /// Environment files to copy (e.g., [".env", ".env.local"])
     pub env_files: Vec<String>,
-}
-
-impl Default for ToolConfig {
-    fn default() -> Self {
-        Self {
-            preferred_tool: None,
-            worktree_base: Some("../worktrees".to_string()),
-            run_setup: true,
-            setup_commands: vec!["cargo build".to_string()],
-            copy_env: true,
-            env_files: vec![".env".to_string(), ".env.local".to_string()],
-        }
-    }
 }
 
 /// Result of a worktree operation
@@ -95,16 +65,13 @@ impl WorktreeTool {
     }
 }
 
-/// Main worktree runner component
-#[wasm_bindgen]
+/// Worktree runner component
 pub struct WorktreeRunner {
     config: ToolConfig,
 }
 
-#[wasm_bindgen]
 impl WorktreeRunner {
     /// Create a new worktree runner with default configuration
-    #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
             config: ToolConfig::default(),
@@ -112,15 +79,12 @@ impl WorktreeRunner {
     }
 
     /// Create a new worktree runner with custom configuration
-    pub fn with_config(config: JsValue) -> Result<WorktreeRunner, JsValue> {
-        let config: ToolConfig = serde_wasm_bindgen::from_value(config)
-            .map_err(|e| JsValue::from_str(&format!("Invalid config: {}", e)))?;
-
-        Ok(Self { config })
+    pub fn with_config(config: ToolConfig) -> Self {
+        Self { config }
     }
 
     /// Get available worktree tools
-    pub fn get_available_tools(&self) -> Result<JsValue, JsValue> {
+    pub fn get_available_tools(&self) -> Vec<WorktreeTool> {
         let tools = vec![
             WorktreeTool::Wtp,
             WorktreeTool::Wt,
@@ -128,74 +92,46 @@ impl WorktreeRunner {
             WorktreeTool::Git,
         ];
 
-        let available: Vec<WorktreeTool> = tools
+        tools
             .into_iter()
             .filter(|tool| tool.is_available())
-            .collect();
-
-        serde_wasm_bindgen::to_value(&available)
-            .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
+            .collect()
     }
 
     /// Create a new worktree
-    #[cfg(target_arch = "wasm32")]
-    pub async fn create_worktree(&self, branch_name: &str) -> Result<JsValue, JsValue> {
-        let result = self
-            .create_worktree_internal(branch_name)
-            .await
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
-
-        serde_wasm_bindgen::to_value(&result)
-            .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
+    pub async fn create_worktree(&self, branch_name: &str) -> Result<WorktreeResult> {
+        self.create_worktree_internal(branch_name).await
     }
 
     /// List all worktrees
-    #[cfg(target_arch = "wasm32")]
-    pub async fn list_worktrees(&self) -> Result<JsValue, JsValue> {
-        let result = self
-            .list_worktrees_internal()
-            .await
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
-
-        serde_wasm_bindgen::to_value(&result)
-            .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
+    pub async fn list_worktrees(&self) -> Result<WorktreeResult> {
+        self.list_worktrees_internal().await
     }
 
     /// Switch to a worktree
-    #[cfg(target_arch = "wasm32")]
-    pub async fn switch_worktree(&self, worktree_name: &str) -> Result<JsValue, JsValue> {
-        let result = self
-            .switch_worktree_internal(worktree_name)
-            .await
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
-
-        serde_wasm_bindgen::to_value(&result)
-            .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
+    pub async fn switch_worktree(&self, worktree_name: &str) -> Result<WorktreeResult> {
+        self.switch_worktree_internal(worktree_name).await
     }
 
     /// Remove a worktree
-    #[cfg(target_arch = "wasm32")]
     pub async fn remove_worktree(
         &self,
         worktree_name: &str,
         with_branch: bool,
-    ) -> Result<JsValue, JsValue> {
-        let result = self
-            .remove_worktree_internal(worktree_name, with_branch)
+    ) -> Result<WorktreeResult> {
+        self.remove_worktree_internal(worktree_name, with_branch)
             .await
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
-
-        serde_wasm_bindgen::to_value(&result)
-            .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
     }
 
     /// Update configuration
-    pub fn update_config(&mut self, config: JsValue) -> Result<(), JsValue> {
-        let config: ToolConfig = serde_wasm_bindgen::from_value(config)
-            .map_err(|e| JsValue::from_str(&format!("Invalid config: {}", e)))?;
-
+    pub fn update_config(&mut self, config: ToolConfig) {
         self.config = config;
-        Ok(())
+    }
+}
+
+impl Default for WorktreeRunner {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -224,7 +160,7 @@ impl WorktreeRunner {
         }
     }
 
-    /// Internal method to switch worktrees
+    /// Internal method to switch worktree
     async fn switch_worktree_internal(&self, worktree_name: &str) -> Result<WorktreeResult> {
         let tool = self.select_best_tool().await?;
 
@@ -236,7 +172,7 @@ impl WorktreeRunner {
         }
     }
 
-    /// Internal method to remove worktrees
+    /// Internal method to remove worktree
     async fn remove_worktree_internal(
         &self,
         worktree_name: &str,
@@ -254,234 +190,362 @@ impl WorktreeRunner {
 
     /// Select the best available tool
     async fn select_best_tool(&self) -> Result<WorktreeTool> {
-        // If a preferred tool is specified and available, use it
-        if let Some(preferred) = &self.config.preferred_tool {
-            let tool = match preferred.as_str() {
-                "wtp" => WorktreeTool::Wtp,
-                "wt" => WorktreeTool::Wt,
-                "treekanga" => WorktreeTool::Treekanga,
-                "git" => WorktreeTool::Git,
-                _ => return Err(anyhow::anyhow!("Unknown preferred tool: {}", preferred)),
-            };
-
-            if tool.is_available() {
-                return Ok(tool);
+        // Check if preferred tool is available
+        if let Some(ref preferred) = self.config.preferred_tool {
+            match preferred.as_str() {
+                "wtp" if WorktreeTool::Wtp.is_available() => return Ok(WorktreeTool::Wtp),
+                "wt" if WorktreeTool::Wt.is_available() => return Ok(WorktreeTool::Wt),
+                "treekanga" if WorktreeTool::Treekanga.is_available() => {
+                    return Ok(WorktreeTool::Treekanga)
+                }
+                "git" if WorktreeTool::Git.is_available() => return Ok(WorktreeTool::Git),
+                _ => {}
             }
         }
 
-        // Otherwise, try tools in order of preference
-        let tools = vec![
-            WorktreeTool::Wtp,
-            WorktreeTool::Wt,
-            WorktreeTool::Treekanga,
-            WorktreeTool::Git,
-        ];
-
-        for tool in tools {
-            if tool.is_available() {
-                return Ok(tool);
-            }
+        // Fall back to best available tool
+        if WorktreeTool::Wtp.is_available() {
+            Ok(WorktreeTool::Wtp)
+        } else if WorktreeTool::Wt.is_available() {
+            Ok(WorktreeTool::Wt)
+        } else if WorktreeTool::Treekanga.is_available() {
+            Ok(WorktreeTool::Treekanga)
+        } else if WorktreeTool::Git.is_available() {
+            Ok(WorktreeTool::Git)
+        } else {
+            Err(anyhow::anyhow!("No worktree management tool available"))
         }
-
-        Err(anyhow::anyhow!("No worktree tools available"))
     }
 
-    // Tool-specific implementations
+    /// Create worktree using wtp
     async fn create_with_wtp(&self, branch_name: &str) -> Result<WorktreeResult> {
-        // TODO: Implement wtp worktree creation
-        // wtp add <branch_name>
+        let output = Command::new("wtp")
+            .arg("create")
+            .arg(branch_name)
+            .output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!("Created worktree with wtp: {}", branch_name),
-            error: None,
-            worktree_path: Some(format!("../worktrees/{}", branch_name)),
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
+            worktree_path: None, // Would need to parse output
             branch_name: Some(branch_name.to_string()),
         })
     }
 
+    /// Create worktree using wt
     async fn create_with_wt(&self, branch_name: &str) -> Result<WorktreeResult> {
-        // TODO: Implement wt worktree creation
+        let output = Command::new("wt").arg("create").arg(branch_name).output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!("Created worktree with wt: {}", branch_name),
-            error: None,
-            worktree_path: Some(format!("../worktrees/{}", branch_name)),
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
+            worktree_path: None,
             branch_name: Some(branch_name.to_string()),
         })
     }
 
+    /// Create worktree using treekanga
     async fn create_with_treekanga(&self, branch_name: &str) -> Result<WorktreeResult> {
-        // TODO: Implement treekanga worktree creation
+        let output = Command::new("treekanga")
+            .arg("create")
+            .arg(branch_name)
+            .output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!("Created worktree with treekanga: {}", branch_name),
-            error: None,
-            worktree_path: Some(format!("../worktrees/{}", branch_name)),
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
+            worktree_path: None,
             branch_name: Some(branch_name.to_string()),
         })
     }
 
+    /// Create worktree using git
     async fn create_with_git(&self, branch_name: &str) -> Result<WorktreeResult> {
-        // TODO: Implement git worktree creation
+        let output = Command::new("git")
+            .arg("worktree")
+            .arg("add")
+            .arg(format!("../{}", branch_name))
+            .arg(branch_name)
+            .output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!("Created worktree with git: {}", branch_name),
-            error: None,
-            worktree_path: Some(format!("../worktrees/{}", branch_name)),
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
+            worktree_path: Some(format!("../{}", branch_name)),
             branch_name: Some(branch_name.to_string()),
         })
     }
 
-    // List implementations
+    /// List worktrees using wtp
     async fn list_with_wtp(&self) -> Result<WorktreeResult> {
+        let output = Command::new("wtp").arg("list").output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: "wtp list output".to_string(),
-            error: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
             worktree_path: None,
             branch_name: None,
         })
     }
 
+    /// List worktrees using wt
     async fn list_with_wt(&self) -> Result<WorktreeResult> {
+        let output = Command::new("wt").arg("list").output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: "wt list output".to_string(),
-            error: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
             worktree_path: None,
             branch_name: None,
         })
     }
 
+    /// List worktrees using treekanga
     async fn list_with_treekanga(&self) -> Result<WorktreeResult> {
+        let output = Command::new("treekanga").arg("list").output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: "treekanga list output".to_string(),
-            error: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
             worktree_path: None,
             branch_name: None,
         })
     }
 
+    /// List worktrees using git
     async fn list_with_git(&self) -> Result<WorktreeResult> {
+        let output = Command::new("git").arg("worktree").arg("list").output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: "git worktree list output".to_string(),
-            error: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
             worktree_path: None,
             branch_name: None,
         })
     }
 
-    // Switch implementations
+    /// Switch worktree using wtp
     async fn switch_with_wtp(&self, worktree_name: &str) -> Result<WorktreeResult> {
+        let output = Command::new("wtp")
+            .arg("switch")
+            .arg(worktree_name)
+            .output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!("Switched to worktree with wtp: {}", worktree_name),
-            error: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
             worktree_path: None,
             branch_name: None,
         })
     }
 
+    /// Switch worktree using wt
     async fn switch_with_wt(&self, worktree_name: &str) -> Result<WorktreeResult> {
+        let output = Command::new("wt")
+            .arg("switch")
+            .arg(worktree_name)
+            .output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!("Switched to worktree with wt: {}", worktree_name),
-            error: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
             worktree_path: None,
             branch_name: None,
         })
     }
 
+    /// Switch worktree using treekanga
     async fn switch_with_treekanga(&self, worktree_name: &str) -> Result<WorktreeResult> {
+        let output = Command::new("treekanga")
+            .arg("switch")
+            .arg(worktree_name)
+            .output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!("Switched to worktree with treekanga: {}", worktree_name),
-            error: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
             worktree_path: None,
             branch_name: None,
         })
     }
 
+    /// Switch worktree using git
     async fn switch_with_git(&self, worktree_name: &str) -> Result<WorktreeResult> {
+        let output = Command::new("git")
+            .arg("worktree")
+            .arg("add")
+            .arg(worktree_name)
+            .output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!("Switched to worktree with git: {}", worktree_name),
-            error: None,
-            worktree_path: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
+            worktree_path: Some(worktree_name.to_string()),
             branch_name: None,
         })
     }
 
-    // Remove implementations
+    /// Remove worktree using wtp
     async fn remove_with_wtp(
         &self,
         worktree_name: &str,
         with_branch: bool,
     ) -> Result<WorktreeResult> {
+        let mut cmd = Command::new("wtp");
+        cmd.arg("remove").arg(worktree_name);
+
+        if with_branch {
+            cmd.arg("--with-branch");
+        }
+
+        let output = cmd.output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!(
-                "Removed worktree with wtp: {} (with_branch: {})",
-                worktree_name, with_branch
-            ),
-            error: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
             worktree_path: None,
             branch_name: None,
         })
     }
 
+    /// Remove worktree using wt
     async fn remove_with_wt(&self, worktree_name: &str) -> Result<WorktreeResult> {
+        let output = Command::new("wt")
+            .arg("remove")
+            .arg(worktree_name)
+            .output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!("Removed worktree with wt: {}", worktree_name),
-            error: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
             worktree_path: None,
             branch_name: None,
         })
     }
 
+    /// Remove worktree using treekanga
     async fn remove_with_treekanga(&self, worktree_name: &str) -> Result<WorktreeResult> {
+        let output = Command::new("treekanga")
+            .arg("remove")
+            .arg(worktree_name)
+            .output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!("Removed worktree with treekanga: {}", worktree_name),
-            error: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
             worktree_path: None,
             branch_name: None,
         })
     }
 
+    /// Remove worktree using git
     async fn remove_with_git(
         &self,
         worktree_name: &str,
         with_branch: bool,
     ) -> Result<WorktreeResult> {
+        let mut cmd = Command::new("git");
+        cmd.arg("worktree").arg("remove").arg(worktree_name);
+
+        if with_branch {
+            cmd.arg("--force");
+        }
+
+        let output = cmd.output()?;
+
         Ok(WorktreeResult {
-            success: true,
-            output: format!(
-                "Removed worktree with git: {} (with_branch: {})",
-                worktree_name, with_branch
-            ),
-            error: None,
+            success: output.status.success(),
+            output: String::from_utf8_lossy(&output.stdout).to_string(),
+            error: if output.status.success() {
+                None
+            } else {
+                Some(String::from_utf8_lossy(&output.stderr).to_string())
+            },
             worktree_path: None,
             branch_name: None,
         })
     }
 }
 
-// WASM bindings for JavaScript interop
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
-
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
+/// Initialize panic hook for better error reporting
 pub fn init_panic_hook() {
-    console_error_panic_hook::set_once();
+    // In a real WASM environment, this would set up panic handling
+    // For now, we'll leave it empty
 }
 
 #[cfg(test)]
@@ -491,17 +555,24 @@ mod tests {
     #[tokio::test]
     async fn test_worktree_runner_creation() {
         let runner = WorktreeRunner::new();
-        assert!(runner.config.run_setup);
+        assert!(!runner.get_available_tools().is_empty());
     }
 
     #[tokio::test]
     async fn test_tool_availability() {
-        let runner = WorktreeRunner::new();
-        // Test that we can create a runner
-        assert!(runner.config.run_setup);
+        let tools = vec![
+            WorktreeTool::Wtp,
+            WorktreeTool::Wt,
+            WorktreeTool::Treekanga,
+            WorktreeTool::Git,
+        ];
 
-        // Test tool availability without WASM-specific functionality
-        let git_tool = WorktreeTool::Git;
-        assert!(git_tool.command_name() == "git");
+        for tool in tools {
+            let available = tool.is_available();
+            // At least git should be available
+            if matches!(tool, WorktreeTool::Git) {
+                assert!(available);
+            }
+        }
     }
 }

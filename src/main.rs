@@ -720,7 +720,11 @@ async fn main() -> Result<()> {
                 }
             }
         }
-        Commands::VerifyHooks { repo_path, verbose, check_installation } => {
+        Commands::VerifyHooks {
+            repo_path,
+            verbose,
+            check_installation,
+        } => {
             println!(
                 "{} {} {}",
                 style("🔍").blue(),
@@ -1052,7 +1056,7 @@ async fn main() -> Result<()> {
 
                     // For now, we'll use a simple implementation that calls the worktree tools directly
                     // In the future, this will use the WASM component
-                    
+
                     use std::process::Command;
 
                     let tool_name = tool.as_deref().unwrap_or("git");
@@ -1069,7 +1073,7 @@ async fn main() -> Result<()> {
                             cmd.arg("create").arg(&branch_name);
                         }
                         "git" => {
-                            cmd.args(&[
+                            cmd.args([
                                 "worktree",
                                 "add",
                                 &format!("{}/{}", base, branch_name),
@@ -1152,7 +1156,7 @@ async fn main() -> Result<()> {
                             cmd.arg("list");
                         }
                         "git" => {
-                            cmd.args(&["worktree", "list"]);
+                            cmd.args(["worktree", "list"]);
                         }
                         _ => {
                             eprintln!(
@@ -1229,7 +1233,7 @@ async fn main() -> Result<()> {
                         }
                         "git" => {
                             // For git, we need to find the worktree path first
-                            let list_cmd = Command::new("git").args(&["worktree", "list"]).output();
+                            let list_cmd = Command::new("git").args(["worktree", "list"]).output();
 
                             if let Ok(output) = list_cmd {
                                 let _stdout = String::from_utf8_lossy(&output.stdout);
@@ -1336,10 +1340,10 @@ async fn main() -> Result<()> {
                         }
                         "git" => {
                             if with_branch {
-                                cmd.args(&["worktree", "remove", "--force", &worktree_name]);
+                                cmd.args(["worktree", "remove", "--force", &worktree_name]);
                                 // Also remove the branch
                                 let branch_cmd = Command::new("git")
-                                    .args(&["branch", "-D", &worktree_name])
+                                    .args(["branch", "-D", &worktree_name])
                                     .status();
                                 if let Ok(status) = branch_cmd {
                                     if status.success() {
@@ -1351,7 +1355,7 @@ async fn main() -> Result<()> {
                                     }
                                 }
                             } else {
-                                cmd.args(&["worktree", "remove", &worktree_name]);
+                                cmd.args(["worktree", "remove", &worktree_name]);
                             }
                         }
                         _ => {
@@ -1400,7 +1404,6 @@ async fn main() -> Result<()> {
                         style("Available worktree tools:").blue()
                     );
 
-                    
                     use which::which;
 
                     let tools = vec![
@@ -1444,6 +1447,7 @@ struct HookVerificationSummary {
 
 /// Detailed information about a specific hook
 #[derive(Debug)]
+#[allow(dead_code)]
 struct HookDetail {
     name: String,
     status: HookStatus,
@@ -1452,6 +1456,7 @@ struct HookDetail {
 
 /// Status of a Hooksmith hook
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 enum HookStatus {
     Configured,
     Missing,
@@ -1467,9 +1472,9 @@ async fn verify_hooksmith_hooks(
     verbose: bool,
     check_installation: bool,
 ) -> Result<HookVerificationSummary> {
+    use serde_yaml;
     use std::path::Path;
     use tokio::fs;
-    use serde_yaml;
 
     let repo_path = Path::new(repo_path);
     let lefthook_config_path = repo_path.join("lefthook.yml");
@@ -1483,8 +1488,19 @@ async fn verify_hooksmith_hooks(
 
     // Expected Hooksmith hooks
     let expected_hooks = vec![
-        ("pre-commit", vec!["hooksmith-fmt", "hooksmith-clippy", "hooksmith-test", "hooksmith-gen-wit"]),
-        ("pre-push", vec!["hooksmith-audit", "hooksmith-check-generated"]),
+        (
+            "pre-commit",
+            vec![
+                "hooksmith-fmt",
+                "hooksmith-clippy",
+                "hooksmith-test",
+                "hooksmith-gen-wit",
+            ],
+        ),
+        (
+            "pre-push",
+            vec!["hooksmith-audit", "hooksmith-check-generated"],
+        ),
         ("post-commit", vec!["verify-hooksmith"]),
         ("commit-msg", vec!["hooksmith-conventional"]),
     ];
@@ -1508,7 +1524,8 @@ async fn verify_hooksmith_hooks(
             if pre_commit_hook.exists() {
                 // Read the hook file to check if it's managed by Lefthook
                 if let Ok(content) = fs::read_to_string(&pre_commit_hook).await {
-                    summary.lefthook_active = content.contains("lefthook") || content.contains("LEFTHOOK");
+                    summary.lefthook_active =
+                        content.contains("lefthook") || content.contains("LEFTHOOK");
                 }
             }
         }
@@ -1547,7 +1564,10 @@ async fn verify_hooksmith_hooks(
                         config_preview: config_preview.clone(),
                     });
 
-                    println!("✔ {}/{} ✅ Hooksmith hook configured", hook_type, expected_hook_name);
+                    println!(
+                        "✔ {}/{} ✅ Hooksmith hook configured",
+                        hook_type, expected_hook_name
+                    );
 
                     if verbose && config_preview.is_some() {
                         println!("   Configuration:");
@@ -1557,7 +1577,9 @@ async fn verify_hooksmith_hooks(
                         println!();
                     }
                 } else {
-                    summary.missing_hooks.push(format!("{}/{}", hook_type, expected_hook_name));
+                    summary
+                        .missing_hooks
+                        .push(format!("{}/{}", hook_type, expected_hook_name));
 
                     summary.hook_details.push(HookDetail {
                         name: format!("{}/{}", hook_type, expected_hook_name),
@@ -1565,7 +1587,10 @@ async fn verify_hooksmith_hooks(
                         config_preview: None,
                     });
 
-                    println!("✖ {}/{} ❌ Missing Hooksmith hook", hook_type, expected_hook_name);
+                    println!(
+                        "✖ {}/{} ❌ Missing Hooksmith hook",
+                        hook_type, expected_hook_name
+                    );
                 }
             }
         }

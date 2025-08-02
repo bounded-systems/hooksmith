@@ -23,7 +23,7 @@ pub struct LefthookHook {
 }
 
 /// Lefthook configuration structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct LefthookConfig {
     /// Pre-commit hooks
     #[serde(rename = "pre-commit")]
@@ -37,17 +37,6 @@ pub struct LefthookConfig {
     /// Commit-msg hooks
     #[serde(rename = "commit-msg")]
     pub commit_msg: Option<HashMap<String, LefthookHook>>,
-}
-
-impl Default for LefthookConfig {
-    fn default() -> Self {
-        Self {
-            pre_commit: None,
-            pre_push: None,
-            post_commit: None,
-            commit_msg: None,
-        }
-    }
 }
 
 /// Generate a Lefthook configuration file

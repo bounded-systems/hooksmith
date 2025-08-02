@@ -6,7 +6,6 @@
 use crate::config::{HookConfig, JobConfig};
 use crate::error::Result;
 use clap::{Parser, Subcommand};
-use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// CLI for lefthook-rs

@@ -290,12 +290,12 @@ impl HookBuilder {
 
         // Set target if specified
         if let Some(target) = &config.target {
-            cmd.args(&["--target", target]);
+            cmd.args(["--target", target]);
         }
 
         // Add features
         if !config.features.is_empty() {
-            cmd.args(&["--features", &config.features.join(",")]);
+            cmd.args(["--features", &config.features.join(",")]);
         }
 
         // Set working directory
@@ -331,7 +331,7 @@ impl HookBuilder {
         };
 
         // Add .exe extension on Windows
-        let source_binary = if cfg!(target_os = "windows") && !source_binary.extension().is_some() {
+        let source_binary = if cfg!(target_os = "windows") && source_binary.extension().is_none() {
             source_binary.with_extension("exe")
         } else {
             source_binary
@@ -339,7 +339,7 @@ impl HookBuilder {
 
         // Copy to output directory
         let output_binary = config.output_dir.join(&config.hook_name);
-        let output_binary = if cfg!(target_os = "windows") && !output_binary.extension().is_some() {
+        let output_binary = if cfg!(target_os = "windows") && output_binary.extension().is_none() {
             output_binary.with_extension("exe")
         } else {
             output_binary

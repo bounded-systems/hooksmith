@@ -56,7 +56,7 @@ pub fn generate_structure_docs() -> Result<String> {
         "- **Scripts**:        {} (.sh)\n",
         structure.script_files
     ));
-    content.push_str("\n");
+    content.push('\n');
 
     // File type breakdown
     content.push_str("## 📋 File Type Breakdown\n\n");
@@ -81,7 +81,7 @@ pub fn generate_structure_docs() -> Result<String> {
         content.push_str(&format!("| .{} | {} | {} |\n", ext, count, description));
     }
 
-    content.push_str("\n");
+    content.push('\n');
 
     // Component breakdown
     content.push_str("## 🧩 Component Breakdown\n\n");
@@ -235,7 +235,7 @@ fn generate_component_breakdown() -> Result<String> {
         for (name, description, status) in components {
             content.push_str(&format!("| {} | {} | {} |\n", name, description, status));
         }
-        content.push_str("\n");
+        content.push('\n');
     }
 
     // Check for main source structure
@@ -252,7 +252,7 @@ fn generate_component_breakdown() -> Result<String> {
     content.push_str("| `hooks/` | Git hook scripts and configurations |\n");
     content.push_str("| `schemas/` | JSON schema definitions |\n");
     content.push_str("| `wit/` | WebAssembly Interface Type definitions |\n");
-    content.push_str("\n");
+    content.push('\n');
 
     Ok(content)
 }

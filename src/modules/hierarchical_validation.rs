@@ -206,15 +206,11 @@ impl HierarchicalValidator {
         let mut changes = Vec::new();
 
         // Get the diff range
-        let diff_range = if let Some(range) = commit_range {
-            range
-        } else {
-            "HEAD~1..HEAD"
-        };
+        let diff_range = commit_range.unwrap_or("HEAD~1..HEAD");
 
         // Get file changes
         let output = Command::new("git")
-            .args(&["diff", "--name-only", diff_range])
+            .args(["diff", "--name-only", diff_range])
             .current_dir(&self.repo_path)
             .output()
             .context("Failed to get git diff")?;
@@ -254,7 +250,7 @@ impl HierarchicalValidator {
 
         // Get word-level diff to detect character changes
         let word_diff = Command::new("git")
-            .args(&[
+            .args([
                 "diff",
                 "--word-diff=porcelain",
                 diff_range,
@@ -605,7 +601,7 @@ impl HierarchicalValidator {
     /// Get current commit hash
     async fn get_current_commit_hash(&self) -> Result<String> {
         let output = Command::new("git")
-            .args(&["rev-parse", "HEAD"])
+            .args(["rev-parse", "HEAD"])
             .current_dir(&self.repo_path)
             .output()
             .context("Failed to get commit hash")?;
@@ -633,7 +629,7 @@ impl HierarchicalValidator {
 
         // Store the note
         let output = Command::new("git")
-            .args(&[
+            .args([
                 "notes",
                 "--ref=contract-validation",
                 "add",
@@ -691,7 +687,7 @@ impl HierarchicalValidator {
     /// Get validation notes for a commit
     pub async fn get_validation_notes(&self, commit_hash: &str) -> Result<Vec<ValidationNote>> {
         let output = Command::new("git")
-            .args(&["notes", "--ref=contract-validation", "show", commit_hash])
+            .args(["notes", "--ref=contract-validation", "show", commit_hash])
             .current_dir(&self.repo_path)
             .output()
             .context("Failed to get validation notes")?;

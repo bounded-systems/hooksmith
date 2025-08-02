@@ -63,12 +63,15 @@ This document shows the complete file structure of the repository.
 ├── PHASE_5_CI_ENFORCEMENT_SUMMARY.md
 ├── README.md
 ├── SAFEGUARDS_SUMMARY.md
+├── SHELL_SCRIPT_MIGRATION_COMPLETE.md
+├── SHELL_SCRIPT_MIGRATION_SUMMARY.md
 ├── SOURCE_BASED_DOCS.md
 ├── STATUS_SYSTEM_DESIGN.md
 ├── STATUS_SYSTEM_JSON_CODEGEN_SUMMARY.md
 ├── STATUS_SYSTEM_SUMMARY.md
 ├── STRUCTURE.md
 ├── TEMPLATE_SYSTEM_SUMMARY.md
+├── WARNING_AND_VALIDATION_FIXES.md
 ├── bootstrap-simple.rs
 ├── bootstrap-test.rs
 ├── bootstrap.rs
@@ -414,8 +417,6 @@ This document shows the complete file structure of the repository.
   ├── contract-transition.schema.json
 ├── schemas/
   ├── merkle-proof.schema.json
-├── scripts/
-  ├── validate-docs.sh
 ├── src/
   ├── commands/
     ├── mod.rs
@@ -626,32 +627,31 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       302
+- **Total Files**:       301
 - **Rust Files**:        115 (.rs)
 - **Configuration Files**:        31 (.toml, .yaml, .rc)
-- **Documentation**:        114 (.md)
-- **Scripts**:        4 (.sh)
+- **Documentation**:        118 (.md)
+- **Scripts**:        0 (.sh)
 
 ## 📋 File Type Breakdown
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
 | .rs | 115 | Rust source files |
-| .html | 1 | HTML documentation |
-| .toml | 8 | Cargo and configuration files |
-| .yaml | 4 | YAML configuration files |
-| .sh | 4 | Shell scripts |
-| .css | 1 | Stylesheet files |
-| .hbs | 1 | Other files |
-| .md | 114 | Markdown documentation |
-| .dot | 1 | Other files |
-| .yml | 9 | YAML configuration files |
-| .lock | 2 | Other files |
-| .json | 10 | JSON schema and config files |
-| .epub | 1 | EPUB documentation |
 | .wit | 8 | WebAssembly Interface Type definitions |
-| .pdf | 1 | PDF documentation |
+| .yml | 9 | YAML configuration files |
+| .md | 118 | Markdown documentation |
+| .json | 10 | JSON schema and config files |
+| .yaml | 4 | YAML configuration files |
+| .dot | 1 | Other files |
+| .toml | 8 | Cargo and configuration files |
+| .epub | 1 | EPUB documentation |
+| .hbs | 1 | Other files |
+| .html | 1 | HTML documentation |
+| .lock | 2 | Other files |
 | .bash | 1 | Other files |
+| .css | 1 | Stylesheet files |
+| .pdf | 1 | PDF documentation |
 
 ## 🧩 Component Breakdown
 
@@ -682,9 +682,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 155
-- **Modified Files**: 22
+- **Total Commits**: 159
+- **Modified Files**: 49
 
 ---
 
-*Generated on Sat Aug  2 20:49:54 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sat Aug  2 23:22:28 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

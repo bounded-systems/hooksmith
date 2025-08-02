@@ -5,6 +5,7 @@
 use anyhow::Result;
 
 /// Rust compiler interface
+#[allow(dead_code)]
 pub struct RustCompiler {
     /// Compiler configuration
     config: CompilerConfig,
@@ -12,6 +13,7 @@ pub struct RustCompiler {
 
 /// Compiler configuration
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct CompilerConfig {
     /// Whether to enable optimizations
     pub optimize: bool,
@@ -36,6 +38,7 @@ impl Default for CompilerConfig {
 
 impl RustCompiler {
     /// Create a new Rust compiler
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             config: CompilerConfig::default(),
@@ -43,11 +46,13 @@ impl RustCompiler {
     }
 
     /// Create a new Rust compiler with custom configuration
+    #[allow(dead_code)]
     pub fn with_config(config: CompilerConfig) -> Self {
         Self { config }
     }
 
     /// Compile a Rust project
+    #[allow(dead_code)]
     pub async fn compile(&self, _source_path: &str) -> Result<()> {
         // TODO: Implement actual compilation
         Ok(())

@@ -5,7 +5,7 @@
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs;
 
@@ -198,10 +198,10 @@ async fn diff_operation(file: Option<&PathBuf>) -> Result<()> {
 }
 
 /// Validate changes in a commit range
-async fn validate_changes(range: &str, repo: &PathBuf) -> Result<()> {
+async fn validate_changes(range: &str, repo: &Path) -> Result<()> {
     println!("🔍 Detecting changes in range: {}", range);
 
-    let validator = HierarchicalValidator::new(repo.clone());
+    let validator = HierarchicalValidator::new(repo.to_path_buf());
 
     // Detect changes
     let changes = validator
@@ -263,10 +263,10 @@ async fn validate_changes(range: &str, repo: &PathBuf) -> Result<()> {
 }
 
 /// Verify validation chain integrity
-async fn verify_validation_chain(commit: &str, repo: &PathBuf) -> Result<()> {
+async fn verify_validation_chain(commit: &str, repo: &Path) -> Result<()> {
     println!("🔍 Verifying validation chain for commit: {}", commit);
 
-    let validator = HierarchicalValidator::new(repo.clone());
+    let validator = HierarchicalValidator::new(repo.to_path_buf());
 
     let is_valid = validator
         .verify_validation_chain(commit)
@@ -284,10 +284,10 @@ async fn verify_validation_chain(commit: &str, repo: &PathBuf) -> Result<()> {
 }
 
 /// Show validation notes for a commit
-async fn show_validation_notes(commit: &str, repo: &PathBuf) -> Result<()> {
+async fn show_validation_notes(commit: &str, repo: &Path) -> Result<()> {
     println!("📝 Validation notes for commit: {}", commit);
 
-    let validator = HierarchicalValidator::new(repo.clone());
+    let validator = HierarchicalValidator::new(repo.to_path_buf());
 
     // Get validation notes
     let notes = validator
@@ -341,7 +341,7 @@ async fn pre_commit_hook(repo: &PathBuf, validate_generated: bool) -> Result<()>
 
     // Get staged changes
     let output = Command::new("git")
-        .args(&["diff", "--cached", "--name-only"])
+        .args(["diff", "--cached", "--name-only"])
         .current_dir(repo)
         .output()
         .context("Failed to get staged changes")?;
@@ -433,7 +433,7 @@ async fn post_commit_hook(repo: &PathBuf) -> Result<()> {
 
     // Get the current commit hash
     let output = Command::new("git")
-        .args(&["rev-parse", "HEAD"])
+        .args(["rev-parse", "HEAD"])
         .current_dir(repo)
         .output()
         .context("Failed to get current commit hash")?;
@@ -449,7 +449,7 @@ async fn post_commit_hook(repo: &PathBuf) -> Result<()> {
     println!("📝 Validating commit: {}", commit_hash);
 
     // Validate the changes in this commit
-    let validator = HierarchicalValidator::new(repo.clone());
+    let validator = HierarchicalValidator::new(repo.to_path_buf());
 
     let changes = validator
         .detect_changes(Some(&format!("{}~1..{}", commit_hash, commit_hash)))
@@ -485,10 +485,10 @@ async fn post_commit_hook(repo: &PathBuf) -> Result<()> {
 }
 
 /// Validate file extensions against whitelist
-async fn validate_extensions(repo: &PathBuf, staged_only: bool) -> Result<()> {
+async fn validate_extensions(repo: &Path, _staged_only: bool) -> Result<()> {
     println!("🔍 Validating file extensions...");
 
-    let validator = HierarchicalValidator::new(repo.clone());
+    let validator = HierarchicalValidator::new(repo.to_path_buf());
 
     let changes = validator
         .detect_changes(None)
@@ -552,7 +552,7 @@ async fn validate_extensions(repo: &PathBuf, staged_only: bool) -> Result<()> {
 async fn create_temp_commit(repo: &PathBuf) -> Result<String> {
     // Create a temporary commit with staged changes
     let output = Command::new("git")
-        .args(&["commit", "--no-verify", "-m", "temp: validation commit"])
+        .args(["commit", "--no-verify", "-m", "temp: validation commit"])
         .current_dir(repo)
         .output()
         .context("Failed to create temp commit")?;
@@ -566,7 +566,7 @@ async fn create_temp_commit(repo: &PathBuf) -> Result<String> {
 
     // Get the commit hash
     let output = Command::new("git")
-        .args(&["rev-parse", "HEAD"])
+        .args(["rev-parse", "HEAD"])
         .current_dir(repo)
         .output()
         .context("Failed to get temp commit hash")?;
@@ -585,7 +585,7 @@ async fn create_temp_commit(repo: &PathBuf) -> Result<String> {
 async fn cleanup_temp_commit(repo: &PathBuf, commit_hash: &str) -> Result<()> {
     // Reset to the previous commit
     let output = Command::new("git")
-        .args(&["reset", "--soft", &format!("{}~1", commit_hash)])
+        .args(["reset", "--soft", &format!("{}~1", commit_hash)])
         .current_dir(repo)
         .output()
         .context("Failed to reset temp commit")?;

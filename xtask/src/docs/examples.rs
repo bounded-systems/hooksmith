@@ -50,7 +50,7 @@ pub fn generate_examples_docs() -> Result<String> {
                 example.name.to_lowercase().replace(' ', "-")
             ));
         }
-        content.push_str("\n");
+        content.push('\n');
 
         // Generate each example section
         for example in examples {
@@ -62,7 +62,7 @@ pub fn generate_examples_docs() -> Result<String> {
                 for dep in &example.dependencies {
                     content.push_str(&format!("- {}\n", dep));
                 }
-                content.push_str("\n");
+                content.push('\n');
             }
 
             content.push_str("### Code\n\n");
@@ -172,11 +172,11 @@ fn extract_description_from_comments(content: &str) -> String {
 
     for line in lines {
         let trimmed = line.trim();
-        if trimmed.starts_with("//!") {
-            description.push_str(&trimmed[3..].trim());
+        if let Some(stripped) = trimmed.strip_prefix("//!") {
+            description.push_str(stripped.trim());
             description.push(' ');
-        } else if trimmed.starts_with("///") {
-            description.push_str(&trimmed[3..].trim());
+        } else if let Some(stripped) = trimmed.strip_prefix("///") {
+            description.push_str(stripped.trim());
             description.push(' ');
         } else if !trimmed.starts_with("//") && !trimmed.is_empty() {
             break;

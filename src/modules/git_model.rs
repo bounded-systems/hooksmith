@@ -251,7 +251,7 @@ impl HookInfo {
 }
 
 /// Lefthook-specific command configuration
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct LefthookCommand {
     /// The command to run
     pub run: String,
@@ -287,30 +287,6 @@ pub struct LefthookCommand {
     pub use_stdin: Option<bool>,
     /// Whether to stage fixed files
     pub stage_fixed: Option<bool>,
-}
-
-impl Default for LefthookCommand {
-    fn default() -> Self {
-        Self {
-            run: String::new(),
-            files: None,
-            skip: None,
-            only: None,
-            advanced_skip: None,
-            advanced_only: None,
-            tags: Vec::new(),
-            env: HashMap::new(),
-            file_types: Vec::new(),
-            glob: Vec::new(),
-            root: None,
-            exclude: None,
-            priority: None,
-            fail_text: None,
-            interactive: None,
-            use_stdin: None,
-            stage_fixed: None,
-        }
-    }
 }
 
 impl LefthookCommand {
@@ -459,7 +435,7 @@ pub enum ExcludeCondition {
 }
 
 /// Lefthook-specific hook configuration options
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct LefthookHookConfig {
     /// Whether to run commands in parallel
     pub parallel: Option<bool>,
@@ -481,23 +457,6 @@ pub struct LefthookHookConfig {
     pub scripts: HashMap<String, String>,
     /// Detailed commands with full configuration
     pub detailed_commands: HashMap<String, LefthookCommand>,
-}
-
-impl Default for LefthookHookConfig {
-    fn default() -> Self {
-        Self {
-            parallel: None,
-            piped: None,
-            follow: None,
-            files: None,
-            exclude_tags: Vec::new(),
-            skip: None,
-            only: None,
-            commands: HashMap::new(),
-            scripts: HashMap::new(),
-            detailed_commands: HashMap::new(),
-        }
-    }
 }
 
 impl LefthookHookConfig {
@@ -713,7 +672,7 @@ pub fn is_run_files_compatible(run: &str) -> bool {
 }
 
 /// File substitution context for Lefthook commands
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct FileSubstitutionContext {
     /// Specific files to substitute
     pub files: Vec<String>,
@@ -723,17 +682,6 @@ pub struct FileSubstitutionContext {
     pub staged_files: Vec<String>,
     /// Files being pushed
     pub push_files: Vec<String>,
-}
-
-impl Default for FileSubstitutionContext {
-    fn default() -> Self {
-        Self {
-            files: Vec::new(),
-            all_files: Vec::new(),
-            staged_files: Vec::new(),
-            push_files: Vec::new(),
-        }
-    }
 }
 
 impl FileSubstitutionContext {
@@ -1074,7 +1022,7 @@ impl SkipChecker {
 
     /// Check if a reference pattern matches the current branch
     fn matches_ref(&self, state: &GitState, ref_pattern: &str) -> bool {
-        if ref_pattern == &state.branch {
+        if ref_pattern == state.branch {
             return true;
         }
 
@@ -1404,7 +1352,7 @@ pub mod diagrams {
             ));
         }
 
-        dot.push_str("\n");
+        dot.push('\n');
 
         // Add action edges
         for state in [

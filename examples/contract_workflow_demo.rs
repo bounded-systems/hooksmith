@@ -3,8 +3,6 @@
 //! This example demonstrates how to use the unified contract-driven
 //! bootstrap & validation workflow for Hooksmith projects.
 
-use std::process::Command;
-
 fn main() {
     println!("🔨 Hooksmith Contract Workflow Demo");
     println!("=====================================");
@@ -93,4 +91,4 @@ fn main() {
 
     println!("\n🚀 Ready to try it?");
     println!("Run: cargo xtask contract build --commit");
-} 
+}

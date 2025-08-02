@@ -113,6 +113,7 @@ pub struct CodeAnalysisReport {
 
 /// Code stats command configuration
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct CodeStatsConfig {
     /// Whether to show detailed breakdown
     pub detailed: bool,
@@ -139,6 +140,7 @@ pub enum OutputFormat {
 
 /// Code stats CLI commands
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct CodeStatsCli {
     command: CodeStatsCommands,
 }
@@ -349,7 +351,7 @@ async fn count_rust_lines() -> Result<usize> {
     let workspace_root = std::env::current_dir()?.join("..");
 
     let output = Command::new("git")
-        .args(&["ls-files", "*.rs"])
+        .args(["ls-files", "*.rs"])
         .current_dir(&workspace_root)
         .output()
         .context("Failed to find Rust files")?;
@@ -360,7 +362,7 @@ async fn count_rust_lines() -> Result<usize> {
     }
 
     let output = Command::new("wc")
-        .args(&["-l"])
+        .args(["-l"])
         .args(files.lines().collect::<Vec<_>>())
         .current_dir(&workspace_root)
         .output()
@@ -384,7 +386,7 @@ async fn count_pattern(pattern: &str) -> Result<usize> {
 
     // Get list of Rust files
     let files_output = Command::new("git")
-        .args(&["ls-files", "*.rs"])
+        .args(["ls-files", "*.rs"])
         .current_dir(&workspace_root)
         .output()
         .context("Failed to get Rust files")?;
@@ -396,7 +398,7 @@ async fn count_pattern(pattern: &str) -> Result<usize> {
 
     // Count pattern in all Rust files
     let output = Command::new("grep")
-        .args(&["-c", pattern])
+        .args(["-c", pattern])
         .args(files.lines().collect::<Vec<_>>())
         .current_dir(&workspace_root)
         .output()
@@ -406,7 +408,7 @@ async fn count_pattern(pattern: &str) -> Result<usize> {
         .lines()
         .map(|line| {
             line.split(':')
-                .last()
+                .next_back()
                 .unwrap_or("0")
                 .parse::<usize>()
                 .unwrap_or(0)
@@ -424,7 +426,7 @@ async fn run_clippy_analysis(strict: bool) -> Result<ClippyAnalysis> {
         args.extend_from_slice(&["--", "-D", "warnings"]);
     }
 
-    let output = Command::new("cargo").args(&args).output();
+    let output = Command::new("cargo").args(args).output();
 
     let mut analysis = ClippyAnalysis {
         warnings: 0,
@@ -483,7 +485,7 @@ async fn analyze_build_timing() -> Result<BuildTiming> {
     let start = std::time::Instant::now();
 
     let output = Command::new("cargo")
-        .args(&["build", "--timings"])
+        .args(["build", "--timings"])
         .output()
         .context("Failed to run cargo build with timings")?;
 
@@ -551,7 +553,7 @@ async fn count_function_lines() -> Result<usize> {
 
     // Get list of Rust files
     let files_output = Command::new("git")
-        .args(&["ls-files", "*.rs"])
+        .args(["ls-files", "*.rs"])
         .current_dir(&workspace_root)
         .output()
         .context("Failed to get Rust files")?;
@@ -563,7 +565,7 @@ async fn count_function_lines() -> Result<usize> {
 
     // Count function lines using grep
     let output = Command::new("grep")
-        .args(&["-A", "1", "^ *fn "])
+        .args(["-A", "1", "^ *fn "])
         .args(files.lines().collect::<Vec<_>>())
         .current_dir(&workspace_root)
         .output()
@@ -597,7 +599,7 @@ fn calculate_quality_score(report: &CodeAnalysisReport) -> f64 {
         score -= (report.quality.avg_function_length - 50.0) * 0.2;
     }
 
-    score.max(0.0).min(100.0)
+    score.clamp(0.0, 100.0)
 }
 
 /// Calculate quality grade (A-F)

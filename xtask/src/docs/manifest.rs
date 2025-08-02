@@ -109,7 +109,7 @@ impl DocumentationManifest {
         }
 
         // Check for valid generators
-        let valid_generators = vec![
+        let valid_generators = [
             "cli_help",
             "structure",
             "examples",
