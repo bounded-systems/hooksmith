@@ -1,6 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::Path;
 
 /// Character classification for byte-level validation
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

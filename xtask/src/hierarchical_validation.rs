@@ -82,6 +82,15 @@ pub enum Commands {
         #[arg(long, default_value = ".")]
         repo: PathBuf,
     },
+    /// Validate file extensions against whitelist
+    ValidateExtensions {
+        /// Repository path
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// Whether to check only staged files
+        #[arg(long)]
+        staged_only: bool,
+    },
 }
 
 /// Run a hierarchical validation command
@@ -110,6 +119,9 @@ pub async fn run_command(command: Commands) -> Result<()> {
         }
         Commands::PostCommit { repo } => {
             post_commit_hook(&repo).await?;
+        }
+        Commands::ValidateExtensions { repo, staged_only } => {
+            validate_extensions(&repo, staged_only).await?;
         }
     }
 
@@ -438,6 +450,67 @@ async fn post_commit_hook(repo: &PathBuf) -> Result<()> {
         println!("✅ Post-commit validation passed successfully!");
     }
 
+    Ok(())
+}
+
+/// Validate file extensions against whitelist
+async fn validate_extensions(repo: &PathBuf, staged_only: bool) -> Result<()> {
+    println!("🔍 Validating file extensions...");
+
+    let validator = HierarchicalValidator::new(repo.clone());
+
+    let changes = validator
+        .detect_changes(None)
+        .await
+        .context("Failed to detect changes for extension validation")?;
+
+    if changes.is_empty() {
+        println!("✅ No changes detected for extension validation.");
+        return Ok(());
+    }
+
+    println!("📝 Found {} changes for extension validation:", changes.len());
+    for change in &changes {
+        println!("  - {}: {:?} scope", change.file.display(), change.scope);
+    }
+
+    let results = validator
+        .validate_hierarchically(changes)
+        .await
+        .context("Failed to validate extensions")?;
+
+    let mut total_validated = 0;
+    let mut total_failed = 0;
+
+    for result in &results {
+        if result.validated {
+            total_validated += 1;
+            println!(
+                "✅ {:?} scope validated successfully ({}ms)",
+                result.scope, result.duration_ms
+            );
+        } else {
+            total_failed += 1;
+            println!(
+                "❌ {:?} scope validation failed ({}ms)",
+                result.scope, result.duration_ms
+            );
+            for error in &result.errors {
+                println!("    - {}: {}", error.severity, error.message);
+            }
+        }
+    }
+
+    println!("\n📊 Extension Validation Summary:");
+    println!("  - Total scopes: {}", results.len());
+    println!("  - Validated: {}", total_validated);
+    println!("  - Failed: {}", total_failed);
+
+    if total_failed > 0 {
+        anyhow::bail!("Extension validation failed for {} scopes", total_failed);
+    }
+
+    println!("✅ All extension validations passed successfully!");
     Ok(())
 }
 

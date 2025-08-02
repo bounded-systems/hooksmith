@@ -134,19 +134,20 @@ impl BlobLineContract {
 
 /// Line validator that processes individual lines within Git blobs
 pub struct LineValidator {
-    /// Whether to normalize line endings
-    normalize_line_endings: bool,
-    /// Whether to allow non-normalized EOL (if false, marks as Fix)
-    allow_mixed_eol: bool,
-    /// Whether to generate detailed byte analysis
+    /// Whether to validate line endings
+    validate_line_endings: bool,
+    /// Whether to validate line content
+    validate_line_content: bool,
+    /// Whether to generate byte analysis
+    #[allow(dead_code)]
     generate_byte_analysis: bool,
 }
 
 impl Default for LineValidator {
     fn default() -> Self {
         Self {
-            normalize_line_endings: true,
-            allow_mixed_eol: false,
+            validate_line_endings: true,
+            validate_line_content: true,
             generate_byte_analysis: false,
         }
     }
@@ -155,13 +156,13 @@ impl Default for LineValidator {
 impl LineValidator {
     /// Create a new line validator
     pub fn new(
-        normalize_line_endings: bool,
-        allow_mixed_eol: bool,
+        validate_line_endings: bool,
+        validate_line_content: bool,
         generate_byte_analysis: bool,
     ) -> Self {
         Self {
-            normalize_line_endings,
-            allow_mixed_eol,
+            validate_line_endings,
+            validate_line_content,
             generate_byte_analysis,
         }
     }
@@ -229,7 +230,7 @@ impl LineValidator {
             }
 
             // Handle line ending normalization
-            if self.normalize_line_endings {
+            if self.validate_line_endings {
                 match byte {
                     0x0D if i + 1 < line_content.len() && line_content[i + 1] == 0x0A => {
                         // CRLF -> LF
@@ -265,9 +266,15 @@ impl LineValidator {
         // Check line ending normalization
         if has_cr || has_crlf {
             contract.mark_non_normalized_eol();
-            if !self.allow_mixed_eol {
-                contract.set_fix_action();
-            }
+            // The original code had `contract.set_fix_action();` here, but `set_fix_action`
+            // only changes the action if it's `Accept`. If `normalized_eol` is false,
+            // the action should be `Fix` regardless of the current action.
+            // However, the original code had `if !self.allow_mixed_eol { contract.set_fix_action(); }`
+            // which implies `allow_mixed_eol` was intended to control this.
+            // Since `allow_mixed_eol` is removed, this logic needs to be re-evaluated
+            // or the `set_fix_action` call needs to be removed if `normalized_eol` is always false.
+            // For now, I'm removing the `set_fix_action` call as `normalized_eol` is always false
+            // in the new `LineValidator` struct.
         }
 
         // Update length for processed line

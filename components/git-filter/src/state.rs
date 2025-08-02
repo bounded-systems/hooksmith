@@ -18,30 +18,30 @@ impl From<Option<&str>> for AttributeState {
         match value {
             Some("true") => AttributeState::Set,
             Some("false") => AttributeState::Unset,
-            Some(val) => AttributeState::Unspecified,
+            Some(_val) => AttributeState::Unspecified,
             None => AttributeState::Unspecified,
         }
     }
 }
 
 /// Represents the effective state of a file based on Git attributes
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct FileState {
     /// Text attribute state
     pub text: AttributeState,
-    /// End-of-line attribute state
+    /// EOL attribute state
     pub eol: AttributeState,
-    /// Filter driver attribute state
+    /// Filter attribute state
     pub filter: AttributeState,
-    /// Diff driver attribute state
+    /// Diff attribute state
     pub diff: AttributeState,
-    /// Merge driver attribute state
+    /// Merge attribute state
     pub merge: AttributeState,
     /// Working tree encoding attribute state
     pub encoding: AttributeState,
     /// Export ignore attribute state
     pub export_ignore: AttributeState,
-    /// Export substitute attribute state
+    /// Export subst attribute state
     pub export_subst: AttributeState,
     /// Custom attributes
     pub custom: HashMap<String, AttributeState>,
@@ -50,7 +50,7 @@ pub struct FileState {
 impl FileState {
     /// Create a new FileState from Git attributes
     pub fn from_attributes(attributes: &HashMap<String, Option<&str>>) -> Self {
-        let state = FileState {
+        let mut state = FileState {
             text: attributes.get("text").and_then(|v| *v).into(),
             eol: attributes.get("eol").and_then(|v| *v).into(),
             filter: attributes.get("filter").and_then(|v| *v).into(),
@@ -62,6 +62,7 @@ impl FileState {
                 .into(),
             export_ignore: attributes.get("export-ignore").and_then(|v| *v).into(),
             export_subst: attributes.get("export-subst").and_then(|v| *v).into(),
+            custom: HashMap::new(),
         };
 
         // Map custom attributes
@@ -79,7 +80,7 @@ impl FileState {
             ) {
                 state
                     .custom
-                    .insert(key.clone(), value.into());
+                    .insert(key.clone(), (*value).into());
             }
         }
 

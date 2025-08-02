@@ -1,8 +1,12 @@
+use crate::actions::{ActionResolver, GitOperation, HookAction};
 use crate::blob_contract::BlobValidator;
 use crate::contract::CharValidator;
+use crate::error::FilterError;
 use crate::line_contract::LineValidator;
+use crate::state::FileState;
 use std::collections::HashMap;
-use std::path::Path;
+use std::io::{Read, Write};
+use tracing::{debug, error, info};
 
 /// A filter driver that can process files based on Git attributes
 pub trait FilterDriver {
@@ -198,6 +202,8 @@ impl FilterDriver for CharContractFilter {
 #[derive(Default)]
 pub struct BlobContractFilter {
     validator: BlobValidator,
+    /// Whether to generate audit records
+    generate_audit: bool,
 }
 
 impl BlobContractFilter {
@@ -215,6 +221,7 @@ impl BlobContractFilter {
                 binary_threshold,
                 generate_audit,
             ),
+            generate_audit,
         }
     }
 

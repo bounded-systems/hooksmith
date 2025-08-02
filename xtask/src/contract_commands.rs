@@ -13,8 +13,6 @@ use super::ContractCommands;
 const ALLOWED_EXTENSIONS: &[&str] = &[
     // Rust files
     "rs",
-    // Script files
-    "sh", "bash", "zsh",
     // Configuration files
     "toml", "yaml", "yml", "json",
     // Documentation files

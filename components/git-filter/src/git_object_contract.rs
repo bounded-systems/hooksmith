@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use crate::blob_contract::BlobContract;
 use crate::tree_contract::{TreeEntryContract, TreeValidator};
 
@@ -184,7 +183,6 @@ impl GitObjectContract {
                 }
             } else if let Some(suffix) = pattern.strip_prefix('*') {
                 // Wildcard pattern
-                let suffix = suffix;
                 if filepath.ends_with(suffix) {
                     return true;
                 }
@@ -274,18 +272,23 @@ impl GitObjectContract {
 
 /// Git object validator that processes Git object validation with attributes
 pub struct GitObjectValidator {
-    /// Whether to validate attributes
-    validate_attributes: bool,
-    /// Whether to enforce generated file rules
+    /// Whether to validate blobs
+    validate_blobs: bool,
+    /// Whether to validate lines
+    validate_lines: bool,
+    /// Whether to enforce generated rules
+    #[allow(dead_code)]
     enforce_generated_rules: bool,
     /// Tree validator for nested validation
+    #[allow(dead_code)]
     tree_validator: TreeValidator,
 }
 
 impl Default for GitObjectValidator {
     fn default() -> Self {
         Self {
-            validate_attributes: true,
+            validate_blobs: true,
+            validate_lines: true,
             enforce_generated_rules: true,
             tree_validator: TreeValidator::default(),
         }
@@ -295,12 +298,14 @@ impl Default for GitObjectValidator {
 impl GitObjectValidator {
     /// Create a new Git object validator
     pub fn new(
-        validate_attributes: bool,
+        validate_blobs: bool,
+        validate_lines: bool,
         enforce_generated_rules: bool,
         tree_validator: TreeValidator,
     ) -> Self {
         Self {
-            validate_attributes,
+            validate_blobs,
+            validate_lines,
             enforce_generated_rules,
             tree_validator,
         }
@@ -447,7 +452,7 @@ mod tests {
     #[test]
     fn test_git_object_validator() {
         let tree_validator = TreeValidator::new(true, true, true);
-        let validator = GitObjectValidator::new(true, true, tree_validator);
+        let validator = GitObjectValidator::new(true, true, true, tree_validator);
 
         let contract = validator.validate_object(
             GitObjectType::Blob,

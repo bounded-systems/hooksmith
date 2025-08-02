@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 
 /// Tree mode contract - represents allowed Git tree modes (restricted set)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -312,7 +311,6 @@ impl TreeEntryContract {
                 }
             } else if let Some(suffix) = pattern.strip_prefix('*') {
                 // Wildcard pattern
-                let suffix = suffix;
                 if filename.ends_with(suffix) {
                     return true;
                 }
@@ -468,10 +466,13 @@ impl TreeObjectContract {
 /// Tree validator that processes Git tree objects
 pub struct TreeValidator {
     /// Whether to validate individual entries
+    #[allow(dead_code)]
     validate_entries: bool,
     /// Whether to check for duplicate filenames
+    #[allow(dead_code)]
     check_duplicates: bool,
     /// Whether to enforce sorting
+    #[allow(dead_code)]
     enforce_sorting: bool,
 }
 

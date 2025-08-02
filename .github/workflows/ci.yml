@@ -41,6 +41,9 @@ jobs:
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
+      - name: Validate file extensions
+        run: cargo xtask contract validate-extensions
+
       - name: Generate WIT interfaces
         run: cargo xtask gen-wit --overwrite
 

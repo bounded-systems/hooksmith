@@ -518,6 +518,116 @@ hooksmith generate > lefthook.yml
 hooksmith install
 ```
 
+## Code Hygiene and Quality Assurance
+
+### File Extension Validation
+
+The project enforces a whitelist of allowed file extensions for contract validation. This ensures that only appropriate file types are processed by the validation system.
+
+#### Allowed File Extensions
+
+The following file extensions are whitelisted for contract validation:
+
+- **Rust files**: `.rs`
+- **Configuration files**: `.toml`, `.yaml`, `.yml`, `.json`
+- **Documentation files**: `.md`, `.txt`, `.rst`
+- **Web files**: `.html`, `.css`, `.js`, `.ts`
+
+#### Validation Enforcement
+
+File extension validation is enforced at multiple levels:
+
+1. **Pre-commit Hook**: `hooks/validate-file-extensions.rs` validates staged files
+2. **Contract Validation**: `xtask-contract-validate` rejects unknown extensions
+3. **CI Pipeline**: GitHub Actions validates all file extensions
+4. **Git Attributes**: `.gitattributes` defines validation rules per file type
+
+#### Adding New File Extensions
+
+To add a new file extension to the whitelist:
+
+1. Update `ALLOWED_EXTENSIONS` in `xtask/src/contract_commands.rs`
+2. Update `ALLOWED_EXTENSIONS` in `hooks/validate-file-extensions.rs`
+3. Add appropriate rules to `.gitattributes`
+4. Update this documentation
+
+### Warning Management
+
+The project enforces a zero-warning policy to maintain code quality.
+
+#### Automatic Warning Fixes
+
+Run the following command to automatically fix many warnings:
+
+```bash
+cargo fix --allow-dirty --allow-staged
+```
+
+This will:
+- Remove unused imports
+- Add `_` prefixes to unused variables where possible
+- Fix other automatically fixable issues
+
+#### Manual Warning Resolution
+
+For warnings that cannot be automatically fixed:
+
+1. **Unused Variables**: Prefix with `_` if intentionally unused
+   ```rust
+   fn my_fn(_components: &HashMap<String, ComponentHandle>) { ... }
+   ```
+
+2. **Unused Struct Fields**: Either prefix with `_` or remove if not needed
+   ```rust
+   pub struct ComponentHandle {
+       _engine: Engine,  // Will be used later
+   }
+   ```
+
+3. **Unused Imports**: Remove or gate behind `#[cfg(feature = "...")]`
+
+4. **Manual Strip**: Use `strip_prefix()` instead of manual slicing
+   ```rust
+   // Instead of: let suffix = &pattern[1..];
+   if let Some(suffix) = pattern.strip_prefix('*') {
+       // Use suffix
+   }
+   ```
+
+5. **Derivable Impls**: Use `#[derive(Default)]` instead of manual implementations
+
+#### CI Enforcement
+
+The CI pipeline enforces zero warnings with:
+
+```bash
+cargo clippy --all-targets --all-features -- -D warnings
+```
+
+This treats all warnings as errors, ensuring code quality.
+
+### Best Practices
+
+1. **Run clippy locally** before committing:
+   ```bash
+   cargo clippy --all-targets --all-features -- -D warnings
+   ```
+
+2. **Use pre-commit hooks** to catch issues early:
+   ```bash
+   # Install pre-commit hooks
+   cargo xtask setup-git-filters
+   ```
+
+3. **Validate file extensions** before committing:
+   ```bash
+   cargo xtask contract validate-extensions
+   ```
+
+4. **Fix warnings immediately** rather than accumulating them
+
+5. **Use meaningful variable names** and only prefix with `_` when truly unused
+
 ---
 
 *This development guide ensures you can safely develop Hooksmith while maintaining a stable environment for daily workflows.*

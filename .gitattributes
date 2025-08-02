@@ -13,14 +13,6 @@
 *.rs diff=contract_diff
 *.rs scope=char:line:chunk:file:dir
 
-# Script files
-*.sh filter=contract_validate
-*.bash filter=contract_validate
-*.zsh filter=contract_validate
-*.sh scope=char:line:file:dir
-*.bash scope=char:line:file:dir
-*.zsh scope=char:line:file:dir
-
 # Configuration files
 *.toml filter=contract_validate
 *.yaml filter=contract_validate
