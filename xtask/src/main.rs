@@ -339,6 +339,18 @@ enum Commands {
         #[arg(long, default_value = "true")]
         check_uncommitted: bool,
     },
+    /// Git commit with Trunk-style empty message support (replaces git-trunk-commit.sh)
+    GitCommit {
+        /// Git commit message
+        #[arg(short, long)]
+        message: Option<String>,
+        /// Allow empty commit message (Trunk-style)
+        #[arg(long)]
+        allow_empty_message: bool,
+        /// Additional git commit arguments
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
+    },
 }
 
 /// WIT schema for function definition
@@ -601,6 +613,16 @@ async fn main() -> Result<()> {
             check_uncommitted,
         } => {
             validate_documentation(strict, regenerate, check_uncommitted).await?;
+        }
+        Commands::GitCommit {
+            message,
+            allow_empty_message,
+            args,
+        } => {
+            git_commit(message, allow_empty_message, args).await?;
+        }
+        Commands::SetupGitAliases { force } => {
+            setup_git_aliases(force)?;
         }
     }
 
@@ -3334,9 +3356,9 @@ fn setup_git_aliases(force: bool) -> Result<()> {
 
     // Define aliases to set up
     let aliases = vec![
-        ("cm", "!./scripts/git-trunk-commit.sh"),
+        ("cm", "!cargo run -p xtask -- git-commit"),
         ("cc", "commit"),
-        ("ce", "!./scripts/git-trunk-commit.sh --allow-empty-message"),
+        ("ce", "!cargo run -p xtask -- git-commit --allow-empty-message"),
     ];
 
     for (alias, command) in aliases {
@@ -3559,6 +3581,77 @@ async fn validate_documentation(
                 anyhow::bail!("Documentation validation failed with {} errors", errors.len());
             }
         }
+    }
+
+    Ok(())
+}
+
+/// Git commit with Trunk-style empty message support (replaces git-trunk-commit.sh)
+async fn git_commit(
+    message: Option<String>,
+    allow_empty_message: bool,
+    args: Vec<String>,
+) -> Result<()> {
+    println!("🚀 Committing with Trunk-style empty message support...");
+
+    // Check if we're in a git repository
+    let status = Command::new("git")
+        .args(["rev-parse", "--git-dir"])
+        .status()
+        .context("Failed to check git repository")?;
+
+    if !status.success() {
+        anyhow::bail!("❌ Error: Not in a git repository");
+    }
+
+    // Check if there are staged changes
+    let status = Command::new("git")
+        .args(["diff", "--cached", "--quiet"])
+        .status()
+        .context("Failed to check staged changes")?;
+
+    if status.success() {
+        anyhow::bail!("❌ Error: No staged changes to commit\n💡 Use 'git add <files>' to stage changes first");
+    }
+
+    // Build git commit command
+    let mut commit_args = vec!["commit"];
+    
+    // Add --allow-empty-message flag if requested or if no message provided
+    if allow_empty_message || message.is_none() {
+        commit_args.push("--allow-empty-message");
+    }
+
+    // Add message if provided
+    if let Some(msg) = &message {
+        commit_args.extend_from_slice(&["-m", msg]);
+    }
+
+    // Add additional arguments
+    commit_args.extend(args.iter().map(|s| s.as_str()));
+
+    // Execute git commit
+    let status = Command::new("git")
+        .args(&commit_args)
+        .status()
+        .context("Failed to execute git commit")?;
+
+    if !status.success() {
+        anyhow::bail!("Git commit failed");
+    }
+
+    // Check if the commit message is empty and show reminder
+    let output = Command::new("git")
+        .args(["log", "-1", "--pretty=%B"])
+        .output()
+        .context("Failed to get commit message")?;
+
+    let commit_message = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    
+    if commit_message.is_empty() {
+        println!("");
+        println!("✅ Empty commit message accepted (Trunk-style)");
+        println!("💡 Use 'git commit --amend' if you want to add details later");
     }
 
     Ok(())
