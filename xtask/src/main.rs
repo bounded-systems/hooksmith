@@ -3007,37 +3007,7 @@ fn validate_git_attributes_files(main_path: &Path, safechars_path: &Path, blob_c
     Ok(())
 }
 
-/// Generate all configuration files from Rust structs
-fn generate_config(overwrite: bool, validate: bool) -> Result<()> {
-    println!("🔧 Generating configuration files from Rust structs...");
 
-    // Check if files exist and overwrite flag
-    let config_files = [
-        "lefthook.yml",
-        "config/contract-state-machine.yml",
-        "config/docs_manifest.yml",
-        "config/state-transitions.yml",
-    ];
-
-    if !overwrite {
-        for file in &config_files {
-            if Path::new(file).exists() {
-                println!("⚠️  File exists: {} (use --overwrite to regenerate)", file);
-            }
-        }
-    }
-
-    // Generate all configuration files
-    config::ConfigGenerator::generate_all()?;
-
-    if validate {
-        println!("🔍 Validating generated configuration files...");
-        config::ConfigGenerator::validate_all()?;
-    }
-
-    println!("✅ Configuration generation complete");
-    Ok(())
-}
 
 /// Validate all configuration files
 fn validate_config(strict: bool) -> Result<()> {

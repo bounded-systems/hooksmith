@@ -27,16 +27,7 @@ pub struct OrchestratorConfig {
 
 
 
-impl Default for OrchestratorConfig {
-    fn default() -> Self {
-        Self {
-            runtime_config: RuntimeConfig::default(),
-            components: HashMap::new(),
-            settings: GlobalSettings::default(),
-            logging: LoggingConfig::default(),
-        }
-    }
-}
+
 
 /// Configuration for individual components
 #[derive(Debug, Clone, Serialize, Deserialize)]
