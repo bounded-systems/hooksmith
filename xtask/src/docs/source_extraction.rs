@@ -74,13 +74,20 @@ pub fn extract_project_data() -> Result<ProjectData> {
         features,
         structure,
         components,
-        workspace_members: metadata.workspace_members.iter().map(|id| id.to_string()).collect(),
+        workspace_members: metadata
+            .workspace_members
+            .iter()
+            .map(|id| id.to_string())
+            .collect(),
         git_info,
     })
 }
 
 /// Extract dependencies from Cargo.toml
-fn extract_dependencies(metadata: &Metadata, root_package: &Package) -> Result<HashMap<String, String>> {
+fn extract_dependencies(
+    metadata: &Metadata,
+    root_package: &Package,
+) -> Result<HashMap<String, String>> {
     let mut dependencies = HashMap::new();
 
     // Extract direct dependencies
@@ -164,20 +171,23 @@ fn extract_components(metadata: &Metadata) -> Result<Vec<ComponentData>> {
         return Ok(components);
     }
 
-    let entries = fs::read_dir(components_dir)
-        .context("Failed to read components directory")?;
+    let entries = fs::read_dir(components_dir).context("Failed to read components directory")?;
 
     for entry in entries {
         let entry = entry.context("Failed to read components directory entry")?;
         let path = entry.path();
 
         if path.is_dir() {
-            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("unknown");
-            
+            let name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown");
+
             // Try to find package info for this component
-            let component_package = metadata.packages.iter().find(|p| {
-                p.name == name || p.name.contains(name)
-            });
+            let component_package = metadata
+                .packages
+                .iter()
+                .find(|p| p.name == name || p.name.contains(name));
 
             let description = if let Some(pkg) = component_package {
                 pkg.description.clone().unwrap_or_default()
@@ -222,7 +232,7 @@ fn extract_component_description(component_path: &Path) -> Result<String> {
     if readme_path.exists() {
         let content = fs::read_to_string(&readme_path)
             .context(format!("Failed to read README: {:?}", readme_path))?;
-        
+
         // Extract first paragraph as description
         if let Some(first_line) = content.lines().next() {
             if first_line.starts_with('#') {
@@ -236,11 +246,13 @@ fn extract_component_description(component_path: &Path) -> Result<String> {
     if cargo_path.exists() {
         let content = fs::read_to_string(&cargo_path)
             .context(format!("Failed to read Cargo.toml: {:?}", cargo_path))?;
-        
+
         // Simple extraction of description
         for line in content.lines() {
             if line.trim().starts_with("description = ") {
-                let desc = line.split('=').nth(1)
+                let desc = line
+                    .split('=')
+                    .nth(1)
                     .and_then(|s| s.trim().strip_prefix('"').and_then(|s| s.strip_suffix('"')))
                     .unwrap_or("Component");
                 return Ok(desc.to_string());
@@ -266,7 +278,7 @@ fn extract_component_dependencies(component_path: &Path) -> Result<Vec<String>> 
 
     for line in content.lines() {
         let trimmed = line.trim();
-        
+
         if trimmed == "[dependencies]" {
             in_dependencies = true;
             continue;
@@ -319,7 +331,9 @@ fn extract_git_info() -> Result<GitInfo> {
         .args(["log", "-1", "--format=%cd", "--date=short"])
         .output()
         .context("Failed to get last commit date")?;
-    let last_commit_date = String::from_utf8_lossy(&last_commit.stdout).trim().to_string();
+    let last_commit_date = String::from_utf8_lossy(&last_commit.stdout)
+        .trim()
+        .to_string();
 
     Ok(GitInfo {
         branch,
@@ -332,13 +346,13 @@ fn extract_git_info() -> Result<GitInfo> {
 /// Extract license information
 fn extract_license() -> Result<Option<String>> {
     let license_files = ["LICENSE", "LICENSE.txt", "LICENSE.md"];
-    
+
     for license_file in &license_files {
         let path = Path::new(license_file);
         if path.exists() {
             let content = fs::read_to_string(path)
                 .context(format!("Failed to read license file: {:?}", path))?;
-            
+
             // Extract first line as license type
             if let Some(first_line) = content.lines().next() {
                 let license = first_line.trim();
@@ -350,5 +364,4 @@ fn extract_license() -> Result<Option<String>> {
     }
 
     Ok(None)
-} 
-
+}

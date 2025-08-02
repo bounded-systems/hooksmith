@@ -1,74 +1,83 @@
-# Documentation Generation Manifest for Hooksmith
-# This file defines which documentation files should be generated and how
+# Documentation Generation Manifest
+# This file defines which documentation files to generate and their generators
 
 docs:
   # CLI Help Documentation
   - path: "docs/CLI_HELP.md"
     generator: "cli_help"
-    partial_edit: false
-    description: "Auto-generated CLI help documentation"
+    description: "CLI help output from actual commands"
 
   # Repository Structure Documentation
   - path: "docs/STRUCTURE.md"
     generator: "structure"
-    partial_edit: false
-    description: "Auto-generated repository structure documentation"
+    description: "Repository structure analysis"
 
-  # Examples Documentation
+  # Code Examples Documentation
   - path: "docs/EXAMPLES.md"
     generator: "examples"
-    partial_edit: false
-    description: "Auto-generated examples documentation"
+    description: "Code examples from examples/ directory"
 
-  # Component Documentation
+  # API Documentation
+  - path: "docs/API.md"
+    generator: "api_docs"
+    description: "API documentation from source code"
+
+  # Development Guide
+  - path: "docs/DEVELOPMENT.md"
+    generator: "dev_guide"
+    description: "Development guide from project structure"
+
+  # Testing Guide
+  - path: "docs/TESTING.md"
+    generator: "test_guide"
+    description: "Testing guide from test files"
+
+  # Contributing Guide
+  - path: "docs/CONTRIBUTING.md"
+    generator: "contrib_guide"
+    description: "Contributing guide for the project"
+
+  # Architecture Documentation
+  - path: "docs/ARCHITECTURE.md"
+    generator: "arch_docs"
+    description: "Architecture overview from components"
+
+  # Component README files
   - path: "components/cli-core/README.md"
     generator: "component_readme"
-    partial_edit: false
-    description: "Auto-generated CLI core component documentation"
-
+    description: "CLI Core component documentation"
   - path: "components/git-filter/README.md"
     generator: "component_readme"
-    partial_edit: false
-    description: "Auto-generated git-filter component documentation"
-
+    description: "Git Filter component documentation"
   - path: "components/hook-builder/README.md"
     generator: "component_readme"
-    partial_edit: false
-    description: "Auto-generated hook-builder component documentation"
-
+    description: "Hook Builder component documentation"
   - path: "components/worktree-runner/README.md"
     generator: "component_readme"
-    partial_edit: false
-    description: "Auto-generated worktree-runner component documentation"
+    description: "Worktree Runner component documentation"
 
-  # Main README (partially hand-edited)
+  # Main README (generated from source data)
   - path: "README.md"
-    generator: "template"
+    generator: "readme"
+    description: "Main README generated from source code"
     partial_edit: true
-    template: "README"
-    description: "Main project README with CLI help integration"
 
-# Global configuration
+  # Project Structure Summary
+  - path: "STRUCTURE.md"
+    generator: "structure"
+    description: "Project structure summary"
+
+  # Checksum Report
+  - path: "docs/CHECKSUM_REPORT.md"
+    generator: "checksum_report"
+    description: "Checksum validation report"
+
 global_config:
-  # Output directory for generated documentation
   output_dir: "docs"
-  
-  # Whether to validate generated files
   validate: true
-  
-  # Whether to open documentation in browser after generation
   open_browser: false
-  
-  # Template directory
   template_dir: "templates"
-  
-  # Git attributes configuration
   git_attributes:
-    # Mark generated files as codegen
-    mark_generated: true
-    
-    # Files to mark as generated
-    generated_patterns:
-      - "docs/*.md"
-      - "components/*/README.md"
-      - "STRUCTURE.md" 
+    codegen: true
+    linguist_generated: true
+  checksum_validation: true 

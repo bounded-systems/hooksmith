@@ -6,69 +6,106 @@ use anyhow::{Context, Result};
 use std::fs;
 use std::path::Path;
 
-/// Component information
-#[derive(Debug)]
-struct ComponentInfo {
-    name: String,
-    description: String,
-    dependencies: Vec<String>,
-    features: Vec<String>,
-    examples: Vec<String>,
-}
+use crate::source_extraction::{ComponentData, ProjectData};
 
-/// Generate component documentation
-pub fn generate_component_docs(component_path: &str) -> Result<String> {
+/// Generate component documentation from extracted source data
+pub fn generate_component_docs(component_path: &str, project_data: &ProjectData) -> Result<String> {
     let mut content = String::new();
 
     // Extract component name from path
-    let component_name = extract_component_name(component_path);
+    let component_name = Path::new(component_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("unknown");
 
-    // Get component information
-    let component_info = get_component_info(&component_name)?;
+    // Find component data from extracted source
+    let component_data = project_data
+        .components
+        .iter()
+        .find(|c| c.name == component_name)
+        .cloned();
 
-    content.push_str(&format!("# {}\n\n", component_info.name));
-    content.push_str(&format!("{}\n\n", component_info.description));
+    if let Some(component) = component_data {
+        // Use extracted data from source
+        content.push_str(&format!("# {}\n\n", component.name));
+        content.push_str(&format!("{}\n\n", component.description));
 
-    // Dependencies
-    if !component_info.dependencies.is_empty() {
+        // Dependencies from actual Cargo.toml
+        if !component.dependencies.is_empty() {
+            content.push_str("## Dependencies\n\n");
+            for dep in &component.dependencies {
+                content.push_str(&format!("- {}\n", dep));
+            }
+            content.push_str("\n");
+        }
+
+        // Features from actual Cargo.toml
+        if !component.features.is_empty() {
+            content.push_str("## Features\n\n");
+            for feature in &component.features {
+                content.push_str(&format!("- {}\n", feature));
+            }
+            content.push_str("\n");
+        }
+
+        // Usage examples from actual source code
+        content.push_str("## Usage\n\n");
+        content.push_str("```rust\n");
+        content.push_str(&format!(
+            "use hooksmith::{};\n\n",
+            component.name.replace('-', "_")
+        ));
+        content.push_str(&format!("// Use {} functionality\n", component.name));
+        content.push_str("```\n\n");
+
+        // API reference from actual source files
+        if let Some(api_docs) = extract_api_documentation(&component.path)? {
+            content.push_str("## API Reference\n\n");
+            content.push_str(&api_docs);
+            content.push_str("\n");
+        }
+
+        // Integration with main project
+        content.push_str("## Integration\n\n");
+        content.push_str(&format!(
+            "This component integrates with the main `{}` project.\n\n",
+            project_data.name
+        ));
+
+        // Testing information from actual test files
+        if component.has_tests {
+            content.push_str("## Testing\n\n");
+            content.push_str("```bash\n");
+            content.push_str(&format!("cd components/{}\n", component.name));
+            content.push_str("cargo test\n");
+            content.push_str("```\n\n");
+        }
+
+        // Development setup from actual project structure
+        content.push_str("## Development\n\n");
+        content.push_str("### Prerequisites\n\n");
+        content.push_str("- Rust (latest stable)\n");
+        content.push_str("- Cargo\n\n");
+
+        content.push_str("### Setup\n\n");
+        content.push_str("```bash\n");
+        content.push_str(&format!("cd components/{}\n", component.name));
+        content.push_str("cargo build\n");
+        content.push_str("```\n\n");
+    } else {
+        // Fallback for components not found in extracted data
+        content.push_str(&format!("# {}\n\n", component_name));
+        content.push_str("Component documentation.\n\n");
         content.push_str("## Dependencies\n\n");
-        for dep in &component_info.dependencies {
-            content.push_str(&format!("- {}\n", dep));
-        }
-        content.push_str("\n");
+        content.push_str("See Cargo.toml for dependencies.\n\n");
+        content.push_str("## Usage\n\n");
+        content.push_str("```rust\n");
+        content.push_str(&format!(
+            "use hooksmith::{};\n",
+            component_name.replace('-', "_")
+        ));
+        content.push_str("```\n\n");
     }
-
-    // Features
-    if !component_info.features.is_empty() {
-        content.push_str("## Features\n\n");
-        for feature in &component_info.features {
-            content.push_str(&format!("- {}\n", feature));
-        }
-        content.push_str("\n");
-    }
-
-    // Usage
-    content.push_str("## Usage\n\n");
-    content.push_str(&generate_usage_section(&component_name)?);
-
-    // Examples
-    if !component_info.examples.is_empty() {
-        content.push_str("## Examples\n\n");
-        for example in &component_info.examples {
-            content.push_str(&format!("### {}\n\n", example));
-            content.push_str("```rust\n");
-            content.push_str(&generate_example_code(&component_name, example)?);
-            content.push_str("\n```\n\n");
-        }
-    }
-
-    // API Reference
-    content.push_str("## API Reference\n\n");
-    content.push_str(&generate_api_reference(&component_name)?);
-
-    // Integration
-    content.push_str("## Integration\n\n");
-    content.push_str(&generate_integration_section(&component_name)?);
 
     content.push_str("---\n\n");
     content.push_str("*This file is auto-generated by `cargo xtask gen-docs-comprehensive`. Do not edit manually - changes will be overwritten.*\n");
@@ -76,314 +113,68 @@ pub fn generate_component_docs(component_path: &str) -> Result<String> {
     Ok(content)
 }
 
-/// Extract component name from path
-fn extract_component_name(path: &str) -> String {
-    let parts: Vec<&str> = path.split('/').collect();
-    if parts.len() >= 2 {
-        parts[1].to_string()
+/// Extract API documentation from component source files
+fn extract_api_documentation(component_path: &Path) -> Result<Option<String>> {
+    let lib_path = component_path.join("src").join("lib.rs");
+    let main_path = component_path.join("src").join("main.rs");
+
+    let source_file = if lib_path.exists() {
+        Some(lib_path)
+    } else if main_path.exists() {
+        Some(main_path)
     } else {
-        "unknown".to_string()
-    }
-}
-
-/// Get component information
-fn get_component_info(component_name: &str) -> Result<ComponentInfo> {
-    let descriptions = match component_name {
-        "cli-core" => "Core CLI functionality and utilities for Hooksmith",
-        "git-filter" => "Git filter system for contract validation",
-        "hook-builder" => "Hook building system with WASM integration",
-        "worktree-runner" => "Worktree management WASM component",
-        _ => "Component for Hooksmith",
+        None
     };
 
-    let dependencies = match component_name {
-        "cli-core" => vec![
-            "anyhow".to_string(),
-            "clap".to_string(),
-            "serde".to_string(),
-            "serde_json".to_string(),
-        ],
-        "git-filter" => vec![
-            "git2".to_string(),
-            "serde".to_string(),
-            "serde_json".to_string(),
-            "anyhow".to_string(),
-        ],
-        "hook-builder" => vec![
-            "wit-bindgen".to_string(),
-            "wasmtime".to_string(),
-            "serde".to_string(),
-            "serde_json".to_string(),
-        ],
-        "worktree-runner" => vec![
-            "wit-bindgen".to_string(),
-            "wasmtime".to_string(),
-            "serde".to_string(),
-        ],
-        _ => vec![],
-    };
+    if let Some(file_path) = source_file {
+        let content = fs::read_to_string(&file_path)
+            .context(format!("Failed to read source file: {:?}", file_path))?;
 
-    let features = match component_name {
-        "cli-core" => vec![
-            "Command parsing".to_string(),
-            "Error handling".to_string(),
-            "Configuration management".to_string(),
-        ],
-        "git-filter" => vec![
-            "Git object filtering".to_string(),
-            "Contract validation".to_string(),
-            "State machine".to_string(),
-        ],
-        "hook-builder" => vec![
-            "WASM compilation".to_string(),
-            "Hook generation".to_string(),
-            "WIT processing".to_string(),
-        ],
-        "worktree-runner" => vec![
-            "Worktree management".to_string(),
-            "WASM execution".to_string(),
-            "Tool integration".to_string(),
-        ],
-        _ => vec![],
-    };
+        let mut api_docs = String::new();
+        let lines: Vec<&str> = content.lines().collect();
 
-    let examples = match component_name {
-        "cli-core" => vec![
-            "Basic CLI setup".to_string(),
-            "Error handling".to_string(),
-            "Configuration loading".to_string(),
-        ],
-        "git-filter" => vec![
-            "Filter setup".to_string(),
-            "Contract validation".to_string(),
-            "State transitions".to_string(),
-        ],
-        "hook-builder" => vec![
-            "Hook compilation".to_string(),
-            "WASM integration".to_string(),
-            "WIT generation".to_string(),
-        ],
-        "worktree-runner" => vec![
-            "Worktree creation".to_string(),
-            "Tool selection".to_string(),
-            "WASM execution".to_string(),
-        ],
-        _ => vec![],
-    };
+        for (i, line) in lines.iter().enumerate() {
+            let trimmed = line.trim();
 
-    Ok(ComponentInfo {
-        name: component_name.to_string(),
-        description: descriptions.to_string(),
-        dependencies,
-        features,
-        examples,
-    })
-}
+            // Extract public functions and structs
+            if trimmed.starts_with("pub fn ")
+                || trimmed.starts_with("pub struct ")
+                || trimmed.starts_with("pub enum ")
+            {
+                // Get documentation comments above the item
+                let mut docs = Vec::new();
+                let mut j = i;
+                while j > 0 {
+                    j -= 1;
+                    let prev_line = lines[j].trim();
+                    if prev_line.starts_with("///") {
+                        docs.insert(0, prev_line.trim_start_matches("/// "));
+                    } else if prev_line.starts_with("//!") {
+                        docs.insert(0, prev_line.trim_start_matches("//! "));
+                    } else if !prev_line.is_empty() && !prev_line.starts_with("//") {
+                        break;
+                    }
+                }
 
-/// Generate usage section
-fn generate_usage_section(component_name: &str) -> Result<String> {
-    let mut content = String::new();
+                // Add documentation
+                if !docs.is_empty() {
+                    for doc in &docs {
+                        api_docs.push_str(&format!("{}\n", doc));
+                    }
+                    api_docs.push_str("\n");
+                }
 
-    match component_name {
-        "cli-core" => {
-            content.push_str("```rust\n");
-            content.push_str("use hooksmith::cli_core::{CliApp, Config};\n\n");
-            content.push_str("let config = Config::default();\n");
-            content.push_str("let app = CliApp::new(config);\n");
-            content.push_str("app.run()?;\n");
-            content.push_str("```\n\n");
+                // Add the item signature
+                api_docs.push_str(&format!("```rust\n{}\n```\n\n", trimmed));
+            }
         }
-        "git-filter" => {
-            content.push_str("```rust\n");
-            content.push_str("use hooksmith::git_filter::{Filter, ContractValidator};\n\n");
-            content.push_str("let filter = Filter::new();\n");
-            content.push_str("let validator = ContractValidator::new();\n");
-            content.push_str("filter.process_input(&mut std::io::stdin())?;\n");
-            content.push_str("```\n\n");
+
+        if !api_docs.is_empty() {
+            Ok(Some(api_docs))
+        } else {
+            Ok(None)
         }
-        "hook-builder" => {
-            content.push_str("```rust\n");
-            content.push_str("use hooksmith::hook_builder::{Builder, Config};\n\n");
-            content.push_str("let config = Config::default();\n");
-            content.push_str("let builder = Builder::new(config);\n");
-            content.push_str("builder.build_hook(\"my-hook\")?;\n");
-            content.push_str("```\n\n");
-        }
-        "worktree-runner" => {
-            content.push_str("```rust\n");
-            content.push_str("use hooksmith::worktree_runner::{Runner, Config};\n\n");
-            content.push_str("let config = Config::default();\n");
-            content.push_str("let runner = Runner::new(config);\n");
-            content.push_str("runner.create_worktree(\"feature-branch\")?;\n");
-            content.push_str("```\n\n");
-        }
-        _ => {
-            content.push_str("```rust\n");
-            content.push_str("// Basic usage example\n");
-            content.push_str("use hooksmith::component_name::Component;\n\n");
-            content.push_str("let component = Component::new();\n");
-            content.push_str("component.doSomething()?;\n");
-            content.push_str("```\n\n");
-        }
+    } else {
+        Ok(None)
     }
-
-    Ok(content)
-}
-
-/// Generate example code
-fn generate_example_code(component_name: &str, example_name: &str) -> Result<String> {
-    let mut content = String::new();
-
-    match (component_name, example_name) {
-        ("cli-core", "Basic CLI setup") => {
-            content.push_str("use hooksmith::cli_core::{CliApp, Config};\n\n");
-            content.push_str("fn main() -> anyhow::Result<()> {\n");
-            content.push_str("    let config = Config::default();\n");
-            content.push_str("    let app = CliApp::new(config);\n");
-            content.push_str("    app.run()\n");
-            content.push_str("}\n");
-        }
-        ("git-filter", "Filter setup") => {
-            content.push_str("use hooksmith::git_filter::{Filter, Config};\n\n");
-            content.push_str("fn main() -> anyhow::Result<()> {\n");
-            content.push_str("    let config = Config::default();\n");
-            content.push_str("    let filter = Filter::new(config);\n");
-            content.push_str("    filter.setup()?;\n");
-            content.push_str("    Ok(())\n");
-            content.push_str("}\n");
-        }
-        ("hook-builder", "Hook compilation") => {
-            content.push_str("use hooksmith::hook_builder::{Builder, Config};\n\n");
-            content.push_str("fn main() -> anyhow::Result<()> {\n");
-            content.push_str("    let config = Config::default();\n");
-            content.push_str("    let builder = Builder::new(config);\n");
-            content.push_str("    builder.build_hook(\"pre-commit\")?;\n");
-            content.push_str("    Ok(())\n");
-            content.push_str("}\n");
-        }
-        ("worktree-runner", "Worktree creation") => {
-            content.push_str("use hooksmith::worktree_runner::{Runner, Config};\n\n");
-            content.push_str("fn main() -> anyhow::Result<()> {\n");
-            content.push_str("    let config = Config::default();\n");
-            content.push_str("    let runner = Runner::new(config);\n");
-            content.push_str("    runner.create_worktree(\"feature-branch\")?;\n");
-            content.push_str("    Ok(())\n");
-            content.push_str("}\n");
-        }
-        _ => {
-            content.push_str("// Example code for ");
-            content.push_str(component_name);
-            content.push_str(" - ");
-            content.push_str(example_name);
-            content.push_str("\n\n");
-            content.push_str("use hooksmith::");
-            content.push_str(component_name);
-            content.push_str("::Component;\n\n");
-            content.push_str("fn main() -> anyhow::Result<()> {\n");
-            content.push_str("    let component = Component::new();\n");
-            content.push_str("    component.example_function()?;\n");
-            content.push_str("    Ok(())\n");
-            content.push_str("}\n");
-        }
-    }
-
-    Ok(content)
-}
-
-/// Generate API reference
-fn generate_api_reference(component_name: &str) -> Result<String> {
-    let mut content = String::new();
-
-    match component_name {
-        "cli-core" => {
-            content.push_str("### Core Types\n\n");
-            content.push_str("- `CliApp` - Main CLI application\n");
-            content.push_str("- `Config` - Configuration management\n");
-            content.push_str("- `Command` - Command definition\n\n");
-        }
-        "git-filter" => {
-            content.push_str("### Core Types\n\n");
-            content.push_str("- `Filter` - Git filter implementation\n");
-            content.push_str("- `ContractValidator` - Contract validation\n");
-            content.push_str("- `StateMachine` - State machine management\n\n");
-        }
-        "hook-builder" => {
-            content.push_str("### Core Types\n\n");
-            content.push_str("- `Builder` - Hook builder\n");
-            content.push_str("- `Config` - Build configuration\n");
-            content.push_str("- `WasmCompiler` - WASM compilation\n\n");
-        }
-        "worktree-runner" => {
-            content.push_str("### Core Types\n\n");
-            content.push_str("- `Runner` - Worktree runner\n");
-            content.push_str("- `Config` - Runner configuration\n");
-            content.push_str("- `ToolManager` - Tool integration\n\n");
-        }
-        _ => {
-            content.push_str("### Core Types\n\n");
-            content.push_str("- `Component` - Main component type\n");
-            content.push_str("- `Config` - Configuration type\n");
-            content.push_str("- `Error` - Error type\n\n");
-        }
-    }
-
-    content.push_str("For detailed API documentation, run:\n");
-    content.push_str("```bash\n");
-    content.push_str("cargo doc --open\n");
-    content.push_str("```\n\n");
-
-    Ok(content)
-}
-
-/// Generate integration section
-fn generate_integration_section(component_name: &str) -> Result<String> {
-    let mut content = String::new();
-
-    match component_name {
-        "cli-core" => {
-            content
-                .push_str("This component integrates with the main Hooksmith CLI to provide:\n\n");
-            content.push_str("- Command parsing and execution\n");
-            content.push_str("- Error handling and reporting\n");
-            content.push_str("- Configuration management\n");
-            content.push_str("- Logging and output formatting\n\n");
-        }
-        "git-filter" => {
-            content.push_str("This component integrates with Git to provide:\n\n");
-            content.push_str("- Git filter processing\n");
-            content.push_str("- Contract validation during Git operations\n");
-            content.push_str("- State machine enforcement\n");
-            content.push_str("- Audit trail management\n\n");
-        }
-        "hook-builder" => {
-            content.push_str("This component integrates with the build system to provide:\n\n");
-            content.push_str("- Hook compilation and optimization\n");
-            content.push_str("- WASM component integration\n");
-            content.push_str("- WIT interface generation\n");
-            content.push_str("- Lefthook configuration\n\n");
-        }
-        "worktree-runner" => {
-            content.push_str("This component integrates with worktree tools to provide:\n\n");
-            content.push_str("- Worktree creation and management\n");
-            content.push_str("- Tool selection and execution\n");
-            content.push_str("- WASM-based worktree operations\n");
-            content.push_str("- Cross-platform compatibility\n\n");
-        }
-        _ => {
-            content
-                .push_str("This component integrates with the Hooksmith ecosystem to provide:\n\n");
-            content.push_str("- Core functionality\n");
-            content.push_str("- API integration\n");
-            content.push_str("- Error handling\n");
-            content.push_str("- Configuration management\n\n");
-        }
-    }
-
-    content.push_str("### Integration Points\n\n");
-    content.push_str("- **Main CLI**: Used by the main Hooksmith binary\n");
-    content.push_str("- **Tests**: Comprehensive test coverage\n");
-    content.push_str("- **Documentation**: Auto-generated API docs\n");
-    content.push_str("- **Examples**: Usage examples and demonstrations\n\n");
-
-    Ok(content)
 }
