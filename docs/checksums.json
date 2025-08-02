@@ -1,20 +1,20 @@
 {
   "files": {
-    "components/cli-core/README.md": "95efb6d48b8e767c11da29483b2fb23c50f7bc6f610bbfa8d8125947ea5d54ca",
-    "docs/ARCHITECTURE.md": "db8df55a61473706f7ea2512eb39d77d084235e2a17f717a9aa56a22db546201",
     "components/git-filter/README.md": "3e3634b84fc73d6a954f55ae61d06aa6dc06fe230c5f92f78ac023d940c0ca3c",
-    "components/hook-builder/README.md": "91c0ffe08ac7b07fa03023e603f4f91163b4982c4522f2febe8341babd21e19c",
+    "README.md": "22ef47b841d15de53b56c6fafe7fb2c53d9f093f64c305f86a6adfa1c0dd5efc",
+    "docs/ARCHITECTURE.md": "db8df55a61473706f7ea2512eb39d77d084235e2a17f717a9aa56a22db546201",
     "components/worktree-runner/README.md": "be46f887fce4e393a03eb5d64ec139a56c77eb1a1ab6e81be0fcdc0f2f122252",
-    "README.md": "6f56cf2e7cd195957ff1e1f211bbe7e6ab6ead23964393aee6cd943d5db3af6c",
-    "STRUCTURE.md": "03d5c6eaa70e59a01b646fe2ddd89159a7b8ad222ed2dfd59bd5fe2c2e28f908",
-    "docs/EXAMPLES.md": "657a7215543ecab94e8aae968281710088e44f1de92faec170b7b2eb7f536c7d",
+    "components/hook-builder/README.md": "91c0ffe08ac7b07fa03023e603f4f91163b4982c4522f2febe8341babd21e19c",
+    "components/cli-core/README.md": "95efb6d48b8e767c11da29483b2fb23c50f7bc6f610bbfa8d8125947ea5d54ca",
+    "docs/CLI_HELP.md": "1331c988512bf77ce7e30c0e769533986aca55ec74e2e05eeff08fa139ebe528",
+    "docs/STRUCTURE.md": "17fcbbb2d503a698cc3b49d33416962f34942304c7fd873b7fe85e95265c48ef",
     "docs/API.md": "ab59e4419e4dab989f7892bd8cf374914bc4681398f9e0410e7ea402564d40ad",
     "docs/DEVELOPMENT.md": "6f82316f850c513f04f80e6e7aeebe517aaf10ff721495f8ebf6bf81c6bd818c",
-    "docs/CLI_HELP.md": "1331c988512bf77ce7e30c0e769533986aca55ec74e2e05eeff08fa139ebe528",
+    "STRUCTURE.md": "faab3b1988acf734c628c1a324ea3d8a6345d3c04e5c4809db28d3fd7968fc0a",
+    "docs/EXAMPLES.md": "657a7215543ecab94e8aae968281710088e44f1de92faec170b7b2eb7f536c7d",
     "docs/TESTING.md": "96367b489da4cf41e2bff43d1c8947af93f716b0dc394d489482d5450d9c7f1a",
-    "docs/STRUCTURE.md": "c54c778a1b7b7686928bc7716a0377e6b2061559169e9a37d9b323eb3a447b94",
     "docs/CONTRIBUTING.md": "cfb8304420e6fe4b159ab36355ae0b569919fb34eb1c2c6cfec27ffdd88b5955"
   },
-  "generated_at": "2025-08-02T18:14:49.701540+00:00",
+  "generated_at": "2025-08-02T18:17:50.341293+00:00",
   "generator_version": "0.1.0"
 }

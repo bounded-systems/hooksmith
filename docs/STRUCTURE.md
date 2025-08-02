@@ -601,22 +601,22 @@ This document shows the complete file structure of the repository.
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .css | 1 | Stylesheet files |
-| .json | 6 | JSON schema and config files |
 | .yaml | 4 | YAML configuration files |
-| .dot | 1 | Other files |
-| .lock | 2 | Other files |
-| .toml | 8 | Cargo and configuration files |
-| .md | 91 | Markdown documentation |
-| .bash | 1 | Other files |
-| .hbs | 1 | Other files |
-| .epub | 1 | EPUB documentation |
-| .yml | 9 | YAML configuration files |
-| .rs | 111 | Rust source files |
-| .sh | 1 | Shell scripts |
+| .json | 6 | JSON schema and config files |
 | .pdf | 1 | PDF documentation |
-| .wit | 8 | WebAssembly Interface Type definitions |
+| .hbs | 1 | Other files |
+| .css | 1 | Stylesheet files |
+| .rs | 111 | Rust source files |
+| .bash | 1 | Other files |
+| .sh | 1 | Shell scripts |
+| .lock | 2 | Other files |
 | .html | 1 | HTML documentation |
+| .md | 91 | Markdown documentation |
+| .epub | 1 | EPUB documentation |
+| .dot | 1 | Other files |
+| .toml | 8 | Cargo and configuration files |
+| .yml | 9 | YAML configuration files |
+| .wit | 8 | WebAssembly Interface Type definitions |
 
 ## 🧩 Component Breakdown
 
@@ -647,9 +647,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 135
-- **Modified Files**: 2
+- **Total Commits**: 136
+- **Modified Files**: 14
 
 ---
 
-*Generated on Sat Aug  2 18:14:49 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sat Aug  2 18:17:50 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
