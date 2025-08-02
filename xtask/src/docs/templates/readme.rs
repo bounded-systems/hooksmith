@@ -23,8 +23,11 @@ pub struct Feature {
 #[derive(Debug, Clone)]
 pub enum FeatureStatus {
     Complete,
+    #[allow(dead_code)]
     InProgress,
+    #[allow(dead_code)]
     Planned,
+    #[allow(dead_code)]
     NotStarted,
 }
 
@@ -51,7 +54,9 @@ pub struct RoadmapItem {
 #[derive(Debug, Clone)]
 pub enum RoadmapStatus {
     Complete,
+    #[allow(dead_code)]
     InProgress,
+    #[allow(dead_code)]
     Planned,
 }
 
@@ -67,8 +72,10 @@ impl fmt::Display for RoadmapStatus {
 
 #[derive(Debug, Clone)]
 pub struct ProjectStatus {
+    #[allow(dead_code)]
     pub current_state: String,
     pub intended_purpose: String,
+    #[allow(dead_code)]
     pub features: Vec<Feature>,
 }
 
@@ -134,7 +141,7 @@ impl ReadmeTemplate {
             ));
             roadmap.push_str(&format!("{}\n\n", item.description));
 
-            for (_i, task) in item.items.iter().enumerate() {
+            for task in item.items.iter() {
                 let status = match item.status {
                     RoadmapStatus::Complete => "✅",
                     RoadmapStatus::InProgress => "🔄",

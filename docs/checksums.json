@@ -1,20 +1,20 @@
 {
   "files": {
-    "docs/CONTRIBUTING.md": "cfb8304420e6fe4b159ab36355ae0b569919fb34eb1c2c6cfec27ffdd88b5955",
-    "STRUCTURE.md": "b654cf6e9dc19d30d98d76b5a887aeedbe2e2026863da96834abd67e76eaecc0",
-    "docs/DEVELOPMENT.md": "c910f9a0493939f2cea87400bd4f9bf4491e783f9272411a988154957c575c7c",
-    "components/hook-builder/README.md": "91c0ffe08ac7b07fa03023e603f4f91163b4982c4522f2febe8341babd21e19c",
-    "docs/CLI_HELP.md": "1331c988512bf77ce7e30c0e769533986aca55ec74e2e05eeff08fa139ebe528",
+    "docs/EXAMPLES.md": "76971f52976ca55c297eb3425ac087b9567f879cc50324fd2bc14528c10bb98c",
+    "docs/DEVELOPMENT.md": "f6ddc505eca26738d9ea1c8a1a9c119d4da4d0d501a98a3b0dd61542ae07ed90",
     "components/git-filter/README.md": "3e3634b84fc73d6a954f55ae61d06aa6dc06fe230c5f92f78ac023d940c0ca3c",
-    "docs/STRUCTURE.md": "0daf10988673ae1241343db9bfc91abcd946f6308d8395f41b58f1a854b8a761",
-    "README.md": "4f7f04d1481ccc72f1eff4851bc961161f7a3843e46aac5ca1623a9538f70165",
-    "components/cli-core/README.md": "95efb6d48b8e767c11da29483b2fb23c50f7bc6f610bbfa8d8125947ea5d54ca",
-    "components/worktree-runner/README.md": "be46f887fce4e393a03eb5d64ec139a56c77eb1a1ab6e81be0fcdc0f2f122252",
-    "docs/EXAMPLES.md": "2035e0941415e0da8f4c1a5c4c24ad87ab13a2c5716891480697a49227178117",
-    "docs/API.md": "181c6123c9602506630b39faf15e38ad58a3f64fe298ffb00a052b28c82436ae",
     "docs/TESTING.md": "96367b489da4cf41e2bff43d1c8947af93f716b0dc394d489482d5450d9c7f1a",
-    "docs/ARCHITECTURE.md": "b3a3c6aa7299d7b2a4bd91f7785f29740a5d82dd2503b0462f9a1dbc9f29e0dd"
+    "docs/CONTRIBUTING.md": "cfb8304420e6fe4b159ab36355ae0b569919fb34eb1c2c6cfec27ffdd88b5955",
+    "components/worktree-runner/README.md": "be46f887fce4e393a03eb5d64ec139a56c77eb1a1ab6e81be0fcdc0f2f122252",
+    "docs/ARCHITECTURE.md": "b3a3c6aa7299d7b2a4bd91f7785f29740a5d82dd2503b0462f9a1dbc9f29e0dd",
+    "components/cli-core/README.md": "95efb6d48b8e767c11da29483b2fb23c50f7bc6f610bbfa8d8125947ea5d54ca",
+    "README.md": "ea8fea138ec6ce513e49a5584e52b976268d0d646d6e496a64af90c59d210ccc",
+    "components/hook-builder/README.md": "91c0ffe08ac7b07fa03023e603f4f91163b4982c4522f2febe8341babd21e19c",
+    "STRUCTURE.md": "377c81c5097bc8ea35974d0ba28f036911708c8ef00e475230d18fc75c633206",
+    "docs/STRUCTURE.md": "763fe073a113d8f0101fc59cbe73358b61119a4301e33bf3cd9a10565509b097",
+    "docs/API.md": "181c6123c9602506630b39faf15e38ad58a3f64fe298ffb00a052b28c82436ae",
+    "docs/CLI_HELP.md": "1331c988512bf77ce7e30c0e769533986aca55ec74e2e05eeff08fa139ebe528"
   },
-  "generated_at": "2025-08-02T23:22:28.075784+00:00",
+  "generated_at": "2025-08-02T23:41:40.451531+00:00",
   "generator_version": "0.1.0"
 }

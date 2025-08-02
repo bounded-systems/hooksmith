@@ -34,6 +34,7 @@ pub struct GeneratedFileValidationResult {
     /// Whether validation passed
     pub is_valid: bool,
     /// List of files that were manually modified
+    #[allow(dead_code)]
     pub modified_files: Vec<PathBuf>,
     /// Error message if validation failed
     pub error_message: Option<String>,

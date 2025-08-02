@@ -21,6 +21,7 @@ impl ApiTemplate {
     }
 
     /// Add a module to the API documentation
+    #[allow(dead_code)]
     pub fn add_module(&mut self, module: ModuleInfo) {
         self.modules.push(module);
     }

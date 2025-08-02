@@ -11,6 +11,7 @@ pub struct FileTypeConfig {
     pub markers: HashMap<String, String>,
     pub excluded_paths: Vec<String>,
     pub manual_files: Vec<String>,
+    #[allow(dead_code)]
     pub generation_commands: HashMap<String, String>,
 }
 
@@ -60,6 +61,7 @@ impl FileTypeConfig {
         false
     }
 
+    #[allow(dead_code)]
     pub fn get_generation_command(&self, extension: &str) -> Option<&String> {
         self.generation_commands.get(extension)
     }
@@ -314,6 +316,7 @@ pub fn validate_generated_files() -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn list_forbidden_files() -> Result<Vec<String>> {
     let config = FileTypeConfig::load()?;
     let mut forbidden_files = Vec::new();
@@ -351,6 +354,7 @@ pub fn list_forbidden_files() -> Result<Vec<String>> {
     Ok(forbidden_files)
 }
 
+#[allow(dead_code)]
 pub fn list_missing_markers() -> Result<Vec<String>> {
     let config = FileTypeConfig::load()?;
     let mut missing_markers = Vec::new();

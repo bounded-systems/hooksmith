@@ -56,6 +56,7 @@ cargo build
 │   │   ├── lefthook-generator.wit
 │   │   ├── hooksmith.wit
 │   │   ├── hook-builder.wit
+│   │   ├── worktree-runner.wit
 │       └── validation.wit
 │   ├── PHASE_4_IMPLEMENTATION_SUMMARY.md
 │   ├── diagrams/

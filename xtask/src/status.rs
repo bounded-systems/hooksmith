@@ -1237,7 +1237,7 @@ fn generate_main_migration_script(
     script.push_str(&format!("{:.1}%", progress.migration_progress));
     script.push_str("\"\n");
     script.push_str("echo \"Target: 100% Rust-owned pipeline\"\n");
-    script.push_str("\n");
+    script.push('\n');
 
     for file_type in file_types {
         script.push_str(&format!(

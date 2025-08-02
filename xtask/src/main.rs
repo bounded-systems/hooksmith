@@ -376,6 +376,21 @@ enum Commands {
         #[arg(long)]
         auto_fix: bool,
     },
+    /// Check for dead code by temporarily stripping #[allow(dead_code)] attributes
+    DeadCodeCheck {
+        /// Whether to exit with error on dead code found
+        #[arg(long)]
+        strict: bool,
+        /// Whether to strip attributes from generated files too
+        #[arg(long)]
+        include_generated: bool,
+        /// Whether to restore attributes after checking
+        #[arg(long, default_value = "true")]
+        restore: bool,
+        /// Output format for results
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
 }
 
 /// WIT schema for function definition
@@ -661,6 +676,14 @@ async fn main() -> Result<()> {
             auto_fix,
         } => {
             run_pre_commit(enhanced, staged_only, strict, auto_fix).await?;
+        }
+        Commands::DeadCodeCheck {
+            strict,
+            include_generated,
+            restore,
+            format,
+        } => {
+            run_dead_code_check(strict, include_generated, restore, format).await?;
         }
     }
 
@@ -2391,11 +2414,11 @@ async fn setup_git_filters(force: bool) -> Result<()> {
         .context("Failed to set cachetextconv flag")?;
 
     println!("✅ Git filters and diffs configured successfully!");
-    println!("");
+    println!();
     println!("📋 Configuration summary:");
     println!("   Filter: contract_validate");
     println!("   Diff: contract_diff");
-    println!("");
+    println!();
     println!("🔍 To verify the configuration, run:");
     println!("   git config --list | grep contract");
 
@@ -2651,7 +2674,7 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
     }
 
     println!("🎉 Project bootstrap completed!");
-    println!("");
+    println!();
     println!("📋 Next steps:");
     println!("1. Review generated files");
     println!("2. Run tests: cargo test");
@@ -3587,7 +3610,7 @@ async fn validate_documentation(
     }
 
     // Validate checksums if available
-    println!("");
+    println!();
     println!("🔐 Validating checksums...");
 
     let checksum_path = Path::new("docs/checksums.json");
@@ -3609,7 +3632,7 @@ async fn validate_documentation(
     }
 
     // Check Git attributes
-    println!("");
+    println!();
     println!("🏷️  Checking Git attributes...");
 
     let gitattributes_path = Path::new(".gitattributes");
@@ -3632,7 +3655,7 @@ async fn validate_documentation(
 
     // Generate fresh documentation if requested
     if regenerate {
-        println!("");
+        println!();
         println!("🔄 Generating fresh documentation...");
 
         match generate_comprehensive_documentation(true, &None, "docs", true).await {
@@ -3651,7 +3674,7 @@ async fn validate_documentation(
 
     // Check for uncommitted changes
     if check_uncommitted {
-        println!("");
+        println!();
         println!("📝 Checking for uncommitted changes...");
 
         let status = Command::new("git")
@@ -3666,7 +3689,7 @@ async fn validate_documentation(
             println!("⚠️  {}", warning_msg);
 
             if strict {
-                println!("");
+                println!();
                 println!("Please commit all changes or run:");
                 println!("cargo xtask gen-docs-comprehensive --all --validate");
                 println!("git add .");
@@ -3678,7 +3701,7 @@ async fn validate_documentation(
     }
 
     // Summary
-    println!("");
+    println!();
     if errors.is_empty() && warnings.is_empty() {
         println!("🎉 All documentation validation checks passed!");
         println!("✅ No direct markdown file creation detected");
@@ -3750,12 +3773,12 @@ async fn setup_pre_commit(enhanced: bool, force: bool, lefthook: bool) -> Result
         }
 
         println!("✅ Lefthook pre-commit hook installed successfully!");
-        println!("");
+        println!();
         println!("🎯 What this hook does:");
         println!("   • Runs contract validation on staged files");
         println!("   • Prevents commits that violate the contract");
         println!("   • Provides helpful error messages and fix suggestions");
-        println!("");
+        println!();
         println!("🚀 Test it:");
         println!("   git add .");
         println!("   git commit -m 'test commit'");
@@ -3795,7 +3818,7 @@ async fn setup_pre_commit(enhanced: bool, force: bool, lefthook: bool) -> Result
         }
 
         println!("✅ Pre-commit hook installed successfully!");
-        println!("");
+        println!();
         println!("🎯 What this hook does:");
         if enhanced {
             println!("   • Automatically fixes compilation warnings with cargo fix");
@@ -3809,61 +3832,16 @@ async fn setup_pre_commit(enhanced: bool, force: bool, lefthook: bool) -> Result
             println!("   • Prevents commits that violate the contract");
             println!("   • Provides helpful error messages and fix suggestions");
         }
-        println!("");
+        println!();
         println!("🚀 Test it:");
         println!("   git add .");
         println!("   git commit -m 'test commit'");
     }
 
-    println!("");
+    println!();
     println!("📚 For more info:");
     println!("   cargo run -p xtask -- contract-check --help");
     println!("   docs/CONTRACT_CHECK_SYSTEM.md");
-
-    Ok(())
-}
-
-/// Run pre-commit validation (replaces pre-commit script)
-async fn run_pre_commit(
-    enhanced: bool,
-    staged_only: bool,
-    strict: bool,
-    auto_fix: bool,
-) -> Result<()> {
-    if enhanced {
-        println!("🔗 Running Enhanced Hooksmith Pre-commit Check...");
-    } else {
-        println!("🔗 Running Hooksmith Contract Check...");
-    }
-
-    // Check if we're in a git repository
-    let status = Command::new("git")
-        .args(["rev-parse", "--git-dir"])
-        .status()
-        .context("Failed to check git repository")?;
-
-    if !status.success() {
-        anyhow::bail!("❌ Error: Not in a git repository");
-    }
-
-    // Check if there are staged changes
-    let status = Command::new("git")
-        .args(["diff", "--cached", "--quiet"])
-        .status()
-        .context("Failed to check staged changes")?;
-
-    if status.success() {
-        println!("ℹ️  No staged changes to validate");
-        return Ok(());
-    }
-
-    if enhanced {
-        // Enhanced pre-commit workflow
-        run_enhanced_pre_commit_workflow(staged_only, strict, auto_fix).await?;
-    } else {
-        // Basic pre-commit workflow
-        run_basic_pre_commit_workflow(staged_only, strict).await?;
-    }
 
     Ok(())
 }
@@ -3994,7 +3972,7 @@ async fn run_enhanced_pre_commit_workflow(
         println!("   ✅ Clippy checks passed");
     } else {
         println!("   ❌ Clippy found issues that need to be fixed manually");
-        println!("");
+        println!();
         println!("💡 To fix clippy issues:");
         println!("   cargo clippy --workspace --fix --allow-dirty --allow-staged");
         println!("   git add .");
@@ -4022,9 +4000,9 @@ async fn run_enhanced_pre_commit_workflow(
     if status.success() {
         println!("   ✅ Contract check passed");
     } else {
-        println!("");
+        println!();
         println!("❌ Contract check failed!");
-        println!("");
+        println!();
         println!("💡 To fix this:");
         println!(
             "   1. Regenerate modified files: cargo run -p xtask -- gen-docs-comprehensive --all"
@@ -4033,20 +4011,20 @@ async fn run_enhanced_pre_commit_workflow(
         println!("      cargo run -p xtask -- gen-lefthook");
         println!("      cargo run -p xtask -- gen-gitattributes");
         println!("   3. Re-stage and try again");
-        println!("");
+        println!();
         println!("🔍 For detailed analysis:");
         println!("   cargo run -p xtask -- status migration-progress --format markdown");
         println!("   cargo run -p xtask -- status file-types --format json");
-        println!("");
+        println!();
         if strict {
             anyhow::bail!("Contract check failed");
         }
     }
 
-    println!("");
+    println!();
     println!("✅ Enhanced pre-commit check passed!");
     println!("🚀 Ready to commit!");
-    println!("");
+    println!();
     println!("📊 Summary:");
     println!("   ✅ Compilation warnings fixed");
     println!("   ✅ Generated files up to date");
@@ -4079,9 +4057,9 @@ async fn run_basic_pre_commit_workflow(_staged_only: bool, strict: bool) -> Resu
         .context("Failed to run contract check")?;
 
     if !status.success() {
-        println!("");
+        println!();
         println!("❌ Contract check failed!");
-        println!("");
+        println!();
         println!("💡 To fix this:");
         println!("   1. Regenerate modified files: cargo xtask gen-all");
         println!("   2. Or regenerate specific files:");
@@ -4089,11 +4067,11 @@ async fn run_basic_pre_commit_workflow(_staged_only: bool, strict: bool) -> Resu
         println!("      cargo xtask gen-docs");
         println!("      cargo xtask gen-mods");
         println!("   3. Re-stage and try again");
-        println!("");
+        println!();
         println!("🔍 For detailed analysis:");
         println!("   cargo xtask status migration-progress --format markdown");
         println!("   cargo xtask status file-types --format json");
-        println!("");
+        println!();
         anyhow::bail!("Contract check failed");
     }
 
@@ -4358,10 +4336,226 @@ async fn git_commit(
     let commit_message = String::from_utf8_lossy(&output.stdout).trim().to_string();
 
     if commit_message.is_empty() {
-        println!("");
+        println!();
         println!("✅ Empty commit message accepted (Trunk-style)");
         println!("💡 Use 'git commit --amend' if you want to add details later");
     }
 
     Ok(())
+}
+
+/// Run pre-commit validation (replaces pre-commit script)
+async fn run_pre_commit(
+    enhanced: bool,
+    staged_only: bool,
+    strict: bool,
+    auto_fix: bool,
+) -> Result<()> {
+    if enhanced {
+        println!("🔗 Running Enhanced Hooksmith Pre-commit Check...");
+    } else {
+        println!("🔗 Running Hooksmith Contract Check...");
+    }
+
+    // Check if we're in a git repository
+    let status = Command::new("git")
+        .args(["rev-parse", "--git-dir"])
+        .status()
+        .context("Failed to check git repository")?;
+
+    if !status.success() {
+        anyhow::bail!("❌ Error: Not in a git repository");
+    }
+
+    // Check if there are staged changes
+    let status = Command::new("git")
+        .args(["diff", "--cached", "--quiet"])
+        .status()
+        .context("Failed to check staged changes")?;
+
+    if status.success() {
+        println!("ℹ️  No staged changes to validate");
+        return Ok(());
+    }
+
+    if enhanced {
+        // Enhanced pre-commit workflow
+        run_enhanced_pre_commit_workflow(staged_only, strict, auto_fix).await?;
+    } else {
+        // Basic pre-commit workflow
+        run_basic_pre_commit_workflow(staged_only, strict).await?;
+    }
+
+    Ok(())
+}
+
+/// Check for dead code by temporarily stripping #[allow(dead_code)] attributes
+async fn run_dead_code_check(
+    strict: bool,
+    include_generated: bool,
+    restore: bool,
+    format: String,
+) -> Result<()> {
+    println!("🔍 Checking for dead code...");
+
+    // Create backup of files with #[allow(dead_code)] attributes
+    let backup_dir = std::env::temp_dir().join("hooksmith_dead_code_backup");
+    std::fs::create_dir_all(&backup_dir)?;
+
+    // Find all Rust files with #[allow(dead_code)] attributes
+    let output = Command::new("rg")
+        .args(["-l", r"#\[allow\(dead_code\)\]", "--type", "rust"])
+        .output()
+        .context("Failed to find files with #[allow(dead_code)] attributes")?;
+
+    let files_with_attributes: Vec<String> = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(|s| s.to_string())
+        .collect();
+
+    if files_with_attributes.is_empty() {
+        println!("ℹ️  No files with #[allow(dead_code)] attributes found");
+        return Ok(());
+    }
+
+    println!(
+        "📁 Found {} files with #[allow(dead_code)] attributes",
+        files_with_attributes.len()
+    );
+
+    // Backup and strip attributes
+    for file_path in &files_with_attributes {
+        let path = std::path::Path::new(file_path);
+
+        // Skip generated files unless include_generated is true
+        if !include_generated && is_generated_file(path) {
+            continue;
+        }
+
+        // Backup the file
+        let backup_path = backup_dir.join(path.file_name().unwrap());
+        std::fs::copy(path, &backup_path)?;
+
+        // Strip #[allow(dead_code)] attributes
+        let content = std::fs::read_to_string(path)?;
+        let stripped_content = strip_allow_dead_code_attributes(&content);
+        std::fs::write(path, stripped_content)?;
+    }
+
+    // Run cargo check to find dead code
+    println!("🔍 Running cargo check to find dead code...");
+    let output = Command::new("cargo")
+        .args(["check", "--all-targets", "--all-features"])
+        .output()
+        .context("Failed to run cargo check")?;
+
+    let dead_code_found = !output.status.success();
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    let error_str = String::from_utf8_lossy(&output.stderr);
+
+    // Restore attributes if requested
+    if restore {
+        println!("🔄 Restoring #[allow(dead_code)] attributes...");
+        for file_path in &files_with_attributes {
+            let path = std::path::Path::new(file_path);
+
+            if !include_generated && is_generated_file(path) {
+                continue;
+            }
+
+            let backup_path = backup_dir.join(path.file_name().unwrap());
+            if backup_path.exists() {
+                std::fs::copy(&backup_path, path)?;
+            }
+        }
+    }
+
+    // Clean up backup directory
+    if backup_dir.exists() {
+        std::fs::remove_dir_all(&backup_dir)?;
+    }
+
+    // Report results
+    if dead_code_found {
+        println!("❌ Dead code found!");
+
+        if format == "json" {
+            let report = DeadCodeReport {
+                dead_code_found: true,
+                files_checked: files_with_attributes.len(),
+                errors: error_str.lines().map(|s| s.to_string()).collect(),
+                warnings: output_str.lines().map(|s| s.to_string()).collect(),
+            };
+            println!("{}", serde_json::to_string_pretty(&report)?);
+        } else {
+            println!("📋 Dead code errors:");
+            for line in error_str.lines() {
+                if line.contains("dead_code") {
+                    println!("  {}", line);
+                }
+            }
+        }
+
+        if strict {
+            return Err(anyhow::anyhow!("Dead code found"));
+        }
+    } else {
+        println!("✅ No dead code found!");
+
+        if format == "json" {
+            let report = DeadCodeReport {
+                dead_code_found: false,
+                files_checked: files_with_attributes.len(),
+                errors: vec![],
+                warnings: vec![],
+            };
+            println!("{}", serde_json::to_string_pretty(&report)?);
+        }
+    }
+
+    Ok(())
+}
+
+/// Check if a file is generated (contains codegen markers)
+fn is_generated_file(path: &std::path::Path) -> bool {
+    if let Ok(content) = std::fs::read_to_string(path) {
+        content.contains("// Code generated by")
+            || content.contains("// This file is generated")
+            || content.contains("// DO NOT EDIT")
+    } else {
+        false
+    }
+}
+
+/// Strip #[allow(dead_code)] attributes from Rust code
+fn strip_allow_dead_code_attributes(content: &str) -> String {
+    let lines: Vec<&str> = content.lines().collect();
+    let mut result = Vec::new();
+
+    for line in lines {
+        let trimmed = line.trim();
+        if trimmed.starts_with("#[allow(dead_code)]") {
+            // Skip this line entirely
+            continue;
+        } else if trimmed.contains("#[allow(dead_code)]") {
+            // Remove the attribute from the line
+            let replaced = line.replace("#[allow(dead_code)]", "");
+            let cleaned = replaced.trim();
+            if !cleaned.is_empty() {
+                result.push(cleaned.to_string());
+            }
+        } else {
+            result.push(line.to_string());
+        }
+    }
+
+    result.join("\n")
+}
+
+#[derive(serde::Serialize)]
+struct DeadCodeReport {
+    dead_code_found: bool,
+    files_checked: usize,
+    errors: Vec<String>,
+    warnings: Vec<String>,
 }

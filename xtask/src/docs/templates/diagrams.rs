@@ -200,7 +200,9 @@ pub struct GitWorkflowDiagram {
 #[derive(Debug, Clone)]
 pub struct WorkflowStep {
     pub name: String,
+    #[allow(dead_code)]
     pub description: String,
+    #[allow(dead_code)]
     pub action: String,
 }
 

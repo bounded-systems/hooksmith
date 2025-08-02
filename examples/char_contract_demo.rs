@@ -62,7 +62,7 @@ fn demo_file_validation() -> Result<(), Box<dyn std::error::Error>> {
 
     // Valid file
     let valid_content = b"Hello, World!\nThis is valid text with UTF-8: caf\xE9\n";
-    let (result, processed) = validator.validate_file(valid_content);
+    let (result, _processed) = validator.validate_file(valid_content);
 
     println!("  Valid file: {}", result.summary());
     println!("    UTF-8 valid: {}", result.utf8_valid);

@@ -55,6 +55,7 @@ impl DocumentationManifest {
     }
 
     /// Save the documentation manifest to file
+    #[allow(dead_code)]
     pub fn save(&self) -> Result<()> {
         let manifest_path = Path::new("config/docs_manifest.yaml");
 
@@ -72,11 +73,13 @@ impl DocumentationManifest {
     }
 
     /// Get documentation config by path
+    #[allow(dead_code)]
     pub fn get_by_path(&self, path: &str) -> Option<&DocConfig> {
         self.docs.iter().find(|doc| doc.path == path)
     }
 
     /// Get documentation configs by generator
+    #[allow(dead_code)]
     pub fn get_by_generator(&self, generator: &str) -> Vec<&DocConfig> {
         self.docs
             .iter()
@@ -85,6 +88,7 @@ impl DocumentationManifest {
     }
 
     /// Add a new documentation configuration
+    #[allow(dead_code)]
     pub fn add_doc(&mut self, config: DocConfig) {
         // Remove existing config with same path
         self.docs.retain(|doc| doc.path != config.path);
@@ -92,11 +96,13 @@ impl DocumentationManifest {
     }
 
     /// Remove a documentation configuration
+    #[allow(dead_code)]
     pub fn remove_doc(&mut self, path: &str) {
         self.docs.retain(|doc| doc.path != path);
     }
 
     /// Validate the manifest
+    #[allow(dead_code)]
     pub fn validate(&self) -> Result<()> {
         let mut errors = Vec::new();
 
@@ -204,6 +210,7 @@ impl Default for DocumentationManifest {
 }
 
 /// Generate the default documentation manifest
+#[allow(dead_code)]
 pub fn generate_default_manifest() -> Result<()> {
     let manifest = DocumentationManifest::default();
     manifest.save()?;
@@ -212,6 +219,7 @@ pub fn generate_default_manifest() -> Result<()> {
 }
 
 /// Validate and update the documentation manifest
+#[allow(dead_code)]
 pub fn validate_and_update_manifest() -> Result<()> {
     let manifest = DocumentationManifest::load()?;
 
@@ -226,6 +234,7 @@ pub fn validate_and_update_manifest() -> Result<()> {
 }
 
 /// List all documentation configurations
+#[allow(dead_code)]
 pub fn list_documentation_configs() -> Result<()> {
     let manifest = DocumentationManifest::load()?;
 

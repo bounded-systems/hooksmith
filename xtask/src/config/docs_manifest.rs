@@ -148,21 +148,25 @@ impl DocsManifest {
     }
 
     /// Add a new documentation section
+    #[allow(dead_code)]
     pub fn add_section(&mut self, section: DocSection) {
         self.sections.push(section);
     }
 
     /// Add a new documentation format
+    #[allow(dead_code)]
     pub fn add_format(&mut self, format: DocFormat) {
         self.formats.push(format);
     }
 
     /// Get section by name
+    #[allow(dead_code)]
     pub fn get_section(&self, name: &str) -> Option<&DocSection> {
         self.sections.iter().find(|s| s.name == name)
     }
 
     /// Get format by name
+    #[allow(dead_code)]
     pub fn get_format(&self, name: &str) -> Option<&DocFormat> {
         self.formats.iter().find(|f| f.name == name)
     }

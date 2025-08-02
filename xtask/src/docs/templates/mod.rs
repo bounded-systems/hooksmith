@@ -88,11 +88,17 @@ impl Default for TemplateEngine {
 pub struct ProjectData {
     pub name: String,
     pub description: String,
+    #[allow(dead_code)]
     pub version: String,
+    #[allow(dead_code)]
     pub authors: Vec<String>,
+    #[allow(dead_code)]
     pub repository: Option<String>,
+    #[allow(dead_code)]
     pub license: Option<String>,
+    #[allow(dead_code)]
     pub keywords: Vec<String>,
+    #[allow(dead_code)]
     pub categories: Vec<String>,
 }
 
@@ -118,6 +124,7 @@ impl ProjectData {
 #[derive(Debug, Clone)]
 pub struct ModuleInfo {
     pub name: String,
+    #[allow(dead_code)]
     pub path: String,
     pub description: String,
     pub public_items: Vec<PublicItem>,
@@ -126,6 +133,7 @@ pub struct ModuleInfo {
 #[derive(Debug, Clone)]
 pub struct PublicItem {
     pub name: String,
+    #[allow(dead_code)]
     pub item_type: ItemType,
     pub description: String,
     pub signature: Option<String>,
@@ -133,11 +141,17 @@ pub struct PublicItem {
 
 #[derive(Debug, Clone)]
 pub enum ItemType {
+    #[allow(dead_code)]
     Function,
+    #[allow(dead_code)]
     Struct,
+    #[allow(dead_code)]
     Enum,
+    #[allow(dead_code)]
     Trait,
+    #[allow(dead_code)]
     Module,
+    #[allow(dead_code)]
     Constant,
 }
 

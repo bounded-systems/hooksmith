@@ -8,29 +8,29 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **chrono**: ^0.4
-- **sha2**: ^0.10
+- **reqwest**: ^0.11
+- **serde_yaml**: ^0.9
+- **serde_json**: ^1.0
 - **toml**: ^0.8
 - **tracing-subscriber**: ^0.3
-- **reqwest**: ^0.11
-- **serde_json**: ^1.0
-- **tempfile**: dev
 - **serde**: ^1.0
-- **serde_yaml**: ^0.9
-- **git2**: ^0.18
-- **which**: ^5.0
-- **wit-bindgen**: ^0.20
-- **indicatif**: ^0.17
-- **console**: ^0.15
-- **git-filter**: *
-- **jsonschema**: ^0.17
-- **tracing**: ^0.1
-- **cli-core**: *
-- **anyhow**: ^1.0
-- **wasmtime-wasi**: ^18.0
-- **clap**: ^4.0
 - **tokio**: ^1.0
+- **tracing**: ^0.1
+- **console**: ^0.15
+- **chrono**: ^0.4
+- **anyhow**: ^1.0
+- **git2**: ^0.18
+- **cli-core**: *
+- **jsonschema**: ^0.17
+- **indicatif**: ^0.17
+- **wit-bindgen**: ^0.20
+- **sha2**: ^0.10
+- **git-filter**: *
+- **clap**: ^4.0
+- **which**: ^5.0
+- **tempfile**: dev
 - **wasmtime**: ^18.0
+- **wasmtime-wasi**: ^18.0
 
 ## Installation
 
@@ -80,6 +80,7 @@ hooksmith --help
 │   │   ├── lefthook-generator.wit
 │   │   ├── hooksmith.wit
 │   │   ├── hook-builder.wit
+│   │   ├── worktree-runner.wit
 │       └── validation.wit
 │   ├── PHASE_4_IMPLEMENTATION_SUMMARY.md
 │   ├── diagrams/

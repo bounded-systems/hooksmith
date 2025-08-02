@@ -12,6 +12,7 @@ use std::process::Command;
 
 /// Project data extracted from source code
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct ProjectData {
     pub name: String,
     pub description: String,
@@ -28,6 +29,7 @@ pub struct ProjectData {
 
 /// Component data extracted from component directories
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ComponentData {
     pub name: String,
     pub description: String,
@@ -40,6 +42,7 @@ pub struct ComponentData {
 
 /// Git repository information
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct GitInfo {
     pub branch: String,
     pub commit: String,

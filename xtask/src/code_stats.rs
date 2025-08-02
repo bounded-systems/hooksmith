@@ -369,7 +369,6 @@ async fn count_rust_lines() -> Result<usize> {
         .context("Failed to count lines in Rust files")?;
 
     let line_count: usize = String::from_utf8_lossy(&output.stdout)
-        .trim()
         .split_whitespace()
         .next()
         .unwrap_or("0")

@@ -21,6 +21,7 @@ impl ExamplesTemplate {
     }
 
     /// Add an example to the template
+    #[allow(dead_code)]
     pub fn add_example(&mut self, example: ExampleInfo) {
         self.examples.push(example);
     }

@@ -627,7 +627,7 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       301
+- **Total Files**:       302
 - **Rust Files**:        115 (.rs)
 - **Configuration Files**:        31 (.toml, .yaml, .rc)
 - **Documentation**:        118 (.md)
@@ -637,21 +637,21 @@ This document shows the complete file structure of the repository.
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .rs | 115 | Rust source files |
-| .wit | 8 | WebAssembly Interface Type definitions |
-| .yml | 9 | YAML configuration files |
-| .md | 118 | Markdown documentation |
-| .json | 10 | JSON schema and config files |
-| .yaml | 4 | YAML configuration files |
-| .dot | 1 | Other files |
-| .toml | 8 | Cargo and configuration files |
-| .epub | 1 | EPUB documentation |
-| .hbs | 1 | Other files |
-| .html | 1 | HTML documentation |
+| .pdf | 1 | PDF documentation |
 | .lock | 2 | Other files |
+| .wit | 9 | WebAssembly Interface Type definitions |
+| .dot | 1 | Other files |
+| .json | 10 | JSON schema and config files |
+| .yml | 9 | YAML configuration files |
+| .epub | 1 | EPUB documentation |
 | .bash | 1 | Other files |
 | .css | 1 | Stylesheet files |
-| .pdf | 1 | PDF documentation |
+| .rs | 115 | Rust source files |
+| .yaml | 4 | YAML configuration files |
+| .md | 118 | Markdown documentation |
+| .html | 1 | HTML documentation |
+| .toml | 8 | Cargo and configuration files |
+| .hbs | 1 | Other files |
 
 ## 🧩 Component Breakdown
 
@@ -682,9 +682,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 159
-- **Modified Files**: 49
+- **Total Commits**: 160
+- **Modified Files**: 21
 
 ---
 
-*Generated on Sat Aug  2 23:22:28 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sat Aug  2 23:41:40 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

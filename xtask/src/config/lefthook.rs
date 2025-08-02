@@ -35,6 +35,7 @@ impl HookCommand {
     }
 
     /// Create a command with glob pattern
+    #[allow(dead_code)]
     pub fn with_glob(run: &str, glob: &str) -> Self {
         Self {
             run: Some(run.to_string()),
@@ -141,6 +142,7 @@ impl LefthookConfig {
     }
 
     /// Add a custom pre-commit hook
+    #[allow(dead_code)]
     pub fn add_pre_commit_hook(&mut self, name: &str, command: HookCommand) {
         if let Some(ref mut pre_commit) = self.pre_commit {
             pre_commit.insert(name.to_string(), command);
@@ -152,6 +154,7 @@ impl LefthookConfig {
     }
 
     /// Add a custom pre-push hook
+    #[allow(dead_code)]
     pub fn add_pre_push_hook(&mut self, name: &str, command: HookCommand) {
         if let Some(ref mut pre_push) = self.pre_push {
             pre_push.insert(name.to_string(), command);

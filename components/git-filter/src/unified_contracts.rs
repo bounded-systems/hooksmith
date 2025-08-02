@@ -149,6 +149,12 @@ pub enum TreeMode {
     Symlink = 0o120000,
 }
 
+impl std::fmt::Display for TreeMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_mode_string())
+    }
+}
+
 impl TreeMode {
     pub fn parse_from_str(s: &str) -> Option<TreeMode> {
         match s {
