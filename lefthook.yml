@@ -1,20 +1,18 @@
-# Lefthook configuration for Hooksmith
-# This file configures pre-commit hooks to ensure code quality
-
-# Pre-commit hooks run before each commit
 pre-commit:
   parallel: true
   commands:
-    hooksmith-fmt:
-      glob: "*.rs"
-      run: cargo fmt --all -- --check
     hooksmith-clippy:
-      glob: "*.rs"
       run: cargo clippy --all-targets --all-features -- -D warnings
-    hooksmith-test:
-      run: cargo test --all-targets --all-features
+      glob: "*.rs"
     hooksmith-gen-wit:
       run: cargo xtask gen-wit
+      glob: "*.rs"
+    hooksmith-test:
+      run: cargo test --all-targets --all-features
+      glob: "*.rs"
+    hooksmith-fmt:
+      run: cargo fmt --all -- --check
+      glob: "*.rs"
 
 pre-push:
   parallel: true
@@ -24,15 +22,8 @@ pre-push:
     hooksmith-check-generated:
       run: cargo xtask check --strict
 
-commit-msg:
+post-push:
   commands:
-    hooksmith-conventional:
-      run: |
-        if ! grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+" "$1"; then
-          echo "Error: Commit message must follow conventional commit format"
-          exit 1
-        fi
-
-# Note: Global configuration options are set via environment variables
-# LEFTHOOK_SKIP_OUTPUT=meta,success
-# LEFTHOOK_SHOW_TIME=true 
+    verify-hooksmith:
+      run: cargo run --bin hooksmith -- verify-hooks --check-installation
+      description: "Verify Hooksmith hooks are properly configured"

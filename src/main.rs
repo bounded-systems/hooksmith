@@ -1502,9 +1502,14 @@ async fn verify_hooksmith_hooks(
         summary.lefthook_installed = which::which("lefthook").is_ok();
 
         if summary.lefthook_installed {
-            // Check if hooks are active by looking for .git/hooks/lefthook
-            let lefthook_hook_path = repo_path.join(".git").join("hooks").join("lefthook");
-            summary.lefthook_active = lefthook_hook_path.exists();
+            // Check if hooks are active by looking for Lefthook-managed hook files
+            let pre_commit_hook = repo_path.join(".git").join("hooks").join("pre-commit");
+            if pre_commit_hook.exists() {
+                // Read the hook file to check if it's managed by Lefthook
+                if let Ok(content) = fs::read_to_string(&pre_commit_hook).await {
+                    summary.lefthook_active = content.contains("lefthook") || content.contains("LEFTHOOK");
+                }
+            }
         }
     }
 

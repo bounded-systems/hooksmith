@@ -787,51 +787,63 @@ async fn generate_comprehensive_documentation(
     println!("   Output directory: {}", output_dir);
     println!("   All: {}, File: {:?}, Validate: {}", all, file, validate);
 
-    let output_path = Path::new(output_dir);
-    if !output_path.exists() {
-        fs::create_dir_all(output_path).context("Failed to create output directory")?;
-    }
+    // Use the new docs module system
+    docs::generate_all_docs(output_dir, *validate).await?;
 
-    // Generate JSON Schema documentation
-    let schema_docs = generate_json_schema_documentation()?;
-    fs::write(output_path.join("SCHEMA_DOCUMENTATION.md"), &schema_docs)
-        .context("Failed to write schema documentation")?;
-
-    // Generate WIT documentation
-    let wit_docs = generate_wit_documentation()?;
-    fs::write(output_path.join("WIT_DOCUMENTATION.md"), &wit_docs)
-        .context("Failed to write WIT documentation")?;
-
-    // Generate combined documentation
-    let combined_docs = generate_combined_documentation(&schema_docs, &wit_docs)?;
-    fs::write(output_path.join("CONTRACT_STATE_MACHINE.md"), combined_docs)
-        .context("Failed to write combined documentation")?;
-
-    // Generate Pandoc outputs if requested
-    if *validate {
-        generate_pandoc_outputs(output_path, false, false, false)?; // No PDF/HTML/EPUB by default for validation
-    }
-
+    // Generate additional documentation if requested
     if *all {
-        // Generate PDF, HTML, EPUB if all is true
-        generate_pandoc_outputs(output_path, true, true, true)?;
+        // Generate JSON Schema documentation
+        let schema_docs = generate_json_schema_documentation()?;
+        fs::write(Path::new(output_dir).join("SCHEMA_DOCUMENTATION.md"), &schema_docs)
+            .context("Failed to write schema documentation")?;
+
+        // Generate WIT documentation
+        let wit_docs = generate_wit_documentation()?;
+        fs::write(Path::new(output_dir).join("WIT_DOCUMENTATION.md"), &wit_docs)
+            .context("Failed to write WIT documentation")?;
+
+        // Generate combined documentation
+        let combined_docs = generate_combined_documentation(&schema_docs, &wit_docs)?;
+        fs::write(Path::new(output_dir).join("CONTRACT_STATE_MACHINE.md"), combined_docs)
+            .context("Failed to write combined documentation")?;
+
+        // Generate Pandoc outputs
+        generate_pandoc_outputs(Path::new(output_dir), true, true, true)?;
     } else if let Some(f) = file {
         // Generate specific file if a file is specified
-        if f == "schema" {
-            generate_pandoc_outputs(output_path, true, false, false)?; // PDF only
-        } else if f == "wit" {
-            generate_pandoc_outputs(output_path, false, true, false)?; // HTML only
-        } else if f == "epub" {
-            generate_pandoc_outputs(output_path, false, false, true)?; // EPUB only
-        } else {
-            println!("   ⚠️  Unknown file type: {}", f);
+        let output_path = Path::new(output_dir);
+        match f.as_str() {
+            "schema" => {
+                let schema_docs = generate_json_schema_documentation()?;
+                fs::write(output_path.join("SCHEMA_DOCUMENTATION.md"), &schema_docs)
+                    .context("Failed to write schema documentation")?;
+                generate_pandoc_outputs(output_path, true, false, false)?; // PDF only
+            }
+            "wit" => {
+                let wit_docs = generate_wit_documentation()?;
+                fs::write(output_path.join("WIT_DOCUMENTATION.md"), &wit_docs)
+                    .context("Failed to write WIT documentation")?;
+                generate_pandoc_outputs(output_path, false, true, false)?; // HTML only
+            }
+            "epub" => {
+                let combined_docs = generate_combined_documentation(
+                    &generate_json_schema_documentation()?,
+                    &generate_wit_documentation()?
+                )?;
+                fs::write(output_path.join("CONTRACT_STATE_MACHINE.md"), combined_docs)
+                    .context("Failed to write combined documentation")?;
+                generate_pandoc_outputs(output_path, false, false, true)?; // EPUB only
+            }
+            _ => {
+                println!("   ⚠️  Unknown file type: {}", f);
+            }
         }
     }
 
     if *all || file.is_some() {
         println!("   Opening documentation in browser...");
         let _ = Command::new("open")
-            .arg(output_path.join("CONTRACT_STATE_MACHINE.md"))
+            .arg(Path::new(output_dir).join("README.md"))
             .status();
     }
 

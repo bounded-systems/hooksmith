@@ -276,7 +276,8 @@ fn generate_git_info() -> Result<String> {
         .output()
         .context("Failed to get current branch")?;
 
-    let current_branch = String::from_utf8_lossy(&branch.stdout).trim();
+    let branch_output = String::from_utf8_lossy(&branch.stdout);
+    let current_branch = branch_output.trim();
 
     // Get commit count
     let commit_count = Command::new("git")
@@ -284,7 +285,8 @@ fn generate_git_info() -> Result<String> {
         .output()
         .context("Failed to get commit count")?;
 
-    let commits = String::from_utf8_lossy(&commit_count.stdout).trim();
+    let commit_output = String::from_utf8_lossy(&commit_count.stdout);
+    let commits = commit_output.trim();
 
     content.push_str(&format!("- **Current Branch**: {}\n", current_branch));
     content.push_str(&format!("- **Total Commits**: {}\n", commits));

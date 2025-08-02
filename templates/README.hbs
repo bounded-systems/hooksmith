@@ -1,6 +1,6 @@
-# Hooksmith
+# {{project_name}}
 
-A CLI tool for building Rust binaries into Lefthook hooks with WASM components.
+{{description}}
 
 ## 🎯 Purpose
 
@@ -53,7 +53,7 @@ Hooksmith is designed to be a **CLI tool that builds Rust binaries into Lefthook
 | **Hierarchical Validation** | ✅ Complete | Bottom-up contract validation with Git Notes integration |
 | **Contract State Machine** | ✅ Complete | Schema-driven state machine with Merkle chain validation |
 
-### 🚀 **Roadmap**
+## 🚀 **Roadmap**
 
 #### **Phase 1: Foundation** ✅
 - [x] CLI structure and command parsing
@@ -98,134 +98,42 @@ Hooksmith is designed to be a **CLI tool that builds Rust binaries into Lefthook
 #### **Phase 7: Production Ready** ❌
 - [ ] Error handling and recovery
 - [ ] Performance benchmarking
-- [ ] Security audit
-- [ ] Release preparation
+- [ ] Security auditing
+- [ ] Production deployment
+- [ ] Monitoring and observability
 
 ## 📦 Installation
 
 ```bash
-# Build from source
-./build.sh
-
-# Install globally (optional)
 cargo install --path .
 ```
 
-## 🛠️ Usage
-
-### Basic Commands
+## 🚀 Usage
 
 ```bash
+# Get help
+hooksmith --help
+
 # Test the CLI
 hooksmith test
 
-# Test with custom message
-hooksmith test --message "Custom test message"
+# Generate WIT interfaces
+cargo xtask gen-wit
 
-# List available hooks
-hooksmith list
-
-# Show CLI help
-hooksmith --help
-
-# Show version
-hooksmith --version
-```
-
-### Worktree Management (New!)
-
-```bash
-# Create a new worktree
-hooksmith worktree create feature/new-feature
-
-# List all worktrees
-hooksmith worktree list
-
-# Switch to a worktree
-hooksmith worktree switch feature/new-feature
-
-# Remove a worktree
-hooksmith worktree remove feature/new-feature
-
-# Show available worktree tools
-hooksmith worktree tools
-```
-
-### Hierarchical Contract Validation & State Machine (New!)
-
-```bash
-# Validate changes in a commit range
-./xtask.sh contract-validate validate --range HEAD~1..HEAD
-
-# Verify validation chain integrity
-./xtask.sh contract-validate verify <commit-hash>
-
-# Show validation notes for a commit
-./xtask.sh contract-validate show <commit-hash>
-
-# Run pre-commit validation
-./xtask.sh contract-validate pre-commit
-
-# Run post-commit validation
-./xtask.sh contract-validate post-commit
-
-# Git filter operations
-./xtask.sh contract-validate clean <file>
-./xtask.sh contract-validate smudge <file>
-./xtask.sh contract-validate diff <file>
-
-# State machine operations
-./xtask.sh contract-validate audit --strict --commit HEAD
-./xtask.sh contract-validate merkle --verify --commit HEAD
-./xtask.sh contract-validate report --comprehensive --commit HEAD
-```
-
-### Hook Building (Planned)
-
-```bash
-# Build a hook binary
-hooksmith build my-hook
-
-# Build with custom output directory
-hooksmith build my-hook --output target/custom-hooks
-```
-
-### Lefthook Integration (Planned)
-
-```bash
 # Generate Lefthook configuration
-hooksmith generate
+cargo xtask gen-lefthook
 
-# Generate with custom output file
-hooksmith generate --output custom-lefthook.yml
-
-# Install hooks
-hooksmith install
-
-# Install specific hooks
-hooksmith install --hooks pre-commit,pre-push
+# Run all code generation
+cargo xtask gen-all
 ```
 
-### WASM Component Management (Planned)
+## 📋 CLI Commands
 
 ```bash
-# Build WASM component from WIT
-hooksmith wasm build interface.wit
-
-# Build with custom output
-hooksmith wasm build interface.wit --output target/wasm
-
-# Run WASM component
-hooksmith wasm run component.wasm --function validate --args arg1,arg2
-
-# Generate bindings from WIT
-hooksmith wasm bindings interface.wit
-
-# Generate bindings with custom output
-hooksmith wasm bindings interface.wit --output target/bindings
+{{cli_help}}
 ```
 
-## 🏗️ Development
+## 🛠️ Development
 
 ### Prerequisites
 
@@ -286,16 +194,23 @@ This project uses **xtask** for structured code generation and build tasks, repl
 # Generate documentation
 ./xtask.sh gen-docs --open
 
+# Generate comprehensive documentation
+./xtask.sh gen-docs-comprehensive --all --validate
+
+# Generate README with CLI help
+./xtask.sh gen-readme --overwrite
+
+# Generate mod.rs files
+./xtask.sh gen-mods --overwrite
+
 # Run all code generation tasks
 ./xtask.sh gen-all --overwrite
 
 # Check if generated files are up to date
 ./xtask.sh check --strict
 
-# Hierarchical contract validation
-./xtask.sh contract-validate validate --range HEAD~1..HEAD
-./xtask.sh contract-validate verify <commit-hash>
-./xtask.sh contract-validate show <commit-hash>
+# Validate project configuration
+./xtask.sh validate --all
 ```
 
 **Benefits of Xtask:**
@@ -305,67 +220,32 @@ This project uses **xtask** for structured code generation and build tasks, repl
 - ✅ **Deterministic builds** - Same input always produces same output
 - ✅ **CI integration** - Automated checks ensure generated files are up to date
 
-### Traditional Commands
-
-```bash
-# Build workspace
-./build.sh
-
-# Build specific component
-cargo build --package cli-core
-
-# Test workspace
-cargo test --workspace
-
-# Run CLI
-cargo run -- test
-
-# Generate documentation
-cargo doc --no-deps --open
-```
-
 ## 📁 Project Structure
 
 ```
 hooksmith/
 ├── Cargo.toml               # Workspace manifest
-├── build.sh                 # Build script
-├── README.md                # This file
-├── .gitattributes           # Hierarchical validation configuration
+├── xtask.sh                 # Xtask wrapper script
+├── README.md                # This file (auto-generated)
 ├── src/                     # Main CLI binary
-│   ├── main.rs              # CLI entry point (documented)
+│   ├── main.rs              # CLI entry point
 │   ├── lib.rs               # Library exports
-│   ├── commands/            # Command structure
-│   └── modules/             # Module structure
-│       ├── wasm.rs          # WASM component management
-│       ├── hook_builder.rs  # Hook building and compilation
-│       ├── hierarchical_validation.rs # Hierarchical contract validation
-│       └── contract_state_machine.rs # Contract state machine implementation
-├── components/              # Modular components
+│   ├── commands/            # Command modules (auto-generated mod.rs)
+│   └── modules/             # Core modules (auto-generated mod.rs)
+├── components/              # WASM components
 │   ├── cli-core/            # Core CLI functionality
-│   ├── worktree-runner/     # Worktree management WASM component
-│   └── git-filter/          # Git filter components
-├── xtask/                   # Xtask build system
-│   ├── src/main.rs          # Xtask CLI
-│   └── src/hierarchical_validation.rs # Validation CLI
-├── docs/                    # Documentation
-│   ├── git-notes-schema.json # Git Notes JSON schema
-│   ├── contract-state-machine-schema.json # Contract state machine schema
-│   ├── state-transitions.yaml # State transition definitions
-│   ├── merkle-chain-spec.md # Merkle chain validation specification
-│   └── contract-validation-architecture.md # Complete architecture documentation
+│   └── worktree-runner/     # Worktree management WASM component
+├── wit/                     # WIT interface definitions (auto-generated)
 ├── hooks/                   # Hook scripts directory
 ├── tests/                   # Test files
 └── target/doc/              # Generated documentation
 ```
 
-## 🔧 Components
+## 🧩 Components
 
 - **hooksmith**: Main CLI binary for hook building and WASM management
 - **cli-core**: Core CLI functionality and utilities
 - **worktree-runner**: WASM component for worktree management
-- **git-filter**: Git filter components for hierarchical validation
-- **xtask**: Build system for code generation and validation tasks
 
 ## 🔗 Integration
 
@@ -398,64 +278,23 @@ cargo test test_cli_help
 cargo test --test integration
 ```
 
-## 🚧 Implementation Status
+## 📊 Implementation Status
 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | CLI Structure | ✅ Complete | Full command parsing and help |
 | Documentation | ✅ Complete | Comprehensive docs and examples |
-| Tests | ✅ Complete | 14 tests passing |
-| Build System | ✅ Complete | Workspace builds successfully |
-| WASM Compilation | ✅ Complete | Placeholder implementation with WASM toolchain |
-| WIT Processing | ✅ Complete | WIT validation and placeholder bindings generation |
+| Testing | ✅ Complete | All tests passing |
+| Build System | ✅ Complete | Xtask-based workflow |
+| WASM Compilation | ✅ Complete | WASM toolchain integration |
+| WIT Processing | ✅ Complete | WIT parser and compiler |
 | Lefthook Integration | ✅ Complete | YAML generation and hook installation |
-| Hook Building | ✅ Complete | Rust compilation pipeline with Cargo integration |
-| Worktree Management | ✅ Complete | Integration with worktree tools |
-| Hook Installation | ✅ Complete | Hook installation and management |
-| Hierarchical Validation | ✅ Complete | Bottom-up validation with Git Notes integration |
-| Contract State Machine | ✅ Complete | Schema-driven state machine with Merkle chain validation |
-
-## 🎯 Next Steps
-
-To make this a production-ready Lefthook + WASM integration tool:
-
-1. **Enhance WASM component compilation** - Replace placeholder with real WIT-to-WASM compilation
-2. **Improve WASM runtime integration** - Add proper WASI support and function calling
-3. **Add real worktree tool integration** - Implement actual calls to wtp, wt, treekanga
-4. **Create example hooks** - Build sample Rust hooks that demonstrate the workflow
-5. **Add comprehensive testing** - Integration tests for all CLI commands
-6. **Performance optimization** - Optimize binary sizes and execution times
-7. **Documentation improvements** - Add usage examples and tutorials
-
-## 🔐 Contract Validation State Machine
-
-Hooksmith now includes a comprehensive **schema-driven state machine** for contract validation that provides:
-
-### ✅ **Core Features**
-- **State Machine**: Enforces valid state transitions (UNTRACKED → UNVALIDATED → VALIDATED → LOCKED)
-- **Merkle Chain**: Cryptographic proof of integrity across hierarchical scopes
-- **Git Notes Integration**: Tamper-proof audit trails with full validation history
-- **CI Enforcement**: Automated validation and security auditing in GitHub Actions
-
-### 🔗 **Validation Pipeline**
-1. **Change Detection**: Identifies modified scopes from character to repository level
-2. **Bottom-Up Validation**: Validates from smallest to largest scope (Char → Line → Chunk → File → Directory → Repository)
-3. **Merkle Chain Construction**: Builds cryptographic proof chain
-4. **Proof Verification**: Ensures integrity and detects tampering
-
-### 🛡️ **Security Benefits**
-- **Tamper Detection**: Any modification invalidates all parent hashes
-- **Deterministic Validation**: Same input always produces same output
-- **Audit Trail**: Complete validation history in Git Notes
-- **Access Control**: Only authorized tools can modify validation state
-
-### 📋 **Documentation**
-- `docs/contract-state-machine-schema.json` - Complete state machine schema
-- `docs/state-transitions.yaml` - State transition rules and conditions
-- `docs/merkle-chain-spec.md` - Merkle chain validation specification
-- `docs/contract-validation-architecture.md` - Complete architecture documentation
+| Hook Building | ✅ Complete | Rust compilation pipeline |
 
 ## 📄 License
 
-MIT
-# Test commit to verify hooks
+MIT License - see LICENSE file for details.
+
+---
+
+*This README is auto-generated using `cargo xtask gen-docs-comprehensive`. The CLI help section is automatically updated from the actual CLI output.* 

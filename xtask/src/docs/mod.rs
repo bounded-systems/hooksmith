@@ -3,6 +3,10 @@
 //! This module provides comprehensive documentation generation from Rust code,
 //! templates, and repository introspection.
 
+use anyhow::{Context, Result};
+use std::fs;
+use std::path::Path;
+
 pub mod cli_help;
 pub mod component_docs;
 pub mod examples;
@@ -19,9 +23,6 @@ pub use templates::generate_from_template;
 
 /// Generate all documentation based on the manifest
 pub async fn generate_all_docs(output_dir: &str, validate: bool) -> anyhow::Result<()> {
-    use std::fs;
-    use std::path::Path;
-
     let output_path = Path::new(output_dir);
     if !output_path.exists() {
         fs::create_dir_all(output_path).context("Failed to create output directory")?;
@@ -71,9 +72,6 @@ pub async fn generate_all_docs(output_dir: &str, validate: bool) -> anyhow::Resu
 
 /// Validate generated documentation files
 fn validate_generated_docs(output_dir: &str) -> anyhow::Result<()> {
-    use std::fs;
-    use std::path::Path;
-
     let output_path = Path::new(output_dir);
     let manifest = DocumentationManifest::load()?;
 

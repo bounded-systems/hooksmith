@@ -97,34 +97,77 @@ fn get_component_info(component_name: &str) -> Result<ComponentInfo> {
     };
 
     let dependencies = match component_name {
-        "cli-core" => vec!["anyhow", "clap", "serde", "serde_json"],
-        "git-filter" => vec!["git2", "serde", "serde_json", "anyhow"],
-        "hook-builder" => vec!["wit-bindgen", "wasmtime", "serde", "serde_json"],
-        "worktree-runner" => vec!["wit-bindgen", "wasmtime", "serde"],
+        "cli-core" => vec![
+            "anyhow".to_string(),
+            "clap".to_string(),
+            "serde".to_string(),
+            "serde_json".to_string(),
+        ],
+        "git-filter" => vec![
+            "git2".to_string(),
+            "serde".to_string(),
+            "serde_json".to_string(),
+            "anyhow".to_string(),
+        ],
+        "hook-builder" => vec![
+            "wit-bindgen".to_string(),
+            "wasmtime".to_string(),
+            "serde".to_string(),
+            "serde_json".to_string(),
+        ],
+        "worktree-runner" => vec![
+            "wit-bindgen".to_string(),
+            "wasmtime".to_string(),
+            "serde".to_string(),
+        ],
         _ => vec![],
     };
 
     let features = match component_name {
         "cli-core" => vec![
-            "Command parsing",
-            "Error handling",
-            "Configuration management",
+            "Command parsing".to_string(),
+            "Error handling".to_string(),
+            "Configuration management".to_string(),
         ],
         "git-filter" => vec![
-            "Git object filtering",
-            "Contract validation",
-            "State machine",
+            "Git object filtering".to_string(),
+            "Contract validation".to_string(),
+            "State machine".to_string(),
         ],
-        "hook-builder" => vec!["WASM compilation", "Hook generation", "WIT processing"],
-        "worktree-runner" => vec!["Worktree management", "WASM execution", "Tool integration"],
+        "hook-builder" => vec![
+            "WASM compilation".to_string(),
+            "Hook generation".to_string(),
+            "WIT processing".to_string(),
+        ],
+        "worktree-runner" => vec![
+            "Worktree management".to_string(),
+            "WASM execution".to_string(),
+            "Tool integration".to_string(),
+        ],
         _ => vec![],
     };
 
     let examples = match component_name {
-        "cli-core" => vec!["Basic CLI setup", "Error handling", "Configuration loading"],
-        "git-filter" => vec!["Filter setup", "Contract validation", "State transitions"],
-        "hook-builder" => vec!["Hook compilation", "WASM integration", "WIT generation"],
-        "worktree-runner" => vec!["Worktree creation", "Tool selection", "WASM execution"],
+        "cli-core" => vec![
+            "Basic CLI setup".to_string(),
+            "Error handling".to_string(),
+            "Configuration loading".to_string(),
+        ],
+        "git-filter" => vec![
+            "Filter setup".to_string(),
+            "Contract validation".to_string(),
+            "State transitions".to_string(),
+        ],
+        "hook-builder" => vec![
+            "Hook compilation".to_string(),
+            "WASM integration".to_string(),
+            "WIT generation".to_string(),
+        ],
+        "worktree-runner" => vec![
+            "Worktree creation".to_string(),
+            "Tool selection".to_string(),
+            "WASM execution".to_string(),
+        ],
         _ => vec![],
     };
 
