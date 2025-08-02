@@ -574,7 +574,6 @@ fn print_markdown_migration_targets(status: &ProjectStatus) -> Result<()> {
 
 /// Generate status badge for CI
 async fn generate_status_badge(goal: f64, output_path: &str) -> Result<()> {
-    println!("DEBUG: generate_status_badge called with goal: {}, output: {}", goal, output_path);
     let status = analyze_project_status(goal).await?;
 
     let badge_data = serde_json::json!({
@@ -587,9 +586,7 @@ async fn generate_status_badge(goal: f64, output_path: &str) -> Result<()> {
 
     // Add codegen marker to JSON content
     let mut json_content = serde_json::to_string_pretty(&badge_data)?;
-    println!("DEBUG: Before adding marker, content length: {}", json_content.len());
     add_json_codegen_marker(&mut json_content, output_path);
-    println!("DEBUG: After adding marker, content length: {}", json_content.len());
 
     std::fs::write(output_path, json_content)?;
     println!("✅ Status badge written to: {}", output_path);
