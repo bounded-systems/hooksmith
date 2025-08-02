@@ -1,11 +1,11 @@
 pre-commit:
-  hooksmith-fmt:
-    run: cargo fmt --all -- --check
+  hooksmith-test:
+    run: cargo test --all-targets --all-features
     files: '*.rs'
     parallel: false
     env: null
-  hooksmith-test:
-    run: cargo test --all-targets --all-features
+  hooksmith-fmt:
+    run: cargo fmt --all -- --check
     files: '*.rs'
     parallel: false
     env: null
@@ -20,17 +20,17 @@ pre-commit:
     parallel: false
     env: null
 pre-push:
-  hooksmith-check-generated:
-    run: cargo xtask check --strict
-    files: null
-    parallel: false
-    env: null
   hooksmith-audit:
     run: cargo audit
     files: null
     parallel: false
     env: null
-post-push:
+  hooksmith-check-generated:
+    run: cargo xtask check --strict
+    files: null
+    parallel: false
+    env: null
+post-commit:
   verify-hooksmith:
     run: cargo run --bin hooksmith -- verify-hooks --check-installation
     files: null

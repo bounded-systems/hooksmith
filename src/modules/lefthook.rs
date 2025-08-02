@@ -31,9 +31,9 @@ pub struct LefthookConfig {
     /// Pre-push hooks
     #[serde(rename = "pre-push")]
     pub pre_push: Option<HashMap<String, LefthookHook>>,
-    /// Post-push hooks
-    #[serde(rename = "post-push")]
-    pub post_push: Option<HashMap<String, LefthookHook>>,
+    /// Post-commit hooks
+    #[serde(rename = "post-commit")]
+    pub post_commit: Option<HashMap<String, LefthookHook>>,
     /// Commit-msg hooks
     #[serde(rename = "commit-msg")]
     pub commit_msg: Option<HashMap<String, LefthookHook>>,
@@ -44,7 +44,7 @@ impl Default for LefthookConfig {
         Self {
             pre_commit: None,
             pre_push: None,
-            post_push: None,
+            post_commit: None,
             commit_msg: None,
         }
     }
@@ -123,9 +123,9 @@ pub async fn generate_lefthook_config(
 
     config.pre_push = Some(pre_push_hooks);
 
-    // Add post-push hooks
-    let mut post_push_hooks = HashMap::new();
-    post_push_hooks.insert(
+    // Add post-commit hooks for verification
+    let mut post_commit_hooks = HashMap::new();
+    post_commit_hooks.insert(
         "verify-hooksmith".to_string(),
         LefthookHook {
             run: "cargo run --bin hooksmith -- verify-hooks --check-installation".to_string(),
@@ -135,7 +135,7 @@ pub async fn generate_lefthook_config(
         },
     );
 
-    config.post_push = Some(post_push_hooks);
+    config.post_commit = Some(post_commit_hooks);
 
     // Write the configuration to file
     let yaml_content = serde_yaml::to_string(&config)?;
@@ -246,9 +246,9 @@ fi"#.to_string(),
 
     config.commit_msg = Some(commit_msg_hooks);
 
-    // Add post-push hooks
-    let mut post_push_hooks = HashMap::new();
-    post_push_hooks.insert(
+    // Add post-commit hooks for verification
+    let mut post_commit_hooks = HashMap::new();
+    post_commit_hooks.insert(
         "verify-hooksmith".to_string(),
         LefthookHook {
             run: "cargo run --bin hooksmith -- verify-hooks --check-installation".to_string(),
@@ -258,7 +258,7 @@ fi"#.to_string(),
         },
     );
 
-    config.post_push = Some(post_push_hooks);
+    config.post_commit = Some(post_commit_hooks);
 
     // Write the configuration to file
     let yaml_content = serde_yaml::to_string(&config)?;

@@ -1485,7 +1485,7 @@ async fn verify_hooksmith_hooks(
     let expected_hooks = vec![
         ("pre-commit", vec!["hooksmith-fmt", "hooksmith-clippy", "hooksmith-test", "hooksmith-gen-wit"]),
         ("pre-push", vec!["hooksmith-audit", "hooksmith-check-generated"]),
-        ("post-push", vec!["verify-hooksmith"]),
+        ("post-commit", vec!["verify-hooksmith"]),
         ("commit-msg", vec!["hooksmith-conventional"]),
     ];
 
