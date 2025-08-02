@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 use std::fs;
 use std::path::Path;
 
-use crate::docs::source_extraction::{ComponentData, ProjectData};
+use crate::docs::source_extraction::ProjectData;
 
 /// Generate component documentation from extracted source data
 pub fn generate_component_docs(component_path: &str, project_data: &ProjectData) -> Result<String> {

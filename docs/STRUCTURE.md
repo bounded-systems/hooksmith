@@ -19,6 +19,9 @@ This document shows the complete file structure of the repository.
     ├── ci.yml
 ├── .github/
   ├── workflows/
+    ├── contract-check.yml
+├── .github/
+  ├── workflows/
     ├── contract-validation.yml
 ├── .github/
   ├── workflows/
@@ -44,7 +47,9 @@ This document shows the complete file structure of the repository.
 ├── CODEGEN_MARKERS.md
 ├── CODEGEN_SUMMARY.md
 ├── CODEOWNERS
+├── CODE_STATS_SYSTEM_SUMMARY.md
 ├── COMPREHENSIVE_DOCS_SUMMARY.md
+├── CONTRACT_WORKFLOW_DESIGN.md
 ├── CONTRIBUTING.md
 ├── Cargo.toml
 ├── FILE_TYPE_ENFORCEMENT_SUMMARY.md
@@ -52,9 +57,16 @@ This document shows the complete file structure of the repository.
 ├── MIGRATION_PLAN.md
 ├── MIGRATION_SUMMARY.md
 ├── PHASE_3_CONFIGURATION_GENERATION_SUMMARY.md
+├── PHASE_4_COMPLETE_SUMMARY.md
+├── PHASE_4_FILE_TYPE_NORMALIZATION.md
+├── PHASE_4_IMPLEMENTATION_SUMMARY.md
+├── PHASE_5_CI_ENFORCEMENT_SUMMARY.md
 ├── README.md
 ├── SAFEGUARDS_SUMMARY.md
 ├── SOURCE_BASED_DOCS.md
+├── STATUS_SYSTEM_DESIGN.md
+├── STATUS_SYSTEM_JSON_CODEGEN_SUMMARY.md
+├── STATUS_SYSTEM_SUMMARY.md
 ├── STRUCTURE.md
 ├── TEMPLATE_SYSTEM_SUMMARY.md
 ├── bootstrap-simple.rs
@@ -209,6 +221,8 @@ This document shows the complete file structure of the repository.
 ├── docs/
   ├── CLI_HELP.md
 ├── docs/
+  ├── CONTRACT_CHECK_SYSTEM.md
+├── docs/
   ├── CONTRACT_STATE_MACHINE.epub
 ├── docs/
   ├── CONTRACT_STATE_MACHINE.html
@@ -234,6 +248,10 @@ This document shows the complete file structure of the repository.
   ├── STRUCTURE.md
 ├── docs/
   ├── TEST_SUMMARY.md
+├── docs/
+  ├── TRUNK_STYLE_COMMITS.md
+├── docs/
+  ├── TRUNK_STYLE_QUICKSTART.md
 ├── docs/
   ├── VERIFY_HOOKS.md
 ├── docs/
@@ -333,6 +351,8 @@ This document shows the complete file structure of the repository.
   ├── combined_contract_demo.rs
 ├── examples/
   ├── contract_state_machine_demo.rs
+├── examples/
+  ├── contract_workflow_demo.rs
 ├── examples/
   ├── filename_contract_demo.rs
 ├── examples/
@@ -442,6 +462,7 @@ This document shows the complete file structure of the repository.
 ├── src/
   ├── orchestrator/
     ├── runtime.rs
+├── status-badge.json
 ├── stuff.md
 ├── templates/
   ├── README.hbs
@@ -489,6 +510,9 @@ This document shows the complete file structure of the repository.
     ├── README.md
 ├── xtask/
   ├── src/
+    ├── code_stats.rs
+├── xtask/
+  ├── src/
     ├── config/
       ├── contract_state.rs
 ├── xtask/
@@ -503,6 +527,9 @@ This document shows the complete file structure of the repository.
   ├── src/
     ├── config/
       ├── mod.rs
+├── xtask/
+  ├── src/
+    ├── contract.rs
 ├── xtask/
   ├── src/
     ├── contract_commands.rs
@@ -582,6 +609,14 @@ This document shows the complete file structure of the repository.
   ├── src/
     ├── main.rs
 ├── xtask/
+  ├── src/
+    ├── status.rs
+├── xtask/
+  ├── status-badge.json
+├── xtask/
+  ├── status-trends/
+    ├── status-2025-08-02.json
+├── xtask/
   ├── wit/
     ├── hooksmith.wit
 ├── xtask/
@@ -591,32 +626,32 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       267
-- **Rust Files**:        111 (.rs)
-- **Configuration Files**:        27 (.toml, .yaml, .rc)
-- **Documentation**:        91 (.md)
-- **Scripts**:        1 (.sh)
+- **Total Files**:       302
+- **Rust Files**:        115 (.rs)
+- **Configuration Files**:        31 (.toml, .yaml, .rc)
+- **Documentation**:        114 (.md)
+- **Scripts**:        4 (.sh)
 
 ## 📋 File Type Breakdown
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .yaml | 4 | YAML configuration files |
-| .json | 6 | JSON schema and config files |
-| .pdf | 1 | PDF documentation |
-| .hbs | 1 | Other files |
-| .css | 1 | Stylesheet files |
-| .rs | 111 | Rust source files |
-| .bash | 1 | Other files |
-| .sh | 1 | Shell scripts |
-| .lock | 2 | Other files |
+| .rs | 115 | Rust source files |
 | .html | 1 | HTML documentation |
-| .md | 91 | Markdown documentation |
-| .epub | 1 | EPUB documentation |
-| .dot | 1 | Other files |
 | .toml | 8 | Cargo and configuration files |
+| .yaml | 4 | YAML configuration files |
+| .sh | 4 | Shell scripts |
+| .css | 1 | Stylesheet files |
+| .hbs | 1 | Other files |
+| .md | 114 | Markdown documentation |
+| .dot | 1 | Other files |
 | .yml | 9 | YAML configuration files |
+| .lock | 2 | Other files |
+| .json | 10 | JSON schema and config files |
+| .epub | 1 | EPUB documentation |
 | .wit | 8 | WebAssembly Interface Type definitions |
+| .pdf | 1 | PDF documentation |
+| .bash | 1 | Other files |
 
 ## 🧩 Component Breakdown
 
@@ -647,9 +682,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 136
-- **Modified Files**: 14
+- **Total Commits**: 155
+- **Modified Files**: 22
 
 ---
 
-*Generated on Sat Aug  2 18:17:50 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sat Aug  2 20:49:54 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

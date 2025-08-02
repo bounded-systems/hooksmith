@@ -9,9 +9,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use tokio::fs;
 
-use hooksmith::modules::hierarchical_validation::{
-    ChangeScope, HierarchicalValidator, ValidationResult, ValidationScope,
-};
+use hooksmith::modules::hierarchical_validation::HierarchicalValidator;
 
 /// CLI for hierarchical contract validation
 #[derive(Parser)]

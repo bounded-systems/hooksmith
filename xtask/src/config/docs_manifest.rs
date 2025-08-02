@@ -4,7 +4,6 @@
 //! configuration files from code rather than manually maintaining YAML files.
 
 use crate::config::ConfigFile;
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 /// Documentation section definition

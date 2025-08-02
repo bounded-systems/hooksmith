@@ -8,29 +8,29 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **indicatif**: ^0.17
-- **cli-core**: *
-- **git2**: ^0.18
-- **wasmtime**: ^18.0
-- **serde_json**: ^1.0
-- **git-filter**: *
+- **jsonschema**: ^0.17
 - **console**: ^0.15
+- **sha2**: ^0.10
+- **tracing**: ^0.1
+- **tracing-subscriber**: ^0.3
+- **wit-bindgen**: ^0.20
+- **indicatif**: ^0.17
+- **wasmtime-wasi**: ^18.0
+- **which**: ^5.0
 - **serde_yaml**: ^0.9
+- **chrono**: ^0.4
 - **anyhow**: ^1.0
 - **clap**: ^4.0
-- **sha2**: ^0.10
-- **toml**: ^0.8
-- **jsonschema**: ^0.17
-- **wasmtime-wasi**: ^18.0
-- **reqwest**: ^0.11
-- **wit-bindgen**: ^0.20
-- **chrono**: ^0.4
-- **tempfile**: dev
-- **tracing**: ^0.1
+- **git2**: ^0.18
 - **serde**: ^1.0
 - **tokio**: ^1.0
-- **tracing-subscriber**: ^0.3
-- **which**: ^5.0
+- **reqwest**: ^0.11
+- **wasmtime**: ^18.0
+- **git-filter**: *
+- **tempfile**: dev
+- **toml**: ^0.8
+- **cli-core**: *
+- **serde_json**: ^1.0
 
 ## Installation
 
@@ -48,16 +48,20 @@ hooksmith --help
 
 ```
 └── ?/
+│   ├── PHASE_5_CI_ENFORCEMENT_SUMMARY.md
 │   ├── Cargo.toml
 │   ├── CODEGEN_MARKERS.md
 │   ├── ARCHITECTURE.md
 │   ├── STRUCTURE.md
 │   ├── SOURCE_BASED_DOCS.md
 │   ├── CODEGEN_SUMMARY.md
+│   ├── CODE_STATS_SYSTEM_SUMMARY.md
 │   ├── MIGRATION_SUMMARY.md
 │   ├── FILE_TYPE_ENFORCEMENT_SUMMARY.md
+│   ├── PHASE_4_COMPLETE_SUMMARY.md
 │   ├── SAFEGUARDS_SUMMARY.md
 │   ├── CHANGELOG.md
+│   ├── STATUS_SYSTEM_SUMMARY.md
 │   ├── test_docs.rs
 │   ├── lefthook-example.yml
 │   ├── config/
@@ -76,6 +80,7 @@ hooksmith --help
 │   │   ├── hooksmith.wit
 │   │   ├── hook-builder.wit
 │       └── validation.wit
+│   ├── PHASE_4_IMPLEMENTATION_SUMMARY.md
 │   ├── diagrams/
 │   │   ├── git_skip_only_conditions.md
 │   │   ├── git_file_states.md
@@ -92,6 +97,7 @@ hooksmith --help
 │   │   ├── config_formats_test.rs
 │       └── hooks_test.rs
 │   ├── Cargo.lock
+│   ├── PHASE_4_FILE_TYPE_NORMALIZATION.md
 │   ├── bootstrap.rs
 │   ├── bootstrap-simple.rs
 │   ├── test_codegen_markers.rs
@@ -105,6 +111,7 @@ hooksmith --help
 │   │   ├── STRUCTURE.md
 │   │   ├── CONTRACT_STATE_MACHINE.epub
 │   │   ├── api.md
+│   │   ├── TRUNK_STYLE_COMMITS.md
 │   │   ├── VERIFY_HOOKS.md
 │   │   ├── WIT_DOCUMENTATION.md
 │   │   ├── contract-state-machine-schema.json
@@ -122,6 +129,7 @@ hooksmith --help
 │   │   │   ├── CLI_HELP.md
 │   │       └── DEVELOPMENT.md
 │   │   ├── git_filter_system.md
+│   │   ├── CONTRACT_CHECK_SYSTEM.md
 │   │   ├── README.md
 │   │   ├── contract-state-machine.md
 │   │   ├── filename_contract_system.md
@@ -137,6 +145,7 @@ hooksmith --help
 │   │   ├── attributes_validation.md
 │   │   ├── git_workflow.md
 │   │   ├── DEVELOPMENT_SUMMARY.md
+│   │   ├── TRUNK_STYLE_QUICKSTART.md
 │   │   ├── style.css
 │   │   ├── git_object_contract_system.md
 │   │   ├── CONTRACT_STATE_MACHINE.pdf
@@ -159,6 +168,8 @@ hooksmith --help
 │   │   ├── merkle-proof.schema.json
 │   │   ├── contract-transition.schema.json
 │       └── contract-state.schema.json
+│   ├── STATUS_SYSTEM_JSON_CODEGEN_SUMMARY.md
+│   ├── CONTRACT_WORKFLOW_DESIGN.md
 │   ├── README.md
 │   ├── components/
 │   │   ├── hook-builder/
@@ -203,6 +214,7 @@ hooksmith --help
 │       │       └── worktree-runner.wit
 │           └── src/
 │               └── lib.rs
+│   ├── STATUS_SYSTEM_DESIGN.md
 │   ├── CONTRIBUTING.md
 │   ├── hooks/
 │   │   ├── README.md
@@ -213,6 +225,7 @@ hooksmith --help
 │   │   ├── filename_contract_demo.rs
 │   │   ├── char_contract_demo.rs
 │   │   ├── contract_state_machine_demo.rs
+│   │   ├── contract_workflow_demo.rs
 │   │   ├── blob_contract_demo.rs
 │   │   ├── git_filter_demo.rs
 │   │   ├── attributes_validation_simple_test.rs
@@ -226,7 +239,11 @@ hooksmith --help
 │   │   ├── tree_contract_demo.rs
 │       └── git_model_demo.rs
 │   ├── scripts/
-│       └── validate-docs.sh
+│   │   ├── git-trunk-commit.sh
+│   │   ├── setup-pre-commit.sh
+│   │   ├── validate-docs.sh
+│   │   ├── setup-git-aliases.sh
+│       └── pre-commit
 │   ├── lefthook.yml
 │   ├── BOOTSTRAP.md
 │   ├── templates/
@@ -243,6 +260,9 @@ hooksmith --help
 │   │   ├── hooks/
 │   │       └── README.md
 │   │   ├── lefthook.yml
+│   │   ├── status-trends/
+│   │       └── status-2025-08-02.json
+│   │   ├── status-badge.json
 │       └── src/
 │       │   ├── contract_state_machine.rs
 │       │   ├── contract_commands.rs
@@ -268,9 +288,12 @@ hooksmith --help
 │       │   │   ├── examples.rs
 │       │       └── structure.rs
 │       │   ├── git_notes_manager.rs
+│       │   ├── status.rs
 │       │   ├── hierarchical_validation.rs
+│       │   ├── contract.rs
 │       │   ├── main.rs
-│           └── generated_file_validator.rs
+│       │   ├── generated_file_validator.rs
+│           └── code_stats.rs
 │   ├── PHASE_3_CONFIGURATION_GENERATION_SUMMARY.md
 │   ├── lefthook-rs/
 │   │   ├── Cargo.toml
@@ -281,7 +304,9 @@ hooksmith --help
 │       │   ├── binary.rs
 │       │   ├── main.rs
 │           └── cli.rs
+│   ├── status-badge.json
 │   ├── test_comprehensive_docs.rs
+│   ├── SHELL_SCRIPT_MIGRATION_SUMMARY.md
 │   ├── TEMPLATE_SYSTEM_SUMMARY.md
 │   ├── test_safeguards.rs
 │   ├── generated_file_demo

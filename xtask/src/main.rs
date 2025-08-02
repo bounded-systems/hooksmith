@@ -5,12 +5,10 @@
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use jsonschema::JSONSchema;
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 
 mod hierarchical_validation;
@@ -2447,7 +2445,7 @@ fn validate_generated_headers(strict: bool) -> Result<()> {
 
 /// Check file types and generation markers
 fn check_files(strict: bool, verbose: bool) -> Result<()> {
-    use file_audit::{check_files, FileAuditResult};
+    use file_audit::check_files;
 
     println!("🔍 Checking file types and generation markers...");
 

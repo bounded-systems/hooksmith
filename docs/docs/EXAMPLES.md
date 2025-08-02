@@ -6,7 +6,7 @@
 
 This document contains code examples demonstrating Hooksmith functionality.
 
-## Found 15 Examples
+## Found 16 Examples
 
 ### Table of Contents
 
@@ -15,16 +15,17 @@ This document contains code examples demonstrating Hooksmith functionality.
 3. [Char Contract Demo](#char-contract-demo)
 4. [Combined Contract Demo](#combined-contract-demo)
 5. [Contract State Machine Demo](#contract-state-machine-demo)
-6. [Filename Contract Demo](#filename-contract-demo)
-7. [Generated File Validation Demo](#generated-file-validation-demo)
-8. [Git Filter Demo](#git-filter-demo)
-9. [Git Model Demo](#git-model-demo)
-10. [Git Object Contract Demo](#git-object-contract-demo)
-11. [Schema Validation Demo](#schema-validation-demo)
-12. [Tree Contract Demo](#tree-contract-demo)
-13. [Tree Contract Explicit Type Demo](#tree-contract-explicit-type-demo)
-14. [Tree Filename Chars Contract Demo](#tree-filename-chars-contract-demo)
-15. [Unified Contracts Demo](#unified-contracts-demo)
+6. [Contract Workflow Demo](#contract-workflow-demo)
+7. [Filename Contract Demo](#filename-contract-demo)
+8. [Generated File Validation Demo](#generated-file-validation-demo)
+9. [Git Filter Demo](#git-filter-demo)
+10. [Git Model Demo](#git-model-demo)
+11. [Git Object Contract Demo](#git-object-contract-demo)
+12. [Schema Validation Demo](#schema-validation-demo)
+13. [Tree Contract Demo](#tree-contract-demo)
+14. [Tree Contract Explicit Type Demo](#tree-contract-explicit-type-demo)
+15. [Tree Filename Chars Contract Demo](#tree-filename-chars-contract-demo)
+16. [Unified Contracts Demo](#unified-contracts-demo)
 
 ## Attributes Validation Simple Test
 
@@ -870,6 +871,8 @@ Contract State Machine Demo  This example demonstrates the contract validation s
 ### Dependencies
 
 - chrono::Utc
+- hex
+- sha2::{Digest,
 - std::collections::HashMap
 - std::path::Path
 
@@ -877,6 +880,8 @@ Contract State Machine Demo  This example demonstrates the contract validation s
 
 ```rust
 use chrono::Utc;
+use hex;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::Path;
 // In a real implementation, these would be imported from the xtask module
@@ -1106,11 +1111,11 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
             }
             // Store state in Git notes
             let file_content = std::fs::read_to_string(file_path)?;
-            let hash = format!("sha256:{}", sha256::digest(&file_content));
+            let hash = format!("sha256:{}", hex::encode(Sha256::digest(&file_content)));
             let state_note = ContractStateNote {
                 file: file_path.to_string_lossy().to_string(),
                 contract: "blob".to_string(),
-                state: target_state.to_string(),
+                state: target_state.to_string().to_string(),
                 hash,
                 validated_by: "xtask-contract-validate 0.1.0".to_string(),
                 timestamp: Utc::now().to_rfc3339(),
@@ -1151,11 +1156,11 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
             }
             // Update state in Git notes
             let file_content = std::fs::read_to_string(file_path)?;
-            let hash = format!("sha256:{}", sha256::digest(&file_content));
+            let hash = format!("sha256:{}", hex::encode(Sha256::digest(&file_content)));
             let state_note = ContractStateNote {
                 file: file_path.to_string_lossy().to_string(),
                 contract: "blob".to_string(),
-                state: target_state.to_string(),
+                state: target_state.to_string().to_string(),
                 hash,
                 validated_by: "xtask-contract-validate 0.1.0".to_string(),
                 timestamp: Utc::now().to_rfc3339(),
@@ -1194,6 +1199,101 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     demo_contract_validation()
 }
+```
+
+---
+
+## Contract Workflow Demo
+
+Contract Workflow Demo  This example demonstrates how to use the unified contract-driven bootstrap & validation workflow for Hooksmith projects.
+
+### Dependencies
+
+- std::process::Command
+
+### Code
+
+```rust
+use std::process::Command;
+fn main() {
+    println!("🔨 Hooksmith Contract Workflow Demo");
+    println!("=====================================");
+    // Example 1: Full project build
+    println!("\n📋 Example 1: Full Project Build");
+    println!("Command: cargo xtask contract build --commit");
+    println!("This command will:");
+    println!("  • Bootstrap the project if needed");
+    println!("  • Regenerate all codegen files");
+    println!("  • Validate generated files");
+    println!("  • Build all components");
+    println!("  • Run all tests");
+    println!("  • Check Git hooks installation");
+    println!("  • Validate Git attributes");
+    println!("  • Commit generated files");
+    // Example 2: CI/CD build (no tests)
+    println!("\n📋 Example 2: CI/CD Build (No Tests)");
+    println!("Command: cargo xtask contract build --no-test");
+    println!("This command will:");
+    println!("  • Skip running tests (for faster CI builds)");
+    println!("  • Still validate and build everything else");
+    // Example 3: Force regeneration
+    println!("\n📋 Example 3: Force Regeneration");
+    println!("Command: cargo xtask contract build --force");
+    println!("This command will:");
+    println!("  • Force regeneration of all files");
+    println!("  • Overwrite existing generated files");
+    // Example 4: Health check
+    println!("\n📋 Example 4: Project Health Check");
+    println!("Command: cargo xtask contract check --strict");
+    println!("This command will:");
+    println!("  • Validate generated files are up-to-date");
+    println!("  • Check project builds successfully");
+    println!("  • Verify tests can be compiled");
+    println!("  • Check Git hooks installation");
+    println!("  • Validate Git attributes");
+    println!("  • Run linter checks");
+    println!("  • Exit with error if any check fails");
+    // Example 5: Pre-push validation
+    println!("\n📋 Example 5: Pre-Push Validation");
+    println!("Command: cargo xtask contract check --strict --custom-message \"Please run 'cargo xtask contract build' to fix issues\"");
+    println!("This command will:");
+    println!("  • Run all health checks");
+    println!("  • Show custom error message if validation fails");
+    println!("  • Perfect for Git pre-push hooks");
+    // Example 6: Staged files only
+    println!("\n📋 Example 6: Staged Files Only");
+    println!("Command: cargo xtask contract check --staged-only");
+    println!("This command will:");
+    println!("  • Only check staged files");
+    println!("  • Faster validation for large repositories");
+    // Integration with Git hooks
+    println!("\n🪝 Git Hook Integration");
+    println!("Add to lefthook.yml:");
+    println!("```yaml");
+    println!("pre-push:");
+    println!("  parallel: true");
+    println!("  commands:");
+    println!("    contract-check:");
+    println!("      run: cargo xtask contract check --strict");
+    println!("      description: \"Run contract-driven validation\"");
+    println!("```");
+    // Error handling examples
+    println!("\n❌ Error Handling Examples");
+    println!("When validation fails, you'll see:");
+    println!("  • Clear error messages for each failed step");
+    println!("  • Actionable suggestions for fixing issues");
+    println!("  • Summary of what passed and what failed");
+    // Benefits summary
+    println!("\n🎉 Benefits of Contract Workflow");
+    println!("  ✅ Single command for project setup");
+    println!("  ✅ Clear, actionable error messages");
+    println!("  ✅ Consistent environment across developers");
+    println!("  ✅ Automated validation prevents drift");
+    println!("  ✅ Integration with Git hooks");
+    println!("  ✅ Perfect for CI/CD pipelines");
+    println!("\n🚀 Ready to try it?");
+    println!("Run: cargo xtask contract build --commit");
+} 
 ```
 
 ---
@@ -1396,14 +1496,12 @@ Example demonstrating generated file validation  This example shows how to use t
 
 ### Dependencies
 
-- std::path::PathBuf
 - std::process::Command
 - std::fs
 
 ### Code
 
 ```rust
-use std::path::PathBuf;
 use std::process::Command;
 struct GeneratedFileValidator;
 impl GeneratedFileValidator {
@@ -1651,7 +1749,7 @@ fn demo_eol_normalization() -> Result<(), Box<dyn std::error::Error>> {
     let operation = GitOperation::Add;
     // Content with mixed line endings
     let mixed_content = b"Line 1\r\nLine 2\nLine 3\rLine 4\n";
-    let mut filter = MultiFilter::new();
+    let filter = MultiFilter::new();
     match filter.process_file(mixed_content, &file_state, &operation) {
         Ok(normalized) => {
             println!("✅ EOL normalization successful");
@@ -2304,7 +2402,7 @@ fn main() {
     lint_cmd.priority = Some(5);
     let mut test_cmd = LefthookCommand::new("cargo test {staged_files}".to_string());
     test_cmd.priority = Some(1);
-    let mut incompatible_cmd =
+    let incompatible_cmd =
         LefthookCommand::new("cargo fmt {staged_files} {push_files}".to_string());
     println!("  Rustfmt Command:");
     println!("    Run: {}", fmt_cmd.run);
@@ -3112,7 +3210,7 @@ fn demo_tree_mode_validation() -> Result<(), Box<dyn std::error::Error>> {
         ("040000", "Tree (directory)"),
     ];
     for (mode_str, description) in modes {
-        match TreeMode::from_str(mode_str) {
+        match TreeMode::parse_from_str(mode_str) {
             Some(mode) => {
                 println!("  ✅ Mode {}: {}", mode_str, mode.description());
                 println!("    String: {}", mode.to_string());
@@ -3127,7 +3225,7 @@ fn demo_tree_mode_validation() -> Result<(), Box<dyn std::error::Error>> {
         println!();
     }
     // Test invalid mode
-    let invalid_mode = TreeMode::from_str("999999");
+    let invalid_mode = TreeMode::parse_from_str("999999");
     println!("  Invalid mode test: {:?}", invalid_mode);
     println!();
     Ok(())
@@ -3217,7 +3315,7 @@ fn demo_tree_object_contracts() -> Result<(), Box<dyn std::error::Error>> {
 }
 fn demo_tree_validation_with_errors() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚫 Example 4: Tree Validation with Errors");
-    let validator = TreeValidator::default();
+    let _validator = TreeValidator::default();
     // Create entries with various validation issues
     let entries = vec![
         TreeEntryContract::new(
@@ -3321,7 +3419,8 @@ fn demo_complete_tree_object_validation() -> Result<(), Box<dyn std::error::Erro
 }
 fn demo_tree_in_git_object_contract() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔗 Example 6: Tree Object in Git Object Contract");
-    let validator = GitObjectValidator::new(true, false, true); // Enable line and tree validation
+    let tree_validator = TreeValidator::default();
+    let validator = GitObjectValidator::new(true, false, true, false, tree_validator); // Enable line and tree validation
     // Create tree entries
     let entries = vec![
         TreeEntryContract::new(
@@ -3336,9 +3435,9 @@ fn demo_tree_in_git_object_contract() -> Result<(), Box<dyn std::error::Error>> 
         ),
     ];
     // Validate as a Git object
-    let git_object = validator.validate_tree_object(entries);
+    let git_object = validator.validate_tree_entry(&entries[0]);
     match git_object {
-        GitObjectContract::Tree(tree) => {
+        _ => {
             println!("  Git Object Type: Tree");
             println!("  {}", tree.summary());
             println!("    Entries: {}", tree.entries.len());
@@ -3929,7 +4028,7 @@ fn demo_tree_contracts() -> Result<(), Box<dyn std::error::Error>> {
     // Test tree modes
     println!("  Tree modes:");
     for mode_str in &["100644", "100755", "040000", "invalid"] {
-        match UnifiedTreeMode::from_str(mode_str) {
+        match UnifiedTreeMode::parse_from_str(mode_str) {
             Some(mode) => println!(
                 "    '{}' -> {} ({})",
                 mode_str,

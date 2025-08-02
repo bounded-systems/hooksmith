@@ -24,16 +24,20 @@ cargo build
 
 ```
 └── ?/
+│   ├── PHASE_5_CI_ENFORCEMENT_SUMMARY.md
 │   ├── Cargo.toml
 │   ├── CODEGEN_MARKERS.md
 │   ├── ARCHITECTURE.md
 │   ├── STRUCTURE.md
 │   ├── SOURCE_BASED_DOCS.md
 │   ├── CODEGEN_SUMMARY.md
+│   ├── CODE_STATS_SYSTEM_SUMMARY.md
 │   ├── MIGRATION_SUMMARY.md
 │   ├── FILE_TYPE_ENFORCEMENT_SUMMARY.md
+│   ├── PHASE_4_COMPLETE_SUMMARY.md
 │   ├── SAFEGUARDS_SUMMARY.md
 │   ├── CHANGELOG.md
+│   ├── STATUS_SYSTEM_SUMMARY.md
 │   ├── test_docs.rs
 │   ├── lefthook-example.yml
 │   ├── config/
@@ -52,6 +56,7 @@ cargo build
 │   │   ├── hooksmith.wit
 │   │   ├── hook-builder.wit
 │       └── validation.wit
+│   ├── PHASE_4_IMPLEMENTATION_SUMMARY.md
 │   ├── diagrams/
 │   │   ├── git_skip_only_conditions.md
 │   │   ├── git_file_states.md
@@ -68,6 +73,7 @@ cargo build
 │   │   ├── config_formats_test.rs
 │       └── hooks_test.rs
 │   ├── Cargo.lock
+│   ├── PHASE_4_FILE_TYPE_NORMALIZATION.md
 │   ├── bootstrap.rs
 │   ├── bootstrap-simple.rs
 │   ├── test_codegen_markers.rs
@@ -81,6 +87,7 @@ cargo build
 │   │   ├── STRUCTURE.md
 │   │   ├── CONTRACT_STATE_MACHINE.epub
 │   │   ├── api.md
+│   │   ├── TRUNK_STYLE_COMMITS.md
 │   │   ├── VERIFY_HOOKS.md
 │   │   ├── WIT_DOCUMENTATION.md
 │   │   ├── contract-state-machine-schema.json
@@ -98,6 +105,7 @@ cargo build
 │   │   │   ├── CLI_HELP.md
 │   │       └── DEVELOPMENT.md
 │   │   ├── git_filter_system.md
+│   │   ├── CONTRACT_CHECK_SYSTEM.md
 │   │   ├── README.md
 │   │   ├── contract-state-machine.md
 │   │   ├── filename_contract_system.md
@@ -113,6 +121,7 @@ cargo build
 │   │   ├── attributes_validation.md
 │   │   ├── git_workflow.md
 │   │   ├── DEVELOPMENT_SUMMARY.md
+│   │   ├── TRUNK_STYLE_QUICKSTART.md
 │   │   ├── style.css
 │   │   ├── git_object_contract_system.md
 │   │   ├── CONTRACT_STATE_MACHINE.pdf
@@ -135,6 +144,8 @@ cargo build
 │   │   ├── merkle-proof.schema.json
 │   │   ├── contract-transition.schema.json
 │       └── contract-state.schema.json
+│   ├── STATUS_SYSTEM_JSON_CODEGEN_SUMMARY.md
+│   ├── CONTRACT_WORKFLOW_DESIGN.md
 │   ├── README.md
 │   ├── components/
 │   │   ├── hook-builder/
@@ -179,6 +190,7 @@ cargo build
 │       │       └── worktree-runner.wit
 │           └── src/
 │               └── lib.rs
+│   ├── STATUS_SYSTEM_DESIGN.md
 │   ├── CONTRIBUTING.md
 │   ├── hooks/
 │   │   ├── README.md
@@ -189,6 +201,7 @@ cargo build
 │   │   ├── filename_contract_demo.rs
 │   │   ├── char_contract_demo.rs
 │   │   ├── contract_state_machine_demo.rs
+│   │   ├── contract_workflow_demo.rs
 │   │   ├── blob_contract_demo.rs
 │   │   ├── git_filter_demo.rs
 │   │   ├── attributes_validation_simple_test.rs
@@ -202,7 +215,11 @@ cargo build
 │   │   ├── tree_contract_demo.rs
 │       └── git_model_demo.rs
 │   ├── scripts/
-│       └── validate-docs.sh
+│   │   ├── git-trunk-commit.sh
+│   │   ├── setup-pre-commit.sh
+│   │   ├── validate-docs.sh
+│   │   ├── setup-git-aliases.sh
+│       └── pre-commit
 │   ├── lefthook.yml
 │   ├── BOOTSTRAP.md
 │   ├── templates/
@@ -219,6 +236,9 @@ cargo build
 │   │   ├── hooks/
 │   │       └── README.md
 │   │   ├── lefthook.yml
+│   │   ├── status-trends/
+│   │       └── status-2025-08-02.json
+│   │   ├── status-badge.json
 │       └── src/
 │       │   ├── contract_state_machine.rs
 │       │   ├── contract_commands.rs
@@ -244,9 +264,12 @@ cargo build
 │       │   │   ├── examples.rs
 │       │       └── structure.rs
 │       │   ├── git_notes_manager.rs
+│       │   ├── status.rs
 │       │   ├── hierarchical_validation.rs
+│       │   ├── contract.rs
 │       │   ├── main.rs
-│           └── generated_file_validator.rs
+│       │   ├── generated_file_validator.rs
+│           └── code_stats.rs
 │   ├── PHASE_3_CONFIGURATION_GENERATION_SUMMARY.md
 │   ├── lefthook-rs/
 │   │   ├── Cargo.toml
@@ -257,7 +280,9 @@ cargo build
 │       │   ├── binary.rs
 │       │   ├── main.rs
 │           └── cli.rs
+│   ├── status-badge.json
 │   ├── test_comprehensive_docs.rs
+│   ├── SHELL_SCRIPT_MIGRATION_SUMMARY.md
 │   ├── TEMPLATE_SYSTEM_SUMMARY.md
 │   ├── test_safeguards.rs
 │   ├── generated_file_demo

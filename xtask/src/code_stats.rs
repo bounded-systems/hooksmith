@@ -995,7 +995,7 @@ mod tests {
 
     #[test]
     fn test_calculate_quality_score() {
-        let mut report = CodeAnalysisReport {
+        let report = CodeAnalysisReport {
             stats: CodeStats {
                 total_lines: 1000,
                 rust_lines: 1000,

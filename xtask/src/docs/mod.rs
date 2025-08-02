@@ -16,9 +16,7 @@ pub mod source_extraction;
 pub mod structure;
 pub mod templates;
 
-pub use checksum::{
-    generate_checksum, generate_checksum_report, update_checksums, validate_generated_files,
-};
+pub use checksum::{generate_checksum_report, update_checksums, validate_generated_files};
 pub use cli_help::generate_cli_help;
 pub use component_docs::generate_component_docs;
 pub use examples::generate_examples_docs;

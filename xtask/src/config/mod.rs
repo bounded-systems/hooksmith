@@ -9,7 +9,6 @@ pub mod lefthook;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 
 /// Main configuration generator
 pub struct ConfigGenerator;

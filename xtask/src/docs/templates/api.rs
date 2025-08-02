@@ -1,6 +1,6 @@
 //! API documentation template
 
-use super::{ItemType, ModuleInfo, PublicItem, Template};
+use super::{ModuleInfo, Template};
 use std::fmt;
 
 /// API documentation template

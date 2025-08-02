@@ -4,7 +4,6 @@
 //! from code rather than manually maintaining the YAML file.
 
 use crate::config::ConfigFile;
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

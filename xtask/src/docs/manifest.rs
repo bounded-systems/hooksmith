@@ -213,7 +213,7 @@ pub fn generate_default_manifest() -> Result<()> {
 
 /// Validate and update the documentation manifest
 pub fn validate_and_update_manifest() -> Result<()> {
-    let mut manifest = DocumentationManifest::load()?;
+    let manifest = DocumentationManifest::load()?;
 
     // Validate the manifest
     manifest.validate()?;
