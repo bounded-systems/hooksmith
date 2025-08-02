@@ -9,6 +9,7 @@ pub mod filter;
 pub mod error;
 pub mod contract;
 pub mod blob_contract;
+pub mod line_contract;
 
 pub use state::{FileState, AttributeState};
 pub use actions::{ActionResolver, HookAction};

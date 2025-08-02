@@ -81,7 +81,11 @@ impl BlobLineContract {
                     self.line_number,
                     self.length,
                     if self.valid_utf8 { "valid" } else { "invalid" },
-                    if self.normalized_eol { "normalized" } else { "mixed" }
+                    if self.normalized_eol {
+                        "normalized"
+                    } else {
+                        "mixed"
+                    }
                 )
             }
             LineAction::Reject => {
@@ -167,19 +171,19 @@ impl LineValidator {
         match byte {
             // ASCII printable characters (0x20-0x7E)
             0x20..=0x7E => (true, false),
-            
+
             // Safe control characters
             0x09 | 0x0A => (true, false), // TAB, LF
-            
+
             // Forbidden control characters
             0x00..=0x08 | 0x0B..=0x1F | 0x7F => (false, true),
-            
+
             // UTF-8 continuation bytes (0x80-0xBF)
             0x80..=0xBF => (true, false),
-            
+
             // UTF-8 lead bytes (0xC0-0xFD)
             0xC0..=0xFD => (true, false),
-            
+
             // Invalid UTF-8 bytes (0xFE-0xFF)
             0xFE..=0xFF => (false, true),
         }
@@ -284,13 +288,11 @@ impl LineValidator {
         let mut byte_offset = 0;
 
         // Split content into lines
-        let lines: Vec<&[u8]> = content
-            .split(|&b| b == b'\n')
-            .collect();
+        let lines: Vec<&[u8]> = content.split(|&b| b == b'\n').collect();
 
         for (i, line) in lines.iter().enumerate() {
             let is_last_line = i == lines.len() - 1;
-            
+
             // For all lines except the last, include the newline
             let line_with_newline = if is_last_line {
                 *line
@@ -303,12 +305,8 @@ impl LineValidator {
             };
 
             // Validate this line
-            let (contract, processed_line) = self.validate_line(
-                oid,
-                line_number,
-                byte_offset,
-                line_with_newline,
-            );
+            let (contract, processed_line) =
+                self.validate_line(oid, line_number, byte_offset, line_with_newline);
 
             line_contracts.push(contract);
             processed_content.extend_from_slice(&processed_line);
@@ -398,9 +396,7 @@ mod tests {
         assert_eq!(processed, b"Line 1\nLine 2\nLine 3\nLine 4\n");
 
         // Check that lines with mixed EOL are marked for fixing
-        let mixed_eol_lines: Vec<_> = contracts.iter()
-            .filter(|c| c.needs_fixing())
-            .collect();
+        let mixed_eol_lines: Vec<_> = contracts.iter().filter(|c| c.needs_fixing()).collect();
         assert_eq!(mixed_eol_lines.len(), 2); // Lines 2 and 3
     }
-} 
+}
