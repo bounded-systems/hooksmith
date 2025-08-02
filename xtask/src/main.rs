@@ -12,9 +12,6 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 mod hierarchical_validation;
-mod contract_state_machine;
-mod git_notes_manager;
-mod contract_commands;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -114,11 +111,7 @@ enum Commands {
         #[arg(long)]
         all: bool,
     },
-    /// Contract validation commands
-    Contract {
-        #[command(subcommand)]
-        command: ContractCommands,
-    },
+
     /// Hierarchical contract validation
     ContractValidate {
         #[command(subcommand)]
@@ -126,51 +119,7 @@ enum Commands {
     },
 }
 
-#[derive(Subcommand)]
-enum ContractCommands {
-    /// Validate a contract file
-    Validate {
-        /// File path to validate
-        #[arg(required = true)]
-        file: String,
-        /// Contract type (blob, tree, commit, tag)
-        #[arg(long, default_value = "blob")]
-        contract_type: String,
-        /// Whether to store state in Git notes
-        #[arg(long)]
-        store: bool,
-    },
-    /// Audit contract states
-    Audit {
-        /// Specific file to audit
-        #[arg(long)]
-        file: Option<String>,
-        /// Whether to be strict (exit on errors)
-        #[arg(long)]
-        strict: bool,
-        /// Only verify Merkle proofs
-        #[arg(long)]
-        merkle_only: bool,
-        /// Only verify transitions
-        #[arg(long)]
-        transitions_only: bool,
-    },
-    /// List all contract files
-    List {
-        /// Show detailed information
-        #[arg(long)]
-        detailed: bool,
-    },
-    /// Clean up old contract states
-    Cleanup {
-        /// Days to keep (default: 365)
-        #[arg(long, default_value = "365")]
-        days: u32,
-        /// Dry run (don't actually delete)
-        #[arg(long)]
-        dry_run: bool,
-    },
-}
+
 
 /// WIT schema for function definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -318,9 +267,7 @@ async fn main() -> Result<()> {
         Commands::Validate { trunk, cargo, modules, all } => {
             validate_project_config(trunk, cargo, modules, all)?;
         }
-        Commands::Contract { command } => {
-            contract_commands::run(command).await?;
-        }
+
         Commands::ContractValidate { command } => {
             hierarchical_validation::run_command(command).await?;
         }
