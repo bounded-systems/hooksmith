@@ -2,36 +2,36 @@
 # This file defines which contract validators apply to different file types and scopes
 
 # Rust source files - full hierarchical validation
-*.rs filter=contract-validate
-*.rs diff=contract-diff
+*.rs filter=contract_validate
+*.rs diff=contract_diff
 
 # Cargo configuration files
-Cargo.toml filter=contract-validate
-Cargo.lock filter=contract-validate
-*.toml filter=contract-validate
+Cargo.toml filter=contract_validate
+Cargo.lock filter=contract_validate
+*.toml filter=contract_validate
 
 # Documentation files
-*.md filter=contract-validate
-*.txt filter=contract-validate
+*.md filter=contract_validate
+*.txt filter=contract_validate
 
 # Configuration files
-*.yml filter=contract-validate
-*.yaml filter=contract-validate
-*.json filter=contract-validate
+*.yml filter=contract_validate
+*.yaml filter=contract_validate
+*.json filter=contract_validate
 
 # Script files
-*.sh filter=contract-validate
-*.bash filter=contract-validate
-*.zsh filter=contract-validate
+*.sh filter=contract_validate
+*.bash filter=contract_validate
+*.zsh filter=contract_validate
 
 # WebAssembly and WIT files
-*.wasm filter=contract-validate
-*.wit filter=contract-validate
+*.wasm filter=contract_validate
+*.wit filter=contract_validate
 
 # Git configuration
-.gitattributes filter=contract-validate
-.gitignore filter=contract-validate
-.gitmodules filter=contract-validate
+.gitattributes filter=contract_validate
+.gitignore filter=contract_validate
+.gitmodules filter=contract_validate
 
 # Contract validation scopes
 # Format: scope=char:line:chunk:file:dir
@@ -56,12 +56,10 @@ dist/ -filter
 build/ -filter
 node_modules/ -filter
 
-# Contract validation tool configuration
-[filter "contract-validate"]
-    clean = xtask-contract-validate clean
-    smudge = xtask-contract-validate smudge
-    required = true
-
-[diff "contract-diff"]
-    textconv = xtask-contract-validate diff
-    cachetextconv = true 
+# Note: Filter and diff configurations should be set up in .git/config or via git config commands
+# Run the following commands to set up the filters:
+# git config filter.contract_validate.clean "xtask-contract-validate clean"
+# git config filter.contract_validate.smudge "xtask-contract-validate smudge"
+# git config filter.contract_validate.required true
+# git config diff.contract_diff.textconv "xtask-contract-validate diff"
+# git config diff.contract_diff.cachetextconv true 
