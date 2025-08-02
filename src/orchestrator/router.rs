@@ -85,7 +85,7 @@ impl CommandRouter {
     /// Handle build command
     fn handle_build(
         args: Vec<String>,
-        components: &HashMap<String, ComponentHandle>,
+        _components: &HashMap<String, ComponentHandle>,
     ) -> Result<CommandResult> {
         if args.is_empty() {
             return Ok(CommandResult {
