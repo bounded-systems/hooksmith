@@ -2557,6 +2557,24 @@ fn generate_templates(template: Option<String>, output_dir: &str, overwrite: boo
     Ok(())
 }
 
+/// Generate all configuration files from Rust structs
+fn generate_config(overwrite: bool, validate: bool) -> Result<()> {
+    println!("🔧 Generating configuration files...");
+    println!("   Overwrite: {}", overwrite);
+    println!("   Validate: {}", validate);
+
+    // Use the ConfigGenerator to generate all config files
+    config::ConfigGenerator::generate_all()?;
+
+    if validate {
+        println!("🔍 Validating generated configuration files...");
+        config::ConfigGenerator::validate_all()?;
+    }
+
+    println!("✅ Configuration generation completed!");
+    Ok(())
+}
+
 /// Generate Git attributes files
 fn generate_git_attributes(output_dir: &str, overwrite: bool, validate: bool) -> Result<()> {
     println!("🔧 Generating Git attributes files...");

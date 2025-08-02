@@ -98,7 +98,7 @@ impl ComponentHandle {
         T: Serialize,
     {
         let args_json = serde_json::to_string(&args)?;
-        let request = WasmCallRequest {
+        let _request = WasmCallRequest {
             function_name: function_name.to_string(),
             arguments: vec![args_json],
             return_type: None,
@@ -120,7 +120,7 @@ impl ComponentHandle {
         function_name: &str,
         args: Vec<String>,
     ) -> Result<WasmCallResult> {
-        let request = WasmCallRequest {
+        let _request = WasmCallRequest {
             function_name: function_name.to_string(),
             arguments: args,
             return_type: None,
