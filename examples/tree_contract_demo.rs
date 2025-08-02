@@ -33,8 +33,6 @@ fn demo_tree_mode_validation() -> Result<(), Box<dyn std::error::Error>> {
     let modes = vec![
         ("100644", "Regular file (non-executable)"),
         ("100755", "Regular file (executable)"),
-        ("120000", "Symbolic link to another path"),
-        ("160000", "Gitlink (submodule commit)"),
         ("040000", "Tree (directory)"),
     ];
 
@@ -68,9 +66,7 @@ fn demo_tree_entry_contracts() -> Result<(), Box<dyn std::error::Error>> {
     let entries = vec![
         ("100644", "README.md", "a1b2c3d4e5f6789012345678901234567890abcd"),
         ("100755", "script.sh", "b2c3d4e5f6789012345678901234567890abcde"),
-        ("120000", "link.txt", "c3d4e5f6789012345678901234567890abcdef"),
-        ("040000", "src", "d4e5f6789012345678901234567890abcdef0"),
-        ("160000", "submodule", "e5f6789012345678901234567890abcdef01"),
+        ("040000", "src", "c3d4e5f6789012345678901234567890abcdef"),
     ];
 
     for (mode, filename, object_id) in entries {
