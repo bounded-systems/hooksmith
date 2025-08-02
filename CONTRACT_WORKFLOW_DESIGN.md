@@ -1,0 +1,238 @@
+# Contract-Driven Bootstrap & Validation Workflow Design
+
+## Overview
+
+This document describes the unified contract-driven bootstrap & validation workflow for Hooksmith, which provides a single command interface for project setup, code generation, validation, and health checks.
+
+## Goals
+
+The workflow aims to provide one command that:
+
+1. **Sets up the project structure** if missing (bootstrap)
+2. **Regenerates all codegen/config/docs** from source
+3. **Runs validation** to ensure no drift or manual edits
+4. **Builds and runs tests** to confirm project health
+5. **Fails with clear, actionable errors** if any step is out-of-spec
+
+## Commands
+
+### `hooksmith contract --build`
+
+The build command orchestrates the complete project setup and generation workflow:
+
+#### Steps Executed
+
+1. **Bootstrap Check** - Runs bootstrap logic if needed (bootstrap-simple.rs)
+2. **Codegen Regeneration** - Generates:
+   - All Cargo.toml files
+   - Lefthook configuration
+   - Documentation & diagrams
+   - WIT interfaces
+   - Git attributes
+   - Any other codegen artifacts
+3. **Validation** - Validates generated files against source
+4. **Build** - Builds all components and xtask
+5. **Test** - Runs all tests to ensure functionality
+6. **Hook Verification** - Checks Git hooks installation
+7. **Attribute Validation** - Validates Git attributes configuration
+8. **Commit** - Optionally commits generated files with clear message
+
+#### Options
+
+- `--no-bootstrap` - Skip bootstrap logic
+- `--no-codegen` - Skip codegen regeneration
+- `--no-validate` - Skip validation
+- `--no-build` - Skip building components
+- `--no-test` - Skip running tests
+- `--commit` - Commit generated files with clear message
+- `--force` - Force regeneration of all files
+
+#### Example Usage
+
+```bash
+# Full build with commit
+cargo xtask contract build --commit
+
+# Build without tests (for CI)
+cargo xtask contract build --no-test
+
+# Force regeneration
+cargo xtask contract build --force
+```
+
+### `hooksmith contract --check`
+
+The check command validates project health and ensures all generated files are up-to-date:
+
+#### Checks Performed
+
+1. **Generated Files Validation** - Ensures no codegen files have been manually modified
+2. **Build Validation** - Confirms project compiles successfully
+3. **Test Validation** - Verifies tests can be compiled and run
+4. **Hook Installation** - Checks Lefthook + .git/hooks are correctly installed
+5. **Git Attributes** - Validates Git attributes enforce generated file rules
+6. **Linter Validation** - Runs cargo clippy with -D warnings
+
+#### Options
+
+- `--strict` - Exit with error on any validation failure
+- `--staged-only` - Check only staged files
+- `--verbose` - Show detailed validation output
+- `--custom-message` - Custom error message for violations
+
+#### Example Usage
+
+```bash
+# Basic check
+cargo xtask contract check
+
+# Strict check (fails on any error)
+cargo xtask contract check --strict
+
+# Check with custom error message
+cargo xtask contract check --strict --custom-message "Please run 'cargo xtask contract build' to fix issues"
+```
+
+## Integration with Git Hooks
+
+### Pre-Push Hook Integration
+
+The workflow integrates with Lefthook to add a pre-push hook that runs `hooksmith contract --check`:
+
+```yaml
+pre-push:
+  parallel: true
+  commands:
+    contract-check:
+      run: cargo xtask contract check --strict
+      description: "Run contract-driven validation to ensure project health"
+```
+
+If the check fails, the push is prevented with a message like:
+
+```
+❌ Hooksmith contract check failed!
+Run `cargo xtask contract --build` to regenerate configs/docs/hooks.
+```
+
+## Implementation Details
+
+### Contract Configuration
+
+The workflow uses a `ContractConfig` struct to control which steps are executed:
+
+```rust
+pub struct ContractConfig {
+    pub bootstrap_if_needed: bool,
+    pub regenerate_codegen: bool,
+    pub validate_generated: bool,
+    pub build_components: bool,
+    pub run_tests: bool,
+    pub commit_generated: bool,
+    pub check_hooks: bool,
+    pub validate_attributes: bool,
+}
+```
+
+### Error Handling
+
+The workflow provides clear, actionable error messages:
+
+- **Step-by-step progress** with emoji indicators
+- **Detailed error messages** for each failed step
+- **Actionable suggestions** for fixing issues
+- **Summary of completed steps** and failed checks
+
+### Bootstrap Logic
+
+The bootstrap step checks if the project needs initialization:
+
+1. **Check for Cargo.toml** - Main workspace manifest
+2. **Check for xtask** - xtask/Cargo.toml and built binary
+3. **Run bootstrap-simple.rs** - If project structure is missing
+
+### Codegen Regeneration
+
+The codegen step orchestrates all generation tasks:
+
+1. **Configuration files** - gen-config
+2. **Documentation** - gen-docs-comprehensive
+3. **WIT interfaces** - gen-wit
+4. **Lefthook config** - gen-lefthook
+5. **Git attributes** - gen-gitattributes
+
+### Validation Pipeline
+
+The validation step ensures generated files match source:
+
+1. **File existence** - All required files present
+2. **Content validation** - Generated content matches source
+3. **Header validation** - Generated file headers present
+4. **Schema validation** - Configuration files valid
+
+## Benefits
+
+### For Developers
+
+- **Single command setup** - `cargo xtask contract build` sets up everything
+- **Clear error messages** - Know exactly what's wrong and how to fix it
+- **Consistent environment** - Same setup process for all developers
+- **Automated validation** - Prevents manual edits to generated files
+
+### For CI/CD
+
+- **Deterministic builds** - Same input always produces same output
+- **Health checks** - `cargo xtask contract check` validates project state
+- **Pre-push validation** - Prevents broken code from being pushed
+- **Clear failure modes** - Easy to debug CI failures
+
+### For Project Maintenance
+
+- **No drift** - Generated files always match source
+- **Automated updates** - Easy to regenerate all files when needed
+- **Version control** - Clear commit messages for generated changes
+- **Audit trail** - Full history of what was generated and when
+
+## Migration Path
+
+### From Existing Commands
+
+The contract workflow replaces multiple existing commands:
+
+| Old Command | New Command | Notes |
+|-------------|-------------|-------|
+| `cargo xtask bootstrap` | `cargo xtask contract build` | Full bootstrap + validation |
+| `cargo xtask gen-all` | `cargo xtask contract build` | Regeneration + validation |
+| `cargo xtask check` | `cargo xtask contract check` | Health validation |
+| `cargo xtask validate-generated` | `cargo xtask contract check` | Part of health check |
+
+### Backward Compatibility
+
+- **Existing commands remain** - No breaking changes
+- **Gradual migration** - Teams can adopt contract workflow over time
+- **Same functionality** - All existing features preserved
+
+## Future Enhancements
+
+### Planned Features
+
+1. **Incremental regeneration** - Only regenerate changed files
+2. **Parallel execution** - Run independent steps in parallel
+3. **Caching** - Cache generation results for faster builds
+4. **Remote validation** - Validate against remote contract specifications
+5. **Integration testing** - Test contract workflow in CI
+
+### Extensibility
+
+The contract workflow is designed to be extensible:
+
+- **Plugin system** - Add custom validation steps
+- **Configuration files** - Customize workflow behavior
+- **Hook integration** - Integrate with other Git hooks
+- **CI integration** - Customize for different CI environments
+
+## Conclusion
+
+The contract-driven bootstrap & validation workflow provides a unified, reliable way to manage Hooksmith project setup and maintenance. By combining bootstrap, codegen, validation, and health checks into a single command interface, it reduces complexity and ensures project consistency across all environments.
+
+The workflow's clear error messages and actionable suggestions make it easy for developers to understand and fix issues, while its integration with Git hooks prevents broken code from being committed or pushed. 

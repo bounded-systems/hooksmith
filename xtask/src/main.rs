@@ -18,6 +18,8 @@ mod docs;
 mod generated_file_validator;
 mod file_audit;
 mod config;
+mod contract;
+mod status;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -273,6 +275,16 @@ enum Commands {
         #[arg(long)]
         strict: bool,
     },
+    /// Contract-driven bootstrap & validation workflow
+    Contract {
+        #[command(subcommand)]
+        command: contract::ContractCommands,
+    },
+    /// Track Rust-owned project files and coverage
+    Status {
+        #[command(subcommand)]
+        command: status::StatusCommands,
+    },
 }
 
 /// WIT schema for function definition
@@ -500,6 +512,12 @@ async fn main() -> Result<()> {
         }
         Commands::ValidateConfig { strict } => {
             validate_config(strict)?;
+        }
+        Commands::Contract { command } => {
+            contract::run_contract_command(command).await?;
+        }
+        Commands::Status { command } => {
+            status::run_status_command(command).await?;
         }
     }
 
