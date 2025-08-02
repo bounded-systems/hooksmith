@@ -50,6 +50,7 @@ Hooksmith is designed to be a **CLI tool that builds Rust binaries into Lefthook
 | **Tool Integration** | ✅ Implemented | Integration with existing worktree tools (wtp, wt, treekanga, git) |
 | **Hook Installation** | ✅ Implemented | Hook installation and management functionality |
 | **Worktree Management** | ✅ Implemented | Worktree creation, listing, switching, and removal |
+| **Hierarchical Validation** | ✅ Complete | Bottom-up contract validation with Git Notes integration |
 
 ### 🚀 **Roadmap**
 
