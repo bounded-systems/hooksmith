@@ -233,6 +233,15 @@ pub enum StatusCommands {
         #[arg(long, default_value = "table")]
         format: String,
     },
+    /// Generate migration scripts
+    GenerateMigrationScripts {
+        /// Output directory for scripts
+        #[arg(long, default_value = "migration-scripts")]
+        output_dir: String,
+        /// Include all file types (not just high priority)
+        #[arg(long)]
+        all_types: bool,
+    },
 }
 
 /// Run a status command
@@ -263,6 +272,9 @@ pub async fn run_status_command(command: StatusCommands) -> Result<()> {
         StatusCommands::MigrationProgress { detailed, format } => {
             let format = parse_output_format(&format)?;
             analyze_migration_progress(detailed, format).await
+        }
+        StatusCommands::GenerateMigrationScripts { output_dir, all_types } => {
+            generate_migration_scripts(&output_dir, all_types).await
         }
     }
 }
@@ -1078,6 +1090,164 @@ fn print_migration_progress_markdown(progress: &FileTypeMigrationProgress, detai
     }
 
     Ok(())
+}
+
+/// Generate migration scripts for file type normalization
+async fn generate_migration_scripts(output_dir: &str, all_types: bool) -> Result<()> {
+    println!("🔧 Generating Migration Scripts");
+    println!("===============================");
+    
+    // Create output directory
+    std::fs::create_dir_all(output_dir)?;
+    
+    let file_types = get_file_type_analysis().await?;
+    let progress = get_migration_progress().await?;
+    
+    // Filter file types based on priority
+    let target_types: Vec<_> = if all_types {
+        file_types.iter().filter(|ft| ft.migration_status != MigrationStatus::Keep).collect()
+    } else {
+        file_types.iter().filter(|ft| ft.priority >= 8).collect()
+    };
+    
+    println!("Generating {} migration scripts...", target_types.len());
+    
+    // Generate main migration script
+    let main_script = generate_main_migration_script(&target_types, &progress)?;
+    std::fs::write(format!("{}/migrate-all.sh", output_dir), main_script)?;
+    
+    // Generate individual scripts for each file type
+    for file_type in &target_types {
+        let script = generate_file_type_migration_script(file_type)?;
+        let filename = format!("{}/migrate-{}.sh", output_dir, file_type.extension);
+        std::fs::write(filename, script)?;
+    }
+    
+    // Generate README
+    let readme = generate_migration_readme(&target_types, &progress)?;
+    std::fs::write(format!("{}/README.md", output_dir), readme)?;
+    
+    println!("✅ Generated {} migration scripts in '{}'", target_types.len() + 2, output_dir);
+    println!("📖 See '{}/README.md' for usage instructions", output_dir);
+    
+    Ok(())
+}
+
+fn generate_main_migration_script(file_types: &[&FileTypeInfo], progress: &FileTypeMigrationProgress) -> Result<String> {
+    let mut script = String::new();
+    
+    script.push_str("#!/bin/bash\n");
+    script.push_str("# Hooksmith File Type Migration Script\n");
+    script.push_str("# Generated automatically by xtask status generate-migration-scripts\n");
+    script.push_str("# Current progress: ");
+    script.push_str(&format!("{:.1}%\n", progress.migration_progress));
+    script.push_str("\n");
+    script.push_str("set -euo pipefail\n");
+    script.push_str("\n");
+    script.push_str("echo \"🔄 Starting Hooksmith File Type Migration\"\n");
+    script.push_str("echo \"Current progress: ");
+    script.push_str(&format!("{:.1}%", progress.migration_progress));
+    script.push_str("\"\n");
+    script.push_str("echo \"Target: 100% Rust-owned pipeline\"\n");
+    script.push_str("\n");
+    
+    for file_type in file_types {
+        script.push_str(&format!("# Migrate {} files (Priority: {}, Effort: {})\n", 
+            file_type.extension, file_type.priority, file_type.estimated_effort));
+        script.push_str(&format!("echo \"📁 Migrating {} files...\"\n", file_type.extension));
+        script.push_str(&format!("bash migrate-{}.sh\n", file_type.extension));
+        script.push_str("\n");
+    }
+    
+    script.push_str("echo \"✅ Migration complete!\"\n");
+    script.push_str("echo \"Run 'cargo xtask status migration-progress' to check progress\"\n");
+    
+    Ok(script)
+}
+
+fn generate_file_type_migration_script(file_type: &FileTypeInfo) -> Result<String> {
+    let mut script = String::new();
+    
+    script.push_str("#!/bin/bash\n");
+    script.push_str(&format!("# Migration script for {} files\n", file_type.extension));
+    script.push_str(&format!("# Action: {}\n", file_type.target_action));
+    script.push_str(&format!("# Priority: {}, Effort: {}\n", file_type.priority, file_type.estimated_effort));
+    script.push_str("\n");
+    script.push_str("set -euo pipefail\n");
+    script.push_str("\n");
+    
+    match file_type.migration_status {
+        MigrationStatus::Remove => {
+            script.push_str(&format!("echo \"🗑️  Removing {} files...\"\n", file_type.extension));
+            script.push_str(&format!("find . -name \"*.{}\" -type f -delete\n", file_type.extension));
+            script.push_str(&format!("echo \"✅ Removed {} files\"\n", file_type.extension));
+        }
+        MigrationStatus::Generate => {
+            script.push_str(&format!("echo \"🔧 Setting up generation for {} files...\"\n", file_type.extension));
+            script.push_str(&format!("# TODO: Implement generation for {} files\n", file_type.extension));
+            script.push_str(&format!("# Action: {}\n", file_type.target_action));
+            script.push_str(&format!("echo \"⚠️  Manual implementation required for {} files\"\n", file_type.extension));
+        }
+        MigrationStatus::Consolidate => {
+            script.push_str(&format!("echo \"🔄 Consolidating {} files...\"\n", file_type.extension));
+            script.push_str(&format!("# TODO: Implement consolidation for {} files\n", file_type.extension));
+            script.push_str(&format!("# Action: {}\n", file_type.target_action));
+            script.push_str(&format!("echo \"⚠️  Manual implementation required for {} files\"\n", file_type.extension));
+        }
+        MigrationStatus::Keep => {
+            script.push_str(&format!("echo \"✅ {} files are already approved\"\n", file_type.extension));
+        }
+    }
+    
+    Ok(script)
+}
+
+fn generate_migration_readme(file_types: &[&FileTypeInfo], progress: &FileTypeMigrationProgress) -> Result<String> {
+    let mut readme = String::new();
+    
+    readme.push_str("# Hooksmith File Type Migration Scripts\n\n");
+    readme.push_str("This directory contains automatically generated migration scripts for normalizing file types in the Hooksmith project.\n\n");
+    readme.push_str(&format!("## Current Status\n\n"));
+    readme.push_str(&format!("- **Progress**: {:.1}%\n", progress.migration_progress));
+    readme.push_str(&format!("- **Total Types**: {}\n", progress.total_types));
+    readme.push_str(&format!("- **Types to Migrate**: {}\n", file_types.len()));
+    readme.push_str("\n");
+    
+    readme.push_str("## Usage\n\n");
+    readme.push_str("### Run All Migrations\n");
+    readme.push_str("```bash\n");
+    readme.push_str("chmod +x migrate-all.sh\n");
+    readme.push_str("./migrate-all.sh\n");
+    readme.push_str("```\n\n");
+    
+    readme.push_str("### Run Individual Migrations\n");
+    for file_type in file_types {
+        readme.push_str(&format!("```bash\n"));
+        readme.push_str(&format!("chmod +x migrate-{}.sh\n", file_type.extension));
+        readme.push_str(&format!("./migrate-{}.sh\n", file_type.extension));
+        readme.push_str(&format!("```\n\n"));
+    }
+    
+    readme.push_str("## Migration Details\n\n");
+    readme.push_str("| Extension | Priority | Effort | Action |\n");
+    readme.push_str("|-----------|----------|--------|--------|\n");
+    
+    for file_type in file_types {
+        readme.push_str(&format!("| {} | {} | {} | {} |\n",
+            file_type.extension,
+            file_type.priority,
+            file_type.estimated_effort,
+            file_type.target_action
+        ));
+    }
+    
+    readme.push_str("\n## Notes\n\n");
+    readme.push_str("- Scripts are generated automatically by `cargo xtask status generate-migration-scripts`\n");
+    readme.push_str("- Some scripts require manual implementation of the actual migration logic\n");
+    readme.push_str("- Always review scripts before running them\n");
+    readme.push_str("- Check progress with `cargo xtask status migration-progress`\n");
+    
+    Ok(readme)
 }
 
 #[cfg(test)]
