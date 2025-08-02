@@ -9,6 +9,42 @@ use crate::git_notes_manager::{ContractStateNote, GitNotesManager, TransitionLog
 
 use super::ContractCommands;
 
+/// Whitelist of allowed file extensions for contract validation
+const ALLOWED_EXTENSIONS: &[&str] = &[
+    // Rust files
+    "rs",
+    // Script files
+    "sh", "bash", "zsh",
+    // Configuration files
+    "toml", "yaml", "yml", "json",
+    // Documentation files
+    "md", "txt", "rst",
+    // Web files
+    "html", "css", "js", "ts",
+];
+
+/// Validate file extension against whitelist
+fn validate_file_extension(file_path: &str) -> Result<()> {
+    let path = Path::new(file_path);
+
+    // Skip validation for files without extensions (like README, Makefile, etc.)
+    if let Some(extension) = path.extension() {
+        if let Some(ext_str) = extension.to_str() {
+            if !ALLOWED_EXTENSIONS.contains(&ext_str) {
+                anyhow::bail!(
+                    "File extension '{}' is not allowed for contract validation. Allowed extensions: {}",
+                    ext_str,
+                    ALLOWED_EXTENSIONS.join(", ")
+                );
+            }
+        } else {
+            anyhow::bail!("File has invalid extension encoding");
+        }
+    }
+
+    Ok(())
+}
+
 /// Run contract commands
 pub async fn run(command: ContractCommands) -> Result<()> {
     match command {
@@ -42,6 +78,10 @@ async fn validate_contract(file_path: &str, contract_type: &str, store: bool) ->
     println!("🔍 Validating contract: {}", file_path);
     println!("   Type: {}", contract_type);
     println!("   Store: {}", store);
+
+    // Validate file extension first
+    validate_file_extension(file_path)?;
+    println!("   ✅ File extension validated");
 
     // Initialize components
     let state_machine = StateMachine::new()?;
@@ -257,6 +297,13 @@ async fn audit_single_file(
     let path = Path::new(file_path);
     if !path.exists() {
         println!("   ❌ File does not exist");
+        errors += 1;
+        return Ok((errors, warnings));
+    }
+
+    // Validate file extension
+    if let Err(e) = validate_file_extension(file_path) {
+        println!("   ❌ File extension validation failed: {}", e);
         errors += 1;
         return Ok((errors, warnings));
     }

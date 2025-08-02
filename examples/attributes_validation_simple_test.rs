@@ -1,7 +1,7 @@
 use git_filter::{
-    blob_contract::{BlobContract, BlobValidator},
-    git_object_contract::{GitObjectContract, GitObjectType, GitObjectValidator},
-    tree_contract::{TreeEntryContract, TreeObjectContract, TreeValidator},
+    blob_contract::BlobContract,
+    git_object_contract::{GitObjectType, GitObjectValidator},
+    tree_contract::{TreeEntryContract, TreeValidator},
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

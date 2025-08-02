@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::Path;
 
 /// Git blob contract - represents the validation contract for a single Git blob
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -156,9 +157,9 @@ impl BlobContract {
                 if filepath.starts_with(pattern) {
                     return true;
                 }
-            } else if pattern.starts_with('*') {
+            } else if let Some(suffix) = pattern.strip_prefix('*') {
                 // Wildcard pattern
-                let suffix = &pattern[1..];
+                let suffix = suffix;
                 if filepath.ends_with(suffix) {
                     return true;
                 }

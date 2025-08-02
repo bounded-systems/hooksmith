@@ -12,7 +12,6 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tokio::fs;
 use wasmtime::{Engine, Linker, Module, Store};
-use wasmtime_wasi::WasiCtxBuilder;
 
 /// Configuration for WASM component building
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -180,7 +179,7 @@ impl WasmManager {
 
         // Create store and linker
         let mut store = Store::new(&self.engine, ());
-        let mut linker = Linker::new(&self.engine);
+        let linker = Linker::new(&self.engine);
 
         // Instantiate module
         let instance = linker

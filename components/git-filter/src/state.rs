@@ -2,30 +2,23 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Represents the state of a Git attribute
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum AttributeState {
     /// Attribute is set to true
-    True,
+    Set,
     /// Attribute is set to false
-    False,
-    /// Attribute is set to a specific value
-    Value(String),
+    Unset,
     /// Attribute is unspecified
+    #[default]
     Unspecified,
-}
-
-impl Default for AttributeState {
-    fn default() -> Self {
-        AttributeState::Unspecified
-    }
 }
 
 impl From<Option<&str>> for AttributeState {
     fn from(value: Option<&str>) -> Self {
         match value {
-            Some("true") => AttributeState::True,
-            Some("false") => AttributeState::False,
-            Some(val) => AttributeState::Value(val.to_string()),
+            Some("true") => AttributeState::Set,
+            Some("false") => AttributeState::Unset,
+            Some(val) => AttributeState::Unspecified,
             None => AttributeState::Unspecified,
         }
     }
@@ -54,39 +47,22 @@ pub struct FileState {
     pub custom: HashMap<String, AttributeState>,
 }
 
-impl Default for FileState {
-    fn default() -> Self {
-        Self {
-            text: AttributeState::Unspecified,
-            eol: AttributeState::Unspecified,
-            filter: AttributeState::Unspecified,
-            diff: AttributeState::Unspecified,
-            merge: AttributeState::Unspecified,
-            encoding: AttributeState::Unspecified,
-            export_ignore: AttributeState::Unspecified,
-            export_subst: AttributeState::Unspecified,
-            custom: HashMap::new(),
-        }
-    }
-}
-
 impl FileState {
     /// Create a new FileState from Git attributes
     pub fn from_attributes(attributes: &HashMap<String, Option<&str>>) -> Self {
-        let mut state = FileState::default();
-
-        // Map standard attributes
-        state.text = attributes.get("text").and_then(|v| *v).into();
-        state.eol = attributes.get("eol").and_then(|v| *v).into();
-        state.filter = attributes.get("filter").and_then(|v| *v).into();
-        state.diff = attributes.get("diff").and_then(|v| *v).into();
-        state.merge = attributes.get("merge").and_then(|v| *v).into();
-        state.encoding = attributes
-            .get("working-tree-encoding")
-            .and_then(|v| *v)
-            .into();
-        state.export_ignore = attributes.get("export-ignore").and_then(|v| *v).into();
-        state.export_subst = attributes.get("export-subst").and_then(|v| *v).into();
+        let state = FileState {
+            text: attributes.get("text").and_then(|v| *v).into(),
+            eol: attributes.get("eol").and_then(|v| *v).into(),
+            filter: attributes.get("filter").and_then(|v| *v).into(),
+            diff: attributes.get("diff").and_then(|v| *v).into(),
+            merge: attributes.get("merge").and_then(|v| *v).into(),
+            encoding: attributes
+                .get("working-tree-encoding")
+                .and_then(|v| *v)
+                .into(),
+            export_ignore: attributes.get("export-ignore").and_then(|v| *v).into(),
+            export_subst: attributes.get("export-subst").and_then(|v| *v).into(),
+        };
 
         // Map custom attributes
         for (key, value) in attributes {
@@ -103,7 +79,7 @@ impl FileState {
             ) {
                 state
                     .custom
-                    .insert(key.clone(), value.and_then(|v| Some(v)).into());
+                    .insert(key.clone(), value.into());
             }
         }
 
@@ -113,21 +89,21 @@ impl FileState {
     /// Check if a specific attribute is enabled
     pub fn is_enabled(&self, attribute: &str) -> bool {
         match attribute {
-            "text" => matches!(self.text, AttributeState::True),
-            "eol" => matches!(self.eol, AttributeState::True | AttributeState::Value(_)),
-            "filter" => matches!(self.filter, AttributeState::True | AttributeState::Value(_)),
-            "diff" => matches!(self.diff, AttributeState::True | AttributeState::Value(_)),
-            "merge" => matches!(self.merge, AttributeState::True | AttributeState::Value(_)),
+            "text" => matches!(self.text, AttributeState::Set),
+            "eol" => matches!(self.eol, AttributeState::Set | AttributeState::Unset),
+            "filter" => matches!(self.filter, AttributeState::Set | AttributeState::Unset),
+            "diff" => matches!(self.diff, AttributeState::Set | AttributeState::Unset),
+            "merge" => matches!(self.merge, AttributeState::Set | AttributeState::Unset),
             "encoding" => matches!(
                 self.encoding,
-                AttributeState::True | AttributeState::Value(_)
+                AttributeState::Set | AttributeState::Unset
             ),
-            "export-ignore" => matches!(self.export_ignore, AttributeState::True),
-            "export-subst" => matches!(self.export_subst, AttributeState::True),
+            "export-ignore" => matches!(self.export_ignore, AttributeState::Set),
+            "export-subst" => matches!(self.export_subst, AttributeState::Set),
             _ => self
                 .custom
                 .get(attribute)
-                .map(|state| matches!(state, AttributeState::True))
+                .map(|state| matches!(state, AttributeState::Set))
                 .unwrap_or(false),
         }
     }
@@ -136,39 +112,46 @@ impl FileState {
     pub fn get_value(&self, attribute: &str) -> Option<&str> {
         match attribute {
             "text" => match &self.text {
-                AttributeState::Value(val) => Some(val),
-                _ => None,
+                AttributeState::Unspecified => None,
+                AttributeState::Set => Some("true"),
+                AttributeState::Unset => Some("false"),
             },
             "eol" => match &self.eol {
-                AttributeState::Value(val) => Some(val),
-                _ => None,
+                AttributeState::Unspecified => None,
+                AttributeState::Set => Some("true"),
+                AttributeState::Unset => Some("false"),
             },
             "filter" => match &self.filter {
-                AttributeState::Value(val) => Some(val),
-                _ => None,
+                AttributeState::Unspecified => None,
+                AttributeState::Set => Some("true"),
+                AttributeState::Unset => Some("false"),
             },
             "diff" => match &self.diff {
-                AttributeState::Value(val) => Some(val),
-                _ => None,
+                AttributeState::Unspecified => None,
+                AttributeState::Set => Some("true"),
+                AttributeState::Unset => Some("false"),
             },
             "merge" => match &self.merge {
-                AttributeState::Value(val) => Some(val),
-                _ => None,
+                AttributeState::Unspecified => None,
+                AttributeState::Set => Some("true"),
+                AttributeState::Unset => Some("false"),
             },
             "encoding" => match &self.encoding {
-                AttributeState::Value(val) => Some(val),
-                _ => None,
+                AttributeState::Unspecified => None,
+                AttributeState::Set => Some("true"),
+                AttributeState::Unset => Some("false"),
             },
             _ => self.custom.get(attribute).and_then(|state| match state {
-                AttributeState::Value(val) => Some(val.as_str()),
-                _ => None,
+                AttributeState::Unspecified => None,
+                AttributeState::Set => Some("true"),
+                AttributeState::Unset => Some("false"),
             }),
         }
     }
 
     /// Check if the file should be treated as text
     pub fn is_text(&self) -> bool {
-        matches!(self.text, AttributeState::True)
+        matches!(self.text, AttributeState::Set)
     }
 
     /// Get the end-of-line setting

@@ -1,28 +1,69 @@
-# Hierarchical Contract Validation Configuration
+# Hooksmith Hierarchical Contract Validation Configuration
 # This file defines which contract validators apply to different file types and scopes
+# Only whitelisted file extensions are allowed for contract validation
+
+# =============================================================================
+# WHITELISTED FILE EXTENSIONS
+# =============================================================================
+# Only these file extensions are allowed for contract validation
+# All other files will be rejected by xtask-contract-validate
 
 # Rust source files - full hierarchical validation
 *.rs filter=contract_validate
 *.rs diff=contract_diff
+*.rs scope=char:line:chunk:file:dir
 
 # Script files
 *.sh filter=contract_validate
 *.bash filter=contract_validate
 *.zsh filter=contract_validate
-
-# Contract validation scopes
-# Format: scope=char:line:chunk:file:dir
-*.rs scope=char:line:chunk:file:dir
 *.sh scope=char:line:file:dir
 *.bash scope=char:line:file:dir
 *.zsh scope=char:line:file:dir
+
+# Configuration files
+*.toml filter=contract_validate
+*.yaml filter=contract_validate
+*.yml filter=contract_validate
+*.json filter=contract_validate
+*.toml scope=char:line:file:dir
+*.yaml scope=char:line:file:dir
+*.yml scope=char:line:file:dir
+*.json scope=char:line:file:dir
+
+# Documentation files
+*.md filter=contract_validate
+*.txt filter=contract_validate
+*.rst filter=contract_validate
+*.md scope=char:line:file:dir
+*.txt scope=char:line:file:dir
+*.rst scope=char:line:file:dir
+
+# Web files
+*.html filter=contract_validate
+*.css filter=contract_validate
+*.js filter=contract_validate
+*.ts filter=contract_validate
+*.html scope=char:line:file:dir
+*.css scope=char:line:file:dir
+*.js scope=char:line:file:dir
+*.ts scope=char:line:file:dir
+
+# =============================================================================
+# EXCLUDED DIRECTORIES
+# =============================================================================
+# These directories are excluded from contract validation
 
 # Generated files - no validation
 target/ -filter
 dist/ -filter
 build/ -filter
 node_modules/ -filter
+.git/ -filter
 
+# =============================================================================
+# GIT CONFIGURATION
+# =============================================================================
 # Note: Filter and diff configurations should be set up in .git/config or via git config commands
 # Run the following commands to set up the filters:
 # git config filter.contract_validate.clean "xtask-contract-validate clean"
@@ -30,3 +71,13 @@ node_modules/ -filter
 # git config filter.contract_validate.required true
 # git config diff.contract_diff.textconv "xtask-contract-validate diff"
 # git config diff.contract_diff.cachetextconv true
+
+# =============================================================================
+# VALIDATION SCOPES
+# =============================================================================
+# Scope levels define the depth of validation:
+# char:   Character-level validation (byte-by-byte)
+# line:   Line-level validation (line endings, content)
+# chunk:  Chunk-level validation (semantic blocks)
+# file:   File-level validation (structure, metadata)
+# dir:    Directory-level validation (hierarchy, naming)

@@ -85,15 +85,10 @@ impl FilenameContract {
 }
 
 /// Filename validator that processes filename validation
+#[derive(Default)]
 pub struct FilenameValidator {
     /// Whether to use strict validation (block path separators)
     strict: bool,
-}
-
-impl Default for FilenameValidator {
-    fn default() -> Self {
-        Self { strict: false }
-    }
 }
 
 impl FilenameValidator {

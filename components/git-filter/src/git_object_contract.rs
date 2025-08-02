@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-
+use std::path::Path;
 use crate::blob_contract::BlobContract;
-use crate::tree_contract::{TreeEntryContract, TreeObjectContract, TreeValidator};
+use crate::tree_contract::{TreeEntryContract, TreeValidator};
 
 /// Git object contract - represents the validation contract for Git objects with attributes
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -183,9 +182,9 @@ impl GitObjectContract {
                 if filepath.starts_with(pattern) {
                     return true;
                 }
-            } else if pattern.starts_with('*') {
+            } else if let Some(suffix) = pattern.strip_prefix('*') {
                 // Wildcard pattern
-                let suffix = &pattern[1..];
+                let suffix = suffix;
                 if filepath.ends_with(suffix) {
                     return true;
                 }

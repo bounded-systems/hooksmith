@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::path::Path;
 
 /// Tree mode contract - represents allowed Git tree modes (restricted set)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -9,26 +9,30 @@ pub enum TreeMode {
     /// Regular file (executable)
     ExecutableFile = 0o100755,
     /// Tree (directory)
-    Tree = 0o040000,
+    Directory = 0o040000,
+    /// Symlink
+    Symlink = 0o120000,
 }
 
 impl TreeMode {
     /// Create a TreeMode from a string representation (restricted set)
-    pub fn from_str(mode: &str) -> Option<Self> {
+    pub fn parse_from_str(mode: &str) -> Option<Self> {
         match mode {
             "100644" => Some(TreeMode::RegularFile),
             "100755" => Some(TreeMode::ExecutableFile),
-            "040000" => Some(TreeMode::Tree),
+            "040000" => Some(TreeMode::Directory),
+            "120000" => Some(TreeMode::Symlink),
             _ => None,
         }
     }
 
     /// Convert to string representation
-    pub fn to_string(&self) -> String {
+    pub fn to_mode_string(&self) -> String {
         match self {
             TreeMode::RegularFile => "100644".to_string(),
             TreeMode::ExecutableFile => "100755".to_string(),
-            TreeMode::Tree => "040000".to_string(),
+            TreeMode::Directory => "040000".to_string(),
+            TreeMode::Symlink => "120000".to_string(),
         }
     }
 
@@ -37,13 +41,14 @@ impl TreeMode {
         match self {
             TreeMode::RegularFile => "Regular file (non-executable)",
             TreeMode::ExecutableFile => "Regular file (executable)",
-            TreeMode::Tree => "Tree (directory)",
+            TreeMode::Directory => "Tree (directory)",
+            TreeMode::Symlink => "Symlink",
         }
     }
 
     /// Check if this mode represents a tree (directory)
     pub fn is_tree(&self) -> bool {
-        matches!(self, TreeMode::Tree)
+        matches!(self, TreeMode::Directory)
     }
 
     /// Check if this mode represents a blob (file)
@@ -203,7 +208,7 @@ impl TreeEntryContract {
         let mut errors = Vec::new();
 
         // Validate mode
-        let mode_enum = match TreeMode::from_str(mode) {
+        let mode_enum = match TreeMode::parse_from_str(mode) {
             Some(m) => m,
             None => {
                 errors.push(format!("Invalid tree mode: {}", mode));
@@ -305,9 +310,9 @@ impl TreeEntryContract {
                 if filename.starts_with(pattern) {
                     return true;
                 }
-            } else if pattern.starts_with('*') {
+            } else if let Some(suffix) = pattern.strip_prefix('*') {
                 // Wildcard pattern
-                let suffix = &pattern[1..];
+                let suffix = suffix;
                 if filename.ends_with(suffix) {
                     return true;
                 }
@@ -386,7 +391,7 @@ impl TreeEntryContract {
 
     /// Get the mode as a string
     pub fn mode_string(&self) -> String {
-        self.mode.to_string()
+        self.mode.to_mode_string()
     }
 }
 
@@ -532,9 +537,9 @@ mod tests {
 
     #[test]
     fn test_tree_mode_creation() {
-        let mode = TreeMode::from_str("100644").unwrap();
+        let mode = TreeMode::parse_from_str("100644").unwrap();
         assert_eq!(mode, TreeMode::RegularFile);
-        assert_eq!(mode.to_string(), "100644");
+        assert_eq!(mode.to_mode_string(), "100644");
         assert_eq!(mode.description(), "Regular file (non-executable)");
         assert!(mode.is_blob());
         assert!(!mode.is_tree());
@@ -543,9 +548,9 @@ mod tests {
 
     #[test]
     fn test_tree_mode_tree() {
-        let mode = TreeMode::from_str("040000").unwrap();
-        assert_eq!(mode, TreeMode::Tree);
-        assert_eq!(mode.to_string(), "040000");
+        let mode = TreeMode::parse_from_str("040000").unwrap();
+        assert_eq!(mode, TreeMode::Directory);
+        assert_eq!(mode.to_mode_string(), "040000");
         assert_eq!(mode.description(), "Tree (directory)");
         assert!(!mode.is_blob());
         assert!(mode.is_tree());
@@ -554,7 +559,7 @@ mod tests {
 
     #[test]
     fn test_tree_mode_invalid() {
-        let mode = TreeMode::from_str("999999");
+        let mode = TreeMode::parse_from_str("999999");
         assert!(mode.is_none());
     }
 

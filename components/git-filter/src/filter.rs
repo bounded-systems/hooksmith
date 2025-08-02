@@ -1,12 +1,8 @@
-use crate::actions::{ActionResolver, GitOperation, HookAction};
-use crate::blob_contract::{BlobByteAudit, BlobContract, BlobValidator};
-use crate::contract::{CharValidator, FileValidationResult};
-use crate::error::FilterError;
-use crate::line_contract::{BlobLineContract, LineAction, LineValidator};
-use crate::state::FileState;
+use crate::blob_contract::BlobValidator;
+use crate::contract::CharValidator;
+use crate::line_contract::LineValidator;
 use std::collections::HashMap;
-use std::io::{Read, Write};
-use tracing::{debug, error, info};
+use std::path::Path;
 
 /// A filter driver that can process files based on Git attributes
 pub trait FilterDriver {
@@ -145,18 +141,9 @@ impl FilterDriver for SafeAsciiFilter {
     }
 }
 
-/// Character contract filter that uses the Dev Contract system for precise validation
+#[derive(Default)]
 pub struct CharContractFilter {
-    /// Character validator
     validator: CharValidator,
-}
-
-impl Default for CharContractFilter {
-    fn default() -> Self {
-        Self {
-            validator: CharValidator::default(),
-        }
-    }
 }
 
 impl CharContractFilter {
@@ -208,21 +195,9 @@ impl FilterDriver for CharContractFilter {
     }
 }
 
-/// Blob contract filter that validates Git blobs using the contract system
+#[derive(Default)]
 pub struct BlobContractFilter {
-    /// Blob validator
     validator: BlobValidator,
-    /// Whether to generate audit records
-    generate_audit: bool,
-}
-
-impl Default for BlobContractFilter {
-    fn default() -> Self {
-        Self {
-            validator: BlobValidator::default(),
-            generate_audit: false,
-        }
-    }
 }
 
 impl BlobContractFilter {
@@ -240,7 +215,6 @@ impl BlobContractFilter {
                 binary_threshold,
                 generate_audit,
             ),
-            generate_audit,
         }
     }
 
@@ -466,6 +440,7 @@ impl FilterDriver for CombinedContractFilter {
 }
 
 /// A filter that can handle multiple filter drivers
+#[derive(Default)]
 pub struct MultiFilter {
     drivers: HashMap<String, Box<dyn FilterDriver>>,
     action_resolver: ActionResolver,

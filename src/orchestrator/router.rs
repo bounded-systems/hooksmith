@@ -5,13 +5,11 @@
 //! and execution.
 
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use super::components::ComponentHandle;
 use super::{
-    BuildConfig, BuildResult, CommandResult, LefthookConfig, LefthookResult, ValidationConfig,
-    ValidationResult, WorktreeOperation, WorktreeResult,
+    BuildConfig, CommandResult, LefthookConfig, ValidationConfig, WorktreeOperation,
 };
 
 /// Command router for handling CLI commands

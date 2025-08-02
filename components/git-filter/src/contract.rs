@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::Path;
 
 /// Character classification for byte-level validation
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -123,6 +124,12 @@ pub struct FileValidationResult {
     pub utf8_valid: bool,
     /// Line ending normalization applied
     pub line_endings_normalized: bool,
+}
+
+impl Default for FileValidationResult {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl FileValidationResult {

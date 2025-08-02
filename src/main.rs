@@ -1002,7 +1002,7 @@ async fn main() -> Result<()> {
 
                     // For now, we'll use a simple implementation that calls the worktree tools directly
                     // In the future, this will use the WASM component
-                    use std::collections::HashMap;
+                    
                     use std::process::Command;
 
                     let tool_name = tool.as_deref().unwrap_or("git");
@@ -1118,9 +1118,9 @@ async fn main() -> Result<()> {
                     match cmd.output() {
                         Ok(output) => {
                             if output.status.success() {
-                                let stdout = String::from_utf8_lossy(&output.stdout);
+                                let _stdout = String::from_utf8_lossy(&output.stdout);
                                 println!("{} {}", style("✅").green(), style("Worktrees:").green());
-                                println!("{}", stdout);
+                                println!("{}", _stdout);
                             } else {
                                 let stderr = String::from_utf8_lossy(&output.stderr);
                                 eprintln!(
@@ -1350,7 +1350,7 @@ async fn main() -> Result<()> {
                         style("Available worktree tools:").blue()
                     );
 
-                    use std::process::Command;
+                    
                     use which::which;
 
                     let tools = vec![

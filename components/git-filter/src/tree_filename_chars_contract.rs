@@ -27,7 +27,7 @@ impl CharContract {
         let code = ch as u32;
 
         // Allow only printable ASCII (space to ~), excluding control chars
-        if code >= 0x20 && code <= 0x7e {
+        if (0x20..=0x7e).contains(&code) {
             (true, None)
         } else {
             (
@@ -186,17 +186,10 @@ impl TreeFilenameContractChars {
 }
 
 /// Tree filename validator with character-level validation
+#[derive(Default)]
 pub struct TreeFilenameCharsValidator {
     /// Whether to allow path separators
     allow_path_separators: bool,
-}
-
-impl Default for TreeFilenameCharsValidator {
-    fn default() -> Self {
-        Self {
-            allow_path_separators: false,
-        }
-    }
 }
 
 impl TreeFilenameCharsValidator {

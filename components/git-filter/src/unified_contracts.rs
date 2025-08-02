@@ -145,25 +145,27 @@ pub enum TreeMode {
     Executable = 0o100755,
     /// Directory
     Directory = 0o040000,
+    /// Symbolic link
+    Symlink = 0o120000,
 }
 
 impl TreeMode {
-    /// Create a TreeMode from a string representation
-    pub fn from_str(s: &str) -> Option<TreeMode> {
+    pub fn parse_from_str(s: &str) -> Option<TreeMode> {
         match s {
             "100644" => Some(TreeMode::File),
             "100755" => Some(TreeMode::Executable),
             "040000" => Some(TreeMode::Directory),
+            "120000" => Some(TreeMode::Symlink),
             _ => None,
         }
     }
 
-    /// Convert TreeMode to string representation
-    pub fn to_string(&self) -> String {
+    pub fn to_mode_string(&self) -> String {
         match self {
             TreeMode::File => "100644".to_string(),
             TreeMode::Executable => "100755".to_string(),
             TreeMode::Directory => "040000".to_string(),
+            TreeMode::Symlink => "120000".to_string(),
         }
     }
 
@@ -173,6 +175,7 @@ impl TreeMode {
             TreeMode::File => "Regular file (non-executable)",
             TreeMode::Executable => "Executable file",
             TreeMode::Directory => "Directory",
+            TreeMode::Symlink => "Symbolic link",
         }
     }
 }
@@ -191,7 +194,7 @@ pub struct TreeEntryContract {
 impl TreeEntryContract {
     /// Validate the tree entry contract
     pub fn validate(&self) -> bool {
-        TreeMode::from_str(&self.mode).is_some()
+        TreeMode::parse_from_str(&self.mode).is_some()
             && SHA1_RE.is_match(&self.oid)
             && VALID_FILENAME_RE.is_match(&self.filename)
     }
@@ -200,7 +203,7 @@ impl TreeEntryContract {
     pub fn get_errors(&self) -> Vec<String> {
         let mut errors = Vec::new();
 
-        if TreeMode::from_str(&self.mode).is_none() {
+        if TreeMode::parse_from_str(&self.mode).is_none() {
             errors.push(format!("Invalid tree mode: {}", self.mode));
         }
 
@@ -218,7 +221,7 @@ impl TreeEntryContract {
     /// Get a summary of the tree entry contract
     pub fn summary(&self) -> String {
         if self.validate() {
-            let mode = TreeMode::from_str(&self.mode).unwrap();
+            let mode = TreeMode::parse_from_str(&self.mode).unwrap();
             format!(
                 "✅ Entry '{}' valid ({} -> {})",
                 self.filename,
@@ -640,10 +643,10 @@ mod tests {
 
     #[test]
     fn test_tree_mode() {
-        assert_eq!(TreeMode::from_str("100644"), Some(TreeMode::File));
-        assert_eq!(TreeMode::from_str("100755"), Some(TreeMode::Executable));
-        assert_eq!(TreeMode::from_str("040000"), Some(TreeMode::Directory));
-        assert_eq!(TreeMode::from_str("invalid"), None);
+        assert_eq!(TreeMode::parse_from_str("100644"), Some(TreeMode::File));
+        assert_eq!(TreeMode::parse_from_str("100755"), Some(TreeMode::Executable));
+        assert_eq!(TreeMode::parse_from_str("040000"), Some(TreeMode::Directory));
+        assert_eq!(TreeMode::parse_from_str("invalid"), None);
     }
 
     #[test]

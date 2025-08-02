@@ -123,7 +123,7 @@ impl WasmRuntime {
             Ok(ComponentHandle::new(name.to_string(), self.engine.clone()))
         } else {
             // Create basic linker without WASI
-            let mut linker = Linker::new(&self.engine);
+            let linker = Linker::new(&self.engine);
 
             // Create store without WASI context
             let mut store = Store::new(&self.engine, ());
