@@ -1,9 +1,9 @@
 {
-  "coverage": 91.17647058823529,
+  "coverage": 91.8918918918919,
   "date": "2025-08-02",
-  "generated_files": 6,
+  "generated_files": 8,
   "manual_files": 3,
-  "rust_files": 25,
-  "timestamp": "2025-08-02T18:26:34.373783+00:00",
-  "total_files": 34
+  "rust_files": 26,
+  "timestamp": "2025-08-02T18:32:40.770188+00:00",
+  "total_files": 37
 }
