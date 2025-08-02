@@ -145,6 +145,8 @@ impl HookBuilder {
         
         let build_time = start_time.elapsed();
         
+        let binary_size = fs::metadata(&binary_path).await?.len();
+
         Ok(HookBuildResult {
             success: true,
             binary_path: Some(binary_path),
@@ -152,7 +154,7 @@ impl HookBuilder {
             error: None,
             metadata: HashMap::from([
                 ("build_time_ms".to_string(), build_time.as_millis().to_string()),
-                ("binary_size".to_string(), fs::metadata(&binary_path).await?.len().to_string()),
+                ("binary_size".to_string(), binary_size.to_string()),
             ]),
             build_time_ms: build_time.as_millis() as u64,
         })
@@ -479,4 +481,4 @@ mod tests {
         assert!(hooks.is_ok());
         assert!(hooks.unwrap().is_empty());
     }
-} 
+}

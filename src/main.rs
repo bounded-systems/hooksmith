@@ -546,7 +546,8 @@ async fn main() -> Result<()> {
                         .map_err(|e| {
                             eprintln!("{} {}", style("❌").red(), style(format!("Failed to create WASM manager: {}", e)).red());
                             std::process::exit(1);
-                        })?;
+                        })
+                        .unwrap();
 
                     match manager.build_component(config).await {
                         Ok(result) => {
@@ -595,7 +596,8 @@ async fn main() -> Result<()> {
                         .map_err(|e| {
                             eprintln!("{} {}", style("❌").red(), style(format!("Failed to create WASM manager: {}", e)).red());
                             std::process::exit(1);
-                        })?;
+                        })
+                        .unwrap();
 
                     match manager.run_component(config).await {
                         Ok(result) => {
@@ -645,7 +647,8 @@ async fn main() -> Result<()> {
                         .map_err(|e| {
                             eprintln!("{} {}", style("❌").red(), style(format!("Failed to create WASM manager: {}", e)).red());
                             std::process::exit(1);
-                        })?;
+                        })
+                        .unwrap();
 
                     match manager.generate_bindings(config).await {
                         Ok(result) => {
