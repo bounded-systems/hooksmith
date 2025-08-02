@@ -137,7 +137,10 @@ impl FilenameValidator {
     }
 
     /// Get invalid filenames
-    pub fn get_invalid_filenames<'a>(&self, contracts: &'a [FilenameContract]) -> Vec<&'a FilenameContract> {
+    pub fn get_invalid_filenames<'a>(
+        &self,
+        contracts: &'a [FilenameContract],
+    ) -> Vec<&'a FilenameContract> {
         contracts.iter().filter(|c| !c.is_valid()).collect()
     }
 }

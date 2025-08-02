@@ -16,6 +16,8 @@ pub struct BlobContract {
     pub has_forbidden_byte: bool,
     /// Positions of forbidden bytes (if any)
     pub forbidden_byte_positions: Option<Vec<usize>>,
+    /// Git attributes for this blob (e.g., ["linguist-generated=true", "-diff"])
+    pub attributes: Option<Vec<String>>,
     /// Action to take (accept/reject)
     pub action: BlobAction,
 }
@@ -39,6 +41,21 @@ impl BlobContract {
             normalized_eol: true,
             has_forbidden_byte: false,
             forbidden_byte_positions: None,
+            attributes: None,
+            action: BlobAction::Accept,
+        }
+    }
+
+    /// Create a new blob contract with attributes
+    pub fn new_with_attributes(oid: String, size: usize, attributes: Option<Vec<String>>) -> Self {
+        Self {
+            oid,
+            size,
+            valid_utf8: true,
+            normalized_eol: true,
+            has_forbidden_byte: false,
+            forbidden_byte_positions: None,
+            attributes,
             action: BlobAction::Accept,
         }
     }
@@ -69,10 +86,92 @@ impl BlobContract {
         // Note: This doesn't automatically reject, just marks as non-normalized
     }
 
+    /// Add attributes to the blob contract
+    pub fn add_attributes(&mut self, attributes: Vec<String>) {
+        self.attributes = Some(attributes);
+    }
+
+    /// Check if this blob has a specific attribute
+    pub fn has_attribute(&self, attribute: &str) -> bool {
+        if let Some(ref attrs) = self.attributes {
+            attrs.iter().any(|attr| attr == attribute)
+        } else {
+            false
+        }
+    }
+
+    /// Get the value of a key=value attribute
+    pub fn get_attribute_value(&self, key: &str) -> Option<&str> {
+        if let Some(ref attrs) = self.attributes {
+            for attr in attrs {
+                if let Some(value) = attr.strip_prefix(&format!("{}=", key)) {
+                    return Some(value);
+                }
+            }
+        }
+        None
+    }
+
+    /// Validate attributes for a blob (called when processing tree entries)
+    pub fn validate_attributes_for_path(&mut self, filepath: &str) -> bool {
+        let mut valid = true;
+
+        // Check if this is a generated file that should have linguist-generated=true
+        if Self::is_generated_file(filepath) {
+            if !self.has_attribute("linguist-generated=true") {
+                // Mark as rejected if generated file doesn't have the required attribute
+                self.action = BlobAction::Reject;
+                valid = false;
+            }
+        } else {
+            // Check if non-generated file incorrectly has linguist-generated=true
+            if self.has_attribute("linguist-generated=true") {
+                // This is a warning but doesn't necessarily reject the blob
+                // Could be logged or handled differently
+            }
+        }
+
+        valid
+    }
+
+    /// Check if a file path indicates it's a generated file
+    fn is_generated_file(filepath: &str) -> bool {
+        let generated_patterns = [
+            "target/",
+            "gen/",
+            "generated/",
+            "build/",
+            "dist/",
+            "node_modules/",
+            ".git/",
+            "*.min.js",
+            "*.min.css",
+            "*.bundle.js",
+            "*.bundle.css",
+        ];
+
+        for pattern in &generated_patterns {
+            if pattern.ends_with('/') {
+                // Directory pattern
+                if filepath.starts_with(pattern) {
+                    return true;
+                }
+            } else if pattern.starts_with('*') {
+                // Wildcard pattern
+                let suffix = &pattern[1..];
+                if filepath.ends_with(suffix) {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
     /// Get a summary of the blob contract
     pub fn summary(&self) -> String {
         if self.action == BlobAction::Accept {
-            format!(
+            let mut summary = format!(
                 "✅ Blob {} accepted ({} bytes, UTF-8: {}, EOL: {})",
                 &self.oid[..8],
                 self.size,
@@ -82,7 +181,15 @@ impl BlobContract {
                 } else {
                     "mixed"
                 }
-            )
+            );
+
+            if let Some(ref attrs) = self.attributes {
+                if !attrs.is_empty() {
+                    summary.push_str(&format!(" [attributes: {}]", attrs.join(", ")));
+                }
+            }
+
+            summary
         } else {
             let mut reasons = Vec::new();
             if !self.valid_utf8 {
@@ -90,6 +197,11 @@ impl BlobContract {
             }
             if self.has_forbidden_byte {
                 reasons.push("forbidden bytes");
+            }
+            if let Some(ref attrs) = self.attributes {
+                if !attrs.is_empty() {
+                    reasons.push("attribute validation failed");
+                }
             }
             format!(
                 "❌ Blob {} rejected: {}",

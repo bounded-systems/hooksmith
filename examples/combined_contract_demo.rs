@@ -1,235 +1,266 @@
-use git_filter::prelude::*;
-use git_filter::actions::GitOperation;
+use git_filter::{
+    blob_contract::{BlobContract, BlobValidator},
+    git_object_contract::{GitObjectContract, GitObjectType, GitObjectValidator},
+    tree_contract::{TreeEntryContract, TreeObjectContract, TreeValidator},
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize tracing
-    tracing_subscriber::fmt::init();
+    println!("🔧 Combined Contract Demo - Attributes with Generated Files\n");
 
-    println!("🔧 Combined Contract Demo - Blob + Line Level Validation\n");
+    // Example 1: Tree Entry with Attributes
+    demo_tree_entry_attributes()?;
 
-    // Example 1: Basic combined validation
-    demo_basic_combined_validation()?;
+    // Example 2: Blob Contract with Attributes
+    demo_blob_contract_attributes()?;
 
-    // Example 2: Blob with mixed line issues
-    demo_blob_with_mixed_line_issues()?;
+    // Example 3: Git Object Contract with Attributes
+    demo_git_object_contract_attributes()?;
 
-    // Example 3: Line-by-line analysis
-    demo_line_by_line_analysis()?;
+    // Example 4: Generated Files Validation
+    demo_generated_files_validation()?;
 
-    // Example 4: EOL normalization at line level
-    demo_eol_normalization_at_line_level()?;
-
-    // Example 5: UTF-8 validation per line
-    demo_utf8_validation_per_line()?;
-
-    // Example 6: Combined filter usage
-    demo_combined_filter_usage()?;
+    // Example 5: Complete Workflow
+    demo_complete_workflow()?;
 
     Ok(())
 }
 
-fn demo_basic_combined_validation() -> Result<(), Box<dyn std::error::Error>> {
-    println!("📝 Example 1: Basic Combined Validation");
+fn demo_tree_entry_attributes() -> Result<(), Box<dyn std::error::Error>> {
+    println!("🎯 Example 1: Tree Entry with Attributes");
+    println!("==========================================\n");
 
-    let _validator = CombinedContractFilter::default();
-    let content = b"Hello, World!\nThis is a valid text blob.\nLine 3 with normal content.\n";
-    let oid = "abc123def456";
-
-    // Simulate the filter process
-    let blob_validator = BlobValidator::default();
-    let line_validator = LineValidator::default();
-
-    // Validate at blob level
-    let (blob_contract, _processed_content, _) = blob_validator.validate_blob(oid, content);
-    println!("  {}", blob_contract.summary());
-
-    // Validate at line level
-    let (line_contracts, _) = line_validator.validate_blob_lines(oid, content);
-    let line_summary = line_validator.summarize_line_contracts(&line_contracts);
-    println!("  {}", line_summary);
-
-    // Show individual line contracts
-    for line_contract in &line_contracts {
-        println!("    {}", line_contract.summary());
-    }
-
-    println!();
-    Ok(())
-}
-
-fn demo_blob_with_mixed_line_issues() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🚫 Example 2: Blob with Mixed Line Issues");
-
-    let content = b"Line 1 - valid\nLine 2 - has\x00NUL byte\nLine 3 - CRLF\r\nLine 4 - valid\n";
-    let oid = "def456ghi789";
-
-    let blob_validator = BlobValidator::default();
-    let line_validator = LineValidator::default();
-
-    // Validate at blob level
-    let (blob_contract, _, _) = blob_validator.validate_blob(oid, content);
-    println!("  {}", blob_contract.summary());
-
-    // Validate at line level
-    let (line_contracts, _) = line_validator.validate_blob_lines(oid, content);
-    let line_summary = line_validator.summarize_line_contracts(&line_contracts);
-    println!("  {}", line_summary);
-
-    // Show individual line contracts
-    for line_contract in &line_contracts {
-        println!("    {}", line_contract.summary());
-    }
-
-    // Count issues by type
-    let rejected_lines: Vec<_> = line_contracts.iter()
-        .filter(|c| c.is_rejected())
-        .collect();
-    let fixed_lines: Vec<_> = line_contracts.iter()
-        .filter(|c| c.needs_fixing())
-        .collect();
-
-    println!("  Issues found:");
-    println!("    Rejected lines: {}", rejected_lines.len());
-    println!("    Lines needing fixing: {}", fixed_lines.len());
-
-    println!();
-    Ok(())
-}
-
-fn demo_line_by_line_analysis() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🔍 Example 3: Line-by-Line Analysis");
-
-    let content = b"Line 1: Normal text\nLine 2: Has\x01control char\nLine 3: CRLF\r\nLine 4: UTF-8 caf\xE9\nLine 5: Normal again\n";
-    let oid = "ghi789jkl012";
-
-    let line_validator = LineValidator::default();
-    let (line_contracts, processed_content) = line_validator.validate_blob_lines(oid, content);
-
-    println!("  Original content:");
-    println!("    {:?}", String::from_utf8_lossy(content));
-    println!("  Processed content:");
-    println!("    {:?}", String::from_utf8_lossy(&processed_content));
-
-    println!("  Line-by-line analysis:");
-    for line_contract in &line_contracts {
-        let status = match line_contract.action {
-            LineAction::Accept => "✅",
-            LineAction::Reject => "❌",
-            LineAction::Fix => "🔧",
-        };
-        println!("    {} Line {}: {} (offset: {}, length: {})", 
-            status, 
-            line_contract.line_number, 
-            line_contract.summary(),
-            line_contract.byte_offset,
-            line_contract.length
-        );
-    }
-
-    println!();
-    Ok(())
-}
-
-fn demo_eol_normalization_at_line_level() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🔄 Example 4: EOL Normalization at Line Level");
-
-    let content = b"Line 1: LF only\nLine 2: CRLF\r\nLine 3: CR only\rLine 4: Mixed\r\nLine 5: LF again\n";
-    let oid = "jkl012mno345";
-
-    let line_validator = LineValidator::new(true, false, false); // Normalize, don't allow mixed
-    let (line_contracts, processed_content) = line_validator.validate_blob_lines(oid, content);
-
-    println!("  Original content:");
-    println!("    {:?}", String::from_utf8_lossy(content));
-    println!("  Processed content:");
-    println!("    {:?}", String::from_utf8_lossy(&processed_content));
-
-    println!("  Line EOL analysis:");
-    for line_contract in &line_contracts {
-        let eol_status = if line_contract.normalized_eol { "✅" } else { "❌" };
-        let action_status = match line_contract.action {
-            LineAction::Accept => "Accept",
-            LineAction::Reject => "Reject",
-            LineAction::Fix => "Fix",
-        };
-        println!("    {} Line {}: EOL {} -> {}", 
-            eol_status, 
-            line_contract.line_number, 
-            if line_contract.normalized_eol { "normalized" } else { "mixed" },
-            action_status
-        );
-    }
-
-    println!();
-    Ok(())
-}
-
-fn demo_utf8_validation_per_line() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🔤 Example 5: UTF-8 Validation Per Line");
-
-    let content = b"Line 1: Valid UTF-8\nLine 2: Invalid\x80UTF-8\nLine 3: Valid again\nLine 4: Another\xFFinvalid\n";
-    let oid = "mno345pqr678";
-
-    let line_validator = LineValidator::default();
-    let (line_contracts, _) = line_validator.validate_blob_lines(oid, content);
-
-    println!("  UTF-8 validation per line:");
-    for line_contract in &line_contracts {
-        let utf8_status = if line_contract.valid_utf8 { "✅" } else { "❌" };
-        let action_status = match line_contract.action {
-            LineAction::Accept => "Accept",
-            LineAction::Reject => "Reject",
-            LineAction::Fix => "Fix",
-        };
-        println!("    {} Line {}: UTF-8 {} -> {}", 
-            utf8_status, 
-            line_contract.line_number, 
-            if line_contract.valid_utf8 { "valid" } else { "invalid" },
-            action_status
-        );
-    }
-
-    // Count UTF-8 issues
-    let invalid_utf8_lines: Vec<_> = line_contracts.iter()
-        .filter(|c| !c.valid_utf8)
-        .collect();
-
-    println!("  UTF-8 issues found: {} lines", invalid_utf8_lines.len());
-
-    println!();
-    Ok(())
-}
-
-fn demo_combined_filter_usage() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🔧 Example 6: Combined Filter Usage");
-
-    // Create a combined filter with custom settings
-    let filter = CombinedContractFilter::new(
-        true,   // normalize_line_endings
-        true,   // apply_binary_heuristic
-        30.0,   // binary_threshold
-        false,  // allow_mixed_eol
-        true,   // generate_line_contracts
+    // Create a tree entry for a generated file
+    let entry = TreeEntryContract::new_with_attributes(
+        "100644",
+        "target/build/app.js".to_string(),
+        "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+        Some(vec![
+            "linguist-generated=true".to_string(),
+            "-diff".to_string(),
+        ]),
     );
 
-    let content = b"Line 1: Valid content\nLine 2: Has\x00NUL byte\nLine 3: CRLF\r\nLine 4: Valid again\n";
-    let file_state = FileState::default();
-    let operation = GitOperation::Add;
+    println!("✅ Generated file with correct attributes:");
+    println!("  {}", entry.summary());
 
-    println!("  Processing content with combined filter:");
-    println!("    Original: {:?}", String::from_utf8_lossy(content));
+    // Create a tree entry for a non-generated file
+    let entry2 = TreeEntryContract::new_with_attributes(
+        "100644",
+        "src/main.rs".to_string(),
+        "b2c3d4e5f6789012345678901234567890abcde".to_string(),
+        Some(vec!["text".to_string()]),
+    );
 
-    // Simulate the filter process
-    match filter.process(content, &file_state, &operation) {
-        Ok(processed) => {
-            println!("    ✅ Processing successful");
-            println!("    Processed: {:?}", String::from_utf8_lossy(&processed));
-        }
-        Err(e) => {
-            println!("    ❌ Processing failed: {}", e);
-        }
+    println!("✅ Source file with appropriate attributes:");
+    println!("  {}", entry2.summary());
+
+    // Create a tree entry for a generated file without required attributes
+    let entry3 = TreeEntryContract::new_with_attributes(
+        "100644",
+        "target/build/file.js".to_string(),
+        "c3d4e5f6789012345678901234567890abcdef".to_string(),
+        None, // Missing linguist-generated=true
+    );
+
+    println!("❌ Generated file missing required attributes:");
+    println!("  {}", entry3.summary());
+
+    println!();
+    Ok(())
+}
+
+fn demo_blob_contract_attributes() -> Result<(), Box<dyn std::error::Error>> {
+    println!("🎯 Example 2: Blob Contract with Attributes");
+    println!("============================================\n");
+
+    let mut blob = BlobContract::new_with_attributes(
+        "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+        1024,
+        Some(vec![
+            "linguist-generated=true".to_string(),
+            "-diff".to_string(),
+        ]),
+    );
+
+    println!("✅ Blob with attributes:");
+    println!("  {}", blob.summary());
+
+    // Validate attributes for a generated file path
+    let is_valid = blob.validate_attributes_for_path("target/build/app.js");
+    println!("  Validation for generated file path: {}", if is_valid { "✅ PASS" } else { "❌ FAIL" });
+
+    // Validate attributes for a non-generated file path
+    let is_valid2 = blob.validate_attributes_for_path("src/main.rs");
+    println!("  Validation for source file path: {}", if is_valid2 { "✅ PASS" } else { "❌ FAIL" });
+
+    println!();
+    Ok(())
+}
+
+fn demo_git_object_contract_attributes() -> Result<(), Box<dyn std::error::Error>> {
+    println!("🎯 Example 3: Git Object Contract with Attributes");
+    println!("==================================================\n");
+
+    let tree_validator = TreeValidator::new(true, true, true);
+    let validator = GitObjectValidator::new(true, true, tree_validator);
+
+    // Validate a blob object with attributes
+    let contract = validator.validate_object(
+        GitObjectType::Blob,
+        "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+        1024,
+        Some(vec![
+            "linguist-generated=true".to_string(),
+            "-diff".to_string(),
+        ]),
+        Some("target/build/app.js"),
+    );
+
+    println!("✅ Git object with attributes:");
+    println!("  {}", contract.summary());
+
+    // Validate a tree object with attributes
+    let tree_contract = validator.validate_object(
+        GitObjectType::Tree,
+        "b2c3d4e5f6789012345678901234567890abcde".to_string(),
+        512,
+        Some(vec!["-diff".to_string()]),
+        Some("target/"),
+    );
+
+    println!("✅ Tree object with attributes:");
+    println!("  {}", tree_contract.summary());
+
+    println!();
+    Ok(())
+}
+
+fn demo_generated_files_validation() -> Result<(), Box<dyn std::error::Error>> {
+    println!("🎯 Example 4: Generated Files Validation");
+    println!("==========================================\n");
+
+    let tree_validator = TreeValidator::new(true, true, true);
+    let validator = GitObjectValidator::new(true, true, tree_validator);
+
+    // Test various generated file patterns
+    let test_cases = vec![
+        ("target/build/app.js", true, true),   // Generated, should have linguist-generated=true
+        ("gen/proto/message.rs", true, true),  // Generated, should have linguist-generated=true
+        ("dist/bundle.js", true, true),        // Generated, should have linguist-generated=true
+        ("src/main.rs", false, false),         // Source, should not have linguist-generated=true
+        ("docs/README.md", false, false),      // Docs, should not have linguist-generated=true
+    ];
+
+    for (filepath, is_generated, should_have_linguist) in test_cases {
+        let attributes = if should_have_linguist {
+            Some(vec!["linguist-generated=true".to_string()])
+        } else {
+            None
+        };
+
+        let contract = validator.validate_object(
+            GitObjectType::Blob,
+            format!("hash_{}", filepath.replace('/', "_")),
+            1024,
+            attributes,
+            Some(filepath),
+        );
+
+        let status = if contract.is_valid() { "✅" } else { "❌" };
+        println!("{} {} -> {}", status, filepath, contract.summary());
     }
 
     println!();
+    Ok(())
+}
+
+fn demo_complete_workflow() -> Result<(), Box<dyn std::error::Error>> {
+    println!("🎯 Example 5: Complete Workflow");
+    println!("===============================\n");
+
+    let tree_validator = TreeValidator::new(true, true, true);
+    let git_validator = GitObjectValidator::new(true, true, tree_validator);
+    let blob_validator = BlobValidator::new(true, true, 0.1, false);
+
+    // Simulate a commit with multiple files
+    let commit_files = vec![
+        // Source files (should not have linguist-generated=true)
+        ("src/main.rs", "fn main() { println!(\"Hello, World!\"); }", None),
+        ("src/lib.rs", "pub fn hello() { \"Hello\" }", None),
+        
+        // Generated files (should have linguist-generated=true)
+        ("target/build/app.js", "console.log('Hello, World!');", Some(vec!["linguist-generated=true".to_string(), "-diff".to_string()])),
+        ("gen/proto/message.rs", "pub struct Message { pub content: String }", Some(vec!["linguist-generated=true".to_string()])),
+        
+        // Generated file missing required attribute
+        ("target/build/file.js", "console.log('Generated');", None),
+    ];
+
+    let mut all_contracts = Vec::new();
+    let mut tree_entries = Vec::new();
+
+    for (filepath, content, attributes) in commit_files {
+        println!("Processing: {}", filepath);
+
+        // Create blob contract
+        let (blob_contract, _) = blob_validator.validate_blob_simple(
+            &format!("hash_{}", filepath.replace('/', "_")),
+            content.as_bytes(),
+        );
+
+        // Add attributes to blob
+        if let Some(attrs) = attributes {
+            let mut blob_with_attrs = blob_contract.clone();
+            blob_with_attrs.add_attributes(attrs);
+            
+            // Validate attributes for the filepath
+            blob_with_attrs.validate_attributes_for_path(filepath);
+            
+            // Create tree entry
+            let tree_entry = TreeEntryContract::new_with_attributes(
+                "100644",
+                filepath.to_string(),
+                blob_with_attrs.oid.clone(),
+                Some(attrs),
+            );
+
+            // Create git object contract
+            let git_contract = git_validator.validate_blob(&blob_with_attrs, Some(filepath));
+            
+            all_contracts.push(git_contract);
+            tree_entries.push(tree_entry);
+        } else {
+            // Create tree entry without attributes
+            let tree_entry = TreeEntryContract::new(
+                "100644",
+                filepath.to_string(),
+                blob_contract.oid.clone(),
+            );
+
+            // Create git object contract
+            let git_contract = git_validator.validate_blob(&blob_contract, Some(filepath));
+            
+            all_contracts.push(git_contract);
+            tree_entries.push(tree_entry);
+        }
+    }
+
+    // Create tree object
+    let tree_object = TreeObjectContract::new(tree_entries);
+
+    println!("\n📊 Validation Summary:");
+    println!("=====================");
+    println!("{}", git_validator.summarize_validation(&all_contracts));
+
+    println!("\n🌳 Tree Object Summary:");
+    println!("=====================");
+    println!("{}", tree_object.summary());
+
+    println!("\n📋 Individual File Results:");
+    println!("===========================");
+    for contract in &all_contracts {
+        println!("  {}", contract.summary());
+    }
+
     Ok(())
 } 

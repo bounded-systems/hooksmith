@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Tree mode contract - represents allowed Git tree modes (restricted set)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -80,6 +81,8 @@ pub struct TreeEntryContract {
     pub object_id: String,
     /// Object type (explicit, must match mode)
     pub object_type: TreeObjectType,
+    /// Git attributes for this entry (e.g., ["linguist-generated=true", "-diff"])
+    pub attributes: Option<Vec<String>>,
     /// Whether the entry is valid
     pub valid: bool,
     /// Validation errors
@@ -97,28 +100,29 @@ impl TreeEntryContract {
             filename,
             object_id,
             object_type,
+            attributes: None,
             valid,
             errors,
         }
     }
 
-    /// Create a new tree entry contract with explicit type validation
-    pub fn new_with_type(
+    /// Create a new tree entry contract with attributes
+    pub fn new_with_attributes(
         mode: &str,
         filename: String,
         object_id: String,
-        object_type: TreeObjectType,
+        attributes: Option<Vec<String>>,
     ) -> Self {
         let (mode_enum, mut valid, mut errors) = Self::validate_entry(mode, &filename, &object_id);
+        let object_type = mode_enum.object_type();
 
-        // Validate that the explicit type matches the mode
-        let expected_type = mode_enum.object_type();
-        if object_type != expected_type {
-            valid = false;
-            errors.push(format!(
-                "Type mismatch: expected {:?} for mode {}, got {:?}",
-                expected_type, mode, object_type
-            ));
+        // Validate attributes if provided
+        if let Some(ref attrs) = attributes {
+            let (attr_valid, attr_errors) = Self::validate_attributes(&filename, attrs);
+            if !attr_valid {
+                valid = false;
+                errors.extend(attr_errors);
+            }
         }
 
         Self {
@@ -126,6 +130,47 @@ impl TreeEntryContract {
             filename,
             object_id,
             object_type,
+            attributes,
+            valid,
+            errors,
+        }
+    }
+
+    /// Create a new tree entry contract with type and attributes
+    pub fn new_with_type_and_attributes(
+        mode: &str,
+        filename: String,
+        object_id: String,
+        object_type: TreeObjectType,
+        attributes: Option<Vec<String>>,
+    ) -> Self {
+        let (mode_enum, mut valid, mut errors) = Self::validate_entry(mode, &filename, &object_id);
+        let expected_type = mode_enum.object_type();
+
+        // Validate that the provided type matches the mode
+        if object_type != expected_type {
+            valid = false;
+            errors.push(format!(
+                "Object type mismatch: expected {:?}, got {:?}",
+                expected_type, object_type
+            ));
+        }
+
+        // Validate attributes if provided
+        if let Some(ref attrs) = attributes {
+            let (attr_valid, attr_errors) = Self::validate_attributes(&filename, attrs);
+            if !attr_valid {
+                valid = false;
+                errors.extend(attr_errors);
+            }
+        }
+
+        Self {
+            mode: mode_enum,
+            filename,
+            object_id,
+            object_type,
+            attributes,
             valid,
             errors,
         }
@@ -162,23 +207,151 @@ impl TreeEntryContract {
         (mode_enum, valid, errors)
     }
 
+    /// Validate attributes for a tree entry
+    fn validate_attributes(filename: &str, attributes: &[String]) -> (bool, Vec<String>) {
+        let mut errors = Vec::new();
+        let mut has_linguist_generated = false;
+
+        for attr in attributes {
+            match attr.as_str() {
+                "linguist-generated=true" => {
+                    has_linguist_generated = true;
+                }
+                "linguist-generated=false" => {
+                    // This is valid but we'll check if it should be true
+                }
+                "-diff" | "-merge" | "-export-ignore" | "-export-subst" => {
+                    // These are valid negative attributes
+                }
+                attr if attr.starts_with("linguist-") => {
+                    // Other linguist attributes are valid
+                }
+                attr if attr.starts_with("-") => {
+                    // Other negative attributes are valid
+                }
+                attr if attr.contains('=') => {
+                    // Key=value attributes are valid
+                }
+                _ => {
+                    errors.push(format!("Invalid attribute format: {}", attr));
+                }
+            }
+        }
+
+        // Check if generated files have the required linguist-generated=true attribute
+        if Self::is_generated_file(filename) && !has_linguist_generated {
+            errors.push(format!(
+                "Generated file '{}' must have 'linguist-generated=true' attribute",
+                filename
+            ));
+        }
+
+        // Check if non-generated files incorrectly have linguist-generated=true
+        if !Self::is_generated_file(filename) && has_linguist_generated {
+            errors.push(format!(
+                "Non-generated file '{}' should not have 'linguist-generated=true' attribute",
+                filename
+            ));
+        }
+
+        (errors.is_empty(), errors)
+    }
+
     /// Check if object ID is valid SHA-1 format
     fn is_valid_sha1(object_id: &str) -> bool {
         object_id.len() == 40 && object_id.chars().all(|c| c.is_ascii_hexdigit())
     }
 
+    /// Check if a file path indicates it's a generated file
+    fn is_generated_file(filename: &str) -> bool {
+        let generated_patterns = [
+            "target/",
+            "gen/",
+            "generated/",
+            "build/",
+            "dist/",
+            "node_modules/",
+            ".git/",
+            "*.min.js",
+            "*.min.css",
+            "*.bundle.js",
+            "*.bundle.css",
+        ];
+
+        for pattern in &generated_patterns {
+            if pattern.ends_with('/') {
+                // Directory pattern
+                if filename.starts_with(pattern) {
+                    return true;
+                }
+            } else if pattern.starts_with('*') {
+                // Wildcard pattern
+                let suffix = &pattern[1..];
+                if filename.ends_with(suffix) {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    /// Add attributes to the tree entry
+    pub fn add_attributes(&mut self, attributes: Vec<String>) {
+        let (valid, errors) = Self::validate_attributes(&self.filename, &attributes);
+        if !valid {
+            self.valid = false;
+            self.errors.extend(errors);
+        }
+        self.attributes = Some(attributes);
+    }
+
+    /// Check if this entry has a specific attribute
+    pub fn has_attribute(&self, attribute: &str) -> bool {
+        if let Some(ref attrs) = self.attributes {
+            attrs.iter().any(|attr| attr == attribute)
+        } else {
+            false
+        }
+    }
+
+    /// Get the value of a key=value attribute
+    pub fn get_attribute_value(&self, key: &str) -> Option<&str> {
+        if let Some(ref attrs) = self.attributes {
+            for attr in attrs {
+                if let Some(value) = attr.strip_prefix(&format!("{}=", key)) {
+                    return Some(value);
+                }
+            }
+        }
+        None
+    }
+
+    /// Check if this entry represents a generated file
+    pub fn is_generated(&self) -> bool {
+        Self::is_generated_file(&self.filename)
+    }
+
     /// Get a summary of the tree entry contract
     pub fn summary(&self) -> String {
         if self.valid {
-            format!(
-                "✅ Entry '{}' ({}) -> {}",
+            let mut summary = format!(
+                "✅ Tree entry '{}' valid (mode: {}, type: {:?})",
                 self.filename,
-                self.mode.description(),
-                &self.object_id[..8]
-            )
+                self.mode_string(),
+                self.object_type
+            );
+
+            if let Some(ref attrs) = self.attributes {
+                if !attrs.is_empty() {
+                    summary.push_str(&format!(" [attributes: {}]", attrs.join(", ")));
+                }
+            }
+
+            summary
         } else {
             format!(
-                "❌ Entry '{}' invalid: {}",
+                "❌ Tree entry '{}' invalid: {}",
                 self.filename,
                 self.errors.join(", ")
             )

@@ -13,6 +13,7 @@ pub mod line_contract;
 pub mod git_object_contract;
 pub mod tree_contract;
 pub mod filename_contract;
+pub mod tree_filename_chars_contract;
 
 pub use state::{FileState, AttributeState};
 pub use actions::{ActionResolver, HookAction};
@@ -31,6 +32,9 @@ pub use tree_contract::{
 pub use filename_contract::{
     FilenameContract, FilenameValidator
 };
+pub use tree_filename_chars_contract::{
+    CharContract, TreeFilenameContractChars, TreeFilenameCharsValidator
+};
 
 /// Re-export common types for convenience
 pub mod prelude {
@@ -42,6 +46,7 @@ pub mod prelude {
         BlobLineContract, LineAction, LineValidator,
         GitObjectContract, GitBlobContract, GitBlobLineContract, BlobChunkContract, DiffLine, DiffLineType, GitLineAction, GitObjectValidator,
         TreeMode, TreeObjectType, TreeEntryContract, TreeObjectContract, TreeValidator,
-        FilenameContract, FilenameValidator
+        FilenameContract, FilenameValidator,
+        CharContract, TreeFilenameContractChars, TreeFilenameCharsValidator
     };
 } 
