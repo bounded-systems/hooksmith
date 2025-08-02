@@ -525,6 +525,9 @@ async fn main() -> Result<()> {
         Commands::Status { command } => {
             status::run_status_command(command).await?;
         }
+        Commands::CodeStats { command } => {
+            code_stats::run_code_stats_command(command).await?;
+        }
     }
 
     Ok(())

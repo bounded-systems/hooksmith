@@ -8,11 +8,9 @@
 //! - Code quality metrics
 
 use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
+use clap::Subcommand;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::process::Command;
-use std::time::Duration;
 
 /// Code statistics information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -142,7 +140,6 @@ pub enum OutputFormat {
 /// Code stats CLI commands
 #[derive(Debug, Clone)]
 pub struct CodeStatsCli {
-    #[command(subcommand)]
     command: CodeStatsCommands,
 }
 
@@ -584,10 +581,10 @@ fn calculate_quality_score(report: &CodeAnalysisReport) -> f64 {
 fn calculate_quality_grade(score: f64) -> String {
     match score {
         90.0..=100.0 => "A".to_string(),
-        80.0..<90.0 => "B".to_string(),
-        70.0..<80.0 => "C".to_string(),
-        60.0..<70.0 => "D".to_string(),
-        50.0..<60.0 => "E".to_string(),
+        80.0..90.0 => "B".to_string(),
+        70.0..80.0 => "C".to_string(),
+        60.0..70.0 => "D".to_string(),
+        50.0..60.0 => "E".to_string(),
         _ => "F".to_string(),
     }
 }
