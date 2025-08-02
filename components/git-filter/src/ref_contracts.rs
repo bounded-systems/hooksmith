@@ -838,7 +838,7 @@ mod tests {
     #[test]
     fn test_ref_validator() {
         let validator = RefValidator::default();
-        
+
         let refs = vec![
             RefContract::new(
                 "refs/heads/main".to_string(),
