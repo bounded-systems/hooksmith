@@ -1,0 +1,179 @@
+Here’s the updated version including all additional metadata contracts for refs, commits, trees, blobs, index entries, tags, notes, stashes, and worktrees—still showing a repo with one main branch, one commit, and a single README.md file.
+
+⸻
+
+Repo State
+	•	Ref: refs/heads/main → points to the single commit.
+	•	Commit: One commit that references a tree.
+	•	Tree: Contains a single entry (README.md → blob).
+	•	Blob: The file contents of README.md.
+	•	Index: One entry for README.md at stage 0.
+
+⸻
+
+Object Nesting
+
+Repository
+├── Ref (RefContract)
+│   ├── name: "refs/heads/main" (LineContract → CharContract)
+│   ├── target: <commit SHA> (LineContract → CharContract)
+│   ├── ref_type: "head"
+│   ├── created_at: <timestamp>
+│   └── symbolic: false
+│
+├── Commit (CommitContract)
+│   ├── tree: <tree SHA> (LineContract)
+│   ├── parents: [] (empty)
+│   ├── author: "Alice <alice@example.com>" (LineContract)
+│   ├── author_time: <timestamp>
+│   ├── committer: "Alice <alice@example.com>" (LineContract)
+│   ├── committer_time: <timestamp>
+│   ├── encoding: "UTF-8"
+│   └── message (FileContract)
+│       └── chunks (ChunkContract)
+│           └── lines (LineContract → CharContract)
+│
+├── Tree (TreeContract)
+│   ├── tree_sha: <tree SHA>
+│   ├── entry_count: 1
+│   └── entries[0] (TreeEntryContract)
+│       ├── filename: "README.md" (LineContract → CharContract)
+│       ├── mode: 100644 (TreeModeContract)
+│       └── sha: <blob SHA>
+│
+├── Blob (BlobContract)
+│   ├── blob_sha: <blob SHA>
+│   ├── size: <byte length>
+│   └── file_contract (FileContract)
+│       └── chunks (ChunkContract)
+│           └── lines (LineContract → CharContract)
+│
+└── Index
+    └── IndexEntry (IndexEntryContract)
+        ├── path: "README.md" (LineContract → CharContract)
+        ├── stage: 0
+        ├── ctime: <timestamp>
+        ├── mtime: <timestamp>
+        ├── dev: <int>
+        ├── ino: <int>
+        ├── uid: <int>
+        ├── gid: <int>
+        ├── file_size: <int>
+        ├── sha: <blob SHA>
+        └── flags: <bitmask>
+
+
+⸻
+
+Contracts in Play
+
+Object	Contract	Validates
+Ref	RefContract	Name (Char/Line), target SHA, ref_type, timestamps, symbolic state
+Commit	CommitContract	Tree SHA, parent SHAs, author/committer info, encoding, timestamps
+Tree	TreeContract	Entry count, SHA, each entry’s filename and mode
+Blob	BlobContract	Size, SHA, contents validated via FileContract
+IndexEntry	IndexEntryContract	Path, stage, timestamps, permissions, SHA
+Char	CharContract	Each allowed byte
+Line	LineContract	Sequence of valid chars
+Chunk	ChunkContract	Groups of lines
+File	FileContract	File composed of valid chunks, total size
+
+
+⸻
+
+Projection to Filesystem
+	•	README.md in the working directory corresponds to the Blob content (validated via FileContract).
+	•	IndexEntryContract represents that the file is staged at stage 0 (normal tracked state).
+	•	The RefContract for refs/heads/main points to the commit SHA.
+	•	The CommitContract references the tree SHA, which contains the BlobContract for README.md.
+
+⸻
+
+Validation Flow
+	1.	CharContract – Validate each byte.
+	2.	LineContract – Validate that each line uses valid chars.
+	3.	ChunkContract – Validate multiple lines form valid chunks.
+	4.	FileContract – Validate total file structure & size.
+	5.	BlobContract – Wraps file validation and adds SHA/size checks.
+	6.	TreeEntryContract – Validates filenames & modes.
+	7.	TreeContract – Validates entries and count.
+	8.	CommitContract – Validates commit metadata & references.
+	9.	RefContract – Validates branch name, target, and ref properties.
+	10.	IndexEntryContract – Validates the staging entry metadata.
+
+⸻
+
+Next Step
+
+I can extend this with contracts for Tags, Notes, Worktrees, and Stashes, and show how all of these link back to refs and commits—while keeping the contract flat but relational (using SHA IDs).
+
+Want me to add Tags, Notes, Stash, and Worktree contracts to the same tree view, so the repo snapshot includes all possible Git object types—even if unused?
+
+Yes—Tags, Notes, Stashes, and Worktrees all have metadata that differs from commits/trees/blobs/refs, so dedicated contracts make sense. This ensures:
+	•	Type-specific validation (e.g., a tag must have a tagger and tag name, while notes must reference another object).
+	•	Flat, composable schemas that can be reused anywhere in the repo state.
+	•	Consistency with your Char → Line → Chunk → File → Object pattern.
+
+⸻
+
+Suggested New Contracts
+
+Object Type	Contract Name	Key Fields to Validate
+Tag	TagContract	tag_name (Line→Char), target_sha, object_type, tagger, message (FileContract)
+Note	NoteContract	target_sha, ref (Line→Char), content (FileContract)
+Stash	StashContract	stash_ref (Line→Char), base_commit, index_commit, working_commit, message
+Worktree	WorktreeContract	path, head_ref, commit_sha, is_detached, is_locked, branch_name
+
+
+⸻
+
+How They Fit Into Repo State
+
+Repository
+├── Refs
+│   ├── Head ref (RefContract)
+│   ├── Tag refs (RefContract) → link to TagContract
+│   ├── Note refs (RefContract) → link to NoteContract(s)
+│   └── Stash refs (RefContract) → link to StashContract(s)
+│
+├── Commits/Trees/Blobs (existing contracts)
+│
+├── Tags (TagContract)
+│   ├── tag_name: "v1.0.0"
+│   ├── target_sha: <commit SHA>
+│   ├── object_type: "commit"
+│   ├── tagger: "Alice <alice@example.com>"
+│   └── message (FileContract)
+│
+├── Notes (NoteContract)
+│   ├── target_sha: <commit SHA>
+│   ├── ref: "refs/notes/commits"
+│   └── content (FileContract)
+│
+├── Stashes (StashContract)
+│   ├── stash_ref: "refs/stash"
+│   ├── base_commit: <SHA>
+│   ├── index_commit: <SHA>
+│   ├── working_commit: <SHA>
+│   └── message (FileContract)
+│
+└── Worktrees (WorktreeContract)
+    ├── path: "/path/to/worktree"
+    ├── head_ref: "refs/heads/main"
+    ├── commit_sha: <SHA>
+    ├── is_detached: false
+    ├── is_locked: false
+    └── branch_name: "main"
+
+
+⸻
+
+Why Add These Contracts?
+	•	Tags have semantic meaning beyond a commit—they can include signed annotations and messages.
+	•	Notes can attach structured annotations to any Git object.
+	•	Stashes bundle three commits (base/index/working) with a message.
+	•	Worktrees add extra metadata for multiple checked-out states.
+
+⸻
+
+Do you want me to write out the Rust struct contracts for these new types, following the same flat, Zod-inspired style we used for BlobContract, TreeContract, etc.?

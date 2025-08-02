@@ -1,3 +1,4 @@
+use crate::tree_contract::{TreeEntryContract, TreeObjectContract};
 use serde::{Deserialize, Serialize};
 
 /// Git object contract - discriminated union for different Git object types
@@ -6,8 +7,9 @@ use serde::{Deserialize, Serialize};
 pub enum GitObjectContract {
     /// Blob contract - represents the entire file as stored in Git
     Blob(BlobContract),
-    // Future: Tree, Commit, Tag
-    // Tree(TreeContract),
+    /// Tree contract - represents a Git tree object
+    Tree(TreeObjectContract),
+    // Future: Commit, Tag
     // Commit(CommitContract),
     // Tag(TagContract),
 }
@@ -353,6 +355,8 @@ pub struct GitObjectValidator {
     validate_lines: bool,
     /// Whether to validate chunks
     validate_chunks: bool,
+    /// Whether to validate tree entries
+    validate_tree_entries: bool,
 }
 
 impl Default for GitObjectValidator {
@@ -360,16 +364,18 @@ impl Default for GitObjectValidator {
         Self {
             validate_lines: true,
             validate_chunks: false,
+            validate_tree_entries: true,
         }
     }
 }
 
 impl GitObjectValidator {
     /// Create a new Git object validator
-    pub fn new(validate_lines: bool, validate_chunks: bool) -> Self {
+    pub fn new(validate_lines: bool, validate_chunks: bool, validate_tree_entries: bool) -> Self {
         Self {
             validate_lines,
             validate_chunks,
+            validate_tree_entries,
         }
     }
 
@@ -420,6 +426,16 @@ impl GitObjectValidator {
     pub fn validate_git_object(&self, id: &str, content: &[u8]) -> GitObjectContract {
         let blob = self.validate_blob(id, content);
         GitObjectContract::Blob(blob)
+    }
+
+    /// Validate a tree object
+    pub fn validate_tree_object(
+        &self,
+        id: &str,
+        entries: Vec<TreeEntryContract>,
+    ) -> GitObjectContract {
+        let tree = TreeObjectContract::new(id.to_string(), entries);
+        GitObjectContract::Tree(tree)
     }
 
     /// Get a summary of validation results
