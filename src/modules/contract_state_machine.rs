@@ -343,7 +343,7 @@ impl ContractStateMachine {
         file: &str,
         scope: ValidationScope,
         state: &ContractState,
-        event: &TransitionEvent,
+        _event: &TransitionEvent,
         hash: &str,
     ) -> ValidationNote {
         ValidationNote {
