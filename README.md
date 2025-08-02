@@ -394,6 +394,7 @@ cargo test --test integration
 | Hook Building | ✅ Complete | Rust compilation pipeline with Cargo integration |
 | Worktree Management | ✅ Complete | Integration with worktree tools |
 | Hook Installation | ✅ Complete | Hook installation and management |
+| Hierarchical Validation | ✅ Complete | Bottom-up validation with Git Notes integration |
 
 ## 🎯 Next Steps
 
