@@ -1,0 +1,21 @@
+transitions:
+- from: UNTRACKED
+  to: MODIFIED
+  trigger: file_created
+  condition: file_exists
+- from: MODIFIED
+  to: STAGED
+  trigger: git_add
+  condition: file_not_ignored
+- from: STAGED
+  to: COMMITTED
+  trigger: git_commit
+  condition: staged_files_exist
+- from: COMMITTED
+  to: MODIFIED
+  trigger: file_modified
+  condition: file_changed
+- from: MODIFIED
+  to: IGNORED
+  trigger: git_ignore
+  condition: in_gitignore

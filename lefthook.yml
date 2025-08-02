@@ -1,54 +1,19 @@
-# Lefthook configuration for Hooksmith
-# Enforces file type restrictions and generation markers
-
-pre-commit:
-  parallel: true
-  commands:
-    # Check file types and generation markers
-    check-files:
-      glob: "*.{rs,toml,md,yaml,yml,wit,json}"
-      run: cargo run -p xtask -- check-files --strict
-      
-    # Validate generated files
-    validate-generated:
-      glob: "*.{md,yaml,yml,wit,json}"
-      run: cargo run -p xtask -- validate-generated --strict
-      
-    # Check formatting
-    format:
-      glob: "*.rs"
-      run: cargo fmt --check
-      
-    # Run clippy
-    clippy:
-      glob: "*.rs"
-      run: cargo clippy -- -D warnings
-
-pre-push:
-  parallel: true
-  commands:
-    # Generate and validate all files before push
-    generate-and-validate:
-      run: |
-        cargo run -p xtask -- gen-all --validate
-        cargo run -p xtask -- check-files --strict
-      
-    # Run tests
-    test:
-      run: cargo test --workspace
-
-commit-msg:
-  commands:
-    # Validate commit message format
-    validate-commit-msg:
-      run: |
-        # Check if commit message follows conventional commits
-        if ! echo "$1" | grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+"; then
-          echo "❌ Commit message must follow conventional commits format:"
-          echo "   <type>(<scope>): <description>"
-          echo "   Examples:"
-          echo "   feat: add new feature"
-          echo "   fix(api): resolve bug in API"
-          echo "   docs: update documentation"
-          exit 1
-        fi
+pre_commit:
+  validate-extensions:
+    run: cargo run -p xtask -- validate-extensions
+  contract-validate:
+    run: cargo run -p xtask -- contract-validate --validate-generated
+  validate-generated:
+    run: cargo run -p xtask -- validate-generated --staged-only --strict
+  check-generated:
+    run: cargo run -p xtask -- validate-headers
+pre_push:
+  comprehensive-validate:
+    run: cargo run -p xtask -- contract-validate --validate-generated --comprehensive
+  validate-all-generated:
+    run: cargo run -p xtask -- validate-generated --strict
+  validate-headers:
+    run: cargo run -p xtask -- validate-headers --all
+commit_msg:
+  validate-commit-msg:
+    run: cargo run -p xtask -- validate-commit-msg

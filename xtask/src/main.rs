@@ -17,6 +17,7 @@ mod hierarchical_validation;
 mod docs;
 mod generated_file_validator;
 mod file_audit;
+mod config;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -257,6 +258,21 @@ enum Commands {
         #[arg(long)]
         validate: bool,
     },
+    /// Generate all configuration files from Rust structs
+    GenConfig {
+        /// Whether to overwrite existing files
+        #[arg(long)]
+        overwrite: bool,
+        /// Whether to validate generated files
+        #[arg(long)]
+        validate: bool,
+    },
+    /// Validate all configuration files
+    ValidateConfig {
+        /// Whether to exit with error on validation failures
+        #[arg(long)]
+        strict: bool,
+    },
 }
 
 /// WIT schema for function definition
@@ -479,7 +495,12 @@ async fn main() -> Result<()> {
         Commands::GenGitattributes { output_dir, overwrite, validate } => {
             generate_git_attributes(&output_dir, overwrite, validate)?;
         }
-
+        Commands::GenConfig { overwrite, validate } => {
+            generate_config(overwrite, validate)?;
+        }
+        Commands::ValidateConfig { strict } => {
+            validate_config(strict)?;
+        }
     }
 
     Ok(())
@@ -1057,7 +1078,7 @@ cargo xtask gen-all
    ```bash
    # Install Lefthook (optional but recommended)
    npm install -g @evilmartians/lefthook
-   
+
    # Or using Homebrew on macOS
    brew install lefthook
    ```
@@ -1071,7 +1092,7 @@ cargo xtask gen-all
    ```bash
    # Generate all code and documentation
    ./xtask.sh gen-all --overwrite
-   
+
    # Or use the build script
    ./build.sh
    ```
@@ -2389,6 +2410,11 @@ async fn generate_all_files(validate: bool, force: bool) -> Result<()> {
     generate_hooks_readme("hooks/README.md", force)?;
     generated_count += 1;
 
+    // Generate Git attributes files
+    println!("   🔧 Generating Git attributes files...");
+    generate_git_attributes("hooks", force, validate)?;
+    generated_count += 1;
+
     // Generate README
     println!("   📖 Generating README...");
     generate_readme("README.md", force)?;
@@ -2529,4 +2555,491 @@ fn generate_templates(template: Option<String>, output_dir: &str, overwrite: boo
 
     println!("🎉 Template generation completed!");
     Ok(())
+}
+
+/// Generate Git attributes files
+fn generate_git_attributes(output_dir: &str, overwrite: bool, validate: bool) -> Result<()> {
+    println!("🔧 Generating Git attributes files...");
+    println!("   Output directory: {}", output_dir);
+    println!("   Overwrite: {}", overwrite);
+    println!("   Validate: {}", validate);
+
+    let output_path = Path::new(output_dir);
+    if !output_path.exists() {
+        std::fs::create_dir_all(output_path)?;
+    }
+
+    // Generate main .gitattributes file
+    let main_gitattributes = generate_main_gitattributes()?;
+    let main_path = output_path.join(".gitattributes");
+
+    if main_path.exists() && !overwrite {
+        println!("⚠️  File {} already exists, use --overwrite to replace", main_path.display());
+    } else {
+        std::fs::write(&main_path, main_gitattributes)?;
+        println!("✅ Generated {}", main_path.display());
+    }
+
+    // Generate specialized git attributes files
+    let safechars_gitattributes = generate_safechars_gitattributes()?;
+    let safechars_path = output_path.join(".gitattributes-safechars");
+
+    if safechars_path.exists() && !overwrite {
+        println!("⚠️  File {} already exists, use --overwrite to replace", safechars_path.display());
+    } else {
+        std::fs::write(&safechars_path, safechars_gitattributes)?;
+        println!("✅ Generated {}", safechars_path.display());
+    }
+
+    let blob_contract_gitattributes = generate_blob_contract_gitattributes()?;
+    let blob_contract_path = output_path.join(".gitattributes-blob-contract");
+
+    if blob_contract_path.exists() && !overwrite {
+        println!("⚠️  File {} already exists, use --overwrite to replace", blob_contract_path.display());
+    } else {
+        std::fs::write(&blob_contract_path, blob_contract_gitattributes)?;
+        println!("✅ Generated {}", blob_contract_path.display());
+    }
+
+    // Validate generated files if requested
+    if validate {
+        println!("🔍 Validating generated git attributes files...");
+        validate_git_attributes_files(&main_path, &safechars_path, &blob_contract_path)?;
+        println!("✅ All git attributes files validated successfully!");
+    }
+
+    println!("🎉 Git attributes generation completed!");
+    Ok(())
+}
+
+/// Generate the main .gitattributes file
+fn generate_main_gitattributes() -> Result<String> {
+    let content = r#"# Hooksmith Hierarchical Contract Validation Configuration
+# This file defines which contract validators apply to different file types and scopes
+# Only whitelisted file extensions are allowed for contract validation
+
+# =============================================================================
+# WHITELISTED FILE EXTENSIONS
+# =============================================================================
+# Only these file extensions are allowed for contract validation
+# All other files will be rejected by xtask-contract-validate
+
+# Rust source files - full hierarchical validation
+*.rs filter=contract_validate
+*.rs diff=contract_diff
+*.rs scope=char:line:chunk:file:dir
+
+# Configuration files
+*.toml filter=contract_validate
+*.yaml filter=contract_validate
+*.yml filter=contract_validate
+*.json filter=contract_validate
+*.toml scope=char:line:file:dir
+*.yaml scope=char:line:file:dir
+*.yml scope=char:line:file:dir
+*.json scope=char:line:file:dir
+
+# Documentation files
+*.md filter=contract_validate
+*.txt filter=contract_validate
+*.rst filter=contract_validate
+*.md scope=char:line:file:dir
+*.txt scope=char:line:file:dir
+*.rst scope=char:line:file:dir
+
+# Web files
+*.html filter=contract_validate
+*.css filter=contract_validate
+*.js filter=contract_validate
+*.ts filter=contract_validate
+*.html scope=char:line:file:dir
+*.css scope=char:line:file:dir
+*.js scope=char:line:file:dir
+*.ts scope=char:line:file:dir
+
+# =============================================================================
+# EXCLUDED DIRECTORIES
+# =============================================================================
+# These directories are excluded from contract validation
+
+# Generated files - no validation
+target/ -filter
+dist/ -filter
+build/ -filter
+node_modules/ -filter
+.git/ -filter
+
+# =============================================================================
+# GIT CONFIGURATION
+# =============================================================================
+# Note: Filter and diff configurations should be set up in .git/config or via git config commands
+# Run the following commands to set up the filters:
+# git config filter.contract_validate.clean "xtask-contract-validate clean"
+# git config filter.contract_validate.smudge "xtask-contract-validate smudge"
+# git config filter.contract_validate.required true
+# git config diff.contract_diff.textconv "xtask-contract-validate diff"
+# git config diff.contract_diff.cachetextconv true
+
+# =============================================================================
+# VALIDATION SCOPES
+# =============================================================================
+# Scope levels define the depth of validation:
+# char:   Character-level validation (byte-by-byte)
+# line:   Line-level validation (line endings, content)
+# chunk:  Chunk-level validation (semantic blocks)
+# file:   File-level validation (structure, metadata)
+# dir:    Directory-level validation (hierarchy, naming)
+
+# =============================================================================
+# GENERATED DOCUMENTATION
+# =============================================================================
+# Mark generated documentation files as codegen to prevent manual editing
+# These files are auto-generated by xtask gen-docs-comprehensive
+
+# Generated documentation files - mark as linguist-generated for GitHub
+# ALL markdown files are generated from source code
+*.md        codegen linguist-generated=true
+*.yaml      codegen linguist-generated=true
+*.yml       codegen linguist-generated=true
+*.wit       codegen linguist-generated=true
+*.json      codegen linguist-generated=true
+*.hbs       codegen linguist-generated=true
+*.dot       codegen linguist-generated=true
+*.css       codegen linguist-generated=true
+*.html      codegen linguist-generated=true
+*.pdf       codegen linguist-generated=true
+*.epub      codegen linguist-generated=true
+
+# Manually maintained files - explicitly exclude from generation
+# These files are manually maintained and should not be auto-generated
+README.md        -codegen linguist-generated=false
+.gitignore       -codegen linguist-generated=false
+LICENSE          -codegen linguist-generated=false
+LICENSE.txt      -codegen linguist-generated=false
+LICENSE.md       -codegen linguist-generated=false
+CHANGELOG.md     -codegen linguist-generated=false
+CONTRIBUTING.md  -codegen linguist-generated=false
+SECURITY.md      -codegen linguist-generated=false
+CODE_OF_CONDUCT.md -codegen linguist-generated=false
+
+# Generated files that should not be manually modified
+# These files are automatically generated by xtask and should only be changed via regeneration
+
+# All markdown files are generated
+*.md                           generated=true
+
+# All YAML/YML files are generated
+*.yml                          generated=true
+*.yaml                         generated=true
+
+# Generated Rust module files
+src/commands/mod.rs             generated=true
+src/modules/mod.rs              generated=true
+
+# Generated WIT interface files
+wit/*.wit                       generated=true
+
+# Generated completions
+completions/                    generated=true
+
+# Generated structure documentation
+STRUCTURE.md                    generated=true
+
+# Generated Git hooks (if any)
+.git/hooks/*                    generated=true
+
+# Generated Git attributes files
+.gitattributes                  generated=true
+hooks/.gitattributes            generated=true
+hooks/.gitattributes-*          generated=true
+"#;
+
+    Ok(content.to_string())
+}
+
+/// Generate the safechars git attributes file
+fn generate_safechars_gitattributes() -> Result<String> {
+    let content = r#"# Git Attributes Configuration for SafeChars Filter
+# This file demonstrates how to use the character contract system
+
+# All text files should use the safechars filter
+* text filter=safechars
+
+# Source code files
+*.rs text filter=safechars
+*.py text filter=safechars
+*.js text filter=safechars
+*.ts text filter=safechars
+*.go text filter=safechars
+*.java text filter=safechars
+*.c text filter=safechars
+*.cpp text filter=safechars
+*.h text filter=safechars
+*.hpp text filter=safechars
+
+# Configuration files
+*.toml text filter=safechars
+*.yml text filter=safechars
+*.yaml text filter=safechars
+*.json text filter=safechars
+*.conf text filter=safechars
+*.cfg text filter=safechars
+*.ini text filter=safechars
+*.env text filter=safechars
+
+# Documentation
+*.md text filter=safechars
+*.txt text filter=safechars
+*.rst text filter=safechars
+*.adoc text filter=safechars
+
+# Scripts
+*.sh text filter=safechars
+*.bash text filter=safechars
+*.zsh text filter=safechars
+*.ps1 text filter=safechars
+*.bat text filter=safechars
+
+# Web files
+*.html text filter=safechars
+*.css text filter=safechars
+*.scss text filter=safechars
+*.xml text filter=safechars
+*.svg text filter=safechars
+
+# Data files
+*.csv text filter=safechars
+*.tsv text filter=safechars
+*.sql text filter=safechars
+
+# Binary files (explicitly mark as binary, no filter)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.xz binary
+*.7z binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.a binary
+*.o binary
+
+# Generated files (skip in archive)
+*.log export-ignore
+*.tmp export-ignore
+*.temp export-ignore
+*.cache export-ignore
+node_modules/ export-ignore
+target/ export-ignore
+dist/ export-ignore
+build/ export-ignore
+"#;
+
+    Ok(content.to_string())
+}
+
+/// Generate the blob contract git attributes file
+fn generate_blob_contract_gitattributes() -> Result<String> {
+    let content = r#"# Git Attributes Configuration for Blob Contract Filter
+# This file demonstrates how to use the blob contract system for Git object validation
+
+# All text files should use the blob contract filter
+* text filter=blob-contract
+
+# Source code files
+*.rs text filter=blob-contract
+*.py text filter=blob-contract
+*.js text filter=blob-contract
+*.ts text filter=blob-contract
+*.go text filter=blob-contract
+*.java text filter=blob-contract
+*.c text filter=blob-contract
+*.cpp text filter=blob-contract
+*.h text filter=blob-contract
+*.hpp text filter=blob-contract
+
+# Configuration files
+*.toml text filter=blob-contract
+*.yml text filter=blob-contract
+*.yaml text filter=blob-contract
+*.json text filter=blob-contract
+*.conf text filter=blob-contract
+*.cfg text filter=blob-contract
+*.ini text filter=blob-contract
+*.env text filter=blob-contract
+
+# Documentation
+*.md text filter=blob-contract
+*.txt text filter=blob-contract
+*.rst text filter=blob-contract
+*.adoc text filter=blob-contract
+
+# Scripts
+*.sh text filter=blob-contract
+*.bash text filter=blob-contract
+*.zsh text filter=blob-contract
+*.ps1 text filter=blob-contract
+*.bat text filter=blob-contract
+
+# Web files
+*.html text filter=blob-contract
+*.css text filter=blob-contract
+*.scss text filter=blob-contract
+*.xml text filter=blob-contract
+*.svg text filter=blob-contract
+
+# Data files
+*.csv text filter=blob-contract
+*.tsv text filter=blob-contract
+*.sql text filter=blob-contract
+
+# Binary files (explicitly mark as binary, no filter)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.xz binary
+*.7z binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.a binary
+*.o binary
+
+# Generated files (skip in archive)
+*.log export-ignore
+*.tmp export-ignore
+*.temp export-ignore
+*.cache export-ignore
+node_modules/ export-ignore
+target/ export-ignore
+dist/ export-ignore
+build/ export-ignore
+"#;
+
+    Ok(content.to_string())
+}
+
+/// Validate generated git attributes files
+fn validate_git_attributes_files(main_path: &Path, safechars_path: &Path, blob_contract_path: &Path) -> Result<()> {
+    // Check that all files exist
+    if !main_path.exists() {
+        anyhow::bail!("Main git attributes file not found: {}", main_path.display());
+    }
+    if !safechars_path.exists() {
+        anyhow::bail!("Safechars git attributes file not found: {}", safechars_path.display());
+    }
+    if !blob_contract_path.exists() {
+        anyhow::bail!("Blob contract git attributes file not found: {}", blob_contract_path.display());
+    }
+
+    // Check for invalid patterns (negative patterns with !)
+    let main_content = std::fs::read_to_string(main_path)?;
+    let safechars_content = std::fs::read_to_string(safechars_path)?;
+    let blob_contract_content = std::fs::read_to_string(blob_contract_path)?;
+
+    // Check for negative patterns that would cause warnings
+    let invalid_patterns = ["!*.", "!*/", "!*"];
+    for pattern in &invalid_patterns {
+        if main_content.contains(pattern) {
+            anyhow::bail!("Invalid negative pattern found in main git attributes: {}", pattern);
+        }
+        if safechars_content.contains(pattern) {
+            anyhow::bail!("Invalid negative pattern found in safechars git attributes: {}", pattern);
+        }
+        if blob_contract_content.contains(pattern) {
+            anyhow::bail!("Invalid negative pattern found in blob contract git attributes: {}", pattern);
+        }
+    }
+
+    // Check for basic syntax validity
+    for (name, content) in [
+        ("main", &main_content),
+        ("safechars", &safechars_content),
+        ("blob-contract", &blob_contract_content),
+    ] {
+        for line in content.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+
+            // Basic validation: should have at least one space or tab
+            if !line.contains(' ') && !line.contains('\t') {
+                anyhow::bail!("Invalid git attributes line in {}: {}", name, line);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Generate all configuration files from Rust structs
+fn generate_config(overwrite: bool, validate: bool) -> Result<()> {
+    println!("🔧 Generating configuration files from Rust structs...");
+
+    // Check if files exist and overwrite flag
+    let config_files = [
+        "lefthook.yml",
+        "config/contract-state-machine.yml",
+        "config/docs_manifest.yml",
+        "config/state-transitions.yml",
+    ];
+
+    if !overwrite {
+        for file in &config_files {
+            if Path::new(file).exists() {
+                println!("⚠️  File exists: {} (use --overwrite to regenerate)", file);
+            }
+        }
+    }
+
+    // Generate all configuration files
+    config::ConfigGenerator::generate_all()?;
+
+    if validate {
+        println!("🔍 Validating generated configuration files...");
+        config::ConfigGenerator::validate_all()?;
+    }
+
+    println!("✅ Configuration generation complete");
+    Ok(())
+}
+
+/// Validate all configuration files
+fn validate_config(strict: bool) -> Result<()> {
+    println!("🔍 Validating configuration files...");
+
+    let result = config::ConfigGenerator::validate_all();
+
+    match result {
+        Ok(_) => {
+            println!("✅ All configuration files are valid");
+            Ok(())
+        }
+        Err(e) => {
+            let error_msg = format!("❌ Configuration validation failed: {}", e);
+            if strict {
+                return Err(anyhow::anyhow!(error_msg));
+            } else {
+                println!("{}", error_msg);
+                Ok(())
+            }
+        }
+    }
 }

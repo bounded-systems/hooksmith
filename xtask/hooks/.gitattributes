@@ -131,8 +131,3 @@ STRUCTURE.md                    generated=true
 
 # Generated Git hooks (if any)
 .git/hooks/*                    generated=true
-
-# Generated Git attributes files
-.gitattributes                  generated=true
-hooks/.gitattributes            generated=true
-hooks/.gitattributes-*          generated=true

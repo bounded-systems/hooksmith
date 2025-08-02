@@ -1,0 +1,56 @@
+sections:
+- name: readme
+  title: README
+  description: Project overview and getting started guide
+  source: src/main.rs
+  output: README.md
+  template: readme
+- name: api
+  title: API Documentation
+  description: Complete API reference documentation
+  source: src/
+  output: docs/api.md
+  template: api
+- name: examples
+  title: Examples
+  description: Code examples and usage patterns
+  source: examples/
+  output: docs/examples.md
+  template: examples
+- name: architecture
+  title: Architecture
+  description: System architecture and design decisions
+  source: src/
+  output: docs/architecture.md
+  template: architecture
+- name: development
+  title: Development Guide
+  description: Development setup and contribution guidelines
+  source: CONTRIBUTING.md
+  output: docs/development.md
+- name: contracts
+  title: Contract System
+  description: Contract validation system documentation
+  source: src/modules/contract_state_machine.rs
+  output: docs/contracts.md
+  template: contracts
+- name: git_filters
+  title: Git Filters
+  description: Git filter system documentation
+  source: components/git-filter/
+  output: docs/git_filters.md
+  template: git_filters
+formats:
+- name: markdown
+  extension: md
+  generator: markdown
+- name: html
+  extension: html
+  generator: html
+- name: pdf
+  extension: pdf
+  generator: pandoc
+- name: epub
+  extension: epub
+  generator: pandoc
+output_dir: docs/

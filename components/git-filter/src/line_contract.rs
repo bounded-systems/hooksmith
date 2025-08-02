@@ -137,6 +137,7 @@ pub struct LineValidator {
     /// Whether to validate line endings
     validate_line_endings: bool,
     /// Whether to validate line content
+    #[allow(dead_code)]
     validate_line_content: bool,
     /// Whether to generate byte analysis
     #[allow(dead_code)]

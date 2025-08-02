@@ -169,6 +169,7 @@ impl GeneratedFileValidator {
         message.push_str("  ./xtask gen-docs        # for documentation\n");
         message.push_str("  ./xtask gen-mods        # for module files\n");
         message.push_str("  ./xtask gen-wit         # for WIT interfaces\n");
+        message.push_str("  ./xtask gen-gitattributes # for git attributes files\n");
 
         message
     }

@@ -273,8 +273,10 @@ impl GitObjectContract {
 /// Git object validator that processes Git object validation with attributes
 pub struct GitObjectValidator {
     /// Whether to validate blobs
+    #[allow(dead_code)]
     validate_blobs: bool,
     /// Whether to validate lines
+    #[allow(dead_code)]
     validate_lines: bool,
     /// Whether to validate attributes
     validate_attributes: bool,
