@@ -282,7 +282,7 @@ async fn main() -> Result<()> {
             generate_hooks_readme(&output, overwrite)?;
         }
         Commands::GenAll { overwrite } => {
-            generate_all(overwrite)?;
+            generate_all(overwrite).await?;
         }
         Commands::Check { strict } => {
             check_generated_files(strict)?;
@@ -1131,6 +1131,10 @@ fn generate_all(overwrite: bool) -> Result<()> {
     generate_wit_interfaces("wit", overwrite)?;
     generate_lefthook_config("lefthook.yml", true)?;
     generate_documentation("docs", false)?;
+    
+    // Generate schema documentation (Markdown only, no PDF/HTML/EPUB by default)
+    generate_schema_documentation("docs", false, false, false, false).await?;
+    
     generate_readme("README.md", overwrite)?;
     generate_mod_files(overwrite)?;
     generate_hooks_readme("hooks/README.md", overwrite)?;
@@ -1283,5 +1287,287 @@ fn validate_module_consistency() -> Result<()> {
         }
     }
     
+    Ok(())
+}
+
+/// Generate JSON Schema documentation from existing schema files
+fn generate_json_schema_documentation() -> Result<String> {
+    let mut docs = String::new();
+    
+    docs.push_str("# JSON Schema Documentation\n\n");
+    docs.push_str("This document describes the JSON schemas used by Hooksmith for contract validation and state machine management.\n\n");
+
+    // Read and document contract state schema
+    let contract_state_schema = fs::read_to_string("schemas/contract-state.schema.json")
+        .context("Failed to read contract-state.schema.json")?;
+    let contract_state: serde_json::Value = serde_json::from_str(&contract_state_schema)
+        .context("Failed to parse contract-state.schema.json")?;
+
+    docs.push_str("## Contract State Schema\n\n");
+    docs.push_str("Defines the structure for contract validation states.\n\n");
+
+    if let Some(properties) = contract_state.get("properties") {
+        if let Some(props) = properties.as_object() {
+            docs.push_str("| Property | Type | Required | Description |\n");
+            docs.push_str("|----------|------|----------|-------------|\n");
+            
+            for (name, prop) in props {
+                let prop_type = prop.get("type").and_then(|t| t.as_str()).unwrap_or("object");
+                let description = prop.get("description").and_then(|d| d.as_str()).unwrap_or("");
+                let required = if name == "file" || name == "contract" || name == "state" || name == "hash" || name == "validated_by" || name == "timestamp" {
+                    "✅"
+                } else {
+                    "❌"
+                };
+                
+                docs.push_str(&format!("| {} | {} | {} | {} |\n", name, prop_type, required, description));
+            }
+        }
+    }
+
+    // Read and document contract transition schema
+    let contract_transition_schema = fs::read_to_string("schemas/contract-transition.schema.json")
+        .context("Failed to read contract-transition.schema.json")?;
+    let contract_transition: serde_json::Value = serde_json::from_str(&contract_transition_schema)
+        .context("Failed to parse contract-transition.schema.json")?;
+
+    docs.push_str("\n## Contract Transition Schema\n\n");
+    docs.push_str("Defines the structure for contract state transitions.\n\n");
+
+    if let Some(properties) = contract_transition.get("properties") {
+        if let Some(props) = properties.as_object() {
+            docs.push_str("| Property | Type | Required | Description |\n");
+            docs.push_str("|----------|------|----------|-------------|\n");
+            
+            for (name, prop) in props {
+                let prop_type = prop.get("type").and_then(|t| t.as_str()).unwrap_or("object");
+                let description = prop.get("description").and_then(|d| d.as_str()).unwrap_or("");
+                let required = if name == "from_state" || name == "to_state" || name == "event" {
+                    "✅"
+                } else {
+                    "❌"
+                };
+                
+                docs.push_str(&format!("| {} | {} | {} | {} |\n", name, prop_type, required, description));
+            }
+        }
+    }
+
+    // Read and document merkle proof schema
+    let merkle_proof_schema = fs::read_to_string("schemas/merkle-proof.schema.json")
+        .context("Failed to read merkle-proof.schema.json")?;
+    let merkle_proof: serde_json::Value = serde_json::from_str(&merkle_proof_schema)
+        .context("Failed to parse merkle-proof.schema.json")?;
+
+    docs.push_str("\n## Merkle Proof Schema\n\n");
+    docs.push_str("Defines the structure for Merkle chain validation proofs.\n\n");
+
+    if let Some(properties) = merkle_proof.get("properties") {
+        if let Some(props) = properties.as_object() {
+            docs.push_str("| Property | Type | Required | Description |\n");
+            docs.push_str("|----------|------|----------|-------------|\n");
+            
+            for (name, prop) in props {
+                let prop_type = prop.get("type").and_then(|t| t.as_str()).unwrap_or("object");
+                let description = prop.get("description").and_then(|d| d.as_str()).unwrap_or("");
+                let required = if name == "root_hash" || name == "leaves" || name == "proof" {
+                    "✅"
+                } else {
+                    "❌"
+                };
+                
+                docs.push_str(&format!("| {} | {} | {} | {} |\n", name, prop_type, required, description));
+            }
+        }
+    }
+
+    Ok(docs)
+}
+
+/// Generate WIT documentation from existing WIT files
+fn generate_wit_documentation() -> Result<String> {
+    let mut docs = String::new();
+    
+    docs.push_str("# WIT Interface Documentation\n\n");
+    docs.push_str("This document describes the WebAssembly Interface Types (WIT) used by Hooksmith.\n\n");
+
+    // Read and document hooksmith.wit
+    let hooksmith_wit = fs::read_to_string("wit/hooksmith.wit")
+        .context("Failed to read hooksmith.wit")?;
+    
+    docs.push_str("## Hooksmith CLI Interface\n\n");
+    docs.push_str("Main CLI interface for hook building and management.\n\n");
+    docs.push_str("```wit\n");
+    docs.push_str(&hooksmith_wit);
+    docs.push_str("\n```\n\n");
+
+    // Read and document hook-builder.wit
+    let hook_builder_wit = fs::read_to_string("wit/hook-builder.wit")
+        .context("Failed to read hook-builder.wit")?;
+    
+    docs.push_str("## Hook Builder Interface\n\n");
+    docs.push_str("Interface for building and managing Git hooks.\n\n");
+    docs.push_str("```wit\n");
+    docs.push_str(&hook_builder_wit);
+    docs.push_str("\n```\n\n");
+
+    // Read and document validation.wit
+    let validation_wit = fs::read_to_string("wit/validation.wit")
+        .context("Failed to read validation.wit")?;
+    
+    docs.push_str("## Validation Interface\n\n");
+    docs.push_str("Interface for contract validation and state machine management.\n\n");
+    docs.push_str("```wit\n");
+    docs.push_str(&validation_wit);
+    docs.push_str("\n```\n\n");
+
+    // Read and document lefthook-generator.wit
+    let lefthook_generator_wit = fs::read_to_string("wit/lefthook-generator.wit")
+        .context("Failed to read lefthook-generator.wit")?;
+    
+    docs.push_str("## Lefthook Generator Interface\n\n");
+    docs.push_str("Interface for generating Lefthook configurations.\n\n");
+    docs.push_str("```wit\n");
+    docs.push_str(&lefthook_generator_wit);
+    docs.push_str("\n```\n\n");
+
+    Ok(docs)
+}
+
+/// Generate combined documentation
+fn generate_combined_documentation(schema_docs: &str, wit_docs: &str) -> Result<String> {
+    let mut docs = String::new();
+    
+    docs.push_str("# Contract State Machine Documentation\n\n");
+    docs.push_str("This document provides a comprehensive overview of Hooksmith's contract validation state machine, including JSON schemas and WIT interfaces.\n\n");
+    
+    docs.push_str("## Overview\n\n");
+    docs.push_str("Hooksmith implements a schema-driven state machine for contract validation that provides:\n\n");
+    docs.push_str("- **State Machine**: Enforces valid state transitions (UNTRACKED → UNVALIDATED → VALIDATED → LOCKED)\n");
+    docs.push_str("- **Merkle Chain**: Cryptographic proof of integrity across hierarchical scopes\n");
+    docs.push_str("- **Git Notes Integration**: Tamper-proof audit trails with full validation history\n");
+    docs.push_str("- **CI Enforcement**: Automated validation and security auditing in GitHub Actions\n\n");
+
+    docs.push_str("## JSON Schema Definitions\n\n");
+    docs.push_str("The following schemas define the structure and validation rules for the contract state machine:\n\n");
+    
+    // Extract schema documentation sections
+    let schema_sections = extract_schema_sections(schema_docs);
+    docs.push_str(&schema_sections);
+
+    docs.push_str("## WIT Interface Definitions\n\n");
+    docs.push_str("The following WIT interfaces expose contract validation functionality:\n\n");
+    
+    // Extract WIT documentation sections
+    let wit_sections = extract_wit_sections(wit_docs);
+    docs.push_str(&wit_sections);
+
+    docs.push_str("## Integration with WIT & JSON Schema\n\n");
+    docs.push_str("This implementation demonstrates how JSON Schema and WIT can work together:\n\n");
+    docs.push_str("1. **JSON Schema Defines the Contract State Machine** - Schemas enforce structure and validation rules\n");
+    docs.push_str("2. **WIT Interface Exposes Contract Validation** - WASM components can validate and transition states\n");
+    docs.push_str("3. **WASM Component Implements Logic** - Components can return schemas, validate states, and apply transitions\n");
+    docs.push_str("4. **Rust Host Uses Both** - Combines schemars and wit-bindgen for type-safe validation\n\n");
+
+    docs.push_str("## Benefits\n\n");
+    docs.push_str("- ✅ **Schema as Single Source of Truth** – JSON Schema defines the valid state machine\n");
+    docs.push_str("- ✅ **Language-agnostic Validation** – Any host that supports WIT/WASM can validate contracts\n");
+    docs.push_str("- ✅ **Deterministic Contract Proofs** – The same logic works inside and outside Git hooks\n");
+    docs.push_str("- ✅ **Portable Across Hosts** – Works with Rust, Node.js, Deno, or any WASM runtime\n\n");
+
+    Ok(docs)
+}
+
+/// Extract schema sections from schema documentation
+fn extract_schema_sections(schema_docs: &str) -> String {
+    let mut sections = String::new();
+    
+    // Find and extract the schema sections
+    if let Some(start_idx) = schema_docs.find("## Contract State Schema") {
+        sections.push_str(&schema_docs[start_idx..]);
+    }
+    
+    sections
+}
+
+/// Extract WIT sections from WIT documentation
+fn extract_wit_sections(wit_docs: &str) -> String {
+    let mut sections = String::new();
+    
+    // Find and extract the WIT sections
+    if let Some(start_idx) = wit_docs.find("## Hooksmith CLI Interface") {
+        sections.push_str(&wit_docs[start_idx..]);
+    }
+    
+    sections
+}
+
+/// Generate Pandoc outputs (PDF, HTML, EPUB)
+fn generate_pandoc_outputs(output_path: &Path, pdf: bool, html: bool, epub: bool) -> Result<()> {
+    let input_file = output_path.join("CONTRACT_STATE_MACHINE.md");
+    
+    if !input_file.exists() {
+        anyhow::bail!("Input file does not exist: {:?}", input_file);
+    }
+
+    // Check if pandoc is available
+    let pandoc_check = Command::new("pandoc")
+        .arg("--version")
+        .output();
+
+    if pandoc_check.is_err() {
+        println!("   ⚠️  Pandoc not found. Install pandoc to generate PDF/HTML/EPUB output.");
+        println!("   📖 Installation: https://pandoc.org/installing.html");
+        return Ok(());
+    }
+
+    if pdf {
+        println!("   📄 Generating PDF...");
+        let status = Command::new("pandoc")
+            .arg(&input_file)
+            .args(["-o", &output_path.join("CONTRACT_STATE_MACHINE.pdf").to_string_lossy()])
+            .args(["--pdf-engine=xelatex", "--toc", "--number-sections"])
+            .status()
+            .context("Failed to generate PDF")?;
+
+        if !status.success() {
+            println!("   ⚠️  PDF generation failed");
+        } else {
+            println!("   ✅ PDF generated successfully");
+        }
+    }
+
+    if html {
+        println!("   🌐 Generating HTML...");
+        let status = Command::new("pandoc")
+            .arg(&input_file)
+            .args(["-o", &output_path.join("CONTRACT_STATE_MACHINE.html").to_string_lossy()])
+            .args(["--standalone", "--toc", "--number-sections", "--css=style.css"])
+            .status()
+            .context("Failed to generate HTML")?;
+
+        if !status.success() {
+            println!("   ⚠️  HTML generation failed");
+        } else {
+            println!("   ✅ HTML generated successfully");
+        }
+    }
+
+    if epub {
+        println!("   📚 Generating EPUB...");
+        let status = Command::new("pandoc")
+            .arg(&input_file)
+            .args(["-o", &output_path.join("CONTRACT_STATE_MACHINE.epub").to_string_lossy()])
+            .args(["--toc", "--number-sections"])
+            .status()
+            .context("Failed to generate EPUB")?;
+
+        if !status.success() {
+            println!("   ⚠️  EPUB generation failed");
+        } else {
+            println!("   ✅ EPUB generated successfully");
+        }
+    }
+
     Ok(())
 }
