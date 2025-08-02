@@ -4,6 +4,8 @@
 //! with schema-driven validation and Git notes storage.
 
 use chrono::Utc;
+use hex;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -276,7 +278,7 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
 
             // Store state in Git notes
             let file_content = std::fs::read_to_string(file_path)?;
-            let hash = format!("sha256:{}", sha256::digest(&file_content));
+            let hash = format!("sha256:{}", hex::encode(Sha256::digest(&file_content)));
 
             let state_note = ContractStateNote {
                 file: file_path.to_string_lossy().to_string(),
@@ -327,7 +329,7 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
 
             // Update state in Git notes
             let file_content = std::fs::read_to_string(file_path)?;
-            let hash = format!("sha256:{}", sha256::digest(&file_content));
+            let hash = format!("sha256:{}", hex::encode(Sha256::digest(&file_content)));
 
             let state_note = ContractStateNote {
                 file: file_path.to_string_lossy().to_string(),

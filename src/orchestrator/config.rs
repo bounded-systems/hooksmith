@@ -422,7 +422,7 @@ mod tests {
 
     #[test]
     fn test_default_config() {
-        let config = OrchestratorConfig::create_default_config();
+        let config = OrchestratorConfig::default();
         assert!(config.components.contains_key("hook-builder"));
         assert!(config.components.contains_key("worktree-manager"));
         assert!(config.components.contains_key("lefthook-generator"));
