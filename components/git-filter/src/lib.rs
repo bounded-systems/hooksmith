@@ -17,6 +17,7 @@ pub use filter::{SafeAsciiFilter, CharContractFilter, BlobContractFilter, Filter
 pub use error::FilterError;
 pub use contract::{CharacterContract, CharClass, CharAction, CharValidator, FileValidationResult};
 pub use blob_contract::{BlobContract, BlobAction, BlobByteAudit, ByteClass, BlobValidator};
+pub use line_contract::{BlobLineContract, LineAction, LineValidator};
 
 /// Re-export common types for convenience
 pub mod prelude {
