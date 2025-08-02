@@ -1,0 +1,82 @@
+# Git Attributes Configuration for Blob Contract Filter
+# This file demonstrates how to use the blob contract system for Git object validation
+
+# All text files should use the blob contract filter
+* text filter=blob-contract
+
+# Source code files
+*.rs text filter=blob-contract
+*.py text filter=blob-contract
+*.js text filter=blob-contract
+*.ts text filter=blob-contract
+*.go text filter=blob-contract
+*.java text filter=blob-contract
+*.c text filter=blob-contract
+*.cpp text filter=blob-contract
+*.h text filter=blob-contract
+*.hpp text filter=blob-contract
+
+# Configuration files
+*.toml text filter=blob-contract
+*.yml text filter=blob-contract
+*.yaml text filter=blob-contract
+*.json text filter=blob-contract
+*.conf text filter=blob-contract
+*.cfg text filter=blob-contract
+*.ini text filter=blob-contract
+*.env text filter=blob-contract
+
+# Documentation
+*.md text filter=blob-contract
+*.txt text filter=blob-contract
+*.rst text filter=blob-contract
+*.adoc text filter=blob-contract
+
+# Scripts
+*.sh text filter=blob-contract
+*.bash text filter=blob-contract
+*.zsh text filter=blob-contract
+*.ps1 text filter=blob-contract
+*.bat text filter=blob-contract
+
+# Web files
+*.html text filter=blob-contract
+*.css text filter=blob-contract
+*.scss text filter=blob-contract
+*.xml text filter=blob-contract
+*.svg text filter=blob-contract
+
+# Data files
+*.csv text filter=blob-contract
+*.tsv text filter=blob-contract
+*.sql text filter=blob-contract
+
+# Binary files (explicitly mark as binary, no filter)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.xz binary
+*.7z binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.a binary
+*.o binary
+
+# Generated files (skip in archive)
+*.log export-ignore
+*.tmp export-ignore
+*.temp export-ignore
+*.cache export-ignore
+node_modules/ export-ignore
+target/ export-ignore
+dist/ export-ignore
+build/ export-ignore 

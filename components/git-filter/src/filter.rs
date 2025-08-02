@@ -1,7 +1,8 @@
 use crate::actions::{ActionResolver, GitOperation, HookAction};
+use crate::blob_contract::{BlobByteAudit, BlobContract, BlobValidator};
+use crate::contract::{CharValidator, FileValidationResult};
 use crate::error::FilterError;
 use crate::state::FileState;
-use crate::contract::{CharValidator, FileValidationResult};
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use tracing::{debug, error, info};
@@ -140,6 +141,183 @@ impl FilterDriver for SafeAsciiFilter {
 
     fn name(&self) -> &str {
         "safe-ascii"
+    }
+}
+
+/// Character contract filter that uses the Dev Contract system for precise validation
+pub struct CharContractFilter {
+    /// Character validator
+    validator: CharValidator,
+}
+
+impl Default for CharContractFilter {
+    fn default() -> Self {
+        Self {
+            validator: CharValidator::default(),
+        }
+    }
+}
+
+impl CharContractFilter {
+    /// Create a new CharContractFilter with custom settings
+    pub fn new(
+        normalize_line_endings: bool,
+        apply_binary_heuristic: bool,
+        binary_threshold: f64,
+    ) -> Self {
+        Self {
+            validator: CharValidator::new(
+                normalize_line_endings,
+                apply_binary_heuristic,
+                binary_threshold,
+            ),
+        }
+    }
+}
+
+impl FilterDriver for CharContractFilter {
+    fn process(
+        &self,
+        content: &[u8],
+        _file_state: &FileState,
+        operation: &GitOperation,
+    ) -> Result<Vec<u8>, FilterError> {
+        debug!(
+            "Processing file with CharContractFilter for operation {:?}",
+            operation
+        );
+
+        // Validate file using character contracts
+        let (result, processed_content) = self.validator.validate_file(content);
+
+        if !result.is_valid {
+            error!("File validation failed: {}", result.summary());
+            return Err(FilterError::InvalidCharacter);
+        }
+
+        info!(
+            "Successfully processed file with CharContractFilter: {}",
+            result.summary()
+        );
+        Ok(processed_content)
+    }
+
+    fn name(&self) -> &str {
+        "char-contract"
+    }
+}
+
+/// Blob contract filter that validates Git blobs using the contract system
+pub struct BlobContractFilter {
+    /// Blob validator
+    validator: BlobValidator,
+    /// Whether to generate audit records
+    generate_audit: bool,
+}
+
+impl Default for BlobContractFilter {
+    fn default() -> Self {
+        Self {
+            validator: BlobValidator::default(),
+            generate_audit: false,
+        }
+    }
+}
+
+impl BlobContractFilter {
+    /// Create a new BlobContractFilter with custom settings
+    pub fn new(
+        normalize_line_endings: bool,
+        apply_binary_heuristic: bool,
+        binary_threshold: f64,
+        generate_audit: bool,
+    ) -> Self {
+        Self {
+            validator: BlobValidator::new(
+                normalize_line_endings,
+                apply_binary_heuristic,
+                binary_threshold,
+                generate_audit,
+            ),
+            generate_audit,
+        }
+    }
+
+    /// Generate a mock OID for testing (in real usage, this would come from Git)
+    fn generate_mock_oid(&self, content: &[u8]) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let mut hasher = DefaultHasher::new();
+        content.hash(&mut hasher);
+        format!("{:x}", hasher.finish())
+    }
+}
+
+impl FilterDriver for BlobContractFilter {
+    fn process(
+        &self,
+        content: &[u8],
+        _file_state: &FileState,
+        operation: &GitOperation,
+    ) -> Result<Vec<u8>, FilterError> {
+        debug!(
+            "Processing blob with BlobContractFilter for operation {:?}",
+            operation
+        );
+
+        // Generate a mock OID (in real usage, this would be the actual Git blob OID)
+        let oid = self.generate_mock_oid(content);
+
+        // Validate blob using contract system
+        let (contract, processed_content, audit_records) =
+            self.validator.validate_blob(&oid, content);
+
+        // Log the contract result
+        info!("Blob contract result: {}", contract.summary());
+
+        // If audit records were generated, log them
+        if self.generate_audit && !audit_records.is_empty() {
+            debug!(
+                "Generated {} audit records for blob {}",
+                audit_records.len(),
+                oid
+            );
+
+            // Log forbidden bytes if any
+            let forbidden_audits: Vec<_> = audit_records
+                .iter()
+                .filter(|audit| !audit.allowed)
+                .collect();
+
+            if !forbidden_audits.is_empty() {
+                error!(
+                    "Found {} forbidden bytes in blob {}: {:?}",
+                    forbidden_audits.len(),
+                    oid,
+                    forbidden_audits
+                        .iter()
+                        .map(|a| a.description())
+                        .collect::<Vec<_>>()
+                );
+            }
+        }
+
+        // Check if blob should be accepted
+        if !contract.is_accepted() {
+            error!("Blob {} rejected: {}", oid, contract.summary());
+            return Err(FilterError::InvalidCharacter);
+        }
+
+        info!(
+            "Successfully processed blob {} with BlobContractFilter",
+            oid
+        );
+        Ok(processed_content)
+    }
+
+    fn name(&self) -> &str {
+        "blob-contract"
     }
 }
 
