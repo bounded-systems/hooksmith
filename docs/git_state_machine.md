@@ -1,0 +1,19 @@
+# Git File State Machine
+
+State machine showing the various states a file can be in during Git operations
+
+```mermaid
+stateDiagram-v2
+    Untracked : File exists but is not tracked by Git
+    note right of Untracked : red
+    Staged : File is staged for commit
+    note right of Staged : green
+    Committed : File is committed to the repository
+    note right of Committed : blue
+    Modified : File has been modified since last commit
+    note right of Modified : orange
+    Untracked --> Staged : git add
+    Staged --> Committed : git commit
+    Committed --> Modified : Edit file
+    Modified --> Staged : git add
+```
