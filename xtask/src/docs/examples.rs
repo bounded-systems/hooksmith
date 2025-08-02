@@ -21,7 +21,9 @@ pub fn generate_examples_docs() -> Result<String> {
     let mut content = String::new();
 
     content.push_str("# Code Examples\n\n");
-    content.push_str("This document contains code examples demonstrating Hooksmith functionality.\n\n");
+    content.push_str(
+        "This document contains code examples demonstrating Hooksmith functionality.\n\n",
+    );
 
     // Find all example files
     let examples = find_examples()?;
@@ -32,14 +34,21 @@ pub fn generate_examples_docs() -> Result<String> {
         content.push_str("To add examples:\n");
         content.push_str("1. Create files in the `examples/` directory\n");
         content.push_str("2. Add descriptive comments at the top of each file\n");
-        content.push_str("3. Run `cargo xtask gen-docs-comprehensive` to regenerate this documentation\n");
+        content.push_str(
+            "3. Run `cargo xtask gen-docs-comprehensive` to regenerate this documentation\n",
+        );
     } else {
         content.push_str(&format!("## Found {} Examples\n\n", examples.len()));
 
         // Generate table of contents
         content.push_str("### Table of Contents\n\n");
         for (i, example) in examples.iter().enumerate() {
-            content.push_str(&format!("{}. [{}](#{})\n", i + 1, example.name, example.name.to_lowercase().replace(' ', "-")));
+            content.push_str(&format!(
+                "{}. [{}](#{})\n",
+                i + 1,
+                example.name,
+                example.name.to_lowercase().replace(' ', "-")
+            ));
         }
         content.push_str("\n");
 
@@ -47,7 +56,7 @@ pub fn generate_examples_docs() -> Result<String> {
         for example in examples {
             content.push_str(&format!("## {}\n\n", example.name));
             content.push_str(&format!("{}\n\n", example.description));
-            
+
             if !example.dependencies.is_empty() {
                 content.push_str("### Dependencies\n\n");
                 for dep in &example.dependencies {
@@ -99,11 +108,11 @@ fn find_examples() -> Result<Vec<ExampleInfo>> {
     }
 
     let entries = fs::read_dir(examples_dir).context("Failed to read examples directory")?;
-    
+
     for entry in entries {
         let entry = entry.context("Failed to read examples directory entry")?;
         let path = entry.path();
-        
+
         if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("rs") {
             let example = parse_example_file(&path)?;
             examples.push(example);
@@ -118,23 +127,32 @@ fn find_examples() -> Result<Vec<ExampleInfo>> {
 
 /// Parse an example file to extract information
 fn parse_example_file(path: &Path) -> Result<ExampleInfo> {
-    let content = fs::read_to_string(path).context(format!("Failed to read example file: {:?}", path))?;
-    
-    let filename = path.file_stem().and_then(|s| s.to_str()).unwrap_or("unknown");
-    let name = filename.replace('_', " ").split_whitespace().map(|s| {
-        let mut chars = s.chars();
-        match chars.next() {
-            None => String::new(),
-            Some(first) => first.to_uppercase().chain(chars).collect(),
-        }
-    }).collect::<Vec<_>>().join(" ");
+    let content =
+        fs::read_to_string(path).context(format!("Failed to read example file: {:?}", path))?;
+
+    let filename = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("unknown");
+    let name = filename
+        .replace('_', " ")
+        .split_whitespace()
+        .map(|s| {
+            let mut chars = s.chars();
+            match chars.next() {
+                None => String::new(),
+                Some(first) => first.to_uppercase().chain(chars).collect(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
 
     // Extract description from comments
     let description = extract_description_from_comments(&content);
-    
+
     // Extract dependencies from use statements
     let dependencies = extract_dependencies(&content);
-    
+
     // Extract code (remove comments and clean up)
     let code = clean_code(&content);
 
@@ -151,7 +169,7 @@ fn parse_example_file(path: &Path) -> Result<ExampleInfo> {
 fn extract_description_from_comments(content: &str) -> String {
     let lines: Vec<&str> = content.lines().collect();
     let mut description = String::new();
-    
+
     for line in lines {
         let trimmed = line.trim();
         if trimmed.starts_with("//!") {
@@ -164,14 +182,14 @@ fn extract_description_from_comments(content: &str) -> String {
             break;
         }
     }
-    
+
     description.trim().to_string()
 }
 
 /// Extract dependencies from use statements
 fn extract_dependencies(content: &str) -> Vec<String> {
     let mut dependencies = Vec::new();
-    
+
     for line in content.lines() {
         let trimmed = line.trim();
         if trimmed.starts_with("use ") {
@@ -184,7 +202,7 @@ fn extract_dependencies(content: &str) -> Vec<String> {
             }
         }
     }
-    
+
     dependencies
 }
 
@@ -192,13 +210,13 @@ fn extract_dependencies(content: &str) -> Vec<String> {
 fn clean_code(content: &str) -> String {
     let lines: Vec<&str> = content.lines().collect();
     let mut cleaned_lines = Vec::new();
-    
+
     for line in lines {
         let trimmed = line.trim();
         if !trimmed.starts_with("//!") && !trimmed.starts_with("///") && !trimmed.is_empty() {
             cleaned_lines.push(line);
         }
     }
-    
+
     cleaned_lines.join("\n")
-} 
+}

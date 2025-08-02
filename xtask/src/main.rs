@@ -14,6 +14,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 mod hierarchical_validation;
+mod docs;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]

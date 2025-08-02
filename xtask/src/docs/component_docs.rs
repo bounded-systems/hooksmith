@@ -22,7 +22,7 @@ pub fn generate_component_docs(component_path: &str) -> Result<String> {
 
     // Extract component name from path
     let component_name = extract_component_name(component_path);
-    
+
     // Get component information
     let component_info = get_component_info(&component_name)?;
 
@@ -105,8 +105,16 @@ fn get_component_info(component_name: &str) -> Result<ComponentInfo> {
     };
 
     let features = match component_name {
-        "cli-core" => vec!["Command parsing", "Error handling", "Configuration management"],
-        "git-filter" => vec!["Git object filtering", "Contract validation", "State machine"],
+        "cli-core" => vec![
+            "Command parsing",
+            "Error handling",
+            "Configuration management",
+        ],
+        "git-filter" => vec![
+            "Git object filtering",
+            "Contract validation",
+            "State machine",
+        ],
         "hook-builder" => vec!["WASM compilation", "Hook generation", "WIT processing"],
         "worktree-runner" => vec!["Worktree management", "WASM execution", "Tool integration"],
         _ => vec![],
@@ -290,7 +298,8 @@ fn generate_integration_section(component_name: &str) -> Result<String> {
 
     match component_name {
         "cli-core" => {
-            content.push_str("This component integrates with the main Hooksmith CLI to provide:\n\n");
+            content
+                .push_str("This component integrates with the main Hooksmith CLI to provide:\n\n");
             content.push_str("- Command parsing and execution\n");
             content.push_str("- Error handling and reporting\n");
             content.push_str("- Configuration management\n");
@@ -318,7 +327,8 @@ fn generate_integration_section(component_name: &str) -> Result<String> {
             content.push_str("- Cross-platform compatibility\n\n");
         }
         _ => {
-            content.push_str("This component integrates with the Hooksmith ecosystem to provide:\n\n");
+            content
+                .push_str("This component integrates with the Hooksmith ecosystem to provide:\n\n");
             content.push_str("- Core functionality\n");
             content.push_str("- API integration\n");
             content.push_str("- Error handling\n");
@@ -333,4 +343,4 @@ fn generate_integration_section(component_name: &str) -> Result<String> {
     content.push_str("- **Examples**: Usage examples and demonstrations\n\n");
 
     Ok(content)
-} 
+}

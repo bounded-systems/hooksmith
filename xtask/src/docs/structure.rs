@@ -36,18 +36,33 @@ pub fn generate_structure_docs() -> Result<String> {
     content.push_str("```\n\n");
 
     content.push_str("## 📊 File Count Summary\n\n");
-    content.push_str(&format!("- **Total Files**:       {}\n", structure.total_files));
-    content.push_str(&format!("- **Rust Files**:        {} (.rs)\n", structure.rust_files));
-    content.push_str(&format!("- **Configuration Files**:        {} (.toml, .yaml, .rc)\n", structure.config_files));
-    content.push_str(&format!("- **Documentation**:        {} (.md)\n", structure.doc_files));
-    content.push_str(&format!("- **Scripts**:        {} (.sh)\n", structure.script_files));
+    content.push_str(&format!(
+        "- **Total Files**:       {}\n",
+        structure.total_files
+    ));
+    content.push_str(&format!(
+        "- **Rust Files**:        {} (.rs)\n",
+        structure.rust_files
+    ));
+    content.push_str(&format!(
+        "- **Configuration Files**:        {} (.toml, .yaml, .rc)\n",
+        structure.config_files
+    ));
+    content.push_str(&format!(
+        "- **Documentation**:        {} (.md)\n",
+        structure.doc_files
+    ));
+    content.push_str(&format!(
+        "- **Scripts**:        {} (.sh)\n",
+        structure.script_files
+    ));
     content.push_str("\n");
 
     // File type breakdown
     content.push_str("## 📋 File Type Breakdown\n\n");
     content.push_str("| Extension | Count | Description |\n");
     content.push_str("|-----------|-------|-------------|\n");
-    
+
     for (ext, count) in &structure.file_types {
         let description = match ext.as_str() {
             "rs" => "Rust source files",
@@ -78,7 +93,11 @@ pub fn generate_structure_docs() -> Result<String> {
 
     content.push_str("\n---\n\n");
     content.push_str("*Generated on ");
-    content.push_str(&chrono::Utc::now().format("%a %b %e %H:%M:%S %Z %Y").to_string());
+    content.push_str(
+        &chrono::Utc::now()
+            .format("%a %b %e %H:%M:%S %Z %Y")
+            .to_string(),
+    );
     content.push_str(" using `cargo xtask gen-docs-comprehensive`*\n");
 
     Ok(content)
@@ -97,11 +116,11 @@ fn analyze_repository_structure() -> Result<StructureInfo> {
     };
 
     let entries = fs::read_dir(".").context("Failed to read repository root")?;
-    
+
     for entry in entries {
         let entry = entry.context("Failed to read directory entry")?;
         let path = entry.path();
-        
+
         if path.is_dir() {
             let dir_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
             if !dir_name.starts_with('.') && dir_name != "target" {
@@ -109,11 +128,11 @@ fn analyze_repository_structure() -> Result<StructureInfo> {
             }
         } else if path.is_file() {
             info.total_files += 1;
-            
+
             if let Some(extension) = path.extension().and_then(|s| s.to_str()) {
                 let ext = extension.to_lowercase();
                 *info.file_types.entry(ext.clone()).or_insert(0) += 1;
-                
+
                 match ext.as_str() {
                     "rs" => info.rust_files += 1,
                     "toml" | "yaml" | "yml" | "json" => info.config_files += 1,
@@ -134,11 +153,11 @@ fn analyze_repository_structure() -> Result<StructureInfo> {
 /// Count files recursively in directories
 fn count_files_recursive(dir: &str, info: &mut StructureInfo) -> Result<()> {
     let entries = fs::read_dir(dir).context(format!("Failed to read directory: {}", dir))?;
-    
+
     for entry in entries {
         let entry = entry.context("Failed to read directory entry")?;
         let path = entry.path();
-        
+
         if path.is_dir() {
             let dir_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
             if !dir_name.starts_with('.') && dir_name != "target" {
@@ -146,11 +165,11 @@ fn count_files_recursive(dir: &str, info: &mut StructureInfo) -> Result<()> {
             }
         } else if path.is_file() {
             info.total_files += 1;
-            
+
             if let Some(extension) = path.extension().and_then(|s| s.to_str()) {
                 let ext = extension.to_lowercase();
                 *info.file_types.entry(ext.clone()).or_insert(0) += 1;
-                
+
                 match ext.as_str() {
                     "rs" => info.rust_files += 1,
                     "toml" | "yaml" | "yml" | "json" => info.config_files += 1,
@@ -272,4 +291,4 @@ fn generate_git_info() -> Result<String> {
     content.push_str(&format!("- **Modified Files**: {}\n", modified_files));
 
     Ok(content)
-} 
+}

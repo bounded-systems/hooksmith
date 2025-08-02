@@ -4,23 +4,23 @@
 //! templates, and repository introspection.
 
 pub mod cli_help;
-pub mod structure;
-pub mod examples;
 pub mod component_docs;
-pub mod templates;
+pub mod examples;
 pub mod manifest;
+pub mod structure;
+pub mod templates;
 
 pub use cli_help::generate_cli_help;
-pub use structure::generate_structure_docs;
-pub use examples::generate_examples_docs;
 pub use component_docs::generate_component_docs;
-pub use templates::generate_from_template;
+pub use examples::generate_examples_docs;
 pub use manifest::DocumentationManifest;
+pub use structure::generate_structure_docs;
+pub use templates::generate_from_template;
 
 /// Generate all documentation based on the manifest
 pub async fn generate_all_docs(output_dir: &str, validate: bool) -> anyhow::Result<()> {
-    use std::path::Path;
     use std::fs;
+    use std::path::Path;
 
     let output_path = Path::new(output_dir);
     if !output_path.exists() {
@@ -33,7 +33,7 @@ pub async fn generate_all_docs(output_dir: &str, validate: bool) -> anyhow::Resu
     // Generate each documented file
     for doc_config in manifest.docs {
         println!("   Generating: {}", doc_config.path);
-        
+
         match doc_config.generator.as_str() {
             "cli_help" => {
                 let content = generate_cli_help()?;
@@ -71,8 +71,8 @@ pub async fn generate_all_docs(output_dir: &str, validate: bool) -> anyhow::Resu
 
 /// Validate generated documentation files
 fn validate_generated_docs(output_dir: &str) -> anyhow::Result<()> {
-    use std::path::Path;
     use std::fs;
+    use std::path::Path;
 
     let output_path = Path::new(output_dir);
     let manifest = DocumentationManifest::load()?;
@@ -86,7 +86,7 @@ fn validate_generated_docs(output_dir: &str) -> anyhow::Result<()> {
         // Basic validation - check file is not empty
         let content = fs::read_to_string(&file_path)
             .context(format!("Failed to read {}", doc_config.path))?;
-        
+
         if content.trim().is_empty() {
             anyhow::bail!("Generated file is empty: {}", doc_config.path);
         }
@@ -95,4 +95,4 @@ fn validate_generated_docs(output_dir: &str) -> anyhow::Result<()> {
     }
 
     Ok(())
-} 
+}
