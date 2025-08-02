@@ -2,6 +2,7 @@ use crate::actions::{ActionResolver, GitOperation, HookAction};
 use crate::blob_contract::{BlobByteAudit, BlobContract, BlobValidator};
 use crate::contract::{CharValidator, FileValidationResult};
 use crate::error::FilterError;
+use crate::line_contract::{BlobLineContract, LineAction, LineValidator};
 use crate::state::FileState;
 use std::collections::HashMap;
 use std::io::{Read, Write};
@@ -318,6 +319,149 @@ impl FilterDriver for BlobContractFilter {
 
     fn name(&self) -> &str {
         "blob-contract"
+    }
+}
+
+/// Combined blob and line contract filter that validates both blob-level and line-level contracts
+pub struct CombinedContractFilter {
+    /// Blob validator
+    blob_validator: BlobValidator,
+    /// Line validator
+    line_validator: LineValidator,
+    /// Whether to generate line contracts
+    generate_line_contracts: bool,
+}
+
+impl Default for CombinedContractFilter {
+    fn default() -> Self {
+        Self {
+            blob_validator: BlobValidator::default(),
+            line_validator: LineValidator::default(),
+            generate_line_contracts: true,
+        }
+    }
+}
+
+impl CombinedContractFilter {
+    /// Create a new CombinedContractFilter with custom settings
+    pub fn new(
+        normalize_line_endings: bool,
+        apply_binary_heuristic: bool,
+        binary_threshold: f64,
+        allow_mixed_eol: bool,
+        generate_line_contracts: bool,
+    ) -> Self {
+        Self {
+            blob_validator: BlobValidator::new(
+                normalize_line_endings,
+                apply_binary_heuristic,
+                binary_threshold,
+                false, // Don't generate byte audits by default
+            ),
+            line_validator: LineValidator::new(
+                normalize_line_endings,
+                allow_mixed_eol,
+                false, // Don't generate byte analysis by default
+            ),
+            generate_line_contracts,
+        }
+    }
+
+    /// Generate a mock OID for testing (in real usage, this would come from Git)
+    fn generate_mock_oid(&self, content: &[u8]) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let mut hasher = DefaultHasher::new();
+        content.hash(&mut hasher);
+        format!("{:x}", hasher.finish())
+    }
+}
+
+impl FilterDriver for CombinedContractFilter {
+    fn process(
+        &self,
+        content: &[u8],
+        _file_state: &FileState,
+        operation: &GitOperation,
+    ) -> Result<Vec<u8>, FilterError> {
+        debug!(
+            "Processing blob with CombinedContractFilter for operation {:?}",
+            operation
+        );
+
+        // Generate a mock OID (in real usage, this would be the actual Git blob OID)
+        let oid = self.generate_mock_oid(content);
+
+        // First, validate at blob level
+        let (blob_contract, processed_content, _) =
+            self.blob_validator.validate_blob(&oid, content);
+
+        // Log the blob contract result
+        info!("Blob contract result: {}", blob_contract.summary());
+
+        // If blob is rejected, stop here
+        if !blob_contract.is_accepted() {
+            error!("Blob {} rejected: {}", oid, blob_contract.summary());
+            return Err(FilterError::InvalidCharacter);
+        }
+
+        // Then, validate at line level if requested
+        if self.generate_line_contracts {
+            let (line_contracts, _) = self.line_validator.validate_blob_lines(&oid, content);
+
+            // Log line contract summary
+            let line_summary = self
+                .line_validator
+                .summarize_line_contracts(&line_contracts);
+            info!("Line contracts: {}", line_summary);
+
+            // Check if any lines are rejected
+            let rejected_lines: Vec<_> =
+                line_contracts.iter().filter(|c| c.is_rejected()).collect();
+
+            if !rejected_lines.is_empty() {
+                error!(
+                    "Found {} rejected lines in blob {}",
+                    rejected_lines.len(),
+                    oid
+                );
+                for line_contract in &rejected_lines {
+                    error!("  {}", line_contract.summary());
+                }
+                return Err(FilterError::InvalidCharacter);
+            }
+
+            // Log lines that need fixing
+            let fixed_lines: Vec<_> = line_contracts.iter().filter(|c| c.needs_fixing()).collect();
+
+            if !fixed_lines.is_empty() {
+                info!(
+                    "Found {} lines that need fixing in blob {}",
+                    fixed_lines.len(),
+                    oid
+                );
+                for line_contract in &fixed_lines {
+                    info!("  {}", line_contract.summary());
+                }
+            }
+
+            // Log detailed line contracts for debugging
+            debug!("Detailed line contracts for blob {}:", oid);
+            for line_contract in &line_contracts {
+                debug!("  {}", line_contract.summary());
+            }
+        }
+
+        info!(
+            "Successfully processed blob {} with CombinedContractFilter",
+            oid
+        );
+        Ok(processed_content)
+    }
+
+    fn name(&self) -> &str {
+        "combined-contract"
     }
 }
 

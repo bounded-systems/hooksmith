@@ -221,7 +221,7 @@ impl LineValidator {
 
         while i < line_content.len() {
             let byte = line_content[i];
-            let (allowed, forbidden) = Self::classify_byte(byte);
+            let (_allowed, forbidden) = Self::classify_byte(byte);
 
             // Check if character is forbidden
             if forbidden {
@@ -287,26 +287,22 @@ impl LineValidator {
         let mut line_number = 1;
         let mut byte_offset = 0;
 
-        // Split content into lines
-        let lines: Vec<&[u8]> = content.split(|&b| b == b'\n').collect();
+        // Split content into lines and process each line
+        let mut lines_iter = content.split(|&b| b == b'\n').peekable();
 
-        for (i, line) in lines.iter().enumerate() {
-            let is_last_line = i == lines.len() - 1;
+        while let Some(line) = lines_iter.next() {
+            let is_last_line = lines_iter.peek().is_none();
 
-            // For all lines except the last, include the newline
-            let line_with_newline = if is_last_line {
-                *line
-            } else {
-                // Include the newline character
-                let mut full_line = Vec::new();
-                full_line.extend_from_slice(line);
-                full_line.push(b'\n');
-                &full_line
-            };
+            // Create line with newline (except for the last line if it doesn't end with newline)
+            let mut line_with_newline = Vec::new();
+            line_with_newline.extend_from_slice(line);
+            if !is_last_line {
+                line_with_newline.push(b'\n');
+            }
 
             // Validate this line
             let (contract, processed_line) =
-                self.validate_line(oid, line_number, byte_offset, line_with_newline);
+                self.validate_line(oid, line_number, byte_offset, &line_with_newline);
 
             line_contracts.push(contract);
             processed_content.extend_from_slice(&processed_line);
