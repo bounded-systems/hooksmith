@@ -102,7 +102,8 @@ impl GitObjectContract {
             // Validate attribute format
             for attr in attrs {
                 if !Self::is_valid_attribute_format(attr) {
-                    self.errors.push(format!("Invalid attribute format: {}", attr));
+                    self.errors
+                        .push(format!("Invalid attribute format: {}", attr));
                     valid = false;
                 }
             }
@@ -304,12 +305,8 @@ impl GitObjectValidator {
         attributes: Option<Vec<String>>,
         filepath: Option<&str>,
     ) -> GitObjectContract {
-        let mut contract = GitObjectContract::new_with_attributes(
-            object_type,
-            oid,
-            size,
-            attributes,
-        );
+        let mut contract =
+            GitObjectContract::new_with_attributes(object_type, oid, size, attributes);
 
         if self.validate_attributes {
             contract.validate_attributes(filepath);
@@ -381,10 +378,7 @@ mod tests {
 
     #[test]
     fn test_git_object_contract_with_attributes() {
-        let attributes = vec![
-            "linguist-generated=true".to_string(),
-            "-diff".to_string(),
-        ];
+        let attributes = vec!["linguist-generated=true".to_string(), "-diff".to_string()];
 
         let mut contract = GitObjectContract::new_with_attributes(
             GitObjectType::Blob,
@@ -414,7 +408,10 @@ mod tests {
         // Generated file without linguist-generated=true should fail
         contract.validate_attributes(Some("target/build/file.js"));
         assert!(!contract.is_valid());
-        assert!(contract.errors.iter().any(|e| e.contains("linguist-generated=true")));
+        assert!(contract
+            .errors
+            .iter()
+            .any(|e| e.contains("linguist-generated=true")));
 
         // Generated file with linguist-generated=true should pass
         let mut contract2 = GitObjectContract::new_with_attributes(

@@ -187,11 +187,11 @@ fn demo_complete_workflow() -> Result<(), Box<dyn std::error::Error>> {
         // Source files (should not have linguist-generated=true)
         ("src/main.rs", "fn main() { println!(\"Hello, World!\"); }", None),
         ("src/lib.rs", "pub fn hello() { \"Hello\" }", None),
-        
+
         // Generated files (should have linguist-generated=true)
         ("target/build/app.js", "console.log('Hello, World!');", Some(vec!["linguist-generated=true".to_string(), "-diff".to_string()])),
         ("gen/proto/message.rs", "pub struct Message { pub content: String }", Some(vec!["linguist-generated=true".to_string()])),
-        
+
         // Generated file missing required attribute
         ("target/build/file.js", "console.log('Generated');", None),
     ];

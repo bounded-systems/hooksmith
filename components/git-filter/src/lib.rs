@@ -23,8 +23,16 @@ pub use contract::{CharacterContract, CharClass, CharAction, CharValidator, File
 pub use blob_contract::{BlobContract, BlobAction, BlobByteAudit, ByteClass, BlobValidator};
 pub use line_contract::{BlobLineContract, LineAction, LineValidator};
 pub use git_object_contract::{
-    GitObjectContract, BlobContract as GitBlobContract, BlobLineContract as GitBlobLineContract,
-    BlobChunkContract, DiffLine, DiffLineType, LineAction as GitLineAction, GitObjectValidator
+    GitObjectContract, BlobContract as GitBlobContract, GitObjectValidator
+};
+pub use blob_contract::{
+    BlobContract, BlobAction, BlobByteAudit, ByteClass, BlobValidator
+};
+pub use line_contract::{
+    BlobLineContract, LineAction, LineValidator
+};
+pub use git_object_contract::{
+    BlobChunkContract, DiffLine, DiffLineType
 };
 pub use tree_contract::{
     TreeMode, TreeObjectType, TreeEntryContract, TreeObjectContract, TreeValidator
