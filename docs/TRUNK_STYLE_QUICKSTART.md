@@ -1,0 +1,108 @@
+# Trunk-Style Commits Quick Start
+
+Get started with Trunk-style empty commit messages in 3 simple steps!
+
+## 🚀 Quick Setup
+
+### Step 1: Set up Git Aliases
+```bash
+cargo run -p xtask -- setup-git-aliases
+```
+
+### Step 2: Use Trunk-Style Commits
+```bash
+# Quick empty commit (Trunk-style)
+git cm
+
+# Commit with conventional message
+git cm -m 'feat: add new feature'
+
+# Quick empty commit (alternative)
+git ce
+```
+
+### Step 3: Enjoy! 🎉
+
+That's it! You can now:
+- ✅ **Commit with empty messages** (Trunk-style)
+- ✅ **Use conventional commits** when you want
+- ✅ **Get helpful reminders** about empty commits
+
+## 📋 Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `git cm` | Trunk-style commit (allows empty messages) |
+| `git cc` | Regular commit (requires message) |
+| `git ce` | Quick empty commit (Trunk-style) |
+
+## 💡 Usage Examples
+
+### Quick Development
+```bash
+# Make changes
+git add .
+git cm  # Empty commit for quick save
+```
+
+### Feature Development
+```bash
+# Start feature
+git checkout -b feature/new-feature
+
+# Quick commits during development
+git add .
+git cm  # Empty commit
+
+# Final commit with proper message
+git cm -m 'feat: implement new feature'
+```
+
+### Bug Fixes
+```bash
+# Quick fix
+git add .
+git cm  # Empty commit
+
+# Later, add proper message
+git commit --amend -m 'fix: resolve bug'
+```
+
+## 🔧 How It Works
+
+1. **Empty messages** are always allowed (Trunk-style)
+2. **Non-empty messages** are validated with conventional commit format
+3. **Post-commit reminders** help you remember to add details later
+4. **Git aliases** make it super convenient
+
+## 📚 Conventional Commit Format
+
+When you do add a message, use this format:
+```
+<type>(<scope>): <description>
+```
+
+**Examples:**
+- `feat(cli): add new command`
+- `fix(wasm): correct parsing bug`
+- `docs: update README`
+- `chore(ci): update GitHub Actions`
+
+**Supported Types:** `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`, `revert`
+
+## 🎯 Benefits
+
+- **Faster development** - no need to think of commit messages during rapid iteration
+- **Better quality** - conventional commits when it matters
+- **Flexible workflow** - use what works best for your situation
+- **Team friendly** - works with existing workflows
+
+## 🔍 Need More Info?
+
+- 📖 **Full Documentation**: See `docs/TRUNK_STYLE_COMMITS.md`
+- 🛠️ **Configuration**: Check `lefthook-example.yml`
+- 📝 **Examples**: Look at the usage examples above
+
+---
+
+**Happy coding! 🚀** 

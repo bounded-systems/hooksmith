@@ -12,6 +12,9 @@ pre-commit:
       run: cargo clippy --all-targets --all-features -- -D warnings
     test:
       run: cargo test --all-targets --all-features
+    contract-check:
+      run: cargo run -p xtask -- contract-check --staged-only --strict
+      description: "Validate contract compliance and migration progress"
 
 pre-push:
   parallel: true
@@ -31,11 +34,19 @@ post-push:
       run: hooksmith verify-hooks
       description: "Verify Hooksmith is properly registered in all Git hooks"
 
+# Post-commit hook for empty commit message reminders
+post-commit:
+  commands:
+    empty-commit-reminder:
+      run: |
+        if [ -z "$(git log -1 --pretty=%B)" ]; then
+          echo "✅ Empty commit message accepted (Trunk-style)."
+          echo "💡 Use 'git commit --amend' if you want to add details later."
+        fi
+      description: "Remind about empty commit messages (Trunk-style)"
+
 commit-msg:
   commands:
     conventional:
-      run: |
-        if ! grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+" "$1"; then
-          echo "Error: Commit message must follow conventional commit format"
-          exit 1
-        fi 
+      run: cargo run -p xtask -- validate-commit-msg --file "$1"
+      description: "Validate commit message (Trunk-style: allows empty messages)" 

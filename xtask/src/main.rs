@@ -321,6 +321,24 @@ enum Commands {
         #[arg(long, default_value = "true")]
         validate_conventional: bool,
     },
+    /// Set up git aliases for Trunk-style commit workflow
+    SetupGitAliases {
+        /// Whether to force overwrite existing aliases
+        #[arg(long)]
+        force: bool,
+    },
+    /// Validate documentation generation (replaces validate-docs.sh)
+    ValidateDocs {
+        /// Whether to exit with error on violations
+        #[arg(long)]
+        strict: bool,
+        /// Whether to regenerate documentation
+        #[arg(long)]
+        regenerate: bool,
+        /// Whether to check for uncommitted changes
+        #[arg(long, default_value = "true")]
+        check_uncommitted: bool,
+    },
 }
 
 /// WIT schema for function definition
@@ -573,6 +591,16 @@ async fn main() -> Result<()> {
             validate_conventional,
         } => {
             validate_commit_message(file, allow_empty, validate_conventional)?;
+        }
+        Commands::SetupGitAliases { force } => {
+            setup_git_aliases(force)?;
+        }
+        Commands::ValidateDocs {
+            strict,
+            regenerate,
+            check_uncommitted,
+        } => {
+            validate_documentation(strict, regenerate, check_uncommitted).await?;
         }
     }
 
@@ -3220,6 +3248,133 @@ async fn run_contract_check(
     if trend {
         println!("   • Check '{}' directory for trend data", trend_output);
     }
+
+    Ok(())
+}
+
+/// Validate commit message with Trunk-style empty message support
+fn validate_commit_message(
+    file: Option<String>,
+    allow_empty: bool,
+    validate_conventional: bool,
+) -> Result<()> {
+    // Determine the commit message file path
+    let file_path = match file {
+        Some(path) => path,
+        None => {
+            // Default to $1 from lefthook (first argument)
+            std::env::args()
+                .nth(1)
+                .ok_or_else(|| anyhow::anyhow!("No commit message file path provided"))?
+        }
+    };
+
+    // Read the commit message
+    let commit_msg = fs::read_to_string(&file_path)
+        .with_context(|| format!("Failed to read commit message file: {}", file_path))?;
+
+    // Trim whitespace and check if empty
+    let trimmed_msg = commit_msg.trim();
+
+    if trimmed_msg.is_empty() {
+        if allow_empty {
+            println!("ℹ️  Empty commit message allowed (Trunk-style)");
+            return Ok(());
+        } else {
+            anyhow::bail!("Empty commit messages are not allowed");
+        }
+    }
+
+    // If we have a non-empty message and conventional validation is enabled
+    if validate_conventional {
+        // Conventional commit regex pattern
+        let conventional_pattern = regex::Regex::new(
+            r"^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .+"
+        ).expect("Invalid regex pattern");
+
+        if !conventional_pattern.is_match(trimmed_msg) {
+            anyhow::bail!(
+                "Commit message must follow conventional commit format:\n\
+                \n\
+                Format: <type>(<scope>): <description>\n\
+                \n\
+                Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert\n\
+                \n\
+                Examples:\n\
+                • feat(cli): add new command\n\
+                • fix(wasm): correct parsing bug\n\
+                • docs: update README\n\
+                • chore(ci): update GitHub Actions\n\
+                \n\
+                Your message: {}\n\
+                \n\
+                Note: Empty commit messages are allowed (Trunk-style).",
+                trimmed_msg
+            );
+        }
+    }
+
+    println!("✅ Commit message validation passed");
+    Ok(())
+}
+
+/// Set up git aliases for Trunk-style commit workflow
+fn setup_git_aliases(force: bool) -> Result<()> {
+    println!("🔧 Setting up git aliases for Trunk-style commit workflow...");
+
+    // Check if we're in a git repository
+    let status = Command::new("git")
+        .args(["rev-parse", "--git-dir"])
+        .status()
+        .context("Failed to check git repository")?;
+
+    if !status.success() {
+        anyhow::bail!("Not in a git repository. Run this command from a git repository root.");
+    }
+
+    // Define aliases to set up
+    let aliases = vec![
+        ("cm", "!./scripts/git-trunk-commit.sh"),
+        ("cc", "commit"),
+        ("ce", "!./scripts/git-trunk-commit.sh --allow-empty-message"),
+    ];
+
+    for (alias, command) in aliases {
+        // Check if alias already exists
+        let existing = Command::new("git")
+            .args(["config", "--get", &format!("alias.{}", alias)])
+            .output()
+            .context("Failed to check existing alias")?;
+
+        if existing.status.success() && !force {
+            println!("   ⚠️  Alias '{}' already exists. Use --force to overwrite.", alias);
+            continue;
+        }
+
+        // Set the alias
+        let status = Command::new("git")
+            .args(["config", "alias", alias, command])
+            .status()
+            .with_context(|| format!("Failed to set alias '{}'", alias))?;
+
+        if status.success() {
+            println!("   ✅ Set alias 'git {}' -> '{}'", alias, command);
+        } else {
+            anyhow::bail!("Failed to set alias '{}'", alias);
+        }
+    }
+
+    println!("\n✅ Git aliases configured successfully!");
+    println!("\n🎯 Available commands:");
+    println!("   git cm [options]  - Commit with Trunk-style empty message support");
+    println!("   git cc [options]  - Regular commit (requires message)");
+    println!("   git ce [options]  - Quick empty commit (Trunk-style)");
+    println!("\n💡 Examples:");
+    println!("   git cm                    # Commit with empty message (Trunk-style)");
+    println!("   git cm -m 'feat: add feature'  # Commit with conventional message");
+    println!("   git ce                    # Quick empty commit");
+    println!("\n📚 The commit-msg hook will validate non-empty messages with conventional commit format");
+    println!("   Empty messages are always allowed (Trunk-style behavior)");
 
     Ok(())
 }
