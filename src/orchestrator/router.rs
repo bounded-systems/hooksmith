@@ -276,11 +276,11 @@ impl CommandRouter {
     /// Handle validate command
     fn handle_validate(
         args: Vec<String>,
-        components: &HashMap<String, ComponentHandle>,
+        _components: &HashMap<String, ComponentHandle>,
     ) -> Result<CommandResult> {
         let config_path = args.get(0).unwrap_or(&"lefthook.yml".to_string()).clone();
 
-        let config = ValidationConfig {
+        let _config = ValidationConfig {
             validation_type: super::ValidationType::LefthookConfig,
             data: format!("Validating configuration: {}", config_path),
             schema: None,
