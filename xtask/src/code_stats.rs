@@ -317,16 +317,16 @@ async fn analyze_code_stats() -> Result<CodeStats> {
     // Count lines of Rust code
     let rust_lines = count_rust_lines().await?;
     
-    // Count code elements using ripgrep
-    let functions = count_pattern("^ *(pub )?fn ").await?;
-    let structs = count_pattern("^ *(pub )?struct ").await?;
-    let enums = count_pattern("^ *(pub )?enum ").await?;
-    let modules = count_pattern("^ *(pub )?mod ").await?;
-    let traits = count_pattern("^ *(pub )?trait ").await?;
+    // Count code elements using grep
+    let functions = count_pattern("^ *fn ").await?;
+    let structs = count_pattern("^ *struct ").await?;
+    let enums = count_pattern("^ *enum ").await?;
+    let modules = count_pattern("^ *mod ").await?;
+    let traits = count_pattern("^ *trait ").await?;
     let impls = count_pattern("^ *impl ").await?;
-    let constants = count_pattern("^ *(pub )?const ").await?;
-    let type_aliases = count_pattern("^ *(pub )?type ").await?;
-    let macros = count_pattern("^ *(pub )?macro_rules! ").await?;
+    let constants = count_pattern("^ *const ").await?;
+    let type_aliases = count_pattern("^ *type ").await?;
+    let macros = count_pattern("^ *macro_rules! ").await?;
 
     Ok(CodeStats {
         total_lines: rust_lines,
@@ -345,64 +345,69 @@ async fn analyze_code_stats() -> Result<CodeStats> {
 
 /// Count lines of Rust code
 async fn count_rust_lines() -> Result<usize> {
-    let output = Command::new("find")
-        .args(&["src", "xtask/src", "components", "-name", "*.rs"])
+    // Change to the workspace root directory
+    let workspace_root = std::env::current_dir()?.join("..");
+
+    let output = Command::new("git")
+        .args(&["ls-files", "*.rs"])
+        .current_dir(&workspace_root)
         .output()
         .context("Failed to find Rust files")?;
 
     let files = String::from_utf8_lossy(&output.stdout);
-    let mut total_lines = 0;
-
-    for file in files.lines() {
-        if !file.trim().is_empty() {
-            let output = Command::new("wc")
-                .args(&["-l", file])
-                .output()
-                .context(format!("Failed to count lines in {}", file))?;
-            
-            let line_count: usize = String::from_utf8_lossy(&output.stdout)
-                .trim()
-                .split_whitespace()
-                .next()
-                .unwrap_or("0")
-                .parse()
-                .unwrap_or(0);
-            
-            total_lines += line_count;
-        }
+    if files.trim().is_empty() {
+        return Ok(0);
     }
 
-    Ok(total_lines)
+    let output = Command::new("wc")
+        .args(&["-l"])
+        .args(files.lines().collect::<Vec<_>>())
+        .current_dir(&workspace_root)
+        .output()
+        .context("Failed to count lines in Rust files")?;
+
+    let line_count: usize = String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .split_whitespace()
+        .next()
+        .unwrap_or("0")
+        .parse()
+        .unwrap_or(0);
+
+    Ok(line_count)
 }
 
-/// Count pattern occurrences using ripgrep
+/// Count pattern occurrences using grep
 async fn count_pattern(pattern: &str) -> Result<usize> {
-    let output = Command::new("rg")
-        .args(&["--count", pattern, "src", "xtask/src", "components"])
-        .output();
+    // Change to the workspace root directory
+    let workspace_root = std::env::current_dir()?.join("..");
 
-    match output {
-        Ok(output) => {
-            let count = String::from_utf8_lossy(&output.stdout)
-                .lines()
-                .map(|line| line.split(':').last().unwrap_or("0").parse::<usize>().unwrap_or(0))
-                .sum();
-            Ok(count)
-        }
-        Err(_) => {
-            // Fallback to grep if ripgrep is not available
-            let output = Command::new("grep")
-                .args(&["-r", "--count", pattern, "src", "xtask/src", "components"])
-                .output()
-                .context("Failed to count pattern occurrences")?;
-            
-            let count = String::from_utf8_lossy(&output.stdout)
-                .lines()
-                .map(|line| line.split(':').last().unwrap_or("0").parse::<usize>().unwrap_or(0))
-                .sum();
-            Ok(count)
-        }
+    // Get list of Rust files
+    let files_output = Command::new("git")
+        .args(&["ls-files", "*.rs"])
+        .current_dir(&workspace_root)
+        .output()
+        .context("Failed to get Rust files")?;
+
+    let files = String::from_utf8_lossy(&files_output.stdout);
+    if files.trim().is_empty() {
+        return Ok(0);
     }
+
+    // Count pattern in all Rust files
+    let output = Command::new("grep")
+        .args(&["-c", pattern])
+        .args(files.lines().collect::<Vec<_>>())
+        .current_dir(&workspace_root)
+        .output()
+        .context("Failed to count pattern occurrences")?;
+
+    let count = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(|line| line.split(':').last().unwrap_or("0").parse::<usize>().unwrap_or(0))
+        .sum();
+
+    Ok(count)
 }
 
 /// Run clippy analysis
@@ -534,20 +539,31 @@ async fn analyze_quality_metrics() -> Result<QualityMetrics> {
 
 /// Count function lines
 async fn count_function_lines() -> Result<usize> {
-    let output = Command::new("rg")
-        .args(&["-A", "1", "^ *(pub )?fn ", "src", "xtask/src", "components"])
-        .output();
+    // Change to the workspace root directory
+    let workspace_root = std::env::current_dir()?.join("..");
 
-    match output {
-        Ok(output) => {
-            let lines = String::from_utf8_lossy(&output.stdout).lines().count();
-            Ok(lines)
-        }
-        Err(_) => {
-            // Fallback
-            Ok(0)
-        }
+    // Get list of Rust files
+    let files_output = Command::new("git")
+        .args(&["ls-files", "*.rs"])
+        .current_dir(&workspace_root)
+        .output()
+        .context("Failed to get Rust files")?;
+
+    let files = String::from_utf8_lossy(&files_output.stdout);
+    if files.trim().is_empty() {
+        return Ok(0);
     }
+
+    // Count function lines using grep
+    let output = Command::new("grep")
+        .args(&["-A", "1", "^ *fn "])
+        .args(files.lines().collect::<Vec<_>>())
+        .current_dir(&workspace_root)
+        .output()
+        .context("Failed to count function lines")?;
+
+    let lines = String::from_utf8_lossy(&output.stdout).lines().count();
+    Ok(lines)
 }
 
 /// Calculate quality score (0-100)
