@@ -1,6 +1,6 @@
 //! README template for generating project documentation
 
-use super::{Template, ProjectData, ApiDocumentation, ExampleInfo};
+use super::{ApiDocumentation, ExampleInfo, ProjectData, Template};
 use std::fmt;
 
 /// README template that generates comprehensive project documentation
@@ -77,7 +77,7 @@ impl ReadmeTemplate {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let project_data = ProjectData::from_cargo_toml()?;
         let api_docs = ApiDocumentation::from_rust_sources()?;
-        
+
         Ok(Self {
             project_data,
             api_docs,
@@ -87,7 +87,7 @@ impl ReadmeTemplate {
             roadmap: Self::default_roadmap(),
         })
     }
-    
+
     /// Render the architecture diagram
     fn render_architecture(&self) -> String {
         r#"
@@ -103,35 +103,37 @@ impl ReadmeTemplate {
                        │   Binaries      │
                        └─────────────────┘
 ```
-"#.to_string()
+"#
+        .to_string()
     }
-    
+
     /// Render the features table
     fn render_features_table(&self) -> String {
         let mut table = String::new();
         table.push_str("| Feature | Status | Description |\n");
         table.push_str("|---------|--------|-------------|\n");
-        
+
         for feature in &self.features {
             table.push_str(&format!(
                 "| **{}** | {} | {} |\n",
-                feature.name,
-                feature.status,
-                feature.description
+                feature.name, feature.status, feature.description
             ));
         }
-        
+
         table
     }
-    
+
     /// Render the roadmap
     fn render_roadmap(&self) -> String {
         let mut roadmap = String::new();
-        
+
         for item in &self.roadmap {
-            roadmap.push_str(&format!("#### **{}: {}** {}\n", item.phase, item.title, item.status));
+            roadmap.push_str(&format!(
+                "#### **{}: {}** {}\n",
+                item.phase, item.title, item.status
+            ));
             roadmap.push_str(&format!("{}\n\n", item.description));
-            
+
             for (i, task) in item.items.iter().enumerate() {
                 let status = match item.status {
                     RoadmapStatus::Complete => "✅",
@@ -142,10 +144,10 @@ impl ReadmeTemplate {
             }
             roadmap.push_str("\n");
         }
-        
+
         roadmap
     }
-    
+
     /// Default features for Hooksmith
     fn default_features() -> Vec<Feature> {
         vec![
@@ -216,7 +218,7 @@ impl ReadmeTemplate {
             },
         ]
     }
-    
+
     /// Default project status
     fn default_status() -> ProjectStatus {
         ProjectStatus {
@@ -225,7 +227,7 @@ impl ReadmeTemplate {
             features: Self::default_features(),
         }
     }
-    
+
     /// Default roadmap
     fn default_roadmap() -> Vec<RoadmapItem> {
         vec![
@@ -325,7 +327,7 @@ impl Template for ReadmeTemplate {
     fn name(&self) -> &str {
         "readme"
     }
-    
+
     fn validate(&self) -> super::Result<()> {
         if self.project_data.name.is_empty() {
             return Err(anyhow::anyhow!("Project name cannot be empty"));
@@ -428,7 +430,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
             self.render_examples(),
         )
     }
-    
+
     /// Render examples section
     fn render_examples(&self) -> String {
         if self.examples.is_empty() {
@@ -436,7 +438,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
         } else {
             let mut examples = String::new();
             for example in &self.examples {
-                examples.push_str(&format!("### {}\n\n{}\n\n", example.name, example.description));
+                examples.push_str(&format!(
+                    "### {}\n\n{}\n\n",
+                    example.name, example.description
+                ));
                 examples.push_str(&format!("```rust\n{}\n```\n\n", example.code));
                 if let Some(output) = &example.output {
                     examples.push_str(&format!("Output:\n\n```\n{}\n```\n\n", output));
@@ -445,4 +450,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
             examples
         }
     }
-} 
+}

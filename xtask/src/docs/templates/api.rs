@@ -1,6 +1,6 @@
 //! API documentation template
 
-use super::{Template, ModuleInfo, PublicItem, ItemType};
+use super::{ItemType, ModuleInfo, PublicItem, Template};
 use std::fmt;
 
 /// API documentation template
@@ -19,21 +19,21 @@ impl ApiTemplate {
             description: description.to_string(),
         }
     }
-    
+
     /// Add a module to the API documentation
     pub fn add_module(&mut self, module: ModuleInfo) {
         self.modules.push(module);
     }
-    
+
     /// Render the API documentation as Markdown
     pub fn render(&self) -> String {
         let mut output = String::new();
-        
+
         output.push_str(&format!("# {}\n\n{}\n\n", self.title, self.description));
-        
+
         for module in &self.modules {
             output.push_str(&format!("## {}\n\n{}\n\n", module.name, module.description));
-            
+
             for item in &module.public_items {
                 output.push_str(&format!("### {}\n\n{}\n\n", item.name, item.description));
                 if let Some(sig) = &item.signature {
@@ -41,7 +41,7 @@ impl ApiTemplate {
                 }
             }
         }
-        
+
         output
     }
 }
@@ -50,7 +50,7 @@ impl Template for ApiTemplate {
     fn name(&self) -> &str {
         "api"
     }
-    
+
     fn validate(&self) -> super::Result<()> {
         if self.title.is_empty() {
             return Err(anyhow::anyhow!("API title cannot be empty"));
@@ -66,4 +66,4 @@ impl fmt::Display for ApiTemplate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.render())
     }
-} 
+}

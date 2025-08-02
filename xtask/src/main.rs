@@ -439,7 +439,7 @@ async fn main() -> Result<()> {
         }
         Commands::GenTemplates { template, output_dir, overwrite } => {
             println!("⚠️  Template generation not implemented yet");
-            println!("   Template: {}", template);
+            println!("   Template: {:?}", template);
             println!("   Output dir: {}", output_dir);
             println!("   Overwrite: {}", overwrite);
         }
