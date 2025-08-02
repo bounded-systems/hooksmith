@@ -199,76 +199,26 @@ pub struct TreeObjectContract {
 }
 
 impl TreeObjectContract {
-    /// Create a new tree object contract
-    pub fn new(id: String, entries: Vec<TreeEntryContract>) -> Self {
-        let (valid, errors) = Self::validate_tree(&entries);
-
-        Self {
-            id,
-            entries,
-            valid,
-            errors,
-        }
-    }
-
-    /// Validate a tree object
-    fn validate_tree(entries: &[TreeEntryContract]) -> (bool, Vec<String>) {
-        let mut errors = Vec::new();
-
-        // Check if all entries are valid
-        let invalid_entries: Vec<_> = entries.iter().filter(|e| !e.is_valid()).collect();
-        if !invalid_entries.is_empty() {
-            errors.push(format!("{} invalid entries found", invalid_entries.len()));
-            for entry in invalid_entries {
-                errors.extend(
-                    entry
-                        .errors
-                        .iter()
-                        .map(|e| format!("Entry '{}': {}", entry.filename, e)),
-                );
-            }
-        }
-
-        // Check for duplicate filenames
-        let mut filenames: Vec<_> = entries.iter().map(|e| &e.filename).collect();
-        filenames.sort();
-        filenames.dedup();
-        if filenames.len() != entries.len() {
-            errors.push("Duplicate filenames found in tree".to_string());
-        }
-
-        // Check if entries are sorted (Git requirement)
-        let mut sorted_entries: Vec<_> = entries.iter().map(|e| &e.filename).collect();
-        sorted_entries.sort();
-        let current_entries: Vec<_> = entries.iter().map(|e| &e.filename).collect();
-        if sorted_entries != current_entries {
-            errors.push("Tree entries are not sorted by filename".to_string());
-        }
-
-        let valid = errors.is_empty();
-        (valid, errors)
+    /// Create a new tree object contract (flat list of entries)
+    pub fn new(entries: Vec<TreeEntryContract>) -> Self {
+        Self { entries }
     }
 
     /// Get a summary of the tree object contract
     pub fn summary(&self) -> String {
-        if self.valid {
-            format!(
-                "✅ Tree {} valid ({} entries)",
-                &self.id[..self.id.len().min(8)],
-                self.entries.len()
-            )
+        let valid_entries = self.entries.iter().filter(|e| e.is_valid()).count();
+        let total_entries = self.entries.len();
+
+        if valid_entries == total_entries {
+            format!("✅ Tree valid ({} entries)", total_entries)
         } else {
-            format!(
-                "❌ Tree {} invalid: {}",
-                &self.id[..self.id.len().min(8)],
-                self.errors.join(", ")
-            )
+            format!("❌ Tree invalid ({} valid / {} total entries)", valid_entries, total_entries)
         }
     }
 
-    /// Check if the tree is valid
+    /// Check if all entries are valid
     pub fn is_valid(&self) -> bool {
-        self.valid
+        self.entries.iter().all(|e| e.is_valid())
     }
 
     /// Get entries by type
@@ -292,6 +242,19 @@ impl TreeObjectContract {
     /// Find entry by filename
     pub fn find_entry(&self, filename: &str) -> Option<&TreeEntryContract> {
         self.entries.iter().find(|e| e.filename == filename)
+    }
+
+    /// Get validation errors from all entries
+    pub fn get_errors(&self) -> Vec<String> {
+        let mut errors = Vec::new();
+        for entry in &self.entries {
+            if !entry.is_valid() {
+                for error in &entry.errors {
+                    errors.push(format!("Entry '{}': {}", entry.filename, error));
+                }
+            }
+        }
+        errors
     }
 }
 
@@ -333,7 +296,6 @@ impl TreeValidator {
     /// Create a tree object from raw entries
     pub fn create_tree_object(
         &self,
-        id: &str,
         raw_entries: Vec<(String, String, String)>, // (mode, filename, object_id)
     ) -> TreeObjectContract {
         let entries: Vec<TreeEntryContract> = raw_entries
@@ -341,7 +303,7 @@ impl TreeValidator {
             .map(|(mode, filename, object_id)| TreeEntryContract::new(&mode, filename, object_id))
             .collect();
 
-        TreeObjectContract::new(id.to_string(), entries)
+        TreeObjectContract::new(entries)
     }
 
     /// Get a summary of tree validation results
@@ -444,9 +406,8 @@ mod tests {
             ),
         ];
 
-        let tree = TreeObjectContract::new("tree123".to_string(), entries);
+        let tree = TreeObjectContract::new(entries);
 
-        assert_eq!(tree.id, "tree123");
         assert_eq!(tree.entries.len(), 2);
         assert!(tree.is_valid());
         assert_eq!(tree.get_blob_entries().len(), 1);
@@ -469,7 +430,7 @@ mod tests {
             ),
         ];
 
-        let tree = validator.create_tree_object("tree123", raw_entries);
+        let tree = validator.create_tree_object(raw_entries);
 
         assert!(tree.is_valid());
         assert_eq!(tree.entries.len(), 2);
