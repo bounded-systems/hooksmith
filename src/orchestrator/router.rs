@@ -158,7 +158,7 @@ impl CommandRouter {
     /// Handle worktree command
     fn handle_worktree(
         args: Vec<String>,
-        components: &HashMap<String, ComponentHandle>,
+        _components: &HashMap<String, ComponentHandle>,
     ) -> Result<CommandResult> {
         if args.is_empty() {
             return Ok(CommandResult {
@@ -184,7 +184,7 @@ impl CommandRouter {
                 }
 
                 let branch_name = &operation_args[0];
-                let op = WorktreeOperation::Create {
+                let _op = WorktreeOperation::Create {
                     branch_name: branch_name.clone(),
                     base_path: None,
                     tool: None,
