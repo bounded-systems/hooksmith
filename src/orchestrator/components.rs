@@ -17,6 +17,7 @@ pub struct ComponentHandle {
     /// Component name
     name: String,
     /// WASM engine reference
+    #[allow(dead_code)]
     engine: Engine,
     /// Component metadata
     metadata: ComponentMetadata,
