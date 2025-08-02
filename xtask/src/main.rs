@@ -11,6 +11,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+mod hierarchical_validation;
+
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
 #[command(name = "xtask")]
@@ -108,6 +110,11 @@ enum Commands {
         /// Validate all configurations
         #[arg(long)]
         all: bool,
+    },
+    /// Hierarchical contract validation
+    ContractValidate {
+        #[command(subcommand)]
+        command: hierarchical_validation::Commands,
     },
 }
 
@@ -222,7 +229,8 @@ impl Default for LefthookConfig {
     }
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
@@ -255,6 +263,9 @@ fn main() -> Result<()> {
         }
         Commands::Validate { trunk, cargo, modules, all } => {
             validate_project_config(trunk, cargo, modules, all)?;
+        }
+        Commands::ContractValidate { command } => {
+            hierarchical_validation::run_command(command).await?;
         }
     }
 
