@@ -1,0 +1,310 @@
+use git_filter::{
+    blob_contract::{BlobContract, BlobValidator},
+    git_object_contract::{GitObjectContract, GitObjectType, GitObjectValidator},
+    tree_contract::{TreeEntryContract, TreeObjectContract, TreeValidator},
+};
+
+#[test]
+fn test_generated_file_validation() {
+    let tree_validator = TreeValidator::new(true, true, true);
+    let git_validator = GitObjectValidator::new(true, true, tree_validator);
+
+    // Test cases: (filepath, is_generated, should_have_linguist, expected_valid)
+    let test_cases = vec![
+        ("target/build/app.js", true, true, true),   // Generated with linguist=true -> valid
+        ("gen/proto/message.rs", true, true, true),  // Generated with linguist=true -> valid
+        ("dist/bundle.js", true, true, true),        // Generated with linguist=true -> valid
+        ("src/main.rs", false, false, true),         // Source without linguist=true -> valid
+        ("docs/README.md", false, false, true),      // Docs without linguist=true -> valid
+        ("target/build/file.js", true, false, false), // Generated without linguist=true -> invalid
+        ("src/main.rs", false, true, true),          // Source with linguist=true -> warning but valid
+    ];
+
+    for (filepath, is_generated, should_have_linguist, expected_valid) in test_cases {
+        let attributes = if should_have_linguist {
+            Some(vec!["linguist-generated=true".to_string()])
+        } else {
+            None
+        };
+
+        // Create a valid SHA-1 hash for testing
+        let oid = format!("{:040x}", filepath.len() as u64);
+
+        let contract = git_validator.validate_object(
+            GitObjectType::Blob,
+            oid,
+            1024,
+            attributes,
+            Some(filepath),
+        );
+
+        assert_eq!(
+            contract.is_valid(),
+            expected_valid,
+            "File: {}, Generated: {}, HasLinguist: {}, Expected: {}, Got: {}",
+            filepath,
+            is_generated,
+            should_have_linguist,
+            expected_valid,
+            contract.is_valid()
+        );
+
+        if !expected_valid {
+            assert!(
+                contract.errors.iter().any(|e| e.contains("linguist-generated=true")),
+                "Expected validation error for file: {}",
+                filepath
+            );
+        }
+    }
+}
+
+#[test]
+fn test_tree_entry_attributes() {
+    // Test generated file with correct attributes
+    let entry = TreeEntryContract::new_with_attributes(
+        "100644",
+        "target/build/app.js".to_string(),
+        "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+        Some(vec![
+            "linguist-generated=true".to_string(),
+            "-diff".to_string(),
+        ]),
+    );
+
+    assert!(entry.is_valid());
+    assert!(entry.has_attribute("linguist-generated=true"));
+    assert!(entry.has_attribute("-diff"));
+    assert_eq!(entry.get_attribute_value("linguist-generated"), Some("true"));
+
+    // Test generated file without required attributes
+    let entry2 = TreeEntryContract::new_with_attributes(
+        "100644",
+        "target/build/file.js".to_string(),
+        "b2c3d4e5f6789012345678901234567890abcde".to_string(),
+        None,
+    );
+
+    // The entry should be invalid due to missing linguist-generated=true
+    assert!(!entry2.is_valid());
+    // Check that the error message contains the expected text
+    let has_linguist_error = entry2.errors.iter().any(|e| e.contains("linguist-generated=true"));
+    if !has_linguist_error {
+        println!("Entry2 errors: {:?}", entry2.errors);
+    }
+    assert!(has_linguist_error);
+}
+
+#[test]
+fn test_blob_contract_attributes() {
+    let mut blob = BlobContract::new_with_attributes(
+        "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+        1024,
+        Some(vec![
+            "linguist-generated=true".to_string(),
+            "-diff".to_string(),
+        ]),
+    );
+
+    // Test validation for generated file path
+    let is_valid = blob.validate_attributes_for_path("target/build/app.js");
+    assert!(is_valid);
+
+    // Test validation for non-generated file path
+    let is_valid2 = blob.validate_attributes_for_path("src/main.rs");
+    assert!(is_valid2); // Should be valid but might generate warnings
+
+    // Test blob without linguist-generated for generated file
+    let mut blob2 = BlobContract::new(
+        "b2c3d4e5f6789012345678901234567890abcde".to_string(),
+        1024,
+    );
+    let is_valid3 = blob2.validate_attributes_for_path("target/build/file.js");
+    assert!(!is_valid3);
+}
+
+#[test]
+fn test_attribute_format_validation() {
+    let tree_validator = TreeValidator::new(true, true, true);
+    let git_validator = GitObjectValidator::new(true, true, tree_validator);
+
+    // Test valid attributes
+    let valid_attributes = vec![
+        "linguist-generated=true",
+        "linguist-generated=false",
+        "-diff",
+        "-merge",
+        "-export-ignore",
+        "-export-subst",
+        "linguist-vendored=true",
+        "custom-attribute=value",
+    ];
+
+    for attr in valid_attributes {
+        let contract = git_validator.validate_object(
+            GitObjectType::Blob,
+            "test_hash".to_string(),
+            1024,
+            Some(vec![attr.to_string()]),
+            Some("test/file.txt"),
+        );
+        assert!(contract.is_valid(), "Attribute '{}' should be valid", attr);
+    }
+
+    // Test invalid attributes
+    let invalid_attributes = vec![
+        "invalid-attribute",
+        "linguist-generated=invalid",
+        "=value",
+        "key=",
+    ];
+
+    for attr in invalid_attributes {
+        let contract = git_validator.validate_object(
+            GitObjectType::Blob,
+            "test_hash".to_string(),
+            1024,
+            Some(vec![attr.to_string()]),
+            Some("test/file.txt"),
+        );
+        assert!(!contract.is_valid(), "Attribute '{}' should be invalid", attr);
+    }
+}
+
+#[test]
+fn test_generated_file_patterns() {
+    let tree_validator = TreeValidator::new(true, true, true);
+    let git_validator = GitObjectValidator::new(true, true, tree_validator);
+
+    // Test directory patterns
+    let directory_patterns = vec![
+        "target/file.js",
+        "gen/proto/message.rs",
+        "generated/api/client.ts",
+        "build/dist/app.js",
+        "dist/bundle.js",
+        "node_modules/react/index.js",
+        ".git/hooks/pre-commit",
+    ];
+
+    for filepath in directory_patterns {
+        let contract = git_validator.validate_object(
+            GitObjectType::Blob,
+            "test_hash".to_string(),
+            1024,
+            None, // No linguist-generated attribute
+            Some(filepath),
+        );
+        assert!(!contract.is_valid(), "Generated file '{}' should require linguist-generated=true", filepath);
+    }
+
+    // Test file patterns
+    let file_patterns = vec![
+        "app.min.js",
+        "styles.min.css",
+        "bundle.js",
+        "vendor.bundle.css",
+    ];
+
+    for filepath in file_patterns {
+        let contract = git_validator.validate_object(
+            GitObjectType::Blob,
+            "test_hash".to_string(),
+            1024,
+            None, // No linguist-generated attribute
+            Some(filepath),
+        );
+        assert!(!contract.is_valid(), "Generated file '{}' should require linguist-generated=true", filepath);
+    }
+
+    // Test non-generated files
+    let non_generated_files = vec![
+        "src/main.rs",
+        "docs/README.md",
+        "tests/test.rs",
+        "examples/demo.rs",
+        "Cargo.toml",
+        ".gitignore",
+    ];
+
+    for filepath in non_generated_files {
+        let contract = git_validator.validate_object(
+            GitObjectType::Blob,
+            "test_hash".to_string(),
+            1024,
+            None, // No linguist-generated attribute
+            Some(filepath),
+        );
+        assert!(contract.is_valid(), "Non-generated file '{}' should be valid without linguist-generated=true", filepath);
+    }
+}
+
+#[test]
+fn test_complete_workflow() {
+    let tree_validator = TreeValidator::new(true, true, true);
+    let git_validator = GitObjectValidator::new(true, true, tree_validator);
+    let blob_validator = BlobValidator::new(true, true, 0.1, false);
+
+    // Simulate a commit with multiple files
+    let commit_files = vec![
+        ("src/main.rs", "fn main() { }", None),
+        ("target/build/app.js", "console.log('Hello');", Some(vec!["linguist-generated=true".to_string()])),
+        ("target/build/file.js", "console.log('Generated');", None), // Missing attribute
+    ];
+
+    let mut all_contracts = Vec::new();
+    let mut tree_entries = Vec::new();
+
+    for (filepath, content, attributes) in commit_files {
+        // Create blob contract
+        let (blob_contract, _) = blob_validator.validate_blob_simple(
+            &format!("hash_{}", filepath.replace('/', "_")),
+            content.as_bytes(),
+        );
+
+        // Add attributes to blob
+        if let Some(attrs) = attributes {
+            let mut blob_with_attrs = blob_contract.clone();
+            blob_with_attrs.add_attributes(attrs.clone());
+            blob_with_attrs.validate_attributes_for_path(filepath);
+
+            // Create tree entry
+            let tree_entry = TreeEntryContract::new_with_attributes(
+                "100644",
+                filepath.to_string(),
+                blob_with_attrs.oid.clone(),
+                Some(attrs),
+            );
+
+            // Create git object contract
+            let git_contract = git_validator.validate_blob(&blob_with_attrs, Some(filepath));
+            all_contracts.push(git_contract);
+            tree_entries.push(tree_entry);
+        } else {
+            // Create tree entry without attributes
+            let tree_entry = TreeEntryContract::new(
+                "100644",
+                filepath.to_string(),
+                blob_contract.oid.clone(),
+            );
+
+            // Create git object contract
+            let git_contract = git_validator.validate_blob(&blob_contract, Some(filepath));
+            all_contracts.push(git_contract);
+            tree_entries.push(tree_entry);
+        }
+    }
+
+    // Create tree object
+    let tree_object = TreeObjectContract::new(tree_entries);
+
+    // Verify results
+    let valid_count = all_contracts.iter().filter(|c| c.is_valid()).count();
+    assert_eq!(valid_count, 2, "Expected 2 valid contracts, got {}", valid_count);
+
+    let invalid_count = all_contracts.iter().filter(|c| !c.is_valid()).count();
+    assert_eq!(invalid_count, 1, "Expected 1 invalid contract, got {}", invalid_count);
+
+    // Verify tree object has the expected number of entries
+    assert_eq!(tree_object.entries.len(), 3, "Expected 3 tree entries, got {}", tree_object.entries.len());
+} 

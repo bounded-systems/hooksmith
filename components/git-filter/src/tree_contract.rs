@@ -116,12 +116,21 @@ impl TreeEntryContract {
         let (mode_enum, mut valid, mut errors) = Self::validate_entry(mode, &filename, &object_id);
         let object_type = mode_enum.object_type();
 
-        // Validate attributes if provided
+        // Validate attributes if provided, or check if generated files need attributes
         if let Some(ref attrs) = attributes {
             let (attr_valid, attr_errors) = Self::validate_attributes(&filename, attrs);
             if !attr_valid {
                 valid = false;
                 errors.extend(attr_errors);
+            }
+        } else {
+            // Check if this is a generated file that needs linguist-generated=true
+            if Self::is_generated_file(&filename) {
+                errors.push(format!(
+                    "Generated file '{}' must have 'linguist-generated=true' attribute",
+                    filename
+                ));
+                valid = false;
             }
         }
 
@@ -156,12 +165,21 @@ impl TreeEntryContract {
             ));
         }
 
-        // Validate attributes if provided
+        // Validate attributes if provided, or check if generated files need attributes
         if let Some(ref attrs) = attributes {
             let (attr_valid, attr_errors) = Self::validate_attributes(&filename, attrs);
             if !attr_valid {
                 valid = false;
                 errors.extend(attr_errors);
+            }
+        } else {
+            // Check if this is a generated file that needs linguist-generated=true
+            if Self::is_generated_file(&filename) {
+                errors.push(format!(
+                    "Generated file '{}' must have 'linguist-generated=true' attribute",
+                    filename
+                ));
+                valid = false;
             }
         }
 
