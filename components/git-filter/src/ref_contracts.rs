@@ -1,5 +1,5 @@
-use regex::Regex;
 use once_cell::sync::Lazy;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 // ============================================================================
@@ -12,19 +12,15 @@ pub static VALID_REF_NAME_RE: Lazy<Regex> = Lazy::new(|| {
 });
 
 /// Valid branch name regex pattern (simplified, allows alphanumeric, hyphens, underscores)
-pub static VALID_BRANCH_NAME_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap()
-});
+pub static VALID_BRANCH_NAME_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap());
 
 /// Valid tag name regex pattern
-pub static VALID_TAG_NAME_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^[a-zA-Z0-9._-]+$").unwrap()
-});
+pub static VALID_TAG_NAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[a-zA-Z0-9._-]+$").unwrap());
 
 /// Valid remote name regex pattern
-pub static VALID_REMOTE_NAME_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap()
-});
+pub static VALID_REMOTE_NAME_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap());
 
 // ============================================================================
 // Ref Types and Enums
@@ -64,7 +60,15 @@ impl RefType {
             Some(RefType::Note)
         } else if name == "refs/stash" {
             Some(RefType::Stash)
-        } else if matches!(name, "ORIG_HEAD" | "MERGE_HEAD" | "CHERRY_PICK_HEAD" | "REBASE_HEAD" | "FETCH_HEAD" | "AUTO_MERGE") {
+        } else if matches!(
+            name,
+            "ORIG_HEAD"
+                | "MERGE_HEAD"
+                | "CHERRY_PICK_HEAD"
+                | "REBASE_HEAD"
+                | "FETCH_HEAD"
+                | "AUTO_MERGE"
+        ) {
             Some(RefType::PseudoRef)
         } else {
             None
@@ -191,16 +195,14 @@ impl RefNameContract {
     /// Get a summary of the ref name contract
     pub fn summary(&self) -> String {
         if self.valid {
-            let ref_type_desc = self.ref_type.as_ref()
+            let ref_type_desc = self
+                .ref_type
+                .as_ref()
                 .map(|rt| rt.description())
                 .unwrap_or("Unknown");
             format!("✅ Ref '{}' valid ({})", self.name, ref_type_desc)
         } else {
-            format!(
-                "❌ Ref '{}' invalid: {}",
-                self.name,
-                self.errors.join(", ")
-            )
+            format!("❌ Ref '{}' invalid: {}", self.name, self.errors.join(", "))
         }
     }
 
@@ -268,7 +270,8 @@ impl RefTargetContract {
 
     /// Create a new ref target contract for a symbolic reference
     pub fn new_symbolic(ref_name: String, symbolic_target: String) -> Self {
-        let (expected_type, valid, errors) = Self::validate_symbolic_target(&ref_name, &symbolic_target);
+        let (expected_type, valid, errors) =
+            Self::validate_symbolic_target(&ref_name, &symbolic_target);
         Self {
             ref_name,
             target_oid: String::new(),
@@ -299,7 +302,10 @@ impl RefTargetContract {
     }
 
     /// Validate a symbolic target
-    fn validate_symbolic_target(ref_name: &str, symbolic_target: &str) -> (String, bool, Vec<String>) {
+    fn validate_symbolic_target(
+        ref_name: &str,
+        symbolic_target: &str,
+    ) -> (String, bool, Vec<String>) {
         let mut errors = Vec::new();
 
         // Check if symbolic target is a valid ref name
@@ -476,13 +482,37 @@ impl RefMetaContract {
         // Validate storage type consistency
         match storage_type {
             RefStorageType::PseudoRef => {
-                if !matches!(ref_name, "HEAD" | "ORIG_HEAD" | "MERGE_HEAD" | "CHERRY_PICK_HEAD" | "REBASE_HEAD" | "FETCH_HEAD" | "AUTO_MERGE") {
-                    errors.push(format!("Pseudoref storage type inconsistent with ref name: {}", ref_name));
+                if !matches!(
+                    ref_name,
+                    "HEAD"
+                        | "ORIG_HEAD"
+                        | "MERGE_HEAD"
+                        | "CHERRY_PICK_HEAD"
+                        | "REBASE_HEAD"
+                        | "FETCH_HEAD"
+                        | "AUTO_MERGE"
+                ) {
+                    errors.push(format!(
+                        "Pseudoref storage type inconsistent with ref name: {}",
+                        ref_name
+                    ));
                 }
             }
             RefStorageType::Loose | RefStorageType::Packed => {
-                if matches!(ref_name, "HEAD" | "ORIG_HEAD" | "MERGE_HEAD" | "CHERRY_PICK_HEAD" | "REBASE_HEAD" | "FETCH_HEAD" | "AUTO_MERGE") {
-                    errors.push(format!("Regular storage type inconsistent with pseudoref name: {}", ref_name));
+                if matches!(
+                    ref_name,
+                    "HEAD"
+                        | "ORIG_HEAD"
+                        | "MERGE_HEAD"
+                        | "CHERRY_PICK_HEAD"
+                        | "REBASE_HEAD"
+                        | "FETCH_HEAD"
+                        | "AUTO_MERGE"
+                ) {
+                    errors.push(format!(
+                        "Regular storage type inconsistent with pseudoref name: {}",
+                        ref_name
+                    ));
                 }
             }
         }
@@ -494,16 +524,19 @@ impl RefMetaContract {
     /// Get a summary of the ref meta contract
     pub fn summary(&self) -> String {
         if self.valid {
-            let mut parts = vec![format!("✅ Ref '{}' ({:?})", self.ref_name, self.storage_type)];
-            
+            let mut parts = vec![format!(
+                "✅ Ref '{}' ({:?})",
+                self.ref_name, self.storage_type
+            )];
+
             if let Some(upstream) = &self.upstream {
                 parts.push(format!("upstream: {}/{}", upstream.remote, upstream.branch));
             }
-            
+
             if let Some(reflog) = &self.reflog {
                 parts.push(format!("reflog: {} entries", reflog.entry_count));
             }
-            
+
             parts.join(", ")
         } else {
             format!(
@@ -556,17 +589,13 @@ pub struct RefContract {
 
 impl RefContract {
     /// Create a new ref contract
-    pub fn new(
-        ref_name: String,
-        target_oid: String,
-        storage_type: RefStorageType,
-    ) -> Self {
+    pub fn new(ref_name: String, target_oid: String, storage_type: RefStorageType) -> Self {
         let name = RefNameContract::new(ref_name.clone());
         let target = RefTargetContract::new_direct(ref_name.clone(), target_oid);
         let metadata = RefMetaContract::new(ref_name, storage_type);
-        
+
         let (valid, errors) = Self::validate_ref_contract(&name, &target, &metadata);
-        
+
         Self {
             name,
             target,
@@ -585,9 +614,9 @@ impl RefContract {
         let name = RefNameContract::new(ref_name.clone());
         let target = RefTargetContract::new_symbolic(ref_name.clone(), symbolic_target);
         let metadata = RefMetaContract::new(ref_name, storage_type);
-        
+
         let (valid, errors) = Self::validate_ref_contract(&name, &target, &metadata);
-        
+
         Self {
             name,
             target,
@@ -609,11 +638,11 @@ impl RefContract {
         if !name.is_valid() {
             errors.extend(name.errors.clone());
         }
-        
+
         if !target.is_valid() {
             errors.extend(target.errors.clone());
         }
-        
+
         if !metadata.is_valid() {
             errors.extend(metadata.errors.clone());
         }
@@ -641,7 +670,10 @@ impl RefContract {
             format!(
                 "✅ Ref '{}' valid ({})",
                 self.name.name,
-                self.name.get_ref_type().map(|rt| rt.description()).unwrap_or("Unknown")
+                self.name
+                    .get_ref_type()
+                    .map(|rt| rt.description())
+                    .unwrap_or("Unknown")
             )
         } else {
             format!(
@@ -734,7 +766,10 @@ impl RefValidator {
     /// Get a summary of validation results
     pub fn summarize_validation(&self, ref_contracts: &[RefContract]) -> String {
         let total = ref_contracts.len();
-        let valid = ref_contracts.iter().filter(|r| self.validate_ref(r)).count();
+        let valid = ref_contracts
+            .iter()
+            .filter(|r| self.validate_ref(r))
+            .count();
         let invalid = total - valid;
 
         let mut type_counts = std::collections::HashMap::new();
@@ -751,7 +786,10 @@ impl RefValidator {
 
         format!(
             "Refs: {} total ({} valid, {} invalid) - {}",
-            total, valid, invalid, type_summary.join(", ")
+            total,
+            valid,
+            invalid,
+            type_summary.join(", ")
         )
     }
 }
@@ -780,20 +818,15 @@ mod tests {
         assert!(direct_target.is_valid());
         assert!(!direct_target.is_symbolic);
 
-        let symbolic_target = RefTargetContract::new_symbolic(
-            "HEAD".to_string(),
-            "refs/heads/main".to_string(),
-        );
+        let symbolic_target =
+            RefTargetContract::new_symbolic("HEAD".to_string(), "refs/heads/main".to_string());
         assert!(symbolic_target.is_valid());
         assert!(symbolic_target.is_symbolic);
     }
 
     #[test]
     fn test_ref_meta_contract() {
-        let meta = RefMetaContract::new(
-            "refs/heads/main".to_string(),
-            RefStorageType::Loose,
-        );
+        let meta = RefMetaContract::new("refs/heads/main".to_string(), RefStorageType::Loose);
         assert!(meta.is_valid());
 
         let upstream_info = UpstreamInfo {
@@ -860,4 +893,4 @@ mod tests {
         assert!(summary.contains("Branch"));
         assert!(summary.contains("Head"));
     }
-} 
+}

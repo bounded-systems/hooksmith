@@ -15,6 +15,7 @@ pub mod tree_contract;
 pub mod filename_contract;
 pub mod tree_filename_chars_contract;
 pub mod unified_contracts;
+pub mod ref_contracts;
 
 pub use state::{FileState, AttributeState};
 pub use actions::{ActionResolver, HookAction};
@@ -35,6 +36,20 @@ pub use filename_contract::{
 pub use tree_filename_chars_contract::{
     CharContract, TreeFilenameContractChars, TreeFilenameCharsValidator
 };
+pub use unified_contracts::{
+    SHA1_RE, VALID_FILENAME_RE, VALID_CHAR_RE,
+    BlobLineContract as UnifiedBlobLineContract, BlobContract as UnifiedBlobContract,
+    TreeMode as UnifiedTreeMode, TreeEntryContract as UnifiedTreeEntryContract, TreeContract as UnifiedTreeContract,
+    CommitContract, TagContract,
+    GitObject, UnifiedValidator
+};
+pub use ref_contracts::{
+    VALID_REF_NAME_RE, VALID_BRANCH_NAME_RE, VALID_TAG_NAME_RE, VALID_REMOTE_NAME_RE,
+    RefType, RefStorageType,
+    RefNameContract, RefTargetContract, RefMetaContract, RefContract,
+    UpstreamInfo, ReflogInfo, ReflogEntry,
+    RefValidator
+};
 
 /// Re-export common types for convenience
 pub mod prelude {
@@ -47,6 +62,16 @@ pub mod prelude {
         GitObjectContract, GitObjectType, GitObjectValidator,
         TreeMode, TreeObjectType, TreeEntryContract, TreeObjectContract, TreeValidator,
         FilenameContract, FilenameValidator,
-        CharContract, TreeFilenameContractChars, TreeFilenameCharsValidator
+        CharContract, TreeFilenameContractChars, TreeFilenameCharsValidator,
+        SHA1_RE, VALID_FILENAME_RE, VALID_CHAR_RE,
+        UnifiedBlobLineContract, UnifiedBlobContract,
+        UnifiedTreeMode, UnifiedTreeEntryContract, UnifiedTreeContract,
+        CommitContract, TagContract,
+        GitObject, UnifiedValidator,
+        VALID_REF_NAME_RE, VALID_BRANCH_NAME_RE, VALID_TAG_NAME_RE, VALID_REMOTE_NAME_RE,
+        RefType, RefStorageType,
+        RefNameContract, RefTargetContract, RefMetaContract, RefContract,
+        UpstreamInfo, ReflogInfo, ReflogEntry,
+        RefValidator
     };
 } 
