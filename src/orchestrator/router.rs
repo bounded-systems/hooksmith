@@ -100,7 +100,7 @@ impl CommandRouter {
         let output_dir = args.get(1).unwrap_or(&"target/hooks".to_string()).clone();
 
         // Create build configuration
-        let config = BuildConfig {
+        let _config = BuildConfig {
             source_path: format!("hooks/{}.rs", hook_name),
             output_path: format!("{}/{}", output_dir, hook_name),
             target_triple: None,
@@ -121,12 +121,12 @@ impl CommandRouter {
     /// Handle generate command
     fn handle_generate(
         args: Vec<String>,
-        components: &HashMap<String, ComponentHandle>,
+        _components: &HashMap<String, ComponentHandle>,
     ) -> Result<CommandResult> {
         let output_file = args.get(0).unwrap_or(&"lefthook.yml".to_string()).clone();
 
         // Create lefthook configuration
-        let config = LefthookConfig {
+        let _config = LefthookConfig {
             output_path: output_file.clone(),
             hooks: vec![
                 super::HookConfig {
