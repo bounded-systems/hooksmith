@@ -123,7 +123,10 @@ lefthook install
 
 ```bash
 # Set up Git filters and diffs for contract validation
-./scripts/setup-git-filters.sh
+cd xtask && cargo run -- setup-git-filters
+
+# Or with force to overwrite existing configuration
+cd xtask && cargo run -- setup-git-filters --force
 
 # Verify the configuration
 git config --list | grep contract
@@ -346,10 +349,10 @@ cargo doc --no-deps --open
 # Clone and setup
 git clone https://github.com/bdelanghe/hooksmith.git
 cd hooksmith
-./xtask.sh gen-all --overwrite
+cd xtask && cargo run -- gen-all --overwrite
 
 # Set up Git filters for contract validation
-./scripts/setup-git-filters.sh
+cd xtask && cargo run -- setup-git-filters
 
 cargo test
 ```

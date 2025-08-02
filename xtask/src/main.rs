@@ -158,6 +158,12 @@ enum Commands {
         #[arg(long, default_value = "0.1.0")]
         version: String,
     },
+    /// Set up Git filters for contract validation
+    SetupGitFilters {
+        /// Force overwrite existing configuration
+        #[arg(long)]
+        force: bool,
+    },
 }
 
 /// WIT schema for function definition
@@ -338,6 +344,9 @@ async fn main() -> Result<()> {
         }
         Commands::CompareWithRelease { version } => {
             compare_with_release(&version).await?;
+        }
+        Commands::SetupGitFilters { force } => {
+            setup_git_filters(force).await?;
         }
     }
 
@@ -1939,6 +1948,91 @@ async fn compare_with_release(version: &str) -> Result<()> {
     } else {
         println!("✅ All outputs match between versions");
     }
+
+    Ok(())
+}
+
+/// Set up Git filters for contract validation
+async fn setup_git_filters(force: bool) -> Result<()> {
+    println!("🔧 Setting up Git filters and diffs for contract validation...");
+
+    // Get the repository root directory
+    let repo_root = Command::new("git")
+        .args(["rev-parse", "--show-toplevel"])
+        .output()
+        .context("Failed to get repository root")?;
+
+    let repo_root = String::from_utf8(repo_root.stdout)
+        .context("Failed to parse repository root")?
+        .trim()
+        .to_string();
+
+    // Check if configuration already exists
+    let existing_config = Command::new("git")
+        .args(["config", "--list"])
+        .output()
+        .context("Failed to check existing Git configuration")?;
+
+    let existing_config =
+        String::from_utf8(existing_config.stdout).context("Failed to parse Git configuration")?;
+
+    let has_existing = existing_config.contains("filter.contract_validate.clean");
+
+    if has_existing && !force {
+        println!("⚠️  Git filters are already configured.");
+        println!("   Use --force to overwrite existing configuration.");
+        return Ok(());
+    }
+
+    // Set up the contract validation filter
+    println!("   Setting up contract_validate filter...");
+    Command::new("git")
+        .args([
+            "config",
+            "filter.contract_validate.clean",
+            &format!("{}/target/debug/xtask contract-validate clean", repo_root),
+        ])
+        .status()
+        .context("Failed to set up clean filter")?;
+
+    Command::new("git")
+        .args([
+            "config",
+            "filter.contract_validate.smudge",
+            &format!("{}/target/debug/xtask contract-validate smudge", repo_root),
+        ])
+        .status()
+        .context("Failed to set up smudge filter")?;
+
+    Command::new("git")
+        .args(["config", "filter.contract_validate.required", "true"])
+        .status()
+        .context("Failed to set required flag")?;
+
+    // Set up the contract diff
+    println!("   Setting up contract_diff...");
+    Command::new("git")
+        .args([
+            "config",
+            "diff.contract_diff.textconv",
+            &format!("{}/target/debug/xtask contract-validate diff", repo_root),
+        ])
+        .status()
+        .context("Failed to set up diff textconv")?;
+
+    Command::new("git")
+        .args(["config", "diff.contract_diff.cachetextconv", "true"])
+        .status()
+        .context("Failed to set cachetextconv flag")?;
+
+    println!("✅ Git filters and diffs configured successfully!");
+    println!("");
+    println!("📋 Configuration summary:");
+    println!("   Filter: contract_validate");
+    println!("   Diff: contract_diff");
+    println!("");
+    println!("🔍 To verify the configuration, run:");
+    println!("   git config --list | grep contract");
 
     Ok(())
 }

@@ -1,0 +1,576 @@
+# Lefthook Schema Validation
+
+Hooksmith now integrates with the official [Lefthook JSON schema](https://raw.githubusercontent.com/evilmartians/lefthook/refs/heads/master/schema.json) to provide comprehensive validation of Lefthook configuration files.
+
+## Overview
+
+The schema validation feature ensures that your Lefthook configurations are compliant with the official specification, catching configuration errors early and providing detailed error messages.
+
+## Features
+
+- **Official Schema Integration**: Uses the latest schema from the Lefthook repository
+- **Automatic Caching**: Schema is downloaded once and cached for subsequent validations
+- **Comprehensive Validation**: Validates all Lefthook configuration properties and structure
+- **Detailed Error Messages**: Provides specific error locations and descriptions
+- **Backward Compatibility**: Existing configurations continue to work
+- **Complete Hook Support**: Supports all 28 Git hooks from the official Lefthook implementation
+
+## Available Git Hooks
+
+Hooksmith supports all Git hooks available in Lefthook:
+
+### Commit Hooks
+- `pre-commit` - Runs before commit is created
+- `commit-msg` - Runs after commit message is written
+- `post-commit` - Runs after commit is created
+- `prepare-commit-msg` - Runs before commit message editor is opened
+
+### Push Hooks
+- `pre-push` - Runs before push to remote
+- `pre-receive` - Runs on remote before receiving pushed commits
+- `post-receive` - Runs on remote after receiving pushed commits
+- `post-update` - Runs on remote after refs are updated
+
+### Merge Hooks
+- `pre-merge-commit` - Runs before merge commit is created
+- `post-merge` - Runs after merge is completed
+
+### Checkout Hooks
+- `post-checkout` - Runs after checkout is completed
+- `push-to-checkout` - Runs when push tries to update current branch
+
+### Patch Hooks
+- `applypatch-msg` - Runs before patch commit message is written
+- `pre-applypatch` - Runs before patch is applied
+- `post-applypatch` - Runs after patch is applied
+
+### Rebase Hooks
+- `pre-rebase` - Runs before rebase is started
+- `post-rewrite` - Runs after commit is rewritten (rebase, amend, etc.)
+
+### Server Hooks
+- `update` - Runs on remote before ref is updated
+- `proc-receive` - Runs on remote for push options
+- `reference-transaction` - Runs when refs are updated
+
+### Maintenance Hooks
+- `pre-auto-gc` - Runs before automatic garbage collection
+
+### Email Hooks
+- `sendemail-validate` - Runs before email is sent
+
+### File System Hooks
+- `fsmonitor-watchman` - Runs when file system changes are detected
+- `post-index-change` - Runs after index is changed
+
+### P4 Integration Hooks
+- `p4-changelist` - Runs for P4 changelist operations
+- `p4-prepare-changelist` - Runs before P4 changelist is created
+- `p4-post-changelist` - Runs after P4 changelist is created
+- `p4-pre-submit` - Runs before P4 submit
+
+## Usage
+
+### CLI Commands
+
+#### Generate Configuration with Validation
+
+```bash
+# Generate lefthook.yml with schema validation enabled (default)
+hooksmith generate --output lefthook.yml --validate-schema true
+
+# Generate without schema validation
+hooksmith generate --output lefthook.yml --validate-schema false
+```
+
+#### Generate Comprehensive Configuration
+
+```bash
+# Generate a template with all available hooks
+hooksmith generate-comprehensive --output lefthook-template.yml
+
+# Generate without schema validation
+hooksmith generate-comprehensive --output lefthook-template.yml --validate-schema false
+```
+
+#### Validate Existing Configuration
+
+```bash
+# Validate existing lefthook.yml against official schema
+hooksmith validate --config-path lefthook.yml
+```
+
+### Programmatic Usage
+
+```rust
+use hooksmith::modules::lefthook;
+use serde_json::json;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Check if a hook is supported
+    assert!(lefthook::is_known_hook("pre-commit"));
+    assert!(lefthook::is_known_hook("pre-push"));
+    assert!(!lefthook::is_known_hook("invalid-hook"));
+
+    // Check hook behavior
+    assert!(lefthook::hook_uses_staged_files("pre-commit"));
+    assert!(lefthook::hook_uses_push_files("pre-push"));
+
+    // Get all available hooks
+    let hooks = lefthook::AVAILABLE_HOOKS;
+    println!("Available hooks: {:?}", hooks);
+
+    // Validate a configuration against the schema
+    let config = json!({
+        "pre-commit": {
+            "commands": {
+                "test": {
+                    "run": "cargo test"
+                }
+            }
+        }
+    });
+
+    match lefthook::validate_against_schema(&config).await {
+        Ok(()) => println!("Configuration is valid"),
+        Err(e) => eprintln!("Validation failed: {}", e),
+    }
+
+    // Generate configuration with validation
+    lefthook::generate_lefthook_config(
+        std::path::Path::new("lefthook.yml"),
+        "target/hooks",
+        Some(vec!["components/worktree-runner".to_string()]),
+        true, // Enable schema validation
+    ).await?;
+
+    // Generate comprehensive configuration
+    lefthook::generate_comprehensive_config(
+        std::path::Path::new("lefthook-template.yml"),
+        true, // Enable schema validation
+    ).await?;
+
+    // Validate existing configuration file
+    lefthook::validate_existing_config(std::path::Path::new("lefthook.yml")).await?;
+
+    Ok(())
+}
+```
+
+## Command Structure
+
+The `LefthookHook` struct provides a complete implementation that matches the official Lefthook Command structure from the Go implementation.
+
+### Builder Pattern
+
+Use the builder pattern to create hooks with a fluent API:
+
+```rust
+use hooksmith::modules::lefthook;
+use serde_json::json;
+
+let hook = lefthook::LefthookHook::new("cargo test".to_string())
+    .with_files("*.rs".to_string())
+    .with_priority(10)
+    .with_fail_text("Tests failed".to_string())
+    .with_stage_fixed(true)
+    .with_env({
+        let mut env = std::collections::HashMap::new();
+        env.insert("RUST_BACKTRACE".to_string(), "1".to_string());
+        env
+    })
+    .with_skip(json!(["merge", "rebase"]))
+    .with_tags(json!(["test", "lint"]))
+    .with_glob(json!(["*.rs", "*.toml"]))
+    .with_exclude(json!(["*.tmp", "*.log"]));
+```
+
+### Helper Methods
+
+The `LefthookHook` struct provides several helper methods:
+
+```rust
+// Check execution priority
+let priority = hook.execution_priority(); // Returns i32, defaults to 0
+
+// Check if hook should be skipped
+if hook.should_skip() {
+    println!("Hook should be skipped");
+}
+
+// Check if hook should run
+if hook.should_run() {
+    println!("Hook should run");
+}
+
+// Get tags as vector
+let tags = hook.get_tags(); // Returns Vec<String>
+
+// Get glob patterns as vector
+let globs = hook.get_glob_patterns(); // Returns Vec<String>
+
+// Get exclude patterns as vector
+let excludes = hook.get_exclude_patterns(); // Returns Vec<String>
+```
+
+### Skip and Only Conditions
+
+Skip and only conditions support both boolean and array values:
+
+```rust
+// Boolean skip
+let hook = lefthook::LefthookHook::new("echo test".to_string())
+    .with_skip(json!(true)); // Always skip
+
+// Array skip
+let hook = lefthook::LefthookHook::new("echo test".to_string())
+    .with_skip(json!(["merge", "rebase", "amend"])); // Skip on these operations
+
+// Only conditions
+let hook = lefthook::LefthookHook::new("echo test".to_string())
+    .with_only(json!(["pre-commit", "pre-push"])); // Only run on these hooks
+```
+
+## Enhanced Validation
+
+Hooksmith provides comprehensive validation that goes beyond schema validation, implementing the same validation patterns as the official Lefthook implementation.
+
+### File Type Compatibility
+
+Hooksmith validates file type compatibility to prevent incompatible file types from being mixed in the same hook:
+
+```rust
+use hooksmith::modules::lefthook;
+
+// This will pass validation
+let hook = LefthookHook::new("cargo test".to_string())
+    .with_file_types(vec!["rust".to_string()]);
+
+// This will fail validation - Rust and JavaScript are incompatible
+let hook = LefthookHook::new("echo test".to_string())
+    .with_file_types(vec!["rust".to_string(), "js".to_string()]);
+// Error: Files incompatible: Rust files are incompatible with JavaScript/Python files in the same hook
+```
+
+### Configuration Validation
+
+Hooksmith provides comprehensive configuration validation:
+
+```rust
+use hooksmith::modules::lefthook;
+
+// Validate individual hook
+let hook = LefthookHook::new("cargo test".to_string())
+    .with_priority(100);
+lefthook::validate_hook_configuration(&hook)?;
+
+// Validate complete configuration
+let config = LefthookConfig::default();
+lefthook::validate_configuration(&config)?;
+```
+
+### Validation Rules
+
+Hooksmith enforces the following validation rules:
+
+1. **Required Fields**: The `run` field is required and cannot be empty
+2. **File Type Compatibility**: Rust files cannot be mixed with JavaScript/Python files
+3. **Priority Range**: Priority must be between -1000 and 1000
+4. **Hook Names**: Hook names cannot be empty
+5. **Glob Patterns**: Glob patterns cannot be empty strings
+6. **Hook Types**: All hook types must be valid Git hooks
+
+### Error Types
+
+Hooksmith provides specific error types for different validation failures:
+
+```rust
+use hooksmith::modules::lefthook::LefthookError;
+
+match lefthook::validate_configuration(&config) {
+    Ok(()) => println!("Configuration is valid"),
+    Err(LefthookError::FilesIncompatible(msg)) => {
+        eprintln!("File type incompatibility: {}", msg);
+    }
+    Err(LefthookError::MissingRequiredField(field)) => {
+        eprintln!("Missing required field: {}", field);
+    }
+    Err(LefthookError::InvalidConfiguration(msg)) => {
+        eprintln!("Invalid configuration: {}", msg);
+    }
+    Err(LefthookError::InvalidHookName(name)) => {
+        eprintln!("Invalid hook name: {}", name);
+    }
+    Err(LefthookError::SchemaValidation(msg)) => {
+        eprintln!("Schema validation failed: {}", msg);
+    }
+    _ => eprintln!("Other validation error"),
+}
+```
+
+## Schema Properties
+
+The validation covers all properties defined in the official Lefthook schema:
+
+### Hook Types
+All 28 Git hooks listed above are supported and validated.
+
+### Command Properties
+- `run`: The command to execute (required)
+- `files`: File pattern matching
+- `glob`: Glob patterns for file filtering (string or array)
+- `env`: Environment variables
+- `skip`: Skip conditions (boolean or array of strings)
+- `only`: Only conditions (boolean or array of strings)
+- `tags`: Command tags (string or array of strings)
+- `priority`: Execution priority (integer)
+- `fail_text`: Custom failure message
+- `interactive`: Interactive mode (boolean)
+- `use_stdin`: Use stdin flag (boolean)
+- `stage_fixed`: Stage fixed files (boolean)
+- `file_types`: File types to match (array of strings)
+- `root`: Root directory for execution
+- `exclude`: Exclude patterns (string or array of strings)
+
+### Global Configuration
+- `min_version`: Minimum Lefthook version
+- `source_dir`: Script source directory
+- `colors`: Output colors configuration
+- `skip_output`: Skip output configuration
+- `remotes`: Remote configuration sources
+- `templates`: Custom templates
+
+## Error Examples
+
+### Invalid Property
+```yaml
+pre-commit:
+  commands:
+    test:
+      run: "cargo test"
+      invalid_property: "this will fail validation"
+```
+
+Error:
+```
+Configuration failed schema validation:
+Schema validation error at /pre-commit/commands/test: unknown field `invalid_property`
+```
+
+### Missing Required Property
+```yaml
+pre-commit:
+  commands:
+    test:
+      # Missing required 'run' property
+      glob: "*.rs"
+```
+
+Error:
+```
+Configuration failed schema validation:
+Schema validation error at /pre-commit/commands/test: missing field `run`
+```
+
+### Invalid Hook Type
+```yaml
+invalid-hook:
+  commands:
+    test:
+      run: "cargo test"
+```
+
+Error:
+```
+Configuration failed schema validation:
+Schema validation error at /: unknown field `invalid-hook`
+```
+
+## Benefits
+
+1. **Early Error Detection**: Catch configuration errors before they cause runtime issues
+2. **Compliance Assurance**: Ensure configurations follow official Lefthook specifications
+3. **Better Developer Experience**: Clear error messages help fix issues quickly
+4. **Future-Proof**: Automatically stays up-to-date with schema changes
+5. **Integration Safety**: Prevents invalid configurations from being generated
+6. **Complete Coverage**: Supports all Git hooks available in Lefthook
+
+## Configuration
+
+The schema validation is enabled by default for the `generate` and `generate-comprehensive` commands. You can disable it if needed:
+
+```bash
+# Disable schema validation
+hooksmith generate --validate-schema false
+hooksmith generate-comprehensive --validate-schema false
+```
+
+## Network Requirements
+
+The schema validation requires internet access to download the official schema from the Lefthook repository on first use. The schema is then cached locally for subsequent validations.
+
+## Troubleshooting
+
+### Schema Download Issues
+If schema download fails, check your internet connection and ensure access to GitHub.
+
+### Validation Errors
+Review the error messages carefully - they point to specific configuration issues that need to be fixed.
+
+### Performance
+Schema validation adds minimal overhead and is only performed when explicitly requested or when generating configurations with validation enabled. 
+
+## Configuration File Support
+
+Hooksmith supports all configuration file formats and locations supported by the official Lefthook implementation, as documented at [lefthook.dev/configuration/](https://lefthook.dev/configuration/).
+
+### Supported File Formats
+
+Hooksmith supports three configuration file formats:
+
+- **YAML**: `.yml` and `.yaml` extensions
+- **TOML**: `.toml` extension  
+- **JSON**: `.json` extension
+
+### Configuration File Locations
+
+Hooksmith searches for configuration files in the following order:
+
+#### Main Configuration Files
+1. `lefthook.yml`
+2. `.lefthook.yml`
+3. `.config/lefthook.yml`
+4. `lefthook.yaml`
+5. `.lefthook.yaml`
+6. `.config/lefthook.yaml`
+7. `lefthook.toml`
+8. `.lefthook.toml`
+9. `.config/lefthook.toml`
+10. `lefthook.json`
+11. `.lefthook.json`
+12. `.config/lefthook.json`
+
+#### Local Configuration Files
+1. `lefthook-local.yml`
+2. `.lefthook-local.yml`
+3. `.config/lefthook-local.yml`
+4. `lefthook-local.yaml`
+5. `.lefthook-local.yaml`
+6. `.config/lefthook-local.yaml`
+7. `lefthook-local.toml`
+8. `.lefthook-local.toml`
+9. `.config/lefthook-local.toml`
+10. `lefthook-local.json`
+11. `.lefthook-local.json`
+12. `.config/lefthook-local.json`
+
+### Usage
+
+```rust
+use hooksmith::modules::lefthook::{self, ConfigFormat};
+
+// Find configuration file automatically
+if let Some((path, format)) = lefthook::find_config_file(std::path::Path::new(".")) {
+    println!("Found config file: {:?} in format: {:?}", path, format);
+    
+    // Load configuration
+    let config = lefthook::load_config_from_file(&path, format)?;
+    
+    // Use the configuration...
+}
+
+// Find local configuration file
+if let Some((path, format)) = lefthook::find_local_config_file(std::path::Path::new(".")) {
+    println!("Found local config file: {:?} in format: {:?}", path, format);
+    
+    // Load local configuration
+    let local_config = lefthook::load_config_from_file(&path, format)?;
+    
+    // Use the local configuration...
+}
+
+// Save configuration in specific format
+let config = LefthookConfig::default();
+lefthook::save_config_to_file(&config, std::path::Path::new("lefthook.yml"), ConfigFormat::YAML)?;
+lefthook::save_config_to_file(&config, std::path::Path::new("lefthook.toml"), ConfigFormat::TOML)?;
+lefthook::save_config_to_file(&config, std::path::Path::new("lefthook.json"), ConfigFormat::JSON)?;
+```
+
+### Global Configuration Options
+
+Hooksmith supports all global configuration options from the official Lefthook implementation:
+
+```rust
+use hooksmith::modules::lefthook::{GlobalConfig, RemoteConfig};
+
+let mut global_config = GlobalConfig::default();
+global_config.min_version = Some("1.0.0".to_string());
+global_config.source_dir = Some(".lefthook".to_string());
+global_config.skip_lfs = Some(true);
+global_config.assert_lefthook_installed = Some(true);
+
+// Remote configuration sources
+global_config.remotes = Some(vec![
+    RemoteConfig {
+        git_url: "https://github.com/example/lefthook-config.git".to_string(),
+        ref_: Some("main".to_string()),
+        refetch: Some(true),
+        refetch_frequency: Some("24h".to_string()),
+        configs: Some(vec!["lefthook.yml".to_string()]),
+    }
+]);
+
+// Custom templates
+let mut templates = std::collections::HashMap::new();
+templates.insert("project_name".to_string(), "my-project".to_string());
+global_config.templates = Some(templates);
+```
+
+### Configuration Examples
+
+#### YAML Format
+```yaml
+min_version: "1.0.0"
+source_dir: ".lefthook"
+skip_lfs: true
+
+pre-commit:
+  commands:
+    test:
+      run: "cargo test"
+      files: "*.rs"
+      stage_fixed: true
+```
+
+#### TOML Format
+```toml
+min_version = "1.0.0"
+source_dir = ".lefthook"
+skip_lfs = true
+
+[pre-commit.commands.test]
+run = "cargo test"
+files = "*.rs"
+stage_fixed = true
+```
+
+#### JSON Format
+```json
+{
+  "min_version": "1.0.0",
+  "source_dir": ".lefthook",
+  "skip_lfs": true,
+  "pre-commit": {
+    "commands": {
+      "test": {
+        "run": "cargo test",
+        "files": "*.rs",
+        "stage_fixed": true
+      }
+    }
+  }
+}
+```
+
+## Enhanced Validation 

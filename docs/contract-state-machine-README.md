@@ -1,0 +1,401 @@
+# Contract State Machine System
+
+## 🎯 Overview
+
+The Contract State Machine System provides a **schema-driven validation pipeline** that formalizes contract validation as a state machine with proof mechanisms. This system ensures that contracts (WIT, WASM, codegen outputs) evolve through validated states with auditable proofs stored in Git notes.
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Contract State Machine                      │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   State Schema  │  │ Transition Log  │  │  Proof Chain    │ │
+│  │   (JSON Schema) │  │   (Git Notes)   │  │  (Merkle Tree)  │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Validation Pipeline                         │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │  Contract       │  │  State          │  │  CI             │ │
+│  │  Validator      │  │  Auditor        │  │  Enforcement    │ │
+│  │  (xtask)        │  │  (xtask)        │  │  (Git Hooks)    │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 📋 States and Transitions
+
+### States
+
+| State | Description |
+|-------|-------------|
+| `UNTRACKED` | File has no contract or codegen attribute |
+| `UNVALIDATED` | File has contract/codegen attribute but no proof |
+| `VALIDATED` | File has contract/codegen attribute + matching note with hash |
+| `LOCKED` | File is validated + no further modifications allowed |
+
+### Transitions
+
+| Event | From → To | Action |
+|-------|-----------|--------|
+| `detect_contract` | `UNTRACKED` → `UNVALIDATED` | Tag file via `.gitattributes` |
+| `validate_contract` | `UNVALIDATED` → `VALIDATED` | Run validator → create Git note with hash |
+| `lock_contract` | `VALIDATED` → `LOCKED` | Post-hook marks file as locked |
+| `modify_contract` | `LOCKED` → `UNVALIDATED` | Changing file invalidates proof |
+
+## 🚀 Quick Start
+
+### 1. Install Dependencies
+
+```bash
+# Build the xtask tool
+cargo build --bin xtask
+```
+
+### 2. Validate a Contract
+
+```bash
+# Validate a file and store state
+./target/debug/xtask contract validate src/modules/git_model.rs --contract-type blob --store
+
+# Validate without storing state
+./target/debug/xtask contract validate src/modules/git_model.rs --contract-type blob
+```
+
+### 3. Audit Contract States
+
+```bash
+# Audit all contract files
+./target/debug/xtask contract audit
+
+# Audit specific file
+./target/debug/xtask contract audit --file src/modules/git_model.rs
+
+# Strict audit (exit on errors)
+./target/debug/xtask contract audit --strict
+```
+
+### 4. List Contract Files
+
+```bash
+# List all contract files
+./target/debug/xtask contract list
+
+# List with detailed information
+./target/debug/xtask contract list --detailed
+```
+
+### 5. Clean Up Old States
+
+```bash
+# Dry run cleanup
+./target/debug/xtask contract cleanup --days 30 --dry-run
+
+# Actually clean up
+./target/debug/xtask contract cleanup --days 30
+```
+
+## 📊 Schema Structure
+
+### Contract State Schema
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Contract State",
+  "type": "object",
+  "properties": {
+    "file": { "type": "string" },
+    "contract": { "type": "string" },
+    "state": { "enum": ["UNTRACKED", "UNVALIDATED", "VALIDATED", "LOCKED"] },
+    "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "validated_by": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "metadata": { "type": "object" }
+  },
+  "required": ["file", "contract", "state", "hash", "validated_by", "timestamp"]
+}
+```
+
+### Transition Log Schema
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Contract Transition Log",
+  "type": "object",
+  "properties": {
+    "transition": { "type": "string" },
+    "from": { "type": "string" },
+    "to": { "type": "string" },
+    "file": { "type": "string" },
+    "hash": { "type": "string" },
+    "tool": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "reason": { "type": "string" }
+  },
+  "required": ["transition", "from", "to", "file", "hash", "tool", "timestamp"]
+}
+```
+
+## 🔧 Configuration
+
+### State Machine Configuration
+
+The state machine is configured via `config/contract-state-machine.yaml`:
+
+```yaml
+version: "1.0"
+description: "Schema-driven state machine for contract validation"
+
+states:
+  UNTRACKED:
+    description: "File has no contract or codegen attribute"
+    allowed_transitions: ["UNVALIDATED"]
+    
+  UNVALIDATED:
+    description: "File has contract/codegen attribute but no proof"
+    allowed_transitions: ["VALIDATED"]
+    
+  VALIDATED:
+    description: "File has contract/codegen attribute + matching note with hash"
+    allowed_transitions: ["LOCKED", "UNVALIDATED"]
+    
+  LOCKED:
+    description: "File is validated + no further modifications allowed"
+    allowed_transitions: ["UNVALIDATED"]
+
+transitions:
+  detect_contract:
+    from: ["UNTRACKED"]
+    to: "UNVALIDATED"
+    action: "Tag file via .gitattributes"
+    
+  validate_contract:
+    from: ["UNVALIDATED"]
+    to: "VALIDATED"
+    action: "Run validator → create Git note with hash"
+```
+
+## 🌳 Merkle Validation Chain
+
+The system supports hierarchical validation through Merkle trees:
+
+```
+Repository (Root Hash)
+├── Tree Objects
+│   ├── TreeEntry (filename + mode + hash)
+│   └── TreeEntry (filename + mode + hash)
+├── Blob Objects
+│   ├── BlobLine (char validation)
+│   ├── BlobLine (char validation)
+│   └── BlobLine (char validation)
+├── Commit Objects
+│   ├── Commit (tree + parents + author + message)
+│   └── Commit (tree + parents + author + message)
+└── Tag Objects
+    └── Tag (object + tagger + message)
+```
+
+## 📝 Git Notes Storage
+
+### Notes Reference Structure
+
+```
+refs/notes/contracts/          # Contract states
+refs/notes/contracts-log/      # Transition history
+refs/notes/merkle-proofs/      # Merkle tree proofs
+```
+
+### Example Git Note Content
+
+```json
+{
+  "file": "src/modules/git_model.rs",
+  "contract": "blob",
+  "state": "VALIDATED",
+  "hash": "sha256:a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
+  "validated_by": "xtask-contract-validate 0.2.0",
+  "timestamp": "2025-01-02T15:20:00Z",
+  "metadata": {
+    "line_count": 1250,
+    "char_contracts": 1250,
+    "validation_errors": 0
+  }
+}
+```
+
+## 🚀 CI Integration
+
+### Pre-commit Hook
+
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit
+
+# Check contract validation for modified files
+modified_files=$(git diff --cached --name-only)
+
+for file in $modified_files; do
+    if git check-attr contract "$file" | grep -q "contract: set"; then
+        if ! ./target/debug/xtask contract audit --file "$file" --strict; then
+            echo "❌ Contract validation failed for $file"
+            exit 1
+        fi
+    fi
+done
+```
+
+### GitHub Actions
+
+```yaml
+# .github/workflows/contract-validation.yml
+name: Contract Validation
+
+on: [push, pull_request]
+
+jobs:
+  validate-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Full history for Git notes
+      
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      
+      - name: Build xtask
+        run: cargo build --bin xtask
+      
+      - name: Audit Contract States
+        run: ./target/debug/xtask contract audit --strict
+      
+      - name: Verify Merkle Proofs
+        run: ./target/debug/xtask contract audit --merkle-only
+```
+
+## 🎯 Examples
+
+### Basic Validation Workflow
+
+```bash
+# 1. Validate a file
+./target/debug/xtask contract validate src/main.rs --contract-type blob --store
+
+# 2. Check the state
+./target/debug/xtask contract audit --file src/main.rs
+
+# 3. List all contract files
+./target/debug/xtask contract list --detailed
+```
+
+### Advanced Validation
+
+```bash
+# Validate with specific contract type
+./target/debug/xtask contract validate src/modules/git_model.rs --contract-type blob --store
+
+# Audit with strict mode
+./target/debug/xtask contract audit --strict
+
+# Clean up old states
+./target/debug/xtask contract cleanup --days 30 --dry-run
+```
+
+## 🔍 Demo
+
+Run the demonstration example:
+
+```bash
+cargo run --example contract_state_machine_demo
+```
+
+This will show:
+- State transitions
+- Validation logic
+- Git notes storage
+- Hash computation
+- Metadata tracking
+
+## 📚 API Reference
+
+### State Machine
+
+```rust
+use xtask::contract_state_machine::{StateMachine, ContractState};
+
+let state_machine = StateMachine::new()?;
+let is_valid = state_machine.is_valid_transition(
+    &ContractState::UNTRACKED,
+    &ContractState::UNVALIDATED,
+    "detect_contract"
+)?;
+```
+
+### Git Notes Manager
+
+```rust
+use xtask::git_notes_manager::{GitNotesManager, ContractStateNote};
+
+let notes_manager = GitNotesManager::new(Path::new("."))?;
+let state = notes_manager.get_contract_state("src/main.rs")?;
+notes_manager.store_contract_state(&state_note)?;
+```
+
+## 🎯 Benefits
+
+### ✅ Schema + State Machine
+- Specification that doubles as validation logic
+- Deterministic state transitions
+- Clear audit trail
+
+### ✅ Git Notes = Auditable Proofs
+- Proofs tied to commits
+- Immutable history
+- Distributed verification
+
+### ✅ Merkle Hashing
+- Guarantees deterministic aggregation from char → repo level
+- Efficient verification of large repositories
+- Tamper-evident structure
+
+### ✅ CI Enforcement
+- Prevents stale, tampered, or unvalidated contracts
+- Automated compliance checking
+- Early detection of issues
+
+## 🔄 Migration Path
+
+### Phase 1: Foundation ✅
+- [x] JSON schemas for contract states
+- [x] Basic state machine definition
+- [x] xtask contract-validate command
+
+### Phase 2: Git Integration ✅
+- [x] Git notes storage
+- [x] Transition logging
+- [x] contract-audit command
+
+### Phase 3: Merkle Proofs 🚧
+- [ ] Merkle tree builder
+- [ ] Proof verification
+- [ ] CI pipeline integration
+
+### Phase 4: Enforcement 🚧
+- [ ] Pre-commit hooks
+- [ ] CI validation
+- [ ] Monitoring dashboard
+
+## 📚 References
+
+- [Contract State Machine Specification](contract-state-machine.md)
+- [JSON Schema Specification](https://json-schema.org/)
+- [Git Notes Documentation](https://git-scm.com/docs/git-notes)
+- [Merkle Tree Implementation](https://en.wikipedia.org/wiki/Merkle_tree)
+- [Hooksmith Architecture](../ARCHITECTURE.md) 

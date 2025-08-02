@@ -1,0 +1,287 @@
+# Git Attributes Validation with Contract System
+
+This document explains how to use the enhanced contract system in Hooksmith to enforce Git attributes like `linguist-generated=true` for generated files.
+
+## Overview
+
+The enhanced contract system provides automatic validation of Git attributes at both the Tree and Blob levels, ensuring that:
+
+- Generated files automatically get `linguist-generated=true` and `-diff` attributes
+- Non-generated files don't incorrectly have `linguist-generated=true`
+- Attribute validation is integrated into the existing contract validation pipeline
+
+## Architecture
+
+### Option 1: Tree-Level Attributes (Recommended)
+
+Attributes are stored on `TreeEntryContract` because:
+- Git attributes are path-based, not content-based
+- The same blob (same SHA) can appear in multiple paths with different attributes
+- Tree validation happens before blob validation
+
+### Option 2: Blob-Level Attributes
+
+Attributes can also be stored on `BlobContract` for content-specific validation.
+
+## Enhanced Contract Types
+
+### TreeEntryContract
+
+```rust
+pub struct TreeEntryContract {
+    pub mode: TreeMode,
+    pub filename: String,
+    pub object_id: String,
+    pub object_type: TreeObjectType,
+    pub attributes: Option<Vec<String>>, // NEW: Git attributes
+    pub valid: bool,
+    pub errors: Vec<String>,
+}
+```
+
+### BlobContract
+
+```rust
+pub struct BlobContract {
+    pub oid: String,
+    pub size: usize,
+    pub valid_utf8: bool,
+    pub normalized_eol: bool,
+    pub has_forbidden_byte: bool,
+    pub forbidden_byte_positions: Option<Vec<usize>>,
+    pub attributes: Option<Vec<String>>, // NEW: Git attributes
+    pub action: BlobAction,
+}
+```
+
+### GitObjectContract
+
+```rust
+pub struct GitObjectContract {
+    pub object_type: GitObjectType,
+    pub oid: String,
+    pub size: usize,
+    pub valid: bool,
+    pub errors: Vec<String>,
+    pub attributes: Option<Vec<String>>, // NEW: Git attributes
+    pub nested_contracts: Option<Vec<GitObjectContract>>,
+}
+```
+
+## Generated File Detection
+
+The system automatically detects generated files based on path patterns:
+
+### Directory Patterns
+- `target/`
+- `gen/`
+- `generated/`
+- `build/`
+- `dist/`
+- `node_modules/`
+- `.git/`
+
+### File Patterns
+- `*.min.js`
+- `*.min.css`
+- `*.bundle.js`
+- `*.bundle.css`
+
+## Usage Examples
+
+### 1. Creating Tree Entries with Attributes
+
+```rust
+use git_filter::tree_contract::TreeEntryContract;
+
+// Generated file with correct attributes
+let entry = TreeEntryContract::new_with_attributes(
+    "100644",
+    "target/build/app.js".to_string(),
+    "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+    Some(vec![
+        "linguist-generated=true".to_string(),
+        "-diff".to_string(),
+    ]),
+);
+
+// Source file without linguist-generated
+let entry2 = TreeEntryContract::new_with_attributes(
+    "100644",
+    "src/main.rs".to_string(),
+    "b2c3d4e5f6789012345678901234567890abcde".to_string(),
+    Some(vec!["text".to_string()]),
+);
+```
+
+### 2. Creating Blob Contracts with Attributes
+
+```rust
+use git_filter::blob_contract::BlobContract;
+
+let mut blob = BlobContract::new_with_attributes(
+    "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+    1024,
+    Some(vec![
+        "linguist-generated=true".to_string(),
+        "-diff".to_string(),
+    ]),
+);
+
+// Validate attributes for a specific filepath
+let is_valid = blob.validate_attributes_for_path("target/build/app.js");
+```
+
+### 3. Using Git Object Validator
+
+```rust
+use git_filter::git_object_contract::{GitObjectValidator, GitObjectType};
+use git_filter::tree_contract::TreeValidator;
+
+let tree_validator = TreeValidator::new(true, true, true);
+let validator = GitObjectValidator::new(true, true, tree_validator);
+
+let contract = validator.validate_object(
+    GitObjectType::Blob,
+    "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+    1024,
+    Some(vec!["linguist-generated=true".to_string()]),
+    Some("target/build/app.js"),
+);
+```
+
+## Validation Rules
+
+### Required Attributes for Generated Files
+
+Generated files must have:
+- `linguist-generated=true`
+
+Optional but recommended:
+- `-diff` (exclude from diffs)
+- `-merge` (exclude from merges)
+
+### Validation Errors
+
+The system will generate validation errors for:
+
+1. **Generated files missing `linguist-generated=true`**
+   ```
+   Generated file 'target/build/app.js' must have 'linguist-generated=true' attribute
+   ```
+
+2. **Non-generated files with `linguist-generated=true`**
+   ```
+   Non-generated file 'src/main.rs' should not have 'linguist-generated=true' attribute
+   ```
+
+3. **Invalid attribute formats**
+   ```
+   Invalid attribute format: invalid-attribute
+   ```
+
+## Integration with Hooksmith
+
+### Automatic Enforcement Flow
+
+1. **Tree Contract Validation**
+   - When building commit trees, generated files automatically get required attributes
+   - Validation ensures attributes are correctly applied
+
+2. **Blob Contract Validation**
+   - Focuses on content validation (UTF-8, line endings, forbidden characters)
+   - Can also validate attributes for specific filepaths
+
+3. **Git Object Contract Validation**
+   - Unified validation combining tree and blob validation
+   - Provides comprehensive validation summary
+
+### Hooksmith Integration Points
+
+Hooksmith can extend its commit generation logic to:
+
+1. **Attach attributes to tree entries** for generated files
+2. **Include contract validation** before `git add` or `git commit`
+3. **Provide validation feedback** to users about missing attributes
+
+## Example Workflow
+
+```rust
+use git_filter::{
+    blob_contract::{BlobContract, BlobValidator},
+    git_object_contract::{GitObjectValidator, GitObjectType},
+    tree_contract::{TreeEntryContract, TreeObjectContract, TreeValidator},
+};
+
+// Setup validators
+let tree_validator = TreeValidator::new(true, true, true);
+let git_validator = GitObjectValidator::new(true, true, tree_validator);
+let blob_validator = BlobValidator::new(true, true, 0.1, false);
+
+// Process files in a commit
+let files = vec![
+    ("src/main.rs", "fn main() { }", None),
+    ("target/build/app.js", "console.log('Hello');", Some(vec!["linguist-generated=true".to_string()])),
+];
+
+let mut contracts = Vec::new();
+let mut tree_entries = Vec::new();
+
+for (filepath, content, attributes) in files {
+    // Validate blob
+    let (blob_contract, _) = blob_validator.validate_blob_simple(
+        &format!("hash_{}", filepath.replace('/', "_")),
+        content.as_bytes(),
+    );
+
+    // Add attributes if provided
+    if let Some(attrs) = attributes {
+        let mut blob_with_attrs = blob_contract.clone();
+        blob_with_attrs.add_attributes(attrs.clone());
+        blob_with_attrs.validate_attributes_for_path(filepath);
+
+        // Create tree entry with attributes
+        let tree_entry = TreeEntryContract::new_with_attributes(
+            "100644",
+            filepath.to_string(),
+            blob_with_attrs.oid.clone(),
+            Some(attrs),
+        );
+
+        let git_contract = git_validator.validate_blob(&blob_with_attrs, Some(filepath));
+        contracts.push(git_contract);
+        tree_entries.push(tree_entry);
+    } else {
+        // Create tree entry without attributes
+        let tree_entry = TreeEntryContract::new(
+            "100644",
+            filepath.to_string(),
+            blob_contract.oid.clone(),
+        );
+
+        let git_contract = git_validator.validate_blob(&blob_contract, Some(filepath));
+        contracts.push(git_contract);
+        tree_entries.push(tree_entry);
+    }
+}
+
+// Create tree object and get validation summary
+let tree_object = TreeObjectContract::new(tree_entries);
+println!("{}", git_validator.summarize_validation(&contracts));
+println!("{}", tree_object.summary());
+```
+
+## Benefits
+
+1. **Automatic Enforcement**: Generated files automatically get required attributes
+2. **Validation**: Ensures attributes are correctly applied before commits
+3. **Flexibility**: Supports both tree-level and blob-level attribute storage
+4. **Integration**: Seamlessly integrates with existing contract validation
+5. **Extensibility**: Easy to add new attribute validation rules
+
+## Future Enhancements
+
+1. **Custom Generated File Patterns**: Allow users to define custom patterns
+2. **Attribute Templates**: Predefined attribute sets for common file types
+3. **Git Hooks Integration**: Automatic attribute application in pre-commit hooks
+4. **IDE Integration**: Real-time validation feedback in development environments 

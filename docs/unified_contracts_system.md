@@ -1,0 +1,567 @@
+# Unified Contracts System - Flat Contracts with Shared Primitives
+
+## Overview
+
+The Unified Contracts System implements a **flat contract design in Rust using serde + regex + type-safe enums**. It avoids deep nesting while keeping each Git object type self-contained, providing a unified approach to Git object validation with shared primitives and type-safe validation.
+
+## 🎯 Key Concepts
+
+### Flat Contract Design
+
+The system is designed with **flat contracts** that:
+
+1. **Avoid deep nesting**: Each contract is self-contained with no complex nested structures
+2. **Use shared primitives**: Common validation patterns are shared across all contracts
+3. **Type-safe validation**: Leverage Rust's type system for compile-time safety
+4. **Unified interface**: All Git objects can be handled through a single enum
+
+### Shared Primitives
+
+```rust
+// Lazy-compiled regex patterns for efficient validation
+pub static SHA1_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9a-f]{40}$").unwrap());
+pub static VALID_FILENAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[A-Za-z0-9._/-]+$").unwrap());
+pub static VALID_CHAR_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[\x20-\x7E\t]$").unwrap());
+```
+
+**Benefits**:
+- **Efficient**: Lazy compilation means regexes are only compiled when first used
+- **Shared**: All contracts use the same validation patterns
+- **Consistent**: Ensures uniform validation across the entire system
+
+## 🏗️ Architecture
+
+### 1. Shared Primitives
+
+```rust
+// SHA-1 hash validation
+SHA1_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9a-f]{40}$").unwrap());
+
+// Filename validation (alphanumeric, dots, underscores, hyphens, slashes)
+VALID_FILENAME_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[A-Za-z0-9._/-]+$").unwrap());
+
+// Character validation (basic printable ASCII + tab)
+VALID_CHAR_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[\x20-\x7E\t]$").unwrap());
+```
+
+### 2. Blob Contracts
+
+```rust
+// Contract for a single line in a blob
+BlobLineContract = {
+  line: String,  // The line content
+}
+
+// Contract for a complete blob
+BlobContract = {
+  oid: String,      // SHA-1 hash of the blob
+  size: usize,      // Size of the blob in bytes
+  lines: Vec<BlobLineContract>,  // Lines in the blob
+}
+```
+
+**Validation rules**:
+- SHA-1 hash must match the regex pattern
+- All characters in all lines must be valid (printable ASCII + tab)
+- Size must match the sum of line lengths
+
+### 3. Tree Contracts
+
+```rust
+// Type-safe tree mode enum
+TreeMode = {
+  File = 0o100644,        // Regular file (non-executable)
+  Executable = 0o100755,  // Executable file
+  Directory = 0o040000,   // Directory
+}
+
+// Contract for a single tree entry
+TreeEntryContract = {
+  mode: String,      // Mode as string (e.g., "100644")
+  oid: String,       // SHA-1 hash of the object
+  filename: String,  // Filename
+}
+
+// Contract for a complete tree
+TreeContract = {
+  entries: Vec<TreeEntryContract>,  // Tree entries
+}
+```
+
+**Validation rules**:
+- Mode must be a valid tree mode
+- SHA-1 hash must match the regex pattern
+- Filename must match the filename regex pattern
+- Entries must be sorted alphabetically
+
+### 4. Commit Contracts
+
+```rust
+// Contract for a commit
+CommitContract = {
+  tree: String,           // Tree SHA-1 hash
+  parents: Vec<String>,   // Parent commit SHA-1 hashes
+  author: String,         // Author information
+  committer: String,      // Committer information
+  message: String,        // Commit message
+}
+```
+
+**Validation rules**:
+- Tree hash must be a valid SHA-1
+- All parent hashes must be valid SHA-1s
+- Author, committer, and message must not be empty
+
+### 5. Tag Contracts
+
+```rust
+// Contract for a tag
+TagContract = {
+  object: String,    // Object SHA-1 hash
+  obj_type: String,  // Object type (commit/tree/blob/tag)
+  tag: String,       // Tag name
+  tagger: String,    // Tagger information
+  message: String,   // Tag message
+}
+```
+
+**Validation rules**:
+- Object hash must be a valid SHA-1
+- Object type must be one of: "commit", "tree", "blob", "tag"
+- Tag name, tagger, and message must not be empty
+
+### 6. Unified Git Object Enum
+
+```rust
+// Unified enum for all Git object types
+#[serde(tag = "kind")]
+GitObject = {
+  Blob(BlobContract),     // Blob object
+  Tree(TreeContract),     // Tree object
+  Commit(CommitContract), // Commit object
+  Tag(TagContract),       // Tag object
+}
+```
+
+**Features**:
+- **Tagged serialization**: Uses `serde` tag-based serialization for JSON
+- **Polymorphic validation**: All objects implement the same validation interface
+- **Type safety**: Compile-time type checking for all object types
+
+## 🚀 Usage Examples
+
+### Shared Primitives
+
+```rust
+use git_filter::prelude::*;
+
+// Test SHA-1 validation
+let valid_sha1 = "a1b2c3d4e5f6789012345678901234567890abcd";
+println!("SHA-1 valid: {}", SHA1_RE.is_match(valid_sha1));
+
+// Test filename validation
+let filename = "README.md";
+println!("Filename valid: {}", VALID_FILENAME_RE.is_match(filename));
+
+// Test character validation
+let ch = 'a';
+let mut buf = [0u8; 4];
+let encoded = ch.encode_utf8(&mut buf);
+println!("Character valid: {}", VALID_CHAR_RE.is_match(encoded));
+```
+
+### Blob Contracts
+
+```rust
+// Create a valid blob line
+let line = UnifiedBlobLineContract {
+    line: "Hello, World!".to_string(),
+};
+println!("{}", line.summary());
+
+// Create a valid blob
+let blob = UnifiedBlobContract {
+    oid: "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+    size: 13,
+    lines: vec![
+        UnifiedBlobLineContract { line: "Hello, ".to_string() },
+        UnifiedBlobLineContract { line: "World!".to_string() },
+    ],
+};
+println!("{}", blob.summary());
+```
+
+### Tree Contracts
+
+```rust
+// Test tree modes
+for mode_str in &["100644", "100755", "040000"] {
+    match UnifiedTreeMode::from_str(mode_str) {
+        Some(mode) => println!("{} -> {}", mode_str, mode.description()),
+        None => println!("{} -> Invalid", mode_str),
+    }
+}
+
+// Create a valid tree entry
+let entry = UnifiedTreeEntryContract {
+    mode: "100644".to_string(),
+    oid: "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+    filename: "README.md".to_string(),
+};
+println!("{}", entry.summary());
+```
+
+### Commit Contracts
+
+```rust
+// Create a valid commit
+let commit = CommitContract {
+    tree: "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+    parents: vec!["b2c3d4e5f6789012345678901234567890abcde".to_string()],
+    author: "John Doe <john@example.com>".to_string(),
+    committer: "John Doe <john@example.com>".to_string(),
+    message: "Initial commit".to_string(),
+};
+println!("{}", commit.summary());
+```
+
+### Tag Contracts
+
+```rust
+// Create a valid tag
+let tag = TagContract {
+    object: "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+    obj_type: "commit".to_string(),
+    tag: "v1.0.0".to_string(),
+    tagger: "John Doe <john@example.com>".to_string(),
+    message: "Release v1.0.0".to_string(),
+};
+println!("{}", tag.summary());
+```
+
+### Unified Git Objects
+
+```rust
+// Create different types of Git objects
+let objects = vec![
+    GitObject::Blob(UnifiedBlobContract { /* ... */ }),
+    GitObject::Tree(UnifiedTreeContract { /* ... */ }),
+    GitObject::Commit(CommitContract { /* ... */ }),
+    GitObject::Tag(TagContract { /* ... */ }),
+];
+
+// Polymorphic validation
+for obj in &objects {
+    println!("{}: {}", obj.kind(), obj.summary());
+}
+
+// Count valid objects
+let valid_count = objects.iter().filter(|obj| obj.validate()).count();
+println!("Valid objects: {}/{}", valid_count, objects.len());
+```
+
+### Unified Validator
+
+```rust
+// Create a validator that validates all object types
+let full_validator = UnifiedValidator::default();
+
+// Create a validator that only validates blobs and trees
+let partial_validator = UnifiedValidator::new(true, true, false, false);
+
+// Validate objects
+let results = full_validator.validate_objects(&objects);
+let summary = full_validator.summarize_validation(&objects);
+println!("{}", summary);
+```
+
+### Serialization and Deserialization
+
+```rust
+// Serialize to JSON
+let git_object = GitObject::Blob(UnifiedBlobContract { /* ... */ });
+let json = serde_json::to_string_pretty(&git_object)?;
+println!("{}", json);
+
+// Deserialize from JSON
+let deserialized: GitObject = serde_json::from_str(&json)?;
+println!("{}", deserialized.summary());
+```
+
+## 🔧 Configuration
+
+### Validation Rules
+
+1. **SHA-1 Validation**: Must match `^[0-9a-f]{40}$` pattern
+2. **Filename Validation**: Must match `^[A-Za-z0-9._/-]+$` pattern
+3. **Character Validation**: Must match `^[\x20-\x7E\t]$` pattern (printable ASCII + tab)
+4. **Tree Mode Validation**: Must be one of "100644", "100755", "040000"
+5. **Object Type Validation**: Must be one of "commit", "tree", "blob", "tag"
+
+### Unified Validator Configuration
+
+```rust
+// Validate all object types
+let validator = UnifiedValidator::default();
+
+// Validate only specific object types
+let validator = UnifiedValidator::new(
+    true,   // validate_blobs
+    true,   // validate_trees
+    false,  // validate_commits
+    false   // validate_tags
+);
+```
+
+## 🧪 Testing
+
+Run the unified contracts demo:
+
+```bash
+cargo run --example unified_contracts_demo
+```
+
+This demonstrates:
+- Shared primitives validation
+- Blob contracts with character validation
+- Tree contracts with type-safe modes
+- Commit contracts
+- Tag contracts
+- Unified Git object enum
+- Unified validator
+- Serialization and deserialization
+
+## 📊 Contract Results
+
+### Example Output
+
+```
+🔧 Example 1: Shared Primitives Demonstration
+  SHA-1 validation:
+    'a1b2c3d4e5f6789012345678901234567890abcd' -> true
+    'invalid-hash' -> false
+  Filename validation:
+    'README.md' -> true
+    'file\x00name.txt' -> false
+  Character validation:
+    'a' -> true
+    '\0' -> false
+
+📄 Example 2: Blob Contracts with Character Validation
+  ✅ Line 'Hello, World!' valid (13 chars)
+  ❌ Line 'Hello\x00World!' invalid: Position 5: Invalid character '\0' (code: 0x0)
+  ✅ Blob a1b2c3d4 valid (2 lines, 13 bytes)
+
+🌳 Example 3: Tree Contracts with Type-Safe Modes
+  Tree modes:
+    '100644' -> 100644 (Regular file (non-executable))
+    '100755' -> 100755 (Executable file)
+    '040000' -> 040000 (Directory)
+  ✅ Entry 'README.md' valid (Regular file (non-executable) -> a1b2c3d4)
+
+🔗 Example 6: Unified Git Object Enum
+  blob: ✅ Blob a1b2c3d4 valid (1 lines, 5 bytes)
+  tree: ✅ Tree valid (1 entries)
+  commit: ✅ Commit a1b2c3d4 valid (1 parents)
+  tag: ✅ Tag 'v1.0.0' valid (commit -> a1b2c3d4)
+```
+
+## 🛠️ Integration with Other Systems
+
+### With Git Filters
+
+```rust
+// Use in Git clean filters
+pub fn validate_git_object(obj: &GitObject) -> Result<(), String> {
+    if obj.validate() {
+        Ok(())
+    } else {
+        Err(format!("Invalid {}: {}", obj.kind(), obj.get_errors().join(", ")))
+    }
+}
+```
+
+### With Pre-commit Hooks
+
+```rust
+// Validate objects before allowing commits
+pub fn pre_commit_validation(objects: &[GitObject]) -> Result<(), String> {
+    let validator = UnifiedValidator::default();
+    let results = validator.validate_objects(objects);
+    
+    let invalid_count = results.iter().filter(|&&r| !r).count();
+    if invalid_count > 0 {
+        Err(format!("{} invalid objects found", invalid_count))
+    } else {
+        Ok(())
+    }
+}
+```
+
+### With Serialization Systems
+
+```rust
+// Serialize validation results
+pub fn serialize_validation_results(objects: &[GitObject]) -> Result<String, serde_json::Error> {
+    let results: Vec<serde_json::Value> = objects
+        .iter()
+        .map(|obj| {
+            serde_json::json!({
+                "kind": obj.kind(),
+                "valid": obj.validate(),
+                "errors": obj.get_errors(),
+                "summary": obj.summary()
+            })
+        })
+        .collect();
+    
+    serde_json::to_string_pretty(&results)
+}
+```
+
+## 🎯 Benefits
+
+### 1. **Flat Contract Design**
+- No deep nesting or complex object hierarchies
+- Each contract is self-contained and focused
+- Easy to understand and maintain
+
+### 2. **Shared Primitives**
+- Efficient lazy-compiled regex patterns
+- Consistent validation across all contracts
+- Reduced code duplication
+
+### 3. **Type-Safe Validation**
+- Leverages Rust's type system for compile-time safety
+- Type-safe enums for tree modes and object types
+- Prevents invalid states at compile time
+
+### 4. **Unified Interface**
+- Single enum for all Git object types
+- Polymorphic validation and serialization
+- Consistent API across all object types
+
+### 5. **Efficient Performance**
+- Lazy regex compilation
+- Minimal memory overhead
+- Fast validation with compiled patterns
+
+### 6. **Serialization Support**
+- Native serde integration
+- Tagged JSON serialization
+- Easy integration with external systems
+
+### 7. **Extensible Design**
+- Easy to add new object types
+- Configurable validation rules
+- Modular architecture
+
+## 🔮 Advanced Features
+
+### Custom Validation Rules
+
+```rust
+// Extend with custom validation rules
+impl UnifiedBlobContract {
+    pub fn validate_with_custom_rules(&self, rules: &CustomRules) -> bool {
+        self.validate() && rules.additional_checks(self)
+    }
+}
+```
+
+### Batch Processing
+
+```rust
+// Process multiple objects efficiently
+pub fn batch_validate(objects: &[GitObject]) -> ValidationSummary {
+    let validator = UnifiedValidator::default();
+    let results = validator.validate_objects(objects);
+    
+    ValidationSummary {
+        total: objects.len(),
+        valid: results.iter().filter(|&&r| r).count(),
+        invalid: results.iter().filter(|&&r| !r).count(),
+        by_type: objects.iter().fold(HashMap::new(), |mut acc, obj| {
+            *acc.entry(obj.kind()).or_insert(0) += 1;
+            acc
+        }),
+    }
+}
+```
+
+### Integration with Git Hooks
+
+```rust
+// Hook into Git operations
+pub fn git_add_validation(objects: &[GitObject]) -> Result<(), String> {
+    let validator = UnifiedValidator::new(true, true, false, false);
+    let results = validator.validate_objects(objects);
+    
+    let invalid_objects: Vec<_> = objects
+        .iter()
+        .zip(results.iter())
+        .filter(|(_, &valid)| !valid)
+        .map(|(obj, _)| obj)
+        .collect();
+    
+    if !invalid_objects.is_empty() {
+        Err(format!("Invalid objects found: {:?}", 
+            invalid_objects.iter().map(|obj| obj.kind()).collect::<Vec<_>>()))
+    } else {
+        Ok(())
+    }
+}
+```
+
+## 📖 API Reference
+
+### Core Types
+
+- `SHA1_RE`, `VALID_FILENAME_RE`, `VALID_CHAR_RE`: Shared regex patterns
+- `UnifiedBlobLineContract`, `UnifiedBlobContract`: Blob contracts
+- `UnifiedTreeMode`, `UnifiedTreeEntryContract`, `UnifiedTreeContract`: Tree contracts
+- `CommitContract`: Commit contract
+- `TagContract`: Tag contract
+- `GitObject`: Unified enum for all Git object types
+- `UnifiedValidator`: Unified validator for batch processing
+
+### Key Methods
+
+- `validate()`: Validate a contract
+- `get_errors()`: Get validation errors
+- `summary()`: Get validation summary
+- `kind()`: Get object type as string
+- `validate_objects()`: Validate multiple objects
+- `summarize_validation()`: Get batch validation summary
+
+## 🚨 Error Handling
+
+The system provides detailed error reporting:
+
+```rust
+let blob = UnifiedBlobContract { /* invalid data */ };
+
+if !blob.validate() {
+    for error in blob.get_errors() {
+        eprintln!("Validation error: {}", error);
+    }
+}
+
+// Output:
+// Validation error: Invalid SHA-1 hash: invalid-hash
+// Validation error: Line 1: Position 5: Invalid character '\0' (code: 0x0)
+// Validation error: Size mismatch: expected 12, got 0
+```
+
+## 🔄 Flow
+
+1. **Create Objects**: Instantiate Git objects with data
+2. **Validate**: Use `validate()` method to check contracts
+3. **Handle Errors**: Use `get_errors()` to get detailed error information
+4. **Process Results**: Use `summary()` for human-readable results
+5. **Batch Process**: Use `UnifiedValidator` for multiple objects
+6. **Serialize**: Use serde for JSON serialization/deserialization
+
+## 📄 License
+
+This component is part of the hooksmith project and is licensed under the MIT License. 

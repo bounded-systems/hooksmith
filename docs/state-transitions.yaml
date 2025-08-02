@@ -1,0 +1,178 @@
+# Contract State Machine Transition Table
+# Defines valid state transitions and their associated actions
+
+state_machine:
+  name: "Contract Validation State Machine"
+  version: "1.0.0"
+  description: "Schema-driven state machine for hierarchical contract validation"
+
+# Valid states in the contract lifecycle
+states:
+  UNTRACKED:
+    description: "File has no contract or codegen attribute"
+    initial: true
+    
+  UNVALIDATED:
+    description: "File has contract/codegen attribute but no proof (note)"
+    
+  VALIDATED:
+    description: "File has contract/codegen attribute + matching note with hash"
+    
+  LOCKED:
+    description: "File is validated + no further modifications allowed without re-validation"
+
+# Valid transition events
+events:
+  detect_contract:
+    description: "Contract attribute detected in .gitattributes"
+    tool: "git filter"
+    
+  validate_contract:
+    description: "Run validator and create Git note with hash"
+    tool: "xtask-contract-validate"
+    
+  lock_contract:
+    description: "Post-hook marks file as locked (no manual changes)"
+    tool: "git post-commit hook"
+    
+  modify_contract:
+    description: "Changing file invalidates proof, requiring re-validation"
+    tool: "git pre-commit hook"
+    
+  regen_codegen:
+    description: "Regenerate codegen and hash-check"
+    tool: "xtask-gen-all"
+    
+  release_proof:
+    description: "CI verifies Merkle hashes and proof chain"
+    tool: "CI pipeline"
+
+# State transition rules
+transitions:
+  # Initial detection of contract
+  - from: "UNTRACKED"
+    to: "UNVALIDATED"
+    event: "detect_contract"
+    action: "Tag file via .gitattributes"
+    conditions:
+      - "File matches contract pattern in .gitattributes"
+      - "No existing Git note for file"
+    
+  # Validation of contract
+  - from: "UNVALIDATED"
+    to: "VALIDATED"
+    event: "validate_contract"
+    action: "Run validator → create Git note with hash"
+    conditions:
+      - "Contract validation passes"
+      - "Content hash computed"
+      - "Git note created successfully"
+    
+  # Locking validated contract
+  - from: "VALIDATED"
+    to: "LOCKED"
+    event: "lock_contract"
+    action: "Post-hook marks file as locked"
+    conditions:
+      - "File is in committed state"
+      - "No pending changes"
+    
+  # Modification invalidates contract
+  - from: "LOCKED"
+    to: "UNVALIDATED"
+    event: "modify_contract"
+    action: "Changing file invalidates proof"
+    conditions:
+      - "File content has changed"
+      - "Hash no longer matches"
+    
+  # Re-validation after modification
+  - from: "UNVALIDATED"
+    to: "VALIDATED"
+    event: "validate_contract"
+    action: "Re-run validator with new content"
+    conditions:
+      - "Contract validation passes"
+      - "New content hash computed"
+      - "Git note updated"
+    
+  # Codegen regeneration
+  - from: "UNVALIDATED"
+    to: "VALIDATED"
+    event: "regen_codegen"
+    action: "Regenerate codegen + hash-check"
+    conditions:
+      - "Codegen files regenerated"
+      - "New hashes computed"
+      - "Validation passes"
+    
+  # Proof verification (no state change)
+  - from: "VALIDATED"
+    to: "VALIDATED"
+    event: "release_proof"
+    action: "CI verifies Merkle hashes and proof chain"
+    conditions:
+      - "All child hashes match parent"
+      - "Merkle chain is valid"
+      - "No tampering detected"
+    
+  - from: "LOCKED"
+    to: "LOCKED"
+    event: "release_proof"
+    action: "CI verifies Merkle hashes and proof chain"
+    conditions:
+      - "All child hashes match parent"
+      - "Merkle chain is valid"
+      - "No tampering detected"
+
+# Error handling
+error_transitions:
+  - from: "UNVALIDATED"
+    to: "UNVALIDATED"
+    event: "validate_contract"
+    action: "Validation failed"
+    conditions:
+      - "Contract validation fails"
+      - "Errors stored in Git note"
+    
+  - from: "VALIDATED"
+    to: "UNVALIDATED"
+    event: "modify_contract"
+    action: "File modified after validation"
+    conditions:
+      - "File content changed"
+      - "Hash mismatch detected"
+
+# Merkle chain validation rules
+merkle_rules:
+  parent_child_relationship:
+    - "Each child scope hash must be included in parent scope note"
+    - "Parent hash must be computed from child hashes"
+    - "Repository hash must include all directory hashes"
+    
+  validation_order:
+    - "char → line → chunk → file → directory → repository"
+    - "Bottom-up validation ensures deterministic results"
+    - "Each level aggregates results from child levels"
+    
+  proof_verification:
+    - "CI must verify all hashes in the chain"
+    - "Any hash mismatch indicates tampering"
+    - "Full audit trail available in Git notes"
+
+# Tool integration
+tools:
+  git_filter:
+    - "detect_contract"
+    - "modify_contract"
+    
+  xtask_contract_validate:
+    - "validate_contract"
+    - "regen_codegen"
+    
+  git_hooks:
+    - "lock_contract"
+    - "modify_contract"
+    
+  ci_pipeline:
+    - "release_proof" 

@@ -1,0 +1,48 @@
+# JSON Schema Documentation
+
+This document describes the JSON schemas used by Hooksmith for contract validation and state machine management.
+
+## Contract State Schema
+
+Defines the structure for contract validation states.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| contract | string | ✅ | Type of contract (blob, tree, commit, tag, etc.) |
+| file | string | ✅ | Relative path to the file from repository root |
+| hash | string | ✅ | SHA-256 hash of the validated content |
+| metadata | object | ❌ | Additional contract-specific metadata |
+| parent_hash | string | ❌ | Hash of parent scope (for Merkle tree) |
+| parent_scope | string | ❌ | Parent scope identifier (for Merkle tree) |
+| state | object | ✅ | Current state of the contract |
+| timestamp | string | ✅ | ISO 8601 timestamp of validation |
+| validated_by | string | ✅ | Tool and version that performed validation |
+
+## Contract Transition Schema
+
+Defines the structure for contract state transitions.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| commit_hash | string | ❌ | Git commit hash when transition occurred |
+| environment | string | ❌ | Environment where transition occurred |
+| file | string | ❌ | File path that underwent the transition |
+| from | string | ❌ | Previous state before transition |
+| hash | string | ❌ | SHA-256 hash of the file content at transition time |
+| metadata | object | ❌ | Additional transition-specific metadata |
+| reason | string | ❌ | Human-readable reason for transition |
+| timestamp | string | ❌ | ISO 8601 timestamp of the transition |
+| to | string | ❌ | New state after transition |
+| tool | string | ❌ | Tool that performed the transition |
+| transition | string | ❌ | Type of transition that occurred |
+| user | string | ❌ | User who triggered the transition |
+
+## Merkle Proof Schema
+
+Defines the structure for Merkle chain validation proofs.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| merkle_proof | object | ❌ |  |
+| scope | object | ❌ |  |
+| validation | object | ❌ |  |

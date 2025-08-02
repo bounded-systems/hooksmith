@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hierarchical Contract Validation Git Notes Schema",
+  "description": "Schema for Git Notes that store hierarchical contract validation results with parent-child relationships",
+  "type": "object",
+  "required": ["scope", "file", "hash", "validated", "tool", "timestamp"],
+  "properties": {
+    "scope": {
+      "type": "string",
+      "enum": ["char", "line", "chunk", "file", "dir", "repo"],
+      "description": "The validation scope level"
+    },
+    "file": {
+      "type": "string",
+      "description": "The file path relative to repository root"
+    },
+    "range": {
+      "type": "object",
+      "description": "The range of content being validated (for char, line, chunk scopes)",
+      "properties": {
+        "start_line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Starting line number (1-indexed)"
+        },
+        "end_line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Ending line number (1-indexed)"
+        },
+        "start_char": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Starting character position (0-indexed)"
+        },
+        "end_char": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ending character position (0-indexed)"
+        }
+      },
+      "required": ["start_line", "end_line"]
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "SHA256 hash of the validated content"
+    },
+    "parent_scope": {
+      "type": "string",
+      "enum": ["char", "line", "chunk", "file", "dir", "repo"],
+      "description": "The parent scope that contains this scope"
+    },
+    "parent_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "SHA256 hash of the parent scope content"
+    },
+    "child_scopes": {
+      "type": "array",
+      "description": "Array of child scope hashes that contribute to this scope",
+      "items": {
+        "type": "object",
+        "required": ["scope", "hash"],
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": ["char", "line", "chunk", "file", "dir"]
+          },
+          "hash": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          }
+        }
+      }
+    },
+    "validated": {
+      "type": "boolean",
+      "description": "Whether the content passed validation"
+    },
+    "validation_errors": {
+      "type": "array",
+      "description": "Array of validation errors if validation failed",
+      "items": {
+        "type": "object",
+        "required": ["message", "severity"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning", "info"],
+            "description": "Error severity level"
+          },
+          "line": {
+            "type": "integer",
+            "description": "Line number where error occurred"
+          },
+          "char": {
+            "type": "integer",
+            "description": "Character position where error occurred"
+          }
+        }
+      }
+    },
+    "contract_type": {
+      "type": "string",
+      "description": "Type of contract being validated",
+      "enum": ["char_contract", "line_contract", "blob_contract", "tree_contract", "tree_filename_chars_contract", "repo_contract"]
+    },
+    "tool": {
+      "type": "string",
+      "description": "Name and version of the validation tool",
+      "pattern": "^[a-zA-Z0-9_-]+ [0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when validation was performed"
+    },
+    "commit_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$",
+      "description": "Git commit hash where this validation was performed"
+    },
+    "validation_duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Time taken for validation in milliseconds"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata about the validation",
+      "additionalProperties": true
+    }
+  },
+  "examples": [
+    {
+      "scope": "char",
+      "file": "src/commands/generator.rs",
+      "range": {
+        "start_line": 42,
+        "end_line": 42,
+        "start_char": 15,
+        "end_char": 16
+      },
+      "hash": "sha256:abcd1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd",
+      "parent_scope": "line",
+      "parent_hash": "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
+      "validated": true,
+      "contract_type": "char_contract",
+      "tool": "xtask-contract-validate 0.1.0",
+      "timestamp": "2025-01-02T14:20:00Z",
+      "commit_hash": "a1b2c3d4e5f6789012345678901234567890abcd",
+      "validation_duration_ms": 5
+    },
+    {
+      "scope": "line",
+      "file": "src/commands/generator.rs",
+      "range": {
+        "start_line": 42,
+        "end_line": 42
+      },
+      "hash": "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
+      "parent_scope": "chunk",
+      "parent_hash": "sha256:fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321",
+      "child_scopes": [
+        {
+          "scope": "char",
+          "hash": "sha256:abcd1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd"
+        }
+      ],
+      "validated": true,
+      "contract_type": "line_contract",
+      "tool": "xtask-contract-validate 0.1.0",
+      "timestamp": "2025-01-02T14:20:01Z",
+      "commit_hash": "a1b2c3d4e5f6789012345678901234567890abcd",
+      "validation_duration_ms": 12
+    }
+  ]
+} 

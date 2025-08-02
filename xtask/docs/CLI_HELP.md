@@ -1,0 +1,24 @@
+# CLI Help Documentation
+
+```
+Hooksmith project tasks
+
+Usage: xtask <COMMAND>
+
+Commands:
+  build             Build the project and all components
+  gen-wit           Generate WIT interface definitions
+  gen-lefthook      Generate Lefthook configuration
+  gen-docs          Generate documentation
+  gen-readme        Generate README with CLI help and module docs
+  gen-mods          Generate mod.rs files for commands and modules
+  gen-hooks-readme  Generate hooks README
+  gen-all           Run all code generation tasks
+  check             Check if generated files are up to date
+  validate          Validate project configuration
+  help              Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help  Print help
+
+```

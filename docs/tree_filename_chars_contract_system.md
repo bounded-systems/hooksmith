@@ -1,0 +1,435 @@
+# Tree Filename Chars Contract System - Combined Filename & Character Validation
+
+## Overview
+
+The Tree Filename Chars Contract System implements a **flat contract that combines filename and character validation** into a single, cohesive contract. This system validates both the structure of filenames and the individual characters within them, providing granular control over what characters are allowed in Git tree filenames.
+
+## 🎯 Key Concepts
+
+### Flat Combined Contract
+
+The `TreeFilenameContractChars` is designed as a **flat contract that combines multiple validation concerns**:
+
+1. **Filename structure validation**: Ensures filenames are not empty
+2. **Character-level validation**: Validates each character individually
+3. **Combined validation**: Provides both filename-level and character-level results
+4. **Flat structure**: No nested objects, all validation results in a single contract
+
+### Character-Level Validation
+
+```rust
+// Each character is validated individually
+CharContract = {
+  char: char,              // The character value
+  valid: bool,             // Whether the character is valid
+  error: Option<String>,   // Validation error (if any)
+}
+```
+
+**Validation rules**:
+- **Valid**: Printable ASCII (0x20 to 0x7e) - space to tilde
+- **Invalid**: Control characters (0x00 to 0x1f, 0x7f)
+- **Invalid**: Non-ASCII characters (Unicode, etc.)
+
+## 🏗️ Architecture
+
+### 1. Char Contract
+
+```rust
+CharContract = {
+  char: char,              // The character value
+  valid: bool,             // Whether the character is valid
+  error: Option<String>,   // Validation error (if any)
+}
+```
+
+**Purpose**: Validates individual characters according to ASCII printable rules.
+
+### 2. Tree Filename Contract Chars
+
+```rust
+TreeFilenameContractChars = {
+  filename: Vec<CharContract>,  // Filename as array of validated characters
+  valid: bool,                  // Whether the filename is valid
+  errors: Vec<String>,          // Validation errors
+}
+```
+
+**Purpose**: Combines filename structure validation with character-level validation.
+
+### 3. Tree Filename Chars Validator
+
+```rust
+TreeFilenameCharsValidator = {
+  allow_path_separators: bool,  // Whether to allow path separators
+}
+```
+
+**Purpose**: Provides batch validation and utility methods for filename processing.
+
+## 🚀 Usage Examples
+
+### Character-Level Validation
+
+```rust
+use git_filter::prelude::*;
+
+// Validate individual characters
+let char_contract = CharContract::new('a');
+println!("{}", char_contract.summary());
+// Output: ✅ Char 'a' valid
+
+let char_contract = CharContract::new('\x00');
+println!("{}", char_contract.summary());
+// Output: ❌ Char '' invalid: Invalid character: '\0' (code: 0x0)
+```
+
+### Tree Filename Contract with Character Validation
+
+```rust
+// Create a tree filename contract from a string
+let contract = TreeFilenameContractChars::new("README.md".to_string());
+println!("{}", contract.summary());
+// Output: ✅ Filename 'README.md' valid (9 chars)
+
+// Create from individual characters
+let chars = vec!['R', 'E', 'A', 'D', 'M', 'E', '.', 'm', 'd'];
+let contract = TreeFilenameContractChars::from_chars(chars);
+println!("{}", contract.summary());
+// Output: ✅ Filename 'README.md' valid (9 chars)
+```
+
+### Invalid Characters in Filenames
+
+```rust
+// Filename with control characters
+let contract = TreeFilenameContractChars::new("file\x00name.txt".to_string());
+println!("{}", contract.summary());
+// Output: ❌ Filename 'filename.txt' invalid: Position 4: Invalid character: '\0' (code: 0x0)
+
+// Filename with non-ASCII characters
+let contract = TreeFilenameContractChars::new("fileéname.txt".to_string());
+println!("{}", contract.summary());
+// Output: ❌ Filename 'fileéname.txt' invalid: Position 4: Invalid character: 'é' (code: 0xe9)
+
+// Empty filename
+let contract = TreeFilenameContractChars::new("".to_string());
+println!("{}", contract.summary());
+// Output: ❌ Filename '' invalid: Filename must have at least one character
+```
+
+### Batch Filename Validation
+
+```rust
+let validator = TreeFilenameCharsValidator::new(false); // Don't allow path separators
+let filenames = vec![
+    "README.md".to_string(),
+    "file\x00name.txt".to_string(),
+    "src/main.rs".to_string(), // Contains '/'
+    "".to_string(),
+];
+
+let contracts = validator.validate_filenames(filenames);
+let summary = validator.summarize_validation(&contracts);
+
+println!("{}", summary);
+// Output: Filenames: 4 total (1 valid, 3 invalid) | Characters: 30 total (1 invalid)
+```
+
+### Character-by-Character Analysis
+
+```rust
+let filename = "file\x00with\x01invalid\x1fchars.txt";
+let contract = TreeFilenameContractChars::new(filename.to_string());
+
+println!("Character-by-character analysis:");
+for (i, char_contract) in contract.filename.iter().enumerate() {
+    let status = if char_contract.is_valid() { "✅" } else { "❌" };
+    println!("  Position {}: {} '{}'", i, status, char_contract.char);
+    
+    if !char_contract.is_valid() {
+        println!("    Error: {}", char_contract.error.as_ref().unwrap());
+    }
+}
+
+println!("Summary:");
+println!("  Total characters: {}", contract.len());
+println!("  Valid characters: {}", contract.get_valid_chars().len());
+println!("  Invalid characters: {}", contract.get_invalid_chars().len());
+```
+
+## 🔧 Configuration
+
+### Character Validation Rules
+
+1. **Printable ASCII**: Characters with codes 0x20 to 0x7e (space to tilde)
+2. **Control characters**: Characters with codes 0x00 to 0x1f and 0x7f (invalid)
+3. **Non-ASCII**: Any character outside the ASCII range (invalid)
+
+### Filename Validation Rules
+
+1. **Non-empty**: Filename must have at least one character
+2. **Path separators** (configurable): Filename must not contain `/` (if strict mode)
+
+### Validation Modes
+
+```rust
+// Non-strict mode (allows path separators)
+let validator = TreeFilenameCharsValidator::new(true);
+let contract = validator.validate_filename("src/main.rs");
+// ✅ Valid
+
+// Strict mode (blocks path separators)
+let validator = TreeFilenameCharsValidator::new(false);
+let contract = validator.validate_filename("src/main.rs");
+// ❌ Invalid: Filename must not contain '/'
+```
+
+## 🧪 Testing
+
+Run the tree filename chars contract demo:
+
+```bash
+cargo run --example tree_filename_chars_contract_demo
+```
+
+This demonstrates:
+- Character-level validation
+- Tree filename contract with character validation
+- Invalid characters in filenames
+- Batch filename validation with character analysis
+- Integration with tree entries
+- Character-by-character analysis
+
+## 📊 Contract Results
+
+### Example Output
+
+```
+🔤 Example 1: Character-Level Validation
+  ✅ Char 'a' valid
+  ✅ Char 'Z' valid
+  ❌ Char '' invalid: Invalid character: '\0' (code: 0x0)
+
+📁 Example 2: Tree Filename Contract with Character Validation
+  ✅ Filename 'README.md' valid (9 chars)
+    Length: 9 characters
+    Valid characters: 9
+    Invalid characters: 0
+
+🚫 Example 3: Invalid Characters in Filenames
+  ❌ Filename 'filename.txt' invalid: Position 4: Invalid character: '\0' (code: 0x0)
+    Invalid characters:
+      ❌ Char '' invalid: Invalid character: '\0' (code: 0x0)
+
+📋 Example 4: Batch Filename Validation with Character Analysis
+  Filenames: 6 total (2 valid, 4 invalid) | Characters: 56 total (2 invalid)
+
+🔍 Example 6: Character-by-Character Analysis
+  Character-by-character analysis:
+    Position 0: ✅ 'f'
+    Position 4: ❌ ''
+      Error: Invalid character: '\0' (code: 0x0)
+```
+
+## 🛠️ Integration with Other Systems
+
+### With Tree Entry Contracts
+
+```rust
+// Create tree entries with various filenames
+let tree_entries = vec![
+    TreeEntryContract::new("100644", "README.md".to_string(), "abc123...".to_string()),
+    TreeEntryContract::new("100644", "file\x00name.txt".to_string(), "def456...".to_string()),
+];
+
+// Validate filenames with character-level validation
+let validator = TreeFilenameCharsValidator::new(true);
+let filenames: Vec<String> = tree_entries.iter().map(|e| e.filename.clone()).collect();
+let filename_contracts = validator.validate_filenames(filenames);
+
+// Show combined validation
+for (tree_entry, filename_contract) in tree_entries.iter().zip(filename_contracts.iter()) {
+    println!("Tree: {} | Filename: {}", tree_entry.summary(), filename_contract.summary());
+}
+```
+
+### With File System Operations
+
+```rust
+// Validate filenames before file operations
+let filenames = vec!["file1.txt", "file\x00name.txt", "src/main.rs"];
+
+let validator = TreeFilenameCharsValidator::new(true);
+let contracts = validator.validate_filenames(filenames.into_iter().map(|s| s.to_string()).collect());
+
+// Only process valid filenames
+for contract in &contracts {
+    if contract.is_valid() {
+        println!("Processing: {}", contract.as_string());
+    } else {
+        println!("Skipping invalid filename: {} - {}", 
+            contract.as_string(), contract.errors.join(", "));
+    }
+}
+```
+
+## 🎯 Benefits
+
+### 1. **Combined Validation**
+- Validates both filename structure and individual characters
+- Provides granular control over character sets
+- Single contract for comprehensive validation
+
+### 2. **Character-Level Analysis**
+- Individual character validation with detailed error reporting
+- Position-specific error messages
+- Support for character-by-character analysis
+
+### 3. **Flat Contract Structure**
+- No nested objects or complex relationships
+- Easy to understand and serialize
+- Clear validation results at both levels
+
+### 4. **Configurable Validation**
+- Flexible character validation rules
+- Optional path separator validation
+- Easy to extend with additional rules
+
+### 5. **Batch Processing**
+- Efficient validation of multiple filenames
+- Summary statistics including character counts
+- Integration with other validation systems
+
+### 6. **Detailed Error Reporting**
+- Character-specific error messages with positions
+- Filename-level error aggregation
+- Clear distinction between structure and character errors
+
+## 🔮 Advanced Features
+
+### Custom Character Validation Rules
+
+```rust
+// Extend with custom character validation rules
+impl CharContract {
+    pub fn new_with_custom_rules(ch: char, rules: &CustomCharRules) -> Self {
+        let mut valid = true;
+        let mut error = None;
+        
+        // Apply custom rules
+        if rules.block_digits && ch.is_ascii_digit() {
+            valid = false;
+            error = Some(format!("Digits not allowed: {}", ch));
+        }
+        
+        if rules.max_code > 0 && (ch as u32) > rules.max_code {
+            valid = false;
+            error = Some(format!("Character code too high: 0x{:x}", ch as u32));
+        }
+        
+        Self { char: ch, valid, error }
+    }
+}
+```
+
+### Filename Statistics
+
+```rust
+// Get detailed filename statistics
+impl TreeFilenameCharsValidator {
+    pub fn get_filename_statistics(&self, contracts: &[TreeFilenameContractChars]) -> FilenameCharsStatistics {
+        let total_filenames = contracts.len();
+        let valid_filenames = contracts.iter().filter(|c| c.is_valid()).count();
+        let total_chars: usize = contracts.iter().map(|c| c.len()).sum();
+        let invalid_chars: usize = contracts.iter().map(|c| c.get_invalid_chars().len()).sum();
+        
+        FilenameCharsStatistics {
+            total_filenames,
+            valid_filenames,
+            invalid_filenames: total_filenames - valid_filenames,
+            total_chars,
+            invalid_chars,
+            valid_chars: total_chars - invalid_chars,
+        }
+    }
+}
+```
+
+### Character Frequency Analysis
+
+```rust
+// Analyze character frequency in valid filenames
+impl TreeFilenameContractChars {
+    pub fn get_character_frequency(&self) -> std::collections::HashMap<char, usize> {
+        let mut frequency = std::collections::HashMap::new();
+        
+        for char_contract in &self.filename {
+            if char_contract.is_valid() {
+                *frequency.entry(char_contract.char).or_insert(0) += 1;
+            }
+        }
+        
+        frequency
+    }
+}
+```
+
+## 📖 API Reference
+
+### Core Types
+
+- `CharContract`: Contract for individual character validation
+- `TreeFilenameContractChars`: Contract for filename with character validation
+- `TreeFilenameCharsValidator`: Validator for batch filename processing
+
+### Key Methods
+
+- `CharContract::new()`: Create character contract
+- `CharContract::is_valid()`: Check if character is valid
+- `CharContract::summary()`: Get character validation summary
+- `TreeFilenameContractChars::new()`: Create from string
+- `TreeFilenameContractChars::from_chars()`: Create from character array
+- `TreeFilenameContractChars::is_valid()`: Check if filename is valid
+- `TreeFilenameContractChars::get_invalid_chars()`: Get invalid characters
+- `TreeFilenameCharsValidator::validate_filename()`: Validate single filename
+- `TreeFilenameCharsValidator::validate_filenames()`: Validate multiple filenames
+- `TreeFilenameCharsValidator::summarize_validation()`: Get batch validation summary
+
+## 🚨 Error Handling
+
+The system provides detailed error reporting:
+
+```rust
+let contract = TreeFilenameContractChars::new("file\x00name.txt".to_string());
+
+if !contract.is_valid() {
+    println!("Filename validation errors:");
+    for error in &contract.errors {
+        println!("  {}", error);
+    }
+    
+    println!("Invalid characters:");
+    for char_contract in contract.get_invalid_chars() {
+        println!("  {}", char_contract.summary());
+    }
+}
+
+// Output:
+// Filename validation errors:
+//   Position 4: Invalid character: '\0' (code: 0x0)
+// Invalid characters:
+//   ❌ Char '' invalid: Invalid character: '\0' (code: 0x0)
+```
+
+## 🔄 Flow
+
+1. **Create Contract**: Choose validation mode and input method
+2. **Validate Characters**: Apply character-level validation rules
+3. **Validate Filename**: Apply filename structure validation
+4. **Combine Results**: Aggregate validation results
+5. **Process Accordingly**: Handle valid/invalid filenames as needed
+
+## 📄 License
+
+This component is part of the hooksmith project and is licensed under the MIT License. 
