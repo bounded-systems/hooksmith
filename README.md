@@ -51,6 +51,7 @@ Hooksmith is designed to be a **CLI tool that builds Rust binaries into Lefthook
 | **Hook Installation** | ✅ Implemented | Hook installation and management functionality |
 | **Worktree Management** | ✅ Implemented | Worktree creation, listing, switching, and removal |
 | **Hierarchical Validation** | ✅ Complete | Bottom-up contract validation with Git Notes integration |
+| **Contract State Machine** | ✅ Complete | Schema-driven state machine with Merkle chain validation |
 
 ### 🚀 **Roadmap**
 
@@ -87,7 +88,14 @@ Hooksmith is designed to be a **CLI tool that builds Rust binaries into Lefthook
 - [x] Git hooks integration (pre-commit, post-commit)
 - [x] Xtask CLI for validation management
 
-#### **Phase 6: Production Ready** ❌
+#### **Phase 6: Contract State Machine** ✅
+- [x] Schema-driven state machine implementation
+- [x] Merkle chain validation system
+- [x] Git Notes integration for audit trails
+- [x] CI pipeline with security enforcement
+- [x] State transition validation and enforcement
+
+#### **Phase 7: Production Ready** ❌
 - [ ] Error handling and recovery
 - [ ] Performance benchmarking
 - [ ] Security audit
@@ -143,7 +151,7 @@ hooksmith worktree remove feature/new-feature
 hooksmith worktree tools
 ```
 
-### Hierarchical Contract Validation (New!)
+### Hierarchical Contract Validation & State Machine (New!)
 
 ```bash
 # Validate changes in a commit range
@@ -165,6 +173,11 @@ hooksmith worktree tools
 ./xtask.sh contract-validate clean <file>
 ./xtask.sh contract-validate smudge <file>
 ./xtask.sh contract-validate diff <file>
+
+# State machine operations
+./xtask.sh contract-validate audit --strict --commit HEAD
+./xtask.sh contract-validate merkle --verify --commit HEAD
+./xtask.sh contract-validate report --comprehensive --commit HEAD
 ```
 
 ### Hook Building (Planned)
@@ -326,7 +339,8 @@ hooksmith/
 │   └── modules/             # Module structure
 │       ├── wasm.rs          # WASM component management
 │       ├── hook_builder.rs  # Hook building and compilation
-│       └── hierarchical_validation.rs # Hierarchical contract validation
+│       ├── hierarchical_validation.rs # Hierarchical contract validation
+│       └── contract_state_machine.rs # Contract state machine implementation
 ├── components/              # Modular components
 │   ├── cli-core/            # Core CLI functionality
 │   ├── worktree-runner/     # Worktree management WASM component
@@ -335,7 +349,11 @@ hooksmith/
 │   ├── src/main.rs          # Xtask CLI
 │   └── src/hierarchical_validation.rs # Validation CLI
 ├── docs/                    # Documentation
-│   └── git-notes-schema.json # Git Notes JSON schema
+│   ├── git-notes-schema.json # Git Notes JSON schema
+│   ├── contract-state-machine-schema.json # Contract state machine schema
+│   ├── state-transitions.yaml # State transition definitions
+│   ├── merkle-chain-spec.md # Merkle chain validation specification
+│   └── contract-validation-architecture.md # Complete architecture documentation
 ├── hooks/                   # Hook scripts directory
 ├── tests/                   # Test files
 └── target/doc/              # Generated documentation
@@ -395,6 +413,7 @@ cargo test --test integration
 | Worktree Management | ✅ Complete | Integration with worktree tools |
 | Hook Installation | ✅ Complete | Hook installation and management |
 | Hierarchical Validation | ✅ Complete | Bottom-up validation with Git Notes integration |
+| Contract State Machine | ✅ Complete | Schema-driven state machine with Merkle chain validation |
 
 ## 🎯 Next Steps
 
@@ -407,6 +426,34 @@ To make this a production-ready Lefthook + WASM integration tool:
 5. **Add comprehensive testing** - Integration tests for all CLI commands
 6. **Performance optimization** - Optimize binary sizes and execution times
 7. **Documentation improvements** - Add usage examples and tutorials
+
+## 🔐 Contract Validation State Machine
+
+Hooksmith now includes a comprehensive **schema-driven state machine** for contract validation that provides:
+
+### ✅ **Core Features**
+- **State Machine**: Enforces valid state transitions (UNTRACKED → UNVALIDATED → VALIDATED → LOCKED)
+- **Merkle Chain**: Cryptographic proof of integrity across hierarchical scopes
+- **Git Notes Integration**: Tamper-proof audit trails with full validation history
+- **CI Enforcement**: Automated validation and security auditing in GitHub Actions
+
+### 🔗 **Validation Pipeline**
+1. **Change Detection**: Identifies modified scopes from character to repository level
+2. **Bottom-Up Validation**: Validates from smallest to largest scope (Char → Line → Chunk → File → Directory → Repository)
+3. **Merkle Chain Construction**: Builds cryptographic proof chain
+4. **Proof Verification**: Ensures integrity and detects tampering
+
+### 🛡️ **Security Benefits**
+- **Tamper Detection**: Any modification invalidates all parent hashes
+- **Deterministic Validation**: Same input always produces same output
+- **Audit Trail**: Complete validation history in Git Notes
+- **Access Control**: Only authorized tools can modify validation state
+
+### 📋 **Documentation**
+- `docs/contract-state-machine-schema.json` - Complete state machine schema
+- `docs/state-transitions.yaml` - State transition rules and conditions
+- `docs/merkle-chain-spec.md` - Merkle chain validation specification
+- `docs/contract-validation-architecture.md` - Complete architecture documentation
 
 ## 📄 License
 
