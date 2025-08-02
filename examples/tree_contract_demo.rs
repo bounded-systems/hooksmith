@@ -103,7 +103,6 @@ fn demo_tree_object_contracts() -> Result<(), Box<dyn std::error::Error>> {
     let tree = validator.create_tree_object(raw_entries);
 
     println!("  {}", tree.summary());
-    println!("    ID: {}", tree.id);
     println!("    Total entries: {}", tree.entries.len());
     println!("    Valid: {}", tree.is_valid());
 
@@ -164,14 +163,15 @@ fn demo_tree_validation_with_errors() -> Result<(), Box<dyn std::error::Error>> 
         ),
     ];
 
-    let tree = TreeObjectContract::new("tree456".to_string(), entries);
+    let tree = TreeObjectContract::new(entries);
 
     println!("  {}", tree.summary());
     println!("    Valid: {}", tree.is_valid());
 
-    if !tree.errors.is_empty() {
+    let errors = tree.get_errors();
+    if !errors.is_empty() {
         println!("    Errors:");
-        for error in &tree.errors {
+        for error in &errors {
             println!("      - {}", error);
         }
     }
@@ -201,7 +201,7 @@ fn demo_complete_tree_object_validation() -> Result<(), Box<dyn std::error::Erro
         ("120000".to_string(), "link.txt".to_string(), "f6789012345678901234567890abcdef012".to_string()),
     ];
 
-    let tree = validator.create_tree_object("main_tree", raw_entries);
+    let tree = validator.create_tree_object(raw_entries);
     let summary = validator.summarize_tree(&tree);
 
     println!("  {}", summary);
@@ -238,15 +238,14 @@ fn demo_tree_in_git_object_contract() -> Result<(), Box<dyn std::error::Error>> 
     ];
 
     // Validate as a Git object
-    let git_object = validator.validate_tree_object("tree789", entries);
+    let git_object = validator.validate_tree_object(entries);
 
-    match git_object {
-        GitObjectContract::Tree(tree) => {
-            println!("  Git Object Type: Tree");
-            println!("  {}", tree.summary());
-            println!("    ID: {}", tree.id);
-            println!("    Entries: {}", tree.entries.len());
-            println!("    Valid: {}", tree.is_valid());
+            match git_object {
+            GitObjectContract::Tree(tree) => {
+                println!("  Git Object Type: Tree");
+                println!("  {}", tree.summary());
+                println!("    Entries: {}", tree.entries.len());
+                println!("    Valid: {}", tree.is_valid());
 
             // Show entries
             for entry in &tree.entries {
