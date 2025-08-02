@@ -50,9 +50,9 @@
 //! - `list`: List available hooks
 //! - `wasm`: WASM component management
 
+use anyhow::Result;
 use clap::{Parser, Subcommand};
 use console::style;
-use anyhow::Result;
 
 // All functionality is implemented directly in main.rs
 
@@ -278,13 +278,26 @@ async fn main() -> Result<()> {
     // Execute command
     match cli.command {
         Commands::Test { message } => {
-            println!("{} {}", style("✅").green(), style(format!("Test successful: {}", message)).green());
+            println!(
+                "{} {}",
+                style("✅").green(),
+                style(format!("Test successful: {}", message)).green()
+            );
         }
         Commands::Build { hook_name, output } => {
-            println!("{} {} {}", style("🔨").blue(), style("Building hook:").blue(), style(&hook_name).yellow());
-            println!("{} {}", style("📁").blue(), style(format!("Output: {}", output)).blue());
+            println!(
+                "{} {} {}",
+                style("🔨").blue(),
+                style("Building hook:").blue(),
+                style(&hook_name).yellow()
+            );
+            println!(
+                "{} {}",
+                style("📁").blue(),
+                style(format!("Output: {}", output)).blue()
+            );
 
-            use hooksmith::modules::hook_builder::{HookBuilder, HookBuildConfig};
+            use hooksmith::modules::hook_builder::{HookBuildConfig, HookBuilder};
             use std::path::PathBuf;
 
             let config = HookBuildConfig {
@@ -298,11 +311,23 @@ async fn main() -> Result<()> {
             match builder.build_hook(None).await {
                 Ok(result) => {
                     if result.success {
-                        println!("{} {}", style("✅").green(), style("Hook built successfully").green());
+                        println!(
+                            "{} {}",
+                            style("✅").green(),
+                            style("Hook built successfully").green()
+                        );
                         if let Some(binary_path) = result.binary_path {
-                            println!("{} {}", style("📦").blue(), style(format!("Binary: {:?}", binary_path)).blue());
+                            println!(
+                                "{} {}",
+                                style("📦").blue(),
+                                style(format!("Binary: {:?}", binary_path)).blue()
+                            );
                         }
-                        println!("{} {}ms", style("⏱️").blue(), style(result.build_time_ms).blue());
+                        println!(
+                            "{} {}ms",
+                            style("⏱️").blue(),
+                            style(result.build_time_ms).blue()
+                        );
                     } else {
                         eprintln!("{} {}", style("❌").red(), style("Hook build failed").red());
                         if let Some(error) = result.error {
@@ -312,97 +337,177 @@ async fn main() -> Result<()> {
                     }
                 }
                 Err(e) => {
-                    eprintln!("{} {}", style("❌").red(), style(format!("Build error: {}", e)).red());
+                    eprintln!(
+                        "{} {}",
+                        style("❌").red(),
+                        style(format!("Build error: {}", e)).red()
+                    );
                     std::process::exit(1);
                 }
             }
         }
-        Commands::Generate { output, validate_schema } => {
-            println!("{} {} {}", style("📝").blue(), style("Generating Lefthook config:").blue(), style(&output).yellow());
+        Commands::Generate {
+            output,
+            validate_schema,
+        } => {
+            println!(
+                "{} {} {}",
+                style("📝").blue(),
+                style("Generating Lefthook config:").blue(),
+                style(&output).yellow()
+            );
             if validate_schema {
-                println!("{} {}", style("🔍").blue(), style("Schema validation enabled").blue());
+                println!(
+                    "{} {}",
+                    style("🔍").blue(),
+                    style("Schema validation enabled").blue()
+                );
             }
-            
+
             // Import the lefthook module
             use hooksmith::modules::lefthook;
-            
+
             // Generate configuration with schema validation
             match lefthook::generate_lefthook_config(
                 std::path::Path::new(&output),
                 "target/hooks",
                 Some(vec!["components/worktree-runner".to_string()]),
                 validate_schema,
-            ).await {
-                Ok(()) => println!("{} {}", style("✅").green(), style("Configuration generated successfully").green()),
+            )
+            .await
+            {
+                Ok(()) => println!(
+                    "{} {}",
+                    style("✅").green(),
+                    style("Configuration generated successfully").green()
+                ),
                 Err(e) => {
-                    eprintln!("{} {}", style("❌").red(), style(format!("Failed to generate configuration: {}", e)).red());
+                    eprintln!(
+                        "{} {}",
+                        style("❌").red(),
+                        style(format!("Failed to generate configuration: {}", e)).red()
+                    );
                     std::process::exit(1);
                 }
             }
         }
-        Commands::GenerateComprehensive { output, validate_schema } => {
-            println!("{} {} {}", style("📋").blue(), style("Generating comprehensive Lefthook config:").blue(), style(&output).yellow());
+        Commands::GenerateComprehensive {
+            output,
+            validate_schema,
+        } => {
+            println!(
+                "{} {} {}",
+                style("📋").blue(),
+                style("Generating comprehensive Lefthook config:").blue(),
+                style(&output).yellow()
+            );
             if validate_schema {
-                println!("{} {}", style("🔍").blue(), style("Schema validation enabled").blue());
+                println!(
+                    "{} {}",
+                    style("🔍").blue(),
+                    style("Schema validation enabled").blue()
+                );
             }
-            
+
             // Import the lefthook module
             use hooksmith::modules::lefthook;
-            
+
             // Generate comprehensive configuration with all hooks
             match lefthook::generate_comprehensive_config(
                 std::path::Path::new(&output),
                 validate_schema,
-            ).await {
-                Ok(()) => println!("{} {}", style("✅").green(), style("Comprehensive configuration generated successfully").green()),
+            )
+            .await
+            {
+                Ok(()) => println!(
+                    "{} {}",
+                    style("✅").green(),
+                    style("Comprehensive configuration generated successfully").green()
+                ),
                 Err(e) => {
-                    eprintln!("{} {}", style("❌").red(), style(format!("Failed to generate comprehensive configuration: {}", e)).red());
+                    eprintln!(
+                        "{} {}",
+                        style("❌").red(),
+                        style(format!(
+                            "Failed to generate comprehensive configuration: {}",
+                            e
+                        ))
+                        .red()
+                    );
                     std::process::exit(1);
                 }
             }
         }
         Commands::GenerateCode { type_, output_dir } => {
-            println!("{} {} {}", style("🔧").blue(), style("Generating structured code:").blue(), style(&type_).yellow());
-            println!("{} {} {}", style("📁").blue(), style("Output directory:").blue(), style(&output_dir).yellow());
-            
+            println!(
+                "{} {} {}",
+                style("🔧").blue(),
+                style("Generating structured code:").blue(),
+                style(&type_).yellow()
+            );
+            println!(
+                "{} {} {}",
+                style("📁").blue(),
+                style("Output directory:").blue(),
+                style(&output_dir).yellow()
+            );
+
             use hooksmith::modules::generator::{CodeGenerator, GeneratorConfig};
             use std::path::PathBuf;
-            
+
             let config = GeneratorConfig {
                 output_dir: PathBuf::from(output_dir),
                 ..Default::default()
             };
-            
+
             let generator = CodeGenerator::with_config(config);
-            
+
             match type_.as_str() {
                 "structure" => {
                     let result = generator.generate_structure_docs()?;
                     generator.write_files(&result)?;
-                    println!("{} Generated {} structure files", style("✅").green(), result.files.len());
+                    println!(
+                        "{} Generated {} structure files",
+                        style("✅").green(),
+                        result.files.len()
+                    );
                 }
                 "wit" => {
                     let result = generator.generate_wit_interfaces()?;
                     generator.write_files(&result)?;
-                    println!("{} Generated {} WIT interface files", style("✅").green(), result.files.len());
+                    println!(
+                        "{} Generated {} WIT interface files",
+                        style("✅").green(),
+                        result.files.len()
+                    );
                 }
                 "docs" => {
                     let result = generator.generate_documentation()?;
                     generator.write_files(&result)?;
-                    println!("{} Generated {} documentation files", style("✅").green(), result.files.len());
+                    println!(
+                        "{} Generated {} documentation files",
+                        style("✅").green(),
+                        result.files.len()
+                    );
                 }
                 "all" => {
                     let structure_result = generator.generate_structure_docs()?;
                     generator.write_files(&structure_result)?;
-                    
+
                     let wit_result = generator.generate_wit_interfaces()?;
                     generator.write_files(&wit_result)?;
-                    
+
                     let docs_result = generator.generate_documentation()?;
                     generator.write_files(&docs_result)?;
-                    
-                    let total_files = structure_result.files.len() + wit_result.files.len() + docs_result.files.len();
-                    println!("{} Generated {} total files", style("✅").green(), total_files);
+
+                    let total_files = structure_result.files.len()
+                        + wit_result.files.len()
+                        + docs_result.files.len();
+                    println!(
+                        "{} Generated {} total files",
+                        style("✅").green(),
+                        total_files
+                    );
                 }
                 _ => {
                     println!("{} Unknown generation type: {}", style("❌").red(), type_);
@@ -412,7 +517,12 @@ async fn main() -> Result<()> {
         }
         Commands::Install { hooks } => {
             let hook_list = hooks.unwrap_or_else(|| "all".to_string());
-            println!("{} {} {}", style("🔧").blue(), style("Installing hooks:").blue(), style(&hook_list).yellow());
+            println!(
+                "{} {} {}",
+                style("🔧").blue(),
+                style("Installing hooks:").blue(),
+                style(&hook_list).yellow()
+            );
 
             use hooksmith::modules::hook_builder::install_hooks;
             use std::path::PathBuf;
@@ -422,8 +532,16 @@ async fn main() -> Result<()> {
             let hooks_source_dir = PathBuf::from("target/hooks");
 
             if !hooks_source_dir.exists() {
-                eprintln!("{} {}", style("❌").red(), style("No hooks found in target/hooks directory").red());
-                eprintln!("{} {}", style("💡").yellow(), style("Run 'hooksmith build <hook-name>' first").yellow());
+                eprintln!(
+                    "{} {}",
+                    style("❌").red(),
+                    style("No hooks found in target/hooks directory").red()
+                );
+                eprintln!(
+                    "{} {}",
+                    style("💡").yellow(),
+                    style("Run 'hooksmith build <hook-name>' first").yellow()
+                );
                 std::process::exit(1);
             }
 
@@ -446,29 +564,54 @@ async fn main() -> Result<()> {
                     if hook_path.exists() {
                         hook_binaries.push(hook_path);
                     } else {
-                        eprintln!("{} {} {}", style("⚠️").yellow(), style("Hook not found:").yellow(), style(hook_name.trim()).yellow());
+                        eprintln!(
+                            "{} {} {}",
+                            style("⚠️").yellow(),
+                            style("Hook not found:").yellow(),
+                            style(hook_name.trim()).yellow()
+                        );
                     }
                 }
             }
 
             if hook_binaries.is_empty() {
-                eprintln!("{} {}", style("❌").red(), style("No hooks to install").red());
+                eprintln!(
+                    "{} {}",
+                    style("❌").red(),
+                    style("No hooks to install").red()
+                );
                 std::process::exit(1);
             }
 
             match install_hooks(&hooks_dir, &hook_binaries).await {
                 Ok(()) => {
-                    println!("{} {}", style("✅").green(), style("Hooks installed successfully").green());
-                    println!("{} {} hooks installed", style("📦").blue(), style(hook_binaries.len()).blue());
+                    println!(
+                        "{} {}",
+                        style("✅").green(),
+                        style("Hooks installed successfully").green()
+                    );
+                    println!(
+                        "{} {} hooks installed",
+                        style("📦").blue(),
+                        style(hook_binaries.len()).blue()
+                    );
                 }
                 Err(e) => {
-                    eprintln!("{} {}", style("❌").red(), style(format!("Failed to install hooks: {}", e)).red());
+                    eprintln!(
+                        "{} {}",
+                        style("❌").red(),
+                        style(format!("Failed to install hooks: {}", e)).red()
+                    );
                     std::process::exit(1);
                 }
             }
         }
         Commands::List => {
-            println!("{} {}", style("📋").blue(), style("Available hooks:").blue());
+            println!(
+                "{} {}",
+                style("📋").blue(),
+                style("Available hooks:").blue()
+            );
 
             use hooksmith::modules::hook_builder::list_hooks;
             use std::path::PathBuf;
@@ -478,10 +621,22 @@ async fn main() -> Result<()> {
             match list_hooks(&hooks_dir).await {
                 Ok(hooks) => {
                     if hooks.is_empty() {
-                        println!("{} {}", style("ℹ️").blue(), style("No hooks found in target/hooks directory").blue());
-                        println!("{} {}", style("💡").yellow(), style("Run 'hooksmith build <hook-name>' to create hooks").yellow());
+                        println!(
+                            "{} {}",
+                            style("ℹ️").blue(),
+                            style("No hooks found in target/hooks directory").blue()
+                        );
+                        println!(
+                            "{} {}",
+                            style("💡").yellow(),
+                            style("Run 'hooksmith build <hook-name>' to create hooks").yellow()
+                        );
                     } else {
-                        println!("{} {} hooks found:", style("📦").blue(), style(hooks.len()).blue());
+                        println!(
+                            "{} {} hooks found:",
+                            style("📦").blue(),
+                            style(hooks.len()).blue()
+                        );
                         println!();
 
                         for hook in hooks {
@@ -493,13 +648,19 @@ async fn main() -> Result<()> {
                                 println!("     Version: {}", version);
                             }
                             if !hook.supported_hooks.is_empty() {
-                                println!("     Supported hooks: {}", hook.supported_hooks.join(", "));
+                                println!(
+                                    "     Supported hooks: {}",
+                                    hook.supported_hooks.join(", ")
+                                );
                             }
                             if hook.requires_wasm {
                                 println!("     {} Requires WASM components", style("🔗").blue());
                             }
                             if !hook.wasm_dependencies.is_empty() {
-                                println!("     WASM dependencies: {}", hook.wasm_dependencies.join(", "));
+                                println!(
+                                    "     WASM dependencies: {}",
+                                    hook.wasm_dependencies.join(", ")
+                                );
                             }
                             println!("     Built: {}", hook.build_timestamp);
                             println!();
@@ -507,186 +668,342 @@ async fn main() -> Result<()> {
                     }
                 }
                 Err(e) => {
-                    eprintln!("{} {}", style("❌").red(), style(format!("Failed to list hooks: {}", e)).red());
+                    eprintln!(
+                        "{} {}",
+                        style("❌").red(),
+                        style(format!("Failed to list hooks: {}", e)).red()
+                    );
                     std::process::exit(1);
                 }
             }
         }
         Commands::Validate { config_path } => {
-            println!("{} {} {}", style("🔍").blue(), style("Validating Lefthook config:").blue(), style(&config_path).yellow());
-            
+            println!(
+                "{} {} {}",
+                style("🔍").blue(),
+                style("Validating Lefthook config:").blue(),
+                style(&config_path).yellow()
+            );
+
             // Import the lefthook module
             use hooksmith::modules::lefthook;
-            
+
             // Validate existing configuration against schema
             match lefthook::validate_existing_config(std::path::Path::new(&config_path)).await {
-                Ok(()) => println!("{} {}", style("✅").green(), style("Configuration is valid").green()),
+                Ok(()) => println!(
+                    "{} {}",
+                    style("✅").green(),
+                    style("Configuration is valid").green()
+                ),
                 Err(e) => {
-                    eprintln!("{} {}", style("❌").red(), style(format!("Configuration validation failed: {}", e)).red());
+                    eprintln!(
+                        "{} {}",
+                        style("❌").red(),
+                        style(format!("Configuration validation failed: {}", e)).red()
+                    );
                     std::process::exit(1);
                 }
             }
         }
-        Commands::Wasm { wasm } => {
-            match wasm {
-                WasmCommands::Build { wit_file, output } => {
-                    println!("{} {} {}", style("🔨").blue(), style("Building WASM from WIT:").blue(), style(&wit_file).yellow());
-                    println!("{} {}", style("📁").blue(), style(format!("Output: {}", output)).blue());
+        Commands::Wasm { wasm } => match wasm {
+            WasmCommands::Build { wit_file, output } => {
+                println!(
+                    "{} {} {}",
+                    style("🔨").blue(),
+                    style("Building WASM from WIT:").blue(),
+                    style(&wit_file).yellow()
+                );
+                println!(
+                    "{} {}",
+                    style("📁").blue(),
+                    style(format!("Output: {}", output)).blue()
+                );
 
-                    use hooksmith::modules::wasm::{WasmManager, WasmBuildConfig};
-                    use std::path::PathBuf;
+                use hooksmith::modules::wasm::{WasmBuildConfig, WasmManager};
+                use std::path::PathBuf;
 
-                    let config = WasmBuildConfig {
-                        wit_file: PathBuf::from(&wit_file),
-                        output_dir: PathBuf::from(output),
-                        ..Default::default()
-                    };
+                let config = WasmBuildConfig {
+                    wit_file: PathBuf::from(&wit_file),
+                    output_dir: PathBuf::from(output),
+                    ..Default::default()
+                };
 
-                    let manager = WasmManager::new()
-                        .map_err(|e| {
-                            eprintln!("{} {}", style("❌").red(), style(format!("Failed to create WASM manager: {}", e)).red());
-                            std::process::exit(1);
-                        })
-                        .unwrap();
+                let manager = WasmManager::new()
+                    .map_err(|e| {
+                        eprintln!(
+                            "{} {}",
+                            style("❌").red(),
+                            style(format!("Failed to create WASM manager: {}", e)).red()
+                        );
+                        std::process::exit(1);
+                    })
+                    .unwrap();
 
-                    match manager.build_component(config).await {
-                        Ok(result) => {
-                            if result.success {
-                                println!("{} {}", style("✅").green(), style("WASM component built successfully").green());
-                                if let Some(wasm_file) = result.wasm_file {
-                                    println!("{} {}", style("📦").blue(), style(format!("WASM: {:?}", wasm_file)).blue());
-                                }
-                                if let Some(bindings_file) = result.bindings_file {
-                                    println!("{} {}", style("🔗").blue(), style(format!("Bindings: {:?}", bindings_file)).blue());
-                                }
-                                println!("{} {}", style("⏱️").blue(), style(result.metadata.get("execution_time_ms").unwrap_or(&"0".to_string())).blue());
-                            } else {
-                                eprintln!("{} {}", style("❌").red(), style("WASM build failed").red());
-                                if let Some(error) = result.error {
-                                    eprintln!("{} {}", style("💥").red(), style(error).red());
-                                }
-                                std::process::exit(1);
+                match manager.build_component(config).await {
+                    Ok(result) => {
+                        if result.success {
+                            println!(
+                                "{} {}",
+                                style("✅").green(),
+                                style("WASM component built successfully").green()
+                            );
+                            if let Some(wasm_file) = result.wasm_file {
+                                println!(
+                                    "{} {}",
+                                    style("📦").blue(),
+                                    style(format!("WASM: {:?}", wasm_file)).blue()
+                                );
                             }
-                        }
-                        Err(e) => {
-                            eprintln!("{} {}", style("❌").red(), style(format!("WASM build error: {}", e)).red());
+                            if let Some(bindings_file) = result.bindings_file {
+                                println!(
+                                    "{} {}",
+                                    style("🔗").blue(),
+                                    style(format!("Bindings: {:?}", bindings_file)).blue()
+                                );
+                            }
+                            println!(
+                                "{} {}",
+                                style("⏱️").blue(),
+                                style(
+                                    result
+                                        .metadata
+                                        .get("execution_time_ms")
+                                        .unwrap_or(&"0".to_string())
+                                )
+                                .blue()
+                            );
+                        } else {
+                            eprintln!("{} {}", style("❌").red(), style("WASM build failed").red());
+                            if let Some(error) = result.error {
+                                eprintln!("{} {}", style("💥").red(), style(error).red());
+                            }
                             std::process::exit(1);
                         }
                     }
-                }
-                WasmCommands::Run { wasm_file, function, args } => {
-                    println!("{} {} {}", style("⚡").blue(), style("Running WASM:").blue(), style(&wasm_file).yellow());
-                    println!("{} {} {}", style("🔧").blue(), style("Function:").blue(), style(&function).yellow());
-                    println!("{} {} {:?}", style("📝").blue(), style("Args:").blue(), args);
-
-                    use hooksmith::modules::wasm::{WasmManager, WasmRunConfig};
-                    use std::path::PathBuf;
-                    use std::collections::HashMap;
-
-                    let config = WasmRunConfig {
-                        wasm_file: PathBuf::from(&wasm_file),
-                        function: function.clone(),
-                        args: args.clone(),
-                        enable_wasi: true,
-                        env_vars: HashMap::new(),
-                        working_dir: None,
-                    };
-
-                    let mut manager = WasmManager::new()
-                        .map_err(|e| {
-                            eprintln!("{} {}", style("❌").red(), style(format!("Failed to create WASM manager: {}", e)).red());
-                            std::process::exit(1);
-                        })
-                        .unwrap();
-
-                    match manager.run_component(config).await {
-                        Ok(result) => {
-                            if result.success {
-                                println!("{} {}", style("✅").green(), style("WASM execution successful").green());
-                                if let Some(return_value) = result.return_value {
-                                    println!("{} {} {}", style("📤").blue(), style("Return:").blue(), style(return_value).yellow());
-                                }
-                                if !result.stdout.is_empty() {
-                                    println!("{} {}", style("📄").blue(), style("STDOUT:").blue());
-                                    println!("{}", result.stdout);
-                                }
-                                if !result.stderr.is_empty() {
-                                    println!("{} {}", style("⚠️").yellow(), style("STDERR:").yellow());
-                                    println!("{}", result.stderr);
-                                }
-                                println!("{} {}ms", style("⏱️").blue(), style(result.execution_time_ms).blue());
-                            } else {
-                                eprintln!("{} {}", style("❌").red(), style("WASM execution failed").red());
-                                if let Some(error) = result.error {
-                                    eprintln!("{} {}", style("💥").red(), style(error).red());
-                                }
-                                std::process::exit(1);
-                            }
-                        }
-                        Err(e) => {
-                            eprintln!("{} {}", style("❌").red(), style(format!("WASM execution error: {}", e)).red());
-                            std::process::exit(1);
-                        }
-                    }
-                }
-                WasmCommands::Bindings { wit_file, output } => {
-                    println!("{} {} {}", style("🔗").blue(), style("Generating bindings from WIT:").blue(), style(&wit_file).yellow());
-                    println!("{} {}", style("📁").blue(), style(format!("Output: {}", output)).blue());
-
-                    use hooksmith::modules::wasm::{WasmManager, WasmBuildConfig};
-                    use std::path::PathBuf;
-
-                    let config = WasmBuildConfig {
-                        wit_file: PathBuf::from(&wit_file),
-                        output_dir: PathBuf::from(output),
-                        generate_bindings: true,
-                        ..Default::default()
-                    };
-
-                    let manager = WasmManager::new()
-                        .map_err(|e| {
-                            eprintln!("{} {}", style("❌").red(), style(format!("Failed to create WASM manager: {}", e)).red());
-                            std::process::exit(1);
-                        })
-                        .unwrap();
-
-                    match manager.generate_bindings(config).await {
-                        Ok(result) => {
-                            if result.success {
-                                println!("{} {}", style("✅").green(), style("Bindings generated successfully").green());
-                                if let Some(bindings_file) = result.bindings_file {
-                                    println!("{} {}", style("📦").blue(), style(format!("Bindings: {:?}", bindings_file)).blue());
-                                }
-                                println!("{} {}", style("⏱️").blue(), style(result.metadata.get("execution_time_ms").unwrap_or(&"0".to_string())).blue());
-                            } else {
-                                eprintln!("{} {}", style("❌").red(), style("Bindings generation failed").red());
-                                if let Some(error) = result.error {
-                                    eprintln!("{} {}", style("💥").red(), style(error).red());
-                                }
-                                std::process::exit(1);
-                            }
-                        }
-                        Err(e) => {
-                            eprintln!("{} {}", style("❌").red(), style(format!("Bindings generation error: {}", e)).red());
-                            std::process::exit(1);
-                        }
+                    Err(e) => {
+                        eprintln!(
+                            "{} {}",
+                            style("❌").red(),
+                            style(format!("WASM build error: {}", e)).red()
+                        );
+                        std::process::exit(1);
                     }
                 }
             }
-        }
+            WasmCommands::Run {
+                wasm_file,
+                function,
+                args,
+            } => {
+                println!(
+                    "{} {} {}",
+                    style("⚡").blue(),
+                    style("Running WASM:").blue(),
+                    style(&wasm_file).yellow()
+                );
+                println!(
+                    "{} {} {}",
+                    style("🔧").blue(),
+                    style("Function:").blue(),
+                    style(&function).yellow()
+                );
+                println!(
+                    "{} {} {:?}",
+                    style("📝").blue(),
+                    style("Args:").blue(),
+                    args
+                );
+
+                use hooksmith::modules::wasm::{WasmManager, WasmRunConfig};
+                use std::collections::HashMap;
+                use std::path::PathBuf;
+
+                let config = WasmRunConfig {
+                    wasm_file: PathBuf::from(&wasm_file),
+                    function: function.clone(),
+                    args: args.clone(),
+                    enable_wasi: true,
+                    env_vars: HashMap::new(),
+                    working_dir: None,
+                };
+
+                let mut manager = WasmManager::new()
+                    .map_err(|e| {
+                        eprintln!(
+                            "{} {}",
+                            style("❌").red(),
+                            style(format!("Failed to create WASM manager: {}", e)).red()
+                        );
+                        std::process::exit(1);
+                    })
+                    .unwrap();
+
+                match manager.run_component(config).await {
+                    Ok(result) => {
+                        if result.success {
+                            println!(
+                                "{} {}",
+                                style("✅").green(),
+                                style("WASM execution successful").green()
+                            );
+                            if let Some(return_value) = result.return_value {
+                                println!(
+                                    "{} {} {}",
+                                    style("📤").blue(),
+                                    style("Return:").blue(),
+                                    style(return_value).yellow()
+                                );
+                            }
+                            if !result.stdout.is_empty() {
+                                println!("{} {}", style("📄").blue(), style("STDOUT:").blue());
+                                println!("{}", result.stdout);
+                            }
+                            if !result.stderr.is_empty() {
+                                println!("{} {}", style("⚠️").yellow(), style("STDERR:").yellow());
+                                println!("{}", result.stderr);
+                            }
+                            println!(
+                                "{} {}ms",
+                                style("⏱️").blue(),
+                                style(result.execution_time_ms).blue()
+                            );
+                        } else {
+                            eprintln!(
+                                "{} {}",
+                                style("❌").red(),
+                                style("WASM execution failed").red()
+                            );
+                            if let Some(error) = result.error {
+                                eprintln!("{} {}", style("💥").red(), style(error).red());
+                            }
+                            std::process::exit(1);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!(
+                            "{} {}",
+                            style("❌").red(),
+                            style(format!("WASM execution error: {}", e)).red()
+                        );
+                        std::process::exit(1);
+                    }
+                }
+            }
+            WasmCommands::Bindings { wit_file, output } => {
+                println!(
+                    "{} {} {}",
+                    style("🔗").blue(),
+                    style("Generating bindings from WIT:").blue(),
+                    style(&wit_file).yellow()
+                );
+                println!(
+                    "{} {}",
+                    style("📁").blue(),
+                    style(format!("Output: {}", output)).blue()
+                );
+
+                use hooksmith::modules::wasm::{WasmBuildConfig, WasmManager};
+                use std::path::PathBuf;
+
+                let config = WasmBuildConfig {
+                    wit_file: PathBuf::from(&wit_file),
+                    output_dir: PathBuf::from(output),
+                    generate_bindings: true,
+                    ..Default::default()
+                };
+
+                let manager = WasmManager::new()
+                    .map_err(|e| {
+                        eprintln!(
+                            "{} {}",
+                            style("❌").red(),
+                            style(format!("Failed to create WASM manager: {}", e)).red()
+                        );
+                        std::process::exit(1);
+                    })
+                    .unwrap();
+
+                match manager.generate_bindings(config).await {
+                    Ok(result) => {
+                        if result.success {
+                            println!(
+                                "{} {}",
+                                style("✅").green(),
+                                style("Bindings generated successfully").green()
+                            );
+                            if let Some(bindings_file) = result.bindings_file {
+                                println!(
+                                    "{} {}",
+                                    style("📦").blue(),
+                                    style(format!("Bindings: {:?}", bindings_file)).blue()
+                                );
+                            }
+                            println!(
+                                "{} {}",
+                                style("⏱️").blue(),
+                                style(
+                                    result
+                                        .metadata
+                                        .get("execution_time_ms")
+                                        .unwrap_or(&"0".to_string())
+                                )
+                                .blue()
+                            );
+                        } else {
+                            eprintln!(
+                                "{} {}",
+                                style("❌").red(),
+                                style("Bindings generation failed").red()
+                            );
+                            if let Some(error) = result.error {
+                                eprintln!("{} {}", style("💥").red(), style(error).red());
+                            }
+                            std::process::exit(1);
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!(
+                            "{} {}",
+                            style("❌").red(),
+                            style(format!("Bindings generation error: {}", e)).red()
+                        );
+                        std::process::exit(1);
+                    }
+                }
+            }
+        },
         Commands::Worktree { worktree } => {
             match worktree {
-                WorktreeCommands::Create { branch_name, tool, base } => {
-                    println!("{} {} {}", style("🌳").blue(), style("Creating worktree:").blue(), style(&branch_name).yellow());
+                WorktreeCommands::Create {
+                    branch_name,
+                    tool,
+                    base,
+                } => {
+                    println!(
+                        "{} {} {}",
+                        style("🌳").blue(),
+                        style("Creating worktree:").blue(),
+                        style(&branch_name).yellow()
+                    );
                     if let Some(ref tool) = tool {
-                        println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
+                        println!(
+                            "{} {} {}",
+                            style("🔧").blue(),
+                            style("Using tool:").blue(),
+                            style(tool).yellow()
+                        );
                     }
-                    println!("{} {} {}", style("📁").blue(), style("Base directory:").blue(), style(&base).yellow());
+                    println!(
+                        "{} {} {}",
+                        style("📁").blue(),
+                        style("Base directory:").blue(),
+                        style(&base).yellow()
+                    );
 
                     // For now, we'll use a simple implementation that calls the worktree tools directly
                     // In the future, this will use the WASM component
-                    use std::process::Command;
                     use std::collections::HashMap;
+                    use std::process::Command;
 
                     let tool_name = tool.as_deref().unwrap_or("git");
                     let mut cmd = Command::new(tool_name);
@@ -702,10 +1019,20 @@ async fn main() -> Result<()> {
                             cmd.arg("create").arg(&branch_name);
                         }
                         "git" => {
-                            cmd.args(&["worktree", "add", &format!("{}/{}", base, branch_name), &branch_name]);
+                            cmd.args(&[
+                                "worktree",
+                                "add",
+                                &format!("{}/{}", base, branch_name),
+                                &branch_name,
+                            ]);
                         }
                         _ => {
-                            eprintln!("{} {} {}", style("❌").red(), style("Unknown tool:").red(), style(tool_name).yellow());
+                            eprintln!(
+                                "{} {} {}",
+                                style("❌").red(),
+                                style("Unknown tool:").red(),
+                                style(tool_name).yellow()
+                            );
                             std::process::exit(1);
                         }
                     }
@@ -713,23 +1040,50 @@ async fn main() -> Result<()> {
                     match cmd.status() {
                         Ok(status) => {
                             if status.success() {
-                                println!("{} {}", style("✅").green(), style("Worktree created successfully").green());
-                                println!("{} {} {}", style("📁").blue(), style("Location:").blue(), style(format!("{}/{}", base, branch_name)).yellow());
+                                println!(
+                                    "{} {}",
+                                    style("✅").green(),
+                                    style("Worktree created successfully").green()
+                                );
+                                println!(
+                                    "{} {} {}",
+                                    style("📁").blue(),
+                                    style("Location:").blue(),
+                                    style(format!("{}/{}", base, branch_name)).yellow()
+                                );
                             } else {
-                                eprintln!("{} {}", style("❌").red(), style("Failed to create worktree").red());
+                                eprintln!(
+                                    "{} {}",
+                                    style("❌").red(),
+                                    style("Failed to create worktree").red()
+                                );
                                 std::process::exit(1);
                             }
                         }
                         Err(e) => {
-                            eprintln!("{} {} {}", style("❌").red(), style("Failed to execute tool:").red(), style(e).yellow());
+                            eprintln!(
+                                "{} {} {}",
+                                style("❌").red(),
+                                style("Failed to execute tool:").red(),
+                                style(e).yellow()
+                            );
                             std::process::exit(1);
                         }
                     }
                 }
                 WorktreeCommands::List { tool } => {
-                    println!("{} {}", style("📋").blue(), style("Listing worktrees:").blue());
+                    println!(
+                        "{} {}",
+                        style("📋").blue(),
+                        style("Listing worktrees:").blue()
+                    );
                     if let Some(ref tool) = tool {
-                        println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
+                        println!(
+                            "{} {} {}",
+                            style("🔧").blue(),
+                            style("Using tool:").blue(),
+                            style(tool).yellow()
+                        );
                     }
 
                     use std::process::Command;
@@ -751,7 +1105,12 @@ async fn main() -> Result<()> {
                             cmd.args(&["worktree", "list"]);
                         }
                         _ => {
-                            eprintln!("{} {} {}", style("❌").red(), style("Unknown tool:").red(), style(tool_name).yellow());
+                            eprintln!(
+                                "{} {} {}",
+                                style("❌").red(),
+                                style("Unknown tool:").red(),
+                                style(tool_name).yellow()
+                            );
                             std::process::exit(1);
                         }
                     }
@@ -764,21 +1123,43 @@ async fn main() -> Result<()> {
                                 println!("{}", stdout);
                             } else {
                                 let stderr = String::from_utf8_lossy(&output.stderr);
-                                eprintln!("{} {}", style("❌").red(), style("Failed to list worktrees").red());
+                                eprintln!(
+                                    "{} {}",
+                                    style("❌").red(),
+                                    style("Failed to list worktrees").red()
+                                );
                                 eprintln!("{}", stderr);
                                 std::process::exit(1);
                             }
                         }
                         Err(e) => {
-                            eprintln!("{} {} {}", style("❌").red(), style("Failed to execute tool:").red(), style(e).yellow());
+                            eprintln!(
+                                "{} {} {}",
+                                style("❌").red(),
+                                style("Failed to execute tool:").red(),
+                                style(e).yellow()
+                            );
                             std::process::exit(1);
                         }
                     }
                 }
-                WorktreeCommands::Switch { worktree_name, tool } => {
-                    println!("{} {} {}", style("🔄").blue(), style("Switching to worktree:").blue(), style(&worktree_name).yellow());
+                WorktreeCommands::Switch {
+                    worktree_name,
+                    tool,
+                } => {
+                    println!(
+                        "{} {} {}",
+                        style("🔄").blue(),
+                        style("Switching to worktree:").blue(),
+                        style(&worktree_name).yellow()
+                    );
                     if let Some(ref tool) = tool {
-                        println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
+                        println!(
+                            "{} {} {}",
+                            style("🔧").blue(),
+                            style("Using tool:").blue(),
+                            style(tool).yellow()
+                        );
                     }
 
                     use std::process::Command;
@@ -798,21 +1179,33 @@ async fn main() -> Result<()> {
                         }
                         "git" => {
                             // For git, we need to find the worktree path first
-                            let list_cmd = Command::new("git")
-                                .args(&["worktree", "list"])
-                                .output();
+                            let list_cmd = Command::new("git").args(&["worktree", "list"]).output();
 
                             if let Ok(output) = list_cmd {
                                 let stdout = String::from_utf8_lossy(&output.stdout);
                                 // Parse the worktree list to find the path
                                 // This is a simplified implementation
-                                eprintln!("{} {}", style("⚠️").yellow(), style("Git worktree switching requires manual navigation").yellow());
-                                eprintln!("{} {}", style("💡").blue(), style("Use 'cd <worktree-path>' to switch").blue());
+                                eprintln!(
+                                    "{} {}",
+                                    style("⚠️").yellow(),
+                                    style("Git worktree switching requires manual navigation")
+                                        .yellow()
+                                );
+                                eprintln!(
+                                    "{} {}",
+                                    style("💡").blue(),
+                                    style("Use 'cd <worktree-path>' to switch").blue()
+                                );
                                 return Ok(());
                             }
                         }
                         _ => {
-                            eprintln!("{} {} {}", style("❌").red(), style("Unknown tool:").red(), style(tool_name).yellow());
+                            eprintln!(
+                                "{} {} {}",
+                                style("❌").red(),
+                                style("Unknown tool:").red(),
+                                style(tool_name).yellow()
+                            );
                             std::process::exit(1);
                         }
                     }
@@ -820,25 +1213,56 @@ async fn main() -> Result<()> {
                     match cmd.status() {
                         Ok(status) => {
                             if status.success() {
-                                println!("{} {}", style("✅").green(), style("Switched to worktree successfully").green());
+                                println!(
+                                    "{} {}",
+                                    style("✅").green(),
+                                    style("Switched to worktree successfully").green()
+                                );
                             } else {
-                                eprintln!("{} {}", style("❌").red(), style("Failed to switch worktree").red());
+                                eprintln!(
+                                    "{} {}",
+                                    style("❌").red(),
+                                    style("Failed to switch worktree").red()
+                                );
                                 std::process::exit(1);
                             }
                         }
                         Err(e) => {
-                            eprintln!("{} {} {}", style("❌").red(), style("Failed to execute tool:").red(), style(e).yellow());
+                            eprintln!(
+                                "{} {} {}",
+                                style("❌").red(),
+                                style("Failed to execute tool:").red(),
+                                style(e).yellow()
+                            );
                             std::process::exit(1);
                         }
                     }
                 }
-                WorktreeCommands::Remove { worktree_name, with_branch, tool } => {
-                    println!("{} {} {}", style("🗑️").blue(), style("Removing worktree:").blue(), style(&worktree_name).yellow());
+                WorktreeCommands::Remove {
+                    worktree_name,
+                    with_branch,
+                    tool,
+                } => {
+                    println!(
+                        "{} {} {}",
+                        style("🗑️").blue(),
+                        style("Removing worktree:").blue(),
+                        style(&worktree_name).yellow()
+                    );
                     if with_branch {
-                        println!("{} {}", style("🌿").blue(), style("Also removing branch").blue());
+                        println!(
+                            "{} {}",
+                            style("🌿").blue(),
+                            style("Also removing branch").blue()
+                        );
                     }
                     if let Some(ref tool) = tool {
-                        println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
+                        println!(
+                            "{} {} {}",
+                            style("🔧").blue(),
+                            style("Using tool:").blue(),
+                            style(tool).yellow()
+                        );
                     }
 
                     use std::process::Command;
@@ -869,7 +1293,11 @@ async fn main() -> Result<()> {
                                     .status();
                                 if let Ok(status) = branch_cmd {
                                     if status.success() {
-                                        println!("{} {}", style("🌿").green(), style("Branch removed").green());
+                                        println!(
+                                            "{} {}",
+                                            style("🌿").green(),
+                                            style("Branch removed").green()
+                                        );
                                     }
                                 }
                             } else {
@@ -877,7 +1305,12 @@ async fn main() -> Result<()> {
                             }
                         }
                         _ => {
-                            eprintln!("{} {} {}", style("❌").red(), style("Unknown tool:").red(), style(tool_name).yellow());
+                            eprintln!(
+                                "{} {} {}",
+                                style("❌").red(),
+                                style("Unknown tool:").red(),
+                                style(tool_name).yellow()
+                            );
                             std::process::exit(1);
                         }
                     }
@@ -885,20 +1318,37 @@ async fn main() -> Result<()> {
                     match cmd.status() {
                         Ok(status) => {
                             if status.success() {
-                                println!("{} {}", style("✅").green(), style("Worktree removed successfully").green());
+                                println!(
+                                    "{} {}",
+                                    style("✅").green(),
+                                    style("Worktree removed successfully").green()
+                                );
                             } else {
-                                eprintln!("{} {}", style("❌").red(), style("Failed to remove worktree").red());
+                                eprintln!(
+                                    "{} {}",
+                                    style("❌").red(),
+                                    style("Failed to remove worktree").red()
+                                );
                                 std::process::exit(1);
                             }
                         }
                         Err(e) => {
-                            eprintln!("{} {} {}", style("❌").red(), style("Failed to execute tool:").red(), style(e).yellow());
+                            eprintln!(
+                                "{} {} {}",
+                                style("❌").red(),
+                                style("Failed to execute tool:").red(),
+                                style(e).yellow()
+                            );
                             std::process::exit(1);
                         }
                     }
                 }
                 WorktreeCommands::Tools => {
-                    println!("{} {}", style("🔧").blue(), style("Available worktree tools:").blue());
+                    println!(
+                        "{} {}",
+                        style("🔧").blue(),
+                        style("Available worktree tools:").blue()
+                    );
 
                     use std::process::Command;
                     use which::which;
@@ -915,7 +1365,8 @@ async fn main() -> Result<()> {
                         let status_icon = if available { "✅" } else { "❌" };
                         let status_text = if available { "Available" } else { "Not found" };
 
-                        println!("  {} {} {} ({})",
+                        println!(
+                            "  {} {} {} ({})",
                             style(status_icon).green(),
                             style(tool_name).yellow(),
                             style(description).blue(),

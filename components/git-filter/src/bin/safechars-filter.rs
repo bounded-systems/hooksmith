@@ -1,5 +1,5 @@
-use git_filter::prelude::*;
 use git_filter::actions::GitOperation;
+use git_filter::prelude::*;
 use std::io::{Read, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -12,9 +12,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create character contract filter
     let filter = CharContractFilter::new(
-        true,   // normalize_line_endings
-        true,   // apply_binary_heuristic
-        30.0,   // binary_threshold
+        true, // normalize_line_endings
+        true, // apply_binary_heuristic
+        30.0, // binary_threshold
     );
 
     // Create a default file state
@@ -33,4 +33,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             std::process::exit(1);
         }
     }
-} 
+}

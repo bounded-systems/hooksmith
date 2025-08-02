@@ -132,14 +132,20 @@ fn demo_byte_audit_records() -> Result<(), Box<dyn std::error::Error>> {
     println!("    Generated {} audit records", audit_records.len());
 
     // Show forbidden bytes
-    let forbidden_audits: Vec<_> = audit_records.iter()
+    let forbidden_audits: Vec<_> = audit_records
+        .iter()
         .filter(|audit| !audit.allowed)
         .collect();
 
     if !forbidden_audits.is_empty() {
         println!("    Forbidden bytes:");
         for audit in &forbidden_audits {
-            println!("      [{}] {} (0x{:02X})", audit.offset, audit.description(), audit.byte);
+            println!(
+                "      [{}] {} (0x{:02X})",
+                audit.offset,
+                audit.description(),
+                audit.byte
+            );
         }
     }
 
@@ -182,19 +188,31 @@ fn demo_binary_heuristic() -> Result<(), Box<dyn std::error::Error>> {
     for threshold in [10.0, 20.0, 30.0, 50.0] {
         let validator = BlobValidator::new(false, true, threshold, false);
         let (contract, _, _) = validator.validate_blob(oid, binary_content);
-        
+
         let forbidden_percentage = if contract.size > 0 {
-            (contract.forbidden_byte_positions.as_ref().map(|v| v.len()).unwrap_or(0) as f64 / contract.size as f64) * 100.0
+            (contract
+                .forbidden_byte_positions
+                .as_ref()
+                .map(|v| v.len())
+                .unwrap_or(0) as f64
+                / contract.size as f64)
+                * 100.0
         } else {
             0.0
         };
-        
-        println!("    {}% threshold: {} ({}% forbidden)", 
+
+        println!(
+            "    {}% threshold: {} ({}% forbidden)",
             threshold,
-            if contract.is_accepted() { "Accept" } else { "Reject" },
-            forbidden_percentage);
+            if contract.is_accepted() {
+                "Accept"
+            } else {
+                "Reject"
+            },
+            forbidden_percentage
+        );
     }
 
     println!();
     Ok(())
-} 
+}

@@ -17,7 +17,10 @@ async fn test_schema_validation() {
 
     // This should pass validation
     let result = lefthook::validate_against_schema(&valid_config).await;
-    assert!(result.is_ok(), "Valid configuration should pass schema validation");
+    assert!(
+        result.is_ok(),
+        "Valid configuration should pass schema validation"
+    );
 
     // Test with an invalid configuration
     let invalid_config = json!({
@@ -28,7 +31,10 @@ async fn test_schema_validation() {
 
     // This should fail validation
     let result = lefthook::validate_against_schema(&invalid_config).await;
-    assert!(result.is_err(), "Invalid configuration should fail schema validation");
+    assert!(
+        result.is_err(),
+        "Invalid configuration should fail schema validation"
+    );
 }
 
 #[tokio::test]
@@ -46,5 +52,8 @@ pre-commit:
 
     // This should pass validation
     let result = lefthook::validate_existing_config(temp_file.path()).await;
-    assert!(result.is_ok(), "Valid YAML configuration should pass validation");
-} 
+    assert!(
+        result.is_ok(),
+        "Valid YAML configuration should pass validation"
+    );
+}

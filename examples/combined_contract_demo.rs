@@ -87,11 +87,17 @@ fn demo_blob_contract_attributes() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate attributes for a generated file path
     let is_valid = blob.validate_attributes_for_path("target/build/app.js");
-    println!("  Validation for generated file path: {}", if is_valid { "✅ PASS" } else { "❌ FAIL" });
+    println!(
+        "  Validation for generated file path: {}",
+        if is_valid { "✅ PASS" } else { "❌ FAIL" }
+    );
 
     // Validate attributes for a non-generated file path
     let is_valid2 = blob.validate_attributes_for_path("src/main.rs");
-    println!("  Validation for source file path: {}", if is_valid2 { "✅ PASS" } else { "❌ FAIL" });
+    println!(
+        "  Validation for source file path: {}",
+        if is_valid2 { "✅ PASS" } else { "❌ FAIL" }
+    );
 
     println!();
     Ok(())
@@ -144,11 +150,11 @@ fn demo_generated_files_validation() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test various generated file patterns
     let test_cases = vec![
-        ("target/build/app.js", true, true),   // Generated, should have linguist-generated=true
-        ("gen/proto/message.rs", true, true),  // Generated, should have linguist-generated=true
-        ("dist/bundle.js", true, true),        // Generated, should have linguist-generated=true
-        ("src/main.rs", false, false),         // Source, should not have linguist-generated=true
-        ("docs/README.md", false, false),      // Docs, should not have linguist-generated=true
+        ("target/build/app.js", true, true), // Generated, should have linguist-generated=true
+        ("gen/proto/message.rs", true, true), // Generated, should have linguist-generated=true
+        ("dist/bundle.js", true, true),      // Generated, should have linguist-generated=true
+        ("src/main.rs", false, false),       // Source, should not have linguist-generated=true
+        ("docs/README.md", false, false),    // Docs, should not have linguist-generated=true
     ];
 
     for (filepath, is_generated, should_have_linguist) in test_cases {
@@ -185,13 +191,26 @@ fn demo_complete_workflow() -> Result<(), Box<dyn std::error::Error>> {
     // Simulate a commit with multiple files
     let commit_files = vec![
         // Source files (should not have linguist-generated=true)
-        ("src/main.rs", "fn main() { println!(\"Hello, World!\"); }", None),
+        (
+            "src/main.rs",
+            "fn main() { println!(\"Hello, World!\"); }",
+            None,
+        ),
         ("src/lib.rs", "pub fn hello() { \"Hello\" }", None),
-
         // Generated files (should have linguist-generated=true)
-        ("target/build/app.js", "console.log('Hello, World!');", Some(vec!["linguist-generated=true".to_string(), "-diff".to_string()])),
-        ("gen/proto/message.rs", "pub struct Message { pub content: String }", Some(vec!["linguist-generated=true".to_string()])),
-
+        (
+            "target/build/app.js",
+            "console.log('Hello, World!');",
+            Some(vec![
+                "linguist-generated=true".to_string(),
+                "-diff".to_string(),
+            ]),
+        ),
+        (
+            "gen/proto/message.rs",
+            "pub struct Message { pub content: String }",
+            Some(vec!["linguist-generated=true".to_string()]),
+        ),
         // Generated file missing required attribute
         ("target/build/file.js", "console.log('Generated');", None),
     ];
@@ -231,15 +250,12 @@ fn demo_complete_workflow() -> Result<(), Box<dyn std::error::Error>> {
             tree_entries.push(tree_entry);
         } else {
             // Create tree entry without attributes
-            let tree_entry = TreeEntryContract::new(
-                "100644",
-                filepath.to_string(),
-                blob_contract.oid.clone(),
-            );
+            let tree_entry =
+                TreeEntryContract::new("100644", filepath.to_string(), blob_contract.oid.clone());
 
             // Create git object contract
             let git_contract = git_validator.validate_blob(&blob_contract, Some(filepath));
-            
+
             all_contracts.push(git_contract);
             tree_entries.push(tree_entry);
         }
@@ -263,4 +279,4 @@ fn demo_complete_workflow() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-} 
+}

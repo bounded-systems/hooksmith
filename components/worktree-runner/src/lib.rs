@@ -1,28 +1,28 @@
 //! Worktree Runner WASM Component
-//! 
+//!
 //! This component provides a WASM interface for managing Git worktrees
 //! by wrapping existing CLI tools like wtp, git-worktree-switcher (wt),
 //! and Treekanga.
-//! 
+//!
 //! ## Supported Tools
-//! 
+//!
 //! - **wtp**: Smart Git worktree CLI with branch-only commands
 //! - **wt**: Git worktree switcher for quick navigation
 //! - **treekanga**: Community CLI for worktree management
 //! - **git worktree**: Native Git worktree commands
-//! 
+//!
 //! ## Usage
-//! 
+//!
 //! ```rust
 //! use worktree_runner::{WorktreeRunner, ToolConfig};
-//! 
+//!
 //! let runner = WorktreeRunner::new();
 //! let result = runner.create_worktree("feature/new-feature", &ToolConfig::default()).await;
 //! ```
 
-use wasm_bindgen::prelude::*;
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
 
 /// Configuration for worktree tools
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,7 +88,7 @@ impl WorktreeTool {
             WorktreeTool::Git => "git",
         }
     }
-    
+
     /// Check if this tool is available on the system
     pub fn is_available(&self) -> bool {
         which::which(self.command_name()).is_ok()
@@ -110,15 +110,15 @@ impl WorktreeRunner {
             config: ToolConfig::default(),
         }
     }
-    
+
     /// Create a new worktree runner with custom configuration
     pub fn with_config(config: JsValue) -> Result<WorktreeRunner, JsValue> {
         let config: ToolConfig = serde_wasm_bindgen::from_value(config)
             .map_err(|e| JsValue::from_str(&format!("Invalid config: {}", e)))?;
-        
+
         Ok(Self { config })
     }
-    
+
     /// Get available worktree tools
     pub fn get_available_tools(&self) -> Result<JsValue, JsValue> {
         let tools = vec![
@@ -127,61 +127,73 @@ impl WorktreeRunner {
             WorktreeTool::Treekanga,
             WorktreeTool::Git,
         ];
-        
+
         let available: Vec<WorktreeTool> = tools
             .into_iter()
             .filter(|tool| tool.is_available())
             .collect();
-        
+
         serde_wasm_bindgen::to_value(&available)
             .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
     }
-    
+
     /// Create a new worktree
     #[cfg(target_arch = "wasm32")]
     pub async fn create_worktree(&self, branch_name: &str) -> Result<JsValue, JsValue> {
-        let result = self.create_worktree_internal(branch_name).await
+        let result = self
+            .create_worktree_internal(branch_name)
+            .await
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
-        
+
         serde_wasm_bindgen::to_value(&result)
             .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
     }
-    
+
     /// List all worktrees
     #[cfg(target_arch = "wasm32")]
     pub async fn list_worktrees(&self) -> Result<JsValue, JsValue> {
-        let result = self.list_worktrees_internal().await
+        let result = self
+            .list_worktrees_internal()
+            .await
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
-        
+
         serde_wasm_bindgen::to_value(&result)
             .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
     }
-    
+
     /// Switch to a worktree
     #[cfg(target_arch = "wasm32")]
     pub async fn switch_worktree(&self, worktree_name: &str) -> Result<JsValue, JsValue> {
-        let result = self.switch_worktree_internal(worktree_name).await
+        let result = self
+            .switch_worktree_internal(worktree_name)
+            .await
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
-        
+
         serde_wasm_bindgen::to_value(&result)
             .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
     }
-    
+
     /// Remove a worktree
     #[cfg(target_arch = "wasm32")]
-    pub async fn remove_worktree(&self, worktree_name: &str, with_branch: bool) -> Result<JsValue, JsValue> {
-        let result = self.remove_worktree_internal(worktree_name, with_branch).await
+    pub async fn remove_worktree(
+        &self,
+        worktree_name: &str,
+        with_branch: bool,
+    ) -> Result<JsValue, JsValue> {
+        let result = self
+            .remove_worktree_internal(worktree_name, with_branch)
+            .await
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
-        
+
         serde_wasm_bindgen::to_value(&result)
             .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
     }
-    
+
     /// Update configuration
     pub fn update_config(&mut self, config: JsValue) -> Result<(), JsValue> {
         let config: ToolConfig = serde_wasm_bindgen::from_value(config)
             .map_err(|e| JsValue::from_str(&format!("Invalid config: {}", e)))?;
-        
+
         self.config = config;
         Ok(())
     }
@@ -191,7 +203,7 @@ impl WorktreeRunner {
     /// Internal method to create a worktree
     async fn create_worktree_internal(&self, branch_name: &str) -> Result<WorktreeResult> {
         let tool = self.select_best_tool().await?;
-        
+
         match tool {
             WorktreeTool::Wtp => self.create_with_wtp(branch_name).await,
             WorktreeTool::Wt => self.create_with_wt(branch_name).await,
@@ -199,11 +211,11 @@ impl WorktreeRunner {
             WorktreeTool::Git => self.create_with_git(branch_name).await,
         }
     }
-    
+
     /// Internal method to list worktrees
     async fn list_worktrees_internal(&self) -> Result<WorktreeResult> {
         let tool = self.select_best_tool().await?;
-        
+
         match tool {
             WorktreeTool::Wtp => self.list_with_wtp().await,
             WorktreeTool::Wt => self.list_with_wt().await,
@@ -211,11 +223,11 @@ impl WorktreeRunner {
             WorktreeTool::Git => self.list_with_git().await,
         }
     }
-    
+
     /// Internal method to switch worktrees
     async fn switch_worktree_internal(&self, worktree_name: &str) -> Result<WorktreeResult> {
         let tool = self.select_best_tool().await?;
-        
+
         match tool {
             WorktreeTool::Wtp => self.switch_with_wtp(worktree_name).await,
             WorktreeTool::Wt => self.switch_with_wt(worktree_name).await,
@@ -223,11 +235,15 @@ impl WorktreeRunner {
             WorktreeTool::Git => self.switch_with_git(worktree_name).await,
         }
     }
-    
+
     /// Internal method to remove worktrees
-    async fn remove_worktree_internal(&self, worktree_name: &str, with_branch: bool) -> Result<WorktreeResult> {
+    async fn remove_worktree_internal(
+        &self,
+        worktree_name: &str,
+        with_branch: bool,
+    ) -> Result<WorktreeResult> {
         let tool = self.select_best_tool().await?;
-        
+
         match tool {
             WorktreeTool::Wtp => self.remove_with_wtp(worktree_name, with_branch).await,
             WorktreeTool::Wt => self.remove_with_wt(worktree_name).await,
@@ -235,7 +251,7 @@ impl WorktreeRunner {
             WorktreeTool::Git => self.remove_with_git(worktree_name, with_branch).await,
         }
     }
-    
+
     /// Select the best available tool
     async fn select_best_tool(&self) -> Result<WorktreeTool> {
         // If a preferred tool is specified and available, use it
@@ -247,12 +263,12 @@ impl WorktreeRunner {
                 "git" => WorktreeTool::Git,
                 _ => return Err(anyhow::anyhow!("Unknown preferred tool: {}", preferred)),
             };
-            
+
             if tool.is_available() {
                 return Ok(tool);
             }
         }
-        
+
         // Otherwise, try tools in order of preference
         let tools = vec![
             WorktreeTool::Wtp,
@@ -260,16 +276,16 @@ impl WorktreeRunner {
             WorktreeTool::Treekanga,
             WorktreeTool::Git,
         ];
-        
+
         for tool in tools {
             if tool.is_available() {
                 return Ok(tool);
             }
         }
-        
+
         Err(anyhow::anyhow!("No worktree tools available"))
     }
-    
+
     // Tool-specific implementations
     async fn create_with_wtp(&self, branch_name: &str) -> Result<WorktreeResult> {
         // TODO: Implement wtp worktree creation
@@ -282,7 +298,7 @@ impl WorktreeRunner {
             branch_name: Some(branch_name.to_string()),
         })
     }
-    
+
     async fn create_with_wt(&self, branch_name: &str) -> Result<WorktreeResult> {
         // TODO: Implement wt worktree creation
         Ok(WorktreeResult {
@@ -293,7 +309,7 @@ impl WorktreeRunner {
             branch_name: Some(branch_name.to_string()),
         })
     }
-    
+
     async fn create_with_treekanga(&self, branch_name: &str) -> Result<WorktreeResult> {
         // TODO: Implement treekanga worktree creation
         Ok(WorktreeResult {
@@ -304,7 +320,7 @@ impl WorktreeRunner {
             branch_name: Some(branch_name.to_string()),
         })
     }
-    
+
     async fn create_with_git(&self, branch_name: &str) -> Result<WorktreeResult> {
         // TODO: Implement git worktree creation
         Ok(WorktreeResult {
@@ -315,7 +331,7 @@ impl WorktreeRunner {
             branch_name: Some(branch_name.to_string()),
         })
     }
-    
+
     // List implementations
     async fn list_with_wtp(&self) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
@@ -326,7 +342,7 @@ impl WorktreeRunner {
             branch_name: None,
         })
     }
-    
+
     async fn list_with_wt(&self) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
             success: true,
@@ -336,7 +352,7 @@ impl WorktreeRunner {
             branch_name: None,
         })
     }
-    
+
     async fn list_with_treekanga(&self) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
             success: true,
@@ -346,7 +362,7 @@ impl WorktreeRunner {
             branch_name: None,
         })
     }
-    
+
     async fn list_with_git(&self) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
             success: true,
@@ -356,7 +372,7 @@ impl WorktreeRunner {
             branch_name: None,
         })
     }
-    
+
     // Switch implementations
     async fn switch_with_wtp(&self, worktree_name: &str) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
@@ -367,7 +383,7 @@ impl WorktreeRunner {
             branch_name: None,
         })
     }
-    
+
     async fn switch_with_wt(&self, worktree_name: &str) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
             success: true,
@@ -377,7 +393,7 @@ impl WorktreeRunner {
             branch_name: None,
         })
     }
-    
+
     async fn switch_with_treekanga(&self, worktree_name: &str) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
             success: true,
@@ -387,7 +403,7 @@ impl WorktreeRunner {
             branch_name: None,
         })
     }
-    
+
     async fn switch_with_git(&self, worktree_name: &str) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
             success: true,
@@ -397,18 +413,25 @@ impl WorktreeRunner {
             branch_name: None,
         })
     }
-    
+
     // Remove implementations
-    async fn remove_with_wtp(&self, worktree_name: &str, with_branch: bool) -> Result<WorktreeResult> {
+    async fn remove_with_wtp(
+        &self,
+        worktree_name: &str,
+        with_branch: bool,
+    ) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
             success: true,
-            output: format!("Removed worktree with wtp: {} (with_branch: {})", worktree_name, with_branch),
+            output: format!(
+                "Removed worktree with wtp: {} (with_branch: {})",
+                worktree_name, with_branch
+            ),
             error: None,
             worktree_path: None,
             branch_name: None,
         })
     }
-    
+
     async fn remove_with_wt(&self, worktree_name: &str) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
             success: true,
@@ -418,7 +441,7 @@ impl WorktreeRunner {
             branch_name: None,
         })
     }
-    
+
     async fn remove_with_treekanga(&self, worktree_name: &str) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
             success: true,
@@ -428,11 +451,18 @@ impl WorktreeRunner {
             branch_name: None,
         })
     }
-    
-    async fn remove_with_git(&self, worktree_name: &str, with_branch: bool) -> Result<WorktreeResult> {
+
+    async fn remove_with_git(
+        &self,
+        worktree_name: &str,
+        with_branch: bool,
+    ) -> Result<WorktreeResult> {
         Ok(WorktreeResult {
             success: true,
-            output: format!("Removed worktree with git: {} (with_branch: {})", worktree_name, with_branch),
+            output: format!(
+                "Removed worktree with git: {} (with_branch: {})",
+                worktree_name, with_branch
+            ),
             error: None,
             worktree_path: None,
             branch_name: None,
@@ -457,21 +487,21 @@ pub fn init_panic_hook() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_worktree_runner_creation() {
         let runner = WorktreeRunner::new();
         assert!(runner.config.run_setup);
     }
-    
+
     #[tokio::test]
     async fn test_tool_availability() {
         let runner = WorktreeRunner::new();
         // Test that we can create a runner
         assert!(runner.config.run_setup);
-        
+
         // Test tool availability without WASM-specific functionality
         let git_tool = WorktreeTool::Git;
         assert!(git_tool.command_name() == "git");
     }
-} 
+}

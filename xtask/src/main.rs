@@ -1,17 +1,17 @@
 //! Xtask CLI for Hooksmith
-//! 
+//!
 //! This binary provides structured build and code generation tasks
 //! that replace shell scripts and raw echo statements.
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
+use jsonschema::JSONSchema;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use jsonschema::JSONSchema;
-use schemars::JsonSchema;
 
 mod hierarchical_validation;
 
@@ -160,8 +160,6 @@ enum Commands {
     },
 }
 
-
-
 /// WIT schema for function definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct WitFunction {
@@ -281,7 +279,10 @@ async fn main() -> Result<()> {
         Commands::Build { target, release } => {
             build_project(&target, release)?;
         }
-        Commands::GenWit { output_dir, overwrite } => {
+        Commands::GenWit {
+            output_dir,
+            overwrite,
+        } => {
             generate_wit_interfaces(&output_dir, overwrite)?;
         }
         Commands::GenLefthook { output, validate } => {
@@ -290,7 +291,13 @@ async fn main() -> Result<()> {
         Commands::GenDocs { output_dir, open } => {
             generate_documentation(&output_dir, open)?;
         }
-        Commands::GenSchemaDocs { output_dir, pdf, html, epub, open } => {
+        Commands::GenSchemaDocs {
+            output_dir,
+            pdf,
+            html,
+            epub,
+            open,
+        } => {
             generate_schema_documentation(&output_dir, pdf, html, epub, open).await?;
         }
         Commands::GenReadme { output, overwrite } => {
@@ -308,14 +315,22 @@ async fn main() -> Result<()> {
         Commands::Check { strict } => {
             check_generated_files(strict)?;
         }
-        Commands::Validate { trunk, cargo, modules, all } => {
+        Commands::Validate {
+            trunk,
+            cargo,
+            modules,
+            all,
+        } => {
             validate_project_config(trunk, cargo, modules, all)?;
         }
 
         Commands::ContractValidate { command } => {
             hierarchical_validation::run_command(command).await?;
         }
-        Commands::CheckStable { version, comprehensive } => {
+        Commands::CheckStable {
+            version,
+            comprehensive,
+        } => {
             check_stable_compatibility(&version, comprehensive).await?;
         }
         Commands::TestWithRelease { version } => {
@@ -399,13 +414,11 @@ fn generate_wit_interfaces(output_dir: &str, overwrite: bool) -> Result<()> {
         functions: vec![
             WitFunction {
                 name: "build-hook".to_string(),
-                params: vec![
-                    WitParam {
-                        name: "config".to_string(),
-                        param_type: "hook-config".to_string(),
-                        docs: Some("Hook configuration".to_string()),
-                    },
-                ],
+                params: vec![WitParam {
+                    name: "config".to_string(),
+                    param_type: "hook-config".to_string(),
+                    docs: Some("Hook configuration".to_string()),
+                }],
                 result: "result<build-result, string>".to_string(),
                 docs: Some("Build a hook from source".to_string()),
             },
@@ -417,13 +430,11 @@ fn generate_wit_interfaces(output_dir: &str, overwrite: bool) -> Result<()> {
             },
             WitFunction {
                 name: "install-hooks".to_string(),
-                params: vec![
-                    WitParam {
-                        name: "hook-names".to_string(),
-                        param_type: "list<string>".to_string(),
-                        docs: Some("Names of hooks to install".to_string()),
-                    },
-                ],
+                params: vec![WitParam {
+                    name: "hook-names".to_string(),
+                    param_type: "list<string>".to_string(),
+                    docs: Some("Names of hooks to install".to_string()),
+                }],
                 result: "result<unit, string>".to_string(),
                 docs: Some("Install hooks into Git repository".to_string()),
             },
@@ -488,13 +499,11 @@ fn generate_wit_interfaces(output_dir: &str, overwrite: bool) -> Result<()> {
         functions: vec![
             WitFunction {
                 name: "create-worktree".to_string(),
-                params: vec![
-                    WitParam {
-                        name: "branch-name".to_string(),
-                        param_type: "string".to_string(),
-                        docs: Some("Name of the branch to create".to_string()),
-                    },
-                ],
+                params: vec![WitParam {
+                    name: "branch-name".to_string(),
+                    param_type: "string".to_string(),
+                    docs: Some("Name of the branch to create".to_string()),
+                }],
                 result: "result<worktree-result, string>".to_string(),
                 docs: Some("Create a new worktree".to_string()),
             },
@@ -539,18 +548,16 @@ fn generate_wit_interfaces(output_dir: &str, overwrite: bool) -> Result<()> {
                 ],
             },
         ],
-        enums: vec![
-            WitEnum {
-                name: "worktree-tool".to_string(),
-                docs: Some("Available worktree tools".to_string()),
-                variants: vec![
-                    "wtp".to_string(),
-                    "wt".to_string(),
-                    "treekanga".to_string(),
-                    "git".to_string(),
-                ],
-            },
-        ],
+        enums: vec![WitEnum {
+            name: "worktree-tool".to_string(),
+            docs: Some("Available worktree tools".to_string()),
+            variants: vec![
+                "wtp".to_string(),
+                "wt".to_string(),
+                "treekanga".to_string(),
+                "git".to_string(),
+            ],
+        }],
     };
 
     // Generate WIT files
@@ -561,7 +568,7 @@ fn generate_wit_interfaces(output_dir: &str, overwrite: bool) -> Result<()> {
 
     for (filename, interface) in interfaces {
         let file_path = output_path.join(filename);
-        
+
         if file_path.exists() && !overwrite {
             println!("   Skipping {} (already exists)", filename);
             continue;
@@ -626,7 +633,10 @@ fn generate_wit_content(interface: &WitInterface) -> Result<String> {
             .map(|p| format!("{}: {}", p.name, p.param_type))
             .collect::<Vec<_>>()
             .join(", ");
-        content.push_str(&format!("  {}: func({}) -> {};\n", function.name, params, function.result));
+        content.push_str(&format!(
+            "  {}: func({}) -> {};\n",
+            function.name, params, function.result
+        ));
     }
 
     content.push_str("}\n\n");
@@ -650,7 +660,8 @@ fn generate_lefthook_config(output: &str, validate: bool) -> Result<()> {
     fmt_job.with_files("*.rs");
     config.add_pre_commit_hook("hooksmith-fmt".to_string(), fmt_job);
 
-    let mut clippy_job = lefthook_rs::JobConfig::new("cargo clippy --all-targets --all-features -- -D warnings");
+    let mut clippy_job =
+        lefthook_rs::JobConfig::new("cargo clippy --all-targets --all-features -- -D warnings");
     clippy_job.with_files("*.rs");
     config.add_pre_commit_hook("hooksmith-clippy".to_string(), clippy_job);
 
@@ -673,16 +684,13 @@ fn generate_lefthook_config(output: &str, validate: bool) -> Result<()> {
     );
 
     // Write configuration using lefthook-rs
-    tokio::runtime::Runtime::new()?.block_on(async {
-        config.write_to_file(output).await
-    })?;
+    tokio::runtime::Runtime::new()?.block_on(async { config.write_to_file(output).await })?;
 
     if validate {
         println!("   Validating configuration...");
         // Use lefthook-rs validation
-        tokio::runtime::Runtime::new()?.block_on(async {
-            lefthook_rs::validate_config(std::path::Path::new(output)).await
-        })?;
+        tokio::runtime::Runtime::new()?
+            .block_on(async { lefthook_rs::validate_config(std::path::Path::new(output)).await })?;
         println!("   Configuration validation passed");
     }
 
@@ -1026,7 +1034,7 @@ fn generate_mod_files(overwrite: bool) -> Result<()> {
     if commands_dir.exists() {
         let mod_content = generate_mod_content(commands_dir, "commands")?;
         let mod_path = commands_dir.join("mod.rs");
-        
+
         if mod_path.exists() && !overwrite {
             println!("   Skipping src/commands/mod.rs (already exists)");
         } else {
@@ -1040,7 +1048,7 @@ fn generate_mod_files(overwrite: bool) -> Result<()> {
     if modules_dir.exists() {
         let mod_content = generate_mod_content(modules_dir, "modules")?;
         let mod_path = modules_dir.join("mod.rs");
-        
+
         if mod_path.exists() && !overwrite {
             println!("   Skipping src/modules/mod.rs (already exists)");
         } else {
@@ -1058,15 +1066,18 @@ fn generate_mod_content(dir: &Path, dir_name: &str) -> Result<String> {
     let mut content = String::new();
     content.push_str(&format!("//! {} module\n", dir_name));
     content.push_str(&format!("//! \n"));
-    content.push_str(&format!("//! This module contains {} functionality.\n", dir_name));
+    content.push_str(&format!(
+        "//! This module contains {} functionality.\n",
+        dir_name
+    ));
     content.push_str(&format!("//! Auto-generated by xtask gen-mods\n\n"));
 
     let entries = fs::read_dir(dir).context(format!("Failed to read directory: {:?}", dir))?;
-    
+
     for entry in entries {
         let entry = entry.context("Failed to read directory entry")?;
         let path = entry.path();
-        
+
         if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("rs") {
             let filename = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
             if filename != "mod" {
@@ -1161,10 +1172,10 @@ async fn generate_all(overwrite: bool) -> Result<()> {
     generate_wit_interfaces("wit", overwrite)?;
     generate_lefthook_config("lefthook.yml", true)?;
     generate_documentation("docs", false)?;
-    
+
     // Generate schema documentation (Markdown only, no PDF/HTML/EPUB by default)
     generate_schema_documentation("docs", false, false, false, false).await?;
-    
+
     generate_readme("README.md", overwrite)?;
     generate_mod_files(overwrite)?;
     generate_hooks_readme("hooks/README.md", overwrite)?;
@@ -1278,8 +1289,9 @@ fn validate_trunk_config() -> Result<()> {
     }
 
     let content = fs::read_to_string(trunk_config).context("Failed to read trunk config")?;
-    let _config: serde_yaml::Value = serde_yaml::from_str(&content).context("Failed to parse trunk config")?;
-    
+    let _config: serde_yaml::Value =
+        serde_yaml::from_str(&content).context("Failed to parse trunk config")?;
+
     Ok(())
 }
 
@@ -1287,10 +1299,10 @@ fn validate_trunk_config() -> Result<()> {
 fn validate_cargo_workspace() -> Result<()> {
     let cargo_toml = Path::new("Cargo.toml");
     let content = fs::read_to_string(cargo_toml).context("Failed to read Cargo.toml")?;
-    
+
     // Basic validation - check that it can be parsed
     let _config: toml::Value = toml::from_str(&content).context("Failed to parse Cargo.toml")?;
-    
+
     Ok(())
 }
 
@@ -1300,11 +1312,11 @@ fn validate_module_consistency() -> Result<()> {
     let commands_dir = Path::new("src/commands");
     if commands_dir.exists() {
         let entries = fs::read_dir(commands_dir).context("Failed to read commands directory")?;
-        
+
         for entry in entries {
             let entry = entry.context("Failed to read directory entry")?;
             let path = entry.path();
-            
+
             if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("rs") {
                 let filename = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
                 if filename != "mod" {
@@ -1316,14 +1328,14 @@ fn validate_module_consistency() -> Result<()> {
             }
         }
     }
-    
+
     Ok(())
 }
 
 /// Generate JSON Schema documentation from existing schema files
 fn generate_json_schema_documentation() -> Result<String> {
     let mut docs = String::new();
-    
+
     docs.push_str("# JSON Schema Documentation\n\n");
     docs.push_str("This document describes the JSON schemas used by Hooksmith for contract validation and state machine management.\n\n");
 
@@ -1340,17 +1352,32 @@ fn generate_json_schema_documentation() -> Result<String> {
         if let Some(props) = properties.as_object() {
             docs.push_str("| Property | Type | Required | Description |\n");
             docs.push_str("|----------|------|----------|-------------|\n");
-            
+
             for (name, prop) in props {
-                let prop_type = prop.get("type").and_then(|t| t.as_str()).unwrap_or("object");
-                let description = prop.get("description").and_then(|d| d.as_str()).unwrap_or("");
-                let required = if name == "file" || name == "contract" || name == "state" || name == "hash" || name == "validated_by" || name == "timestamp" {
+                let prop_type = prop
+                    .get("type")
+                    .and_then(|t| t.as_str())
+                    .unwrap_or("object");
+                let description = prop
+                    .get("description")
+                    .and_then(|d| d.as_str())
+                    .unwrap_or("");
+                let required = if name == "file"
+                    || name == "contract"
+                    || name == "state"
+                    || name == "hash"
+                    || name == "validated_by"
+                    || name == "timestamp"
+                {
                     "✅"
                 } else {
                     "❌"
                 };
-                
-                docs.push_str(&format!("| {} | {} | {} | {} |\n", name, prop_type, required, description));
+
+                docs.push_str(&format!(
+                    "| {} | {} | {} | {} |\n",
+                    name, prop_type, required, description
+                ));
             }
         }
     }
@@ -1368,17 +1395,26 @@ fn generate_json_schema_documentation() -> Result<String> {
         if let Some(props) = properties.as_object() {
             docs.push_str("| Property | Type | Required | Description |\n");
             docs.push_str("|----------|------|----------|-------------|\n");
-            
+
             for (name, prop) in props {
-                let prop_type = prop.get("type").and_then(|t| t.as_str()).unwrap_or("object");
-                let description = prop.get("description").and_then(|d| d.as_str()).unwrap_or("");
+                let prop_type = prop
+                    .get("type")
+                    .and_then(|t| t.as_str())
+                    .unwrap_or("object");
+                let description = prop
+                    .get("description")
+                    .and_then(|d| d.as_str())
+                    .unwrap_or("");
                 let required = if name == "from_state" || name == "to_state" || name == "event" {
                     "✅"
                 } else {
                     "❌"
                 };
-                
-                docs.push_str(&format!("| {} | {} | {} | {} |\n", name, prop_type, required, description));
+
+                docs.push_str(&format!(
+                    "| {} | {} | {} | {} |\n",
+                    name, prop_type, required, description
+                ));
             }
         }
     }
@@ -1396,17 +1432,26 @@ fn generate_json_schema_documentation() -> Result<String> {
         if let Some(props) = properties.as_object() {
             docs.push_str("| Property | Type | Required | Description |\n");
             docs.push_str("|----------|------|----------|-------------|\n");
-            
+
             for (name, prop) in props {
-                let prop_type = prop.get("type").and_then(|t| t.as_str()).unwrap_or("object");
-                let description = prop.get("description").and_then(|d| d.as_str()).unwrap_or("");
+                let prop_type = prop
+                    .get("type")
+                    .and_then(|t| t.as_str())
+                    .unwrap_or("object");
+                let description = prop
+                    .get("description")
+                    .and_then(|d| d.as_str())
+                    .unwrap_or("");
                 let required = if name == "root_hash" || name == "leaves" || name == "proof" {
                     "✅"
                 } else {
                     "❌"
                 };
-                
-                docs.push_str(&format!("| {} | {} | {} | {} |\n", name, prop_type, required, description));
+
+                docs.push_str(&format!(
+                    "| {} | {} | {} | {} |\n",
+                    name, prop_type, required, description
+                ));
             }
         }
     }
@@ -1417,14 +1462,16 @@ fn generate_json_schema_documentation() -> Result<String> {
 /// Generate WIT documentation from existing WIT files
 fn generate_wit_documentation() -> Result<String> {
     let mut docs = String::new();
-    
+
     docs.push_str("# WIT Interface Documentation\n\n");
-    docs.push_str("This document describes the WebAssembly Interface Types (WIT) used by Hooksmith.\n\n");
+    docs.push_str(
+        "This document describes the WebAssembly Interface Types (WIT) used by Hooksmith.\n\n",
+    );
 
     // Read and document hooksmith.wit
-    let hooksmith_wit = fs::read_to_string("wit/hooksmith.wit")
-        .context("Failed to read hooksmith.wit")?;
-    
+    let hooksmith_wit =
+        fs::read_to_string("wit/hooksmith.wit").context("Failed to read hooksmith.wit")?;
+
     docs.push_str("## Hooksmith CLI Interface\n\n");
     docs.push_str("Main CLI interface for hook building and management.\n\n");
     docs.push_str("```wit\n");
@@ -1432,9 +1479,9 @@ fn generate_wit_documentation() -> Result<String> {
     docs.push_str("\n```\n\n");
 
     // Read and document hook-builder.wit
-    let hook_builder_wit = fs::read_to_string("wit/hook-builder.wit")
-        .context("Failed to read hook-builder.wit")?;
-    
+    let hook_builder_wit =
+        fs::read_to_string("wit/hook-builder.wit").context("Failed to read hook-builder.wit")?;
+
     docs.push_str("## Hook Builder Interface\n\n");
     docs.push_str("Interface for building and managing Git hooks.\n\n");
     docs.push_str("```wit\n");
@@ -1442,9 +1489,9 @@ fn generate_wit_documentation() -> Result<String> {
     docs.push_str("\n```\n\n");
 
     // Read and document validation.wit
-    let validation_wit = fs::read_to_string("wit/validation.wit")
-        .context("Failed to read validation.wit")?;
-    
+    let validation_wit =
+        fs::read_to_string("wit/validation.wit").context("Failed to read validation.wit")?;
+
     docs.push_str("## Validation Interface\n\n");
     docs.push_str("Interface for contract validation and state machine management.\n\n");
     docs.push_str("```wit\n");
@@ -1454,7 +1501,7 @@ fn generate_wit_documentation() -> Result<String> {
     // Read and document lefthook-generator.wit
     let lefthook_generator_wit = fs::read_to_string("wit/lefthook-generator.wit")
         .context("Failed to read lefthook-generator.wit")?;
-    
+
     docs.push_str("## Lefthook Generator Interface\n\n");
     docs.push_str("Interface for generating Lefthook configurations.\n\n");
     docs.push_str("```wit\n");
@@ -1467,43 +1514,55 @@ fn generate_wit_documentation() -> Result<String> {
 /// Generate combined documentation
 fn generate_combined_documentation(schema_docs: &str, wit_docs: &str) -> Result<String> {
     let mut docs = String::new();
-    
+
     docs.push_str("# Contract State Machine Documentation\n\n");
     docs.push_str("This document provides a comprehensive overview of Hooksmith's contract validation state machine, including JSON schemas and WIT interfaces.\n\n");
-    
+
     docs.push_str("## Overview\n\n");
     docs.push_str("Hooksmith implements a schema-driven state machine for contract validation that provides:\n\n");
     docs.push_str("- **State Machine**: Enforces valid state transitions (UNTRACKED → UNVALIDATED → VALIDATED → LOCKED)\n");
-    docs.push_str("- **Merkle Chain**: Cryptographic proof of integrity across hierarchical scopes\n");
-    docs.push_str("- **Git Notes Integration**: Tamper-proof audit trails with full validation history\n");
-    docs.push_str("- **CI Enforcement**: Automated validation and security auditing in GitHub Actions\n\n");
+    docs.push_str(
+        "- **Merkle Chain**: Cryptographic proof of integrity across hierarchical scopes\n",
+    );
+    docs.push_str(
+        "- **Git Notes Integration**: Tamper-proof audit trails with full validation history\n",
+    );
+    docs.push_str(
+        "- **CI Enforcement**: Automated validation and security auditing in GitHub Actions\n\n",
+    );
 
     docs.push_str("## JSON Schema Definitions\n\n");
     docs.push_str("The following schemas define the structure and validation rules for the contract state machine:\n\n");
-    
+
     // Extract schema documentation sections
     let schema_sections = extract_schema_sections(schema_docs);
     docs.push_str(&schema_sections);
 
     docs.push_str("## WIT Interface Definitions\n\n");
     docs.push_str("The following WIT interfaces expose contract validation functionality:\n\n");
-    
+
     // Extract WIT documentation sections
     let wit_sections = extract_wit_sections(wit_docs);
     docs.push_str(&wit_sections);
 
     docs.push_str("## Integration with WIT & JSON Schema\n\n");
-    docs.push_str("This implementation demonstrates how JSON Schema and WIT can work together:\n\n");
+    docs.push_str(
+        "This implementation demonstrates how JSON Schema and WIT can work together:\n\n",
+    );
     docs.push_str("1. **JSON Schema Defines the Contract State Machine** - Schemas enforce structure and validation rules\n");
     docs.push_str("2. **WIT Interface Exposes Contract Validation** - WASM components can validate and transition states\n");
     docs.push_str("3. **WASM Component Implements Logic** - Components can return schemas, validate states, and apply transitions\n");
     docs.push_str("4. **Rust Host Uses Both** - Combines schemars and wit-bindgen for type-safe validation\n\n");
 
     docs.push_str("## Benefits\n\n");
-    docs.push_str("- ✅ **Schema as Single Source of Truth** – JSON Schema defines the valid state machine\n");
+    docs.push_str(
+        "- ✅ **Schema as Single Source of Truth** – JSON Schema defines the valid state machine\n",
+    );
     docs.push_str("- ✅ **Language-agnostic Validation** – Any host that supports WIT/WASM can validate contracts\n");
     docs.push_str("- ✅ **Deterministic Contract Proofs** – The same logic works inside and outside Git hooks\n");
-    docs.push_str("- ✅ **Portable Across Hosts** – Works with Rust, Node.js, Deno, or any WASM runtime\n\n");
+    docs.push_str(
+        "- ✅ **Portable Across Hosts** – Works with Rust, Node.js, Deno, or any WASM runtime\n\n",
+    );
 
     Ok(docs)
 }
@@ -1511,39 +1570,37 @@ fn generate_combined_documentation(schema_docs: &str, wit_docs: &str) -> Result<
 /// Extract schema sections from schema documentation
 fn extract_schema_sections(schema_docs: &str) -> String {
     let mut sections = String::new();
-    
+
     // Find and extract the schema sections
     if let Some(start_idx) = schema_docs.find("## Contract State Schema") {
         sections.push_str(&schema_docs[start_idx..]);
     }
-    
+
     sections
 }
 
 /// Extract WIT sections from WIT documentation
 fn extract_wit_sections(wit_docs: &str) -> String {
     let mut sections = String::new();
-    
+
     // Find and extract the WIT sections
     if let Some(start_idx) = wit_docs.find("## Hooksmith CLI Interface") {
         sections.push_str(&wit_docs[start_idx..]);
     }
-    
+
     sections
 }
 
 /// Generate Pandoc outputs (PDF, HTML, EPUB)
 fn generate_pandoc_outputs(output_path: &Path, pdf: bool, html: bool, epub: bool) -> Result<()> {
     let input_file = output_path.join("CONTRACT_STATE_MACHINE.md");
-    
+
     if !input_file.exists() {
         anyhow::bail!("Input file does not exist: {:?}", input_file);
     }
 
     // Check if pandoc is available
-    let pandoc_check = Command::new("pandoc")
-        .arg("--version")
-        .output();
+    let pandoc_check = Command::new("pandoc").arg("--version").output();
 
     if pandoc_check.is_err() {
         println!("   ⚠️  Pandoc not found. Install pandoc to generate PDF/HTML/EPUB output.");
@@ -1555,7 +1612,12 @@ fn generate_pandoc_outputs(output_path: &Path, pdf: bool, html: bool, epub: bool
         println!("   📄 Generating PDF...");
         let status = Command::new("pandoc")
             .arg(&input_file)
-            .args(["-o", &output_path.join("CONTRACT_STATE_MACHINE.pdf").to_string_lossy()])
+            .args([
+                "-o",
+                &output_path
+                    .join("CONTRACT_STATE_MACHINE.pdf")
+                    .to_string_lossy(),
+            ])
             .args(["--pdf-engine=xelatex", "--toc", "--number-sections"])
             .status()
             .context("Failed to generate PDF")?;
@@ -1571,8 +1633,18 @@ fn generate_pandoc_outputs(output_path: &Path, pdf: bool, html: bool, epub: bool
         println!("   🌐 Generating HTML...");
         let status = Command::new("pandoc")
             .arg(&input_file)
-            .args(["-o", &output_path.join("CONTRACT_STATE_MACHINE.html").to_string_lossy()])
-            .args(["--standalone", "--toc", "--number-sections", "--css=style.css"])
+            .args([
+                "-o",
+                &output_path
+                    .join("CONTRACT_STATE_MACHINE.html")
+                    .to_string_lossy(),
+            ])
+            .args([
+                "--standalone",
+                "--toc",
+                "--number-sections",
+                "--css=style.css",
+            ])
             .status()
             .context("Failed to generate HTML")?;
 
@@ -1587,7 +1659,12 @@ fn generate_pandoc_outputs(output_path: &Path, pdf: bool, html: bool, epub: bool
         println!("   📚 Generating EPUB...");
         let status = Command::new("pandoc")
             .arg(&input_file)
-            .args(["-o", &output_path.join("CONTRACT_STATE_MACHINE.epub").to_string_lossy()])
+            .args([
+                "-o",
+                &output_path
+                    .join("CONTRACT_STATE_MACHINE.epub")
+                    .to_string_lossy(),
+            ])
             .args(["--toc", "--number-sections"])
             .status()
             .context("Failed to generate EPUB")?;
@@ -1597,6 +1674,270 @@ fn generate_pandoc_outputs(output_path: &Path, pdf: bool, html: bool, epub: bool
         } else {
             println!("   ✅ EPUB generated successfully");
         }
+    }
+
+    Ok(())
+}
+
+/// Check if current changes are compatible with the last release
+async fn check_stable_compatibility(version: &str, comprehensive: bool) -> Result<()> {
+    println!("🛡️ Checking stable version compatibility...");
+    println!("   Version: {}", version);
+    println!("   Comprehensive: {}", comprehensive);
+
+    // Check if stable version is installed
+    let stable_installed = Command::new("hooksmith").arg("--version").output().is_ok();
+
+    if !stable_installed {
+        println!("   ⚠️  Stable version not found. Installing...");
+        let status = Command::new("cargo")
+            .args(["install", "hooksmith", "--version", version])
+            .status()
+            .context("Failed to install stable version")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to install stable version {}", version);
+        }
+    }
+
+    // Build current version
+    println!("   🔨 Building current version...");
+    let status = Command::new("cargo")
+        .args(["build", "--bin", "hooksmith"])
+        .status()
+        .context("Failed to build current version")?;
+
+    if !status.success() {
+        anyhow::bail!("Current version build failed");
+    }
+
+    // Run basic compatibility tests
+    println!("   🧪 Running compatibility tests...");
+
+    // Test basic commands
+    let commands = vec!["test", "list", "--help", "--version"];
+    for cmd in commands {
+        println!("     Testing command: {}", cmd);
+
+        // Run stable version
+        let stable_output = Command::new("hooksmith")
+            .arg(cmd)
+            .output()
+            .context(format!(
+                "Failed to run stable version with command: {}",
+                cmd
+            ))?;
+
+        // Run current version
+        let current_output = Command::new("cargo")
+            .args(["run", "--bin", "hooksmith", "--", cmd])
+            .output()
+            .context(format!(
+                "Failed to run current version with command: {}",
+                cmd
+            ))?;
+
+        // Compare exit codes
+        if stable_output.status.success() != current_output.status.success() {
+            println!("     ❌ Exit code mismatch for command: {}", cmd);
+            if comprehensive {
+                anyhow::bail!("Compatibility test failed for command: {}", cmd);
+            }
+        } else {
+            println!("     ✅ Command {} passed", cmd);
+        }
+    }
+
+    if comprehensive {
+        // Run additional comprehensive tests
+        println!("   🔍 Running comprehensive tests...");
+
+        // Test with different arguments
+        let test_cases = vec![
+            (
+                vec!["test", "--message", "compatibility test"],
+                "test with custom message",
+            ),
+            (vec!["list"], "list command"),
+            (vec!["--help"], "help command"),
+        ];
+
+        for (args, description) in test_cases {
+            println!("     Testing: {}", description);
+
+            // Run stable version
+            let stable_output = Command::new("hooksmith")
+                .args(&args)
+                .output()
+                .context(format!("Failed to run stable version: {}", description))?;
+
+            // Run current version
+            let current_output = Command::new("cargo")
+                .args(["run", "--bin", "hooksmith", "--"])
+                .args(&args)
+                .output()
+                .context(format!("Failed to run current version: {}", description))?;
+
+            // Compare outputs (basic comparison)
+            let stable_stdout = String::from_utf8_lossy(&stable_output.stdout);
+            let current_stdout = String::from_utf8_lossy(&current_output.stdout);
+
+            if stable_stdout.trim() != current_stdout.trim() {
+                println!("     ⚠️  Output differs for: {}", description);
+                if comprehensive {
+                    println!("     Stable output: {}", stable_stdout.trim());
+                    println!("     Current output: {}", current_stdout.trim());
+                }
+            } else {
+                println!("     ✅ Output matches for: {}", description);
+            }
+        }
+    }
+
+    println!("✅ Stable version compatibility check completed");
+    Ok(())
+}
+
+/// Test current version against released version
+async fn test_with_release(version: &str) -> Result<()> {
+    println!("🧪 Testing current version against release {}...", version);
+
+    // Ensure stable version is installed
+    let status = Command::new("cargo")
+        .args(["install", "hooksmith", "--version", version, "--force"])
+        .status()
+        .context("Failed to install stable version")?;
+
+    if !status.success() {
+        anyhow::bail!("Failed to install stable version {}", version);
+    }
+
+    // Run tests with current version
+    println!("   🔨 Running tests with current version...");
+    let current_status = Command::new("cargo")
+        .args(["test", "--all-targets", "--all-features"])
+        .status()
+        .context("Failed to run tests with current version")?;
+
+    if !current_status.success() {
+        anyhow::bail!("Current version tests failed");
+    }
+
+    // Run basic functionality tests with stable version
+    println!("   🧪 Running functionality tests with stable version...");
+    let test_commands = vec!["test", "list", "--help"];
+
+    for cmd in test_commands {
+        let output = Command::new("hooksmith")
+            .arg(cmd)
+            .output()
+            .context(format!("Failed to run stable version command: {}", cmd))?;
+
+        if !output.status.success() {
+            println!("   ⚠️  Stable version command '{}' failed", cmd);
+        } else {
+            println!("   ✅ Stable version command '{}' passed", cmd);
+        }
+    }
+
+    println!("✅ Testing with release version completed");
+    Ok(())
+}
+
+/// Compare outputs between current and released version
+async fn compare_with_release(version: &str) -> Result<()> {
+    println!(
+        "🔍 Comparing outputs between current and release {}...",
+        version
+    );
+
+    // Ensure stable version is installed
+    let status = Command::new("cargo")
+        .args(["install", "hooksmith", "--version", version, "--force"])
+        .status()
+        .context("Failed to install stable version")?;
+
+    if !status.success() {
+        anyhow::bail!("Failed to install stable version {}", version);
+    }
+
+    // Build current version
+    println!("   🔨 Building current version...");
+    let build_status = Command::new("cargo")
+        .args(["build", "--bin", "hooksmith"])
+        .status()
+        .context("Failed to build current version")?;
+
+    if !build_status.success() {
+        anyhow::bail!("Current version build failed");
+    }
+
+    // Compare outputs for various commands
+    let comparison_commands = vec![
+        ("test", "Basic test command"),
+        ("list", "List command"),
+        ("--help", "Help command"),
+        ("--version", "Version command"),
+    ];
+
+    let mut differences_found = false;
+
+    for (cmd, description) in comparison_commands {
+        println!("   🔍 Comparing: {}", description);
+
+        // Get stable version output
+        let stable_output = Command::new("hooksmith")
+            .arg(cmd)
+            .output()
+            .context(format!("Failed to get stable version output for: {}", cmd))?;
+
+        // Get current version output
+        let current_output = Command::new("cargo")
+            .args(["run", "--bin", "hooksmith", "--", cmd])
+            .output()
+            .context(format!("Failed to get current version output for: {}", cmd))?;
+
+        // Compare outputs
+        let stable_stdout = String::from_utf8_lossy(&stable_output.stdout);
+        let current_stdout = String::from_utf8_lossy(&current_output.stdout);
+        let stable_stderr = String::from_utf8_lossy(&stable_output.stderr);
+        let current_stderr = String::from_utf8_lossy(&current_output.stderr);
+
+        let stdout_match = stable_stdout.trim() == current_stdout.trim();
+        let stderr_match = stable_stderr.trim() == current_stderr.trim();
+        let exit_code_match = stable_output.status.success() == current_output.status.success();
+
+        if stdout_match && stderr_match && exit_code_match {
+            println!("     ✅ Outputs match for: {}", description);
+        } else {
+            println!("     ❌ Outputs differ for: {}", description);
+            differences_found = true;
+
+            if !stdout_match {
+                println!("       STDOUT differs:");
+                println!("       Stable: {}", stable_stdout.trim());
+                println!("       Current: {}", current_stdout.trim());
+            }
+
+            if !stderr_match {
+                println!("       STDERR differs:");
+                println!("       Stable: {}", stable_stderr.trim());
+                println!("       Current: {}", current_stderr.trim());
+            }
+
+            if !exit_code_match {
+                println!("       Exit codes differ:");
+                println!("       Stable: {}", stable_output.status);
+                println!("       Current: {}", current_output.status);
+            }
+        }
+    }
+
+    if differences_found {
+        println!("⚠️  Differences found between versions");
+        println!("   Review the differences above to ensure they are expected");
+    } else {
+        println!("✅ All outputs match between versions");
     }
 
     Ok(())

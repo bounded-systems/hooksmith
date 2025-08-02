@@ -1,5 +1,5 @@
-use git_filter::prelude::*;
 use git_filter::actions::GitOperation;
+use git_filter::prelude::*;
 use std::io::{Read, Write};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -12,10 +12,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create blob contract filter
     let filter = BlobContractFilter::new(
-        true,   // normalize_line_endings
-        true,   // apply_binary_heuristic
-        30.0,   // binary_threshold
-        false,  // generate_audit (set to true for detailed logging)
+        true,  // normalize_line_endings
+        true,  // apply_binary_heuristic
+        30.0,  // binary_threshold
+        false, // generate_audit (set to true for detailed logging)
     );
 
     // Create a default file state
@@ -34,4 +34,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             std::process::exit(1);
         }
     }
-} 
+}

@@ -1,77 +1,66 @@
 //! Git Filter Component
-//! 
+//!
 //! This module implements Git attributes as hook-like abstractions, providing
 //! a structured way to handle file processing based on .gitattributes.
 
-pub mod state;
 pub mod actions;
-pub mod filter;
-pub mod error;
-pub mod contract;
 pub mod blob_contract;
-pub mod line_contract;
-pub mod git_object_contract;
-pub mod tree_contract;
+pub mod contract;
+pub mod error;
 pub mod filename_contract;
+pub mod filter;
+pub mod git_object_contract;
+pub mod line_contract;
+pub mod ref_contracts;
+pub mod state;
+pub mod tree_contract;
 pub mod tree_filename_chars_contract;
 pub mod unified_contracts;
-pub mod ref_contracts;
 
-pub use state::{FileState, AttributeState};
 pub use actions::{ActionResolver, HookAction};
-pub use filter::{SafeAsciiFilter, CharContractFilter, BlobContractFilter, CombinedContractFilter, FilterDriver};
+pub use blob_contract::{BlobAction, BlobByteAudit, BlobContract, BlobValidator, ByteClass};
+pub use contract::{CharAction, CharClass, CharValidator, CharacterContract, FileValidationResult};
 pub use error::FilterError;
-pub use contract::{CharacterContract, CharClass, CharAction, CharValidator, FileValidationResult};
-pub use blob_contract::{BlobContract, BlobAction, BlobByteAudit, ByteClass, BlobValidator};
+pub use filename_contract::{FilenameContract, FilenameValidator};
+pub use filter::{
+    BlobContractFilter, CharContractFilter, CombinedContractFilter, FilterDriver, SafeAsciiFilter,
+};
+pub use git_object_contract::{GitObjectContract, GitObjectType, GitObjectValidator};
 pub use line_contract::{BlobLineContract, LineAction, LineValidator};
-pub use git_object_contract::{
-    GitObjectContract, GitObjectType, GitObjectValidator
+pub use ref_contracts::{
+    RefContract, RefMetaContract, RefNameContract, RefStorageType, RefTargetContract, RefType,
+    RefValidator, ReflogEntry, ReflogInfo, UpstreamInfo, VALID_BRANCH_NAME_RE, VALID_REF_NAME_RE,
+    VALID_REMOTE_NAME_RE, VALID_TAG_NAME_RE,
 };
+pub use state::{AttributeState, FileState};
 pub use tree_contract::{
-    TreeMode, TreeObjectType, TreeEntryContract, TreeObjectContract, TreeValidator
-};
-pub use filename_contract::{
-    FilenameContract, FilenameValidator
+    TreeEntryContract, TreeMode, TreeObjectContract, TreeObjectType, TreeValidator,
 };
 pub use tree_filename_chars_contract::{
-    CharContract, TreeFilenameContractChars, TreeFilenameCharsValidator
+    CharContract, TreeFilenameCharsValidator, TreeFilenameContractChars,
 };
 pub use unified_contracts::{
-    SHA1_RE, VALID_FILENAME_RE, VALID_CHAR_RE,
-    BlobLineContract as UnifiedBlobLineContract, BlobContract as UnifiedBlobContract,
-    TreeMode as UnifiedTreeMode, TreeEntryContract as UnifiedTreeEntryContract, TreeContract as UnifiedTreeContract,
-    CommitContract, TagContract,
-    GitObject, UnifiedValidator
-};
-pub use ref_contracts::{
-    VALID_REF_NAME_RE, VALID_BRANCH_NAME_RE, VALID_TAG_NAME_RE, VALID_REMOTE_NAME_RE,
-    RefType, RefStorageType,
-    RefNameContract, RefTargetContract, RefMetaContract, RefContract,
-    UpstreamInfo, ReflogInfo, ReflogEntry,
-    RefValidator
+    BlobContract as UnifiedBlobContract, BlobLineContract as UnifiedBlobLineContract,
+    CommitContract, GitObject, TagContract, TreeContract as UnifiedTreeContract,
+    TreeEntryContract as UnifiedTreeEntryContract, TreeMode as UnifiedTreeMode, UnifiedValidator,
+    SHA1_RE, VALID_CHAR_RE, VALID_FILENAME_RE,
 };
 
 /// Re-export common types for convenience
 pub mod prelude {
     pub use super::{
-        FileState, AttributeState, ActionResolver, HookAction,
-        SafeAsciiFilter, CharContractFilter, BlobContractFilter, CombinedContractFilter, FilterDriver, FilterError,
-        CharacterContract, CharClass, CharAction, CharValidator, FileValidationResult,
-        BlobContract, BlobAction, BlobByteAudit, ByteClass, BlobValidator,
-        BlobLineContract, LineAction, LineValidator,
-        GitObjectContract, GitObjectType, GitObjectValidator,
-        TreeMode, TreeObjectType, TreeEntryContract, TreeObjectContract, TreeValidator,
-        FilenameContract, FilenameValidator,
-        CharContract, TreeFilenameContractChars, TreeFilenameCharsValidator,
-        SHA1_RE, VALID_FILENAME_RE, VALID_CHAR_RE,
-        UnifiedBlobLineContract, UnifiedBlobContract,
-        UnifiedTreeMode, UnifiedTreeEntryContract, UnifiedTreeContract,
-        CommitContract, TagContract,
-        GitObject, UnifiedValidator,
-        VALID_REF_NAME_RE, VALID_BRANCH_NAME_RE, VALID_TAG_NAME_RE, VALID_REMOTE_NAME_RE,
-        RefType, RefStorageType,
-        RefNameContract, RefTargetContract, RefMetaContract, RefContract,
-        UpstreamInfo, ReflogInfo, ReflogEntry,
-        RefValidator
+        ActionResolver, AttributeState, BlobAction, BlobByteAudit, BlobContract,
+        BlobContractFilter, BlobLineContract, BlobValidator, ByteClass, CharAction, CharClass,
+        CharContract, CharContractFilter, CharValidator, CharacterContract, CombinedContractFilter,
+        CommitContract, FileState, FileValidationResult, FilenameContract, FilenameValidator,
+        FilterDriver, FilterError, GitObject, GitObjectContract, GitObjectType, GitObjectValidator,
+        HookAction, LineAction, LineValidator, RefContract, RefMetaContract, RefNameContract,
+        RefStorageType, RefTargetContract, RefType, RefValidator, ReflogEntry, ReflogInfo,
+        SafeAsciiFilter, TagContract, TreeEntryContract, TreeFilenameCharsValidator,
+        TreeFilenameContractChars, TreeMode, TreeObjectContract, TreeObjectType, TreeValidator,
+        UnifiedBlobContract, UnifiedBlobLineContract, UnifiedTreeContract,
+        UnifiedTreeEntryContract, UnifiedTreeMode, UnifiedValidator, UpstreamInfo, SHA1_RE,
+        VALID_BRANCH_NAME_RE, VALID_CHAR_RE, VALID_FILENAME_RE, VALID_REF_NAME_RE,
+        VALID_REMOTE_NAME_RE, VALID_TAG_NAME_RE,
     };
-} 
+}

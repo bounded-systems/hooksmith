@@ -37,11 +37,17 @@ fn test_tree_entry_attributes() -> Result<(), Box<dyn std::error::Error>> {
         ]),
     );
 
-    println!("  ✅ Generated file with correct attributes: {}", entry.is_valid());
+    println!(
+        "  ✅ Generated file with correct attributes: {}",
+        entry.is_valid()
+    );
     assert!(entry.is_valid());
     assert!(entry.has_attribute("linguist-generated=true"));
     assert!(entry.has_attribute("-diff"));
-    assert_eq!(entry.get_attribute_value("linguist-generated"), Some("true"));
+    assert_eq!(
+        entry.get_attribute_value("linguist-generated"),
+        Some("true")
+    );
 
     // Test generated file without required attributes
     let entry2 = TreeEntryContract::new_with_attributes(
@@ -51,12 +57,18 @@ fn test_tree_entry_attributes() -> Result<(), Box<dyn std::error::Error>> {
         None,
     );
 
-    println!("  ❌ Generated file missing required attributes: {}", !entry2.is_valid());
+    println!(
+        "  ❌ Generated file missing required attributes: {}",
+        !entry2.is_valid()
+    );
     println!("    Entry2 errors: {:?}", entry2.errors);
     println!("    Entry2 valid: {}", entry2.is_valid());
     assert!(!entry2.is_valid());
-    
-    let has_linguist_error = entry2.errors.iter().any(|e| e.contains("linguist-generated=true"));
+
+    let has_linguist_error = entry2
+        .errors
+        .iter()
+        .any(|e| e.contains("linguist-generated=true"));
     if !has_linguist_error {
         println!("    Entry2 errors: {:?}", entry2.errors);
     }
@@ -70,7 +82,10 @@ fn test_tree_entry_attributes() -> Result<(), Box<dyn std::error::Error>> {
         Some(vec!["text=true".to_string()]),
     );
 
-    println!("  ✅ Source file without linguist-generated: {}", entry3.is_valid());
+    println!(
+        "  ✅ Source file without linguist-generated: {}",
+        entry3.is_valid()
+    );
     println!("    Entry3 errors: {:?}", entry3.errors);
     assert!(entry3.is_valid());
 
@@ -101,12 +116,12 @@ fn test_blob_contract_attributes() -> Result<(), Box<dyn std::error::Error>> {
     assert!(is_valid2);
 
     // Test blob without linguist-generated for generated file
-    let mut blob2 = BlobContract::new(
-        "b2c3d4e5f6789012345678901234567890abcde1".to_string(),
-        1024,
-    );
+    let mut blob2 = BlobContract::new("b2c3d4e5f6789012345678901234567890abcde1".to_string(), 1024);
     let is_valid3 = blob2.validate_attributes_for_path("target/build/file.js");
-    println!("  ❌ Generated file without linguist-generated: {}", !is_valid3);
+    println!(
+        "  ❌ Generated file without linguist-generated: {}",
+        !is_valid3
+    );
     assert!(!is_valid3);
 
     println!();
@@ -128,7 +143,10 @@ fn test_git_object_contract_attributes() -> Result<(), Box<dyn std::error::Error
         Some("target/build/app.js"),
     );
 
-    println!("  ✅ Generated file with linguist-generated=true: {}", contract.is_valid());
+    println!(
+        "  ✅ Generated file with linguist-generated=true: {}",
+        contract.is_valid()
+    );
     assert!(contract.is_valid());
 
     // Test generated file without linguist-generated=true
@@ -140,7 +158,10 @@ fn test_git_object_contract_attributes() -> Result<(), Box<dyn std::error::Error
         Some("target/build/file.js"),
     );
 
-    println!("  ❌ Generated file without linguist-generated=true: {}", !contract2.is_valid());
+    println!(
+        "  ❌ Generated file without linguist-generated=true: {}",
+        !contract2.is_valid()
+    );
     assert!(!contract2.is_valid());
 
     // Test source file without linguist-generated=true (should be valid)
@@ -152,7 +173,10 @@ fn test_git_object_contract_attributes() -> Result<(), Box<dyn std::error::Error
         Some("src/main.rs"),
     );
 
-    println!("  ✅ Source file without linguist-generated=true: {}", contract3.is_valid());
+    println!(
+        "  ✅ Source file without linguist-generated=true: {}",
+        contract3.is_valid()
+    );
     assert!(contract3.is_valid());
 
     println!();
@@ -183,7 +207,11 @@ fn test_generated_file_detection() -> Result<(), Box<dyn std::error::Error>> {
             None, // No linguist-generated attribute
             Some(filepath),
         );
-        println!("  ❌ {} (should require linguist-generated=true): {}", filepath, !contract.is_valid());
+        println!(
+            "  ❌ {} (should require linguist-generated=true): {}",
+            filepath,
+            !contract.is_valid()
+        );
         assert!(!contract.is_valid());
     }
 
@@ -203,7 +231,11 @@ fn test_generated_file_detection() -> Result<(), Box<dyn std::error::Error>> {
             None, // No linguist-generated attribute
             Some(filepath),
         );
-        println!("  ❌ {} (should require linguist-generated=true): {}", filepath, !contract.is_valid());
+        println!(
+            "  ❌ {} (should require linguist-generated=true): {}",
+            filepath,
+            !contract.is_valid()
+        );
         assert!(!contract.is_valid());
     }
 
@@ -225,10 +257,14 @@ fn test_generated_file_detection() -> Result<(), Box<dyn std::error::Error>> {
             None, // No linguist-generated attribute
             Some(filepath),
         );
-        println!("  ✅ {} (should be valid without linguist-generated=true): {}", filepath, contract.is_valid());
+        println!(
+            "  ✅ {} (should be valid without linguist-generated=true): {}",
+            filepath,
+            contract.is_valid()
+        );
         assert!(contract.is_valid());
     }
 
     println!();
     Ok(())
-} 
+}

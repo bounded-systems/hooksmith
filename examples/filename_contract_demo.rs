@@ -40,7 +40,7 @@ fn demo_basic_filename_validation() -> Result<(), Box<dyn std::error::Error>> {
     for filename in filenames {
         let contract = FilenameContract::new(filename.to_string());
         println!("  {}", contract.summary());
-        
+
         if !contract.errors.is_empty() {
             println!("    Errors: {:?}", contract.errors);
         }
@@ -57,7 +57,7 @@ fn demo_strict_filename_validation() -> Result<(), Box<dyn std::error::Error>> {
     let filenames = vec![
         "README.md",
         "Cargo.toml",
-        "src/main.rs",      // ❌ Contains '/'
+        "src/main.rs",         // ❌ Contains '/'
         "src/utils/helper.rs", // ❌ Contains '/'
         "file.txt",
         "script.sh",
@@ -66,7 +66,7 @@ fn demo_strict_filename_validation() -> Result<(), Box<dyn std::error::Error>> {
     for filename in filenames {
         let contract = FilenameContract::new_strict(filename.to_string());
         println!("  {}", contract.summary());
-        
+
         if !contract.errors.is_empty() {
             println!("    Errors: {:?}", contract.errors);
         }
@@ -87,7 +87,7 @@ fn demo_non_strict_filename_validation() -> Result<(), Box<dyn std::error::Error
     let filenames = vec![
         "README.md",
         "Cargo.toml",
-        "src/main.rs",      // ✅ Allowed
+        "src/main.rs",         // ✅ Allowed
         "src/utils/helper.rs", // ✅ Allowed
         "file.txt",
         "scripts/build.sh", // ✅ Allowed
@@ -97,7 +97,7 @@ fn demo_non_strict_filename_validation() -> Result<(), Box<dyn std::error::Error
     for filename in filenames {
         let contract = FilenameContract::new(filename.to_string());
         println!("  {}", contract.summary());
-        
+
         if !contract.errors.is_empty() {
             println!("    Errors: {:?}", contract.errors);
         }
@@ -141,12 +141,16 @@ fn demo_batch_filename_validation() -> Result<(), Box<dyn std::error::Error>> {
     println!();
     println!("  Validation summary:");
     println!("    All valid: {}", validator.all_valid(&contracts));
-    
+
     let invalid_filenames = validator.get_invalid_filenames(&contracts);
     if !invalid_filenames.is_empty() {
         println!("    Invalid filenames:");
         for contract in invalid_filenames {
-            println!("      - '{}': {}", contract.filename, contract.errors.join(", "));
+            println!(
+                "      - '{}': {}",
+                contract.filename,
+                contract.errors.join(", ")
+            );
         }
     }
 
@@ -187,10 +191,14 @@ fn demo_integration_with_tree_entries() -> Result<(), Box<dyn std::error::Error>
     let filename_contracts = filename_validator.validate_filenames(filenames);
 
     println!("  Tree entries with filename validation:");
-    for (i, (tree_entry, filename_contract)) in tree_entries.iter().zip(filename_contracts.iter()).enumerate() {
+    for (i, (tree_entry, filename_contract)) in tree_entries
+        .iter()
+        .zip(filename_contracts.iter())
+        .enumerate()
+    {
         println!("    Entry {}: {}", i + 1, tree_entry.summary());
         println!("      Filename validation: {}", filename_contract.summary());
-        
+
         if !filename_contract.errors.is_empty() {
             println!("      Filename errors: {:?}", filename_contract.errors);
         }
@@ -206,4 +214,4 @@ fn demo_integration_with_tree_entries() -> Result<(), Box<dyn std::error::Error>
     println!();
 
     Ok(())
-} 
+}

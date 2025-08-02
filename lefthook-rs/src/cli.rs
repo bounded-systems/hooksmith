@@ -27,54 +27,54 @@ enum Commands {
         #[arg(long, default_value = "lefthook.yml")]
         config: PathBuf,
     },
-    
+
     /// Run a specific Lefthook hook
     Run {
         /// Name of the hook to run
         hook_name: String,
-        
+
         /// Path to the lefthook.yml configuration file
         #[arg(long, default_value = "lefthook.yml")]
         config: PathBuf,
     },
-    
+
     /// Generate a lefthook.yml configuration file
     Generate {
         /// Output path for the configuration file
         #[arg(long, default_value = "lefthook.yml")]
         output: PathBuf,
-        
+
         /// Whether to overwrite existing file
         #[arg(long)]
         overwrite: bool,
-        
+
         /// Template to use for generation
         #[arg(long, default_value = "rust")]
         template: String,
     },
-    
+
     /// Validate a lefthook.yml configuration file
     Validate {
         /// Path to the configuration file to validate
         #[arg(long, default_value = "lefthook.yml")]
         config: PathBuf,
     },
-    
+
     /// Check if Lefthook is installed and working
     Check,
-    
+
     /// Get the version of the installed Lefthook binary
     Version,
-    
+
     /// Create a new project with Lefthook configuration
     Init {
         /// Project name
         name: String,
-        
+
         /// Project directory
         #[arg(long)]
         dir: Option<PathBuf>,
-        
+
         /// Template to use
         #[arg(long, default_value = "rust")]
         template: String,
@@ -91,44 +91,55 @@ pub async fn run() -> Result<()> {
             crate::install().await?;
             println!("✅ Hooks installed successfully");
         }
-        
-        Commands::Run { hook_name, config: _ } => {
+
+        Commands::Run {
+            hook_name,
+            config: _,
+        } => {
             println!("Running hook: {}", hook_name);
             crate::run_hook(&hook_name).await?;
             println!("✅ Hook completed successfully");
         }
-        
-        Commands::Generate { output, overwrite, template } => {
+
+        Commands::Generate {
+            output,
+            overwrite,
+            template,
+        } => {
             println!("Generating lefthook.yml configuration...");
             let config = generate_config_from_template(&template)?;
-            
+
             if output.exists() && !overwrite {
                 eprintln!("❌ File already exists. Use --overwrite to overwrite.");
                 return Ok(());
             }
-            
+
             config.write_to_file(&output).await?;
             println!("✅ Configuration generated at: {:?}", output);
         }
-        
+
         Commands::Validate { config } => {
             println!("Validating configuration...");
             crate::validate_config(&config).await?;
             println!("✅ Configuration is valid");
         }
-        
+
         Commands::Check => {
             println!("Checking Lefthook installation...");
             crate::check_installation().await?;
             println!("✅ Lefthook is installed and working");
         }
-        
+
         Commands::Version => {
             let version = crate::get_version().await?;
             println!("Lefthook version: {}", version);
         }
-        
-        Commands::Init { name, dir, template } => {
+
+        Commands::Init {
+            name,
+            dir,
+            template,
+        } => {
             println!("Initializing new project: {}", name);
             init_project(&name, dir, &template).await?;
             println!("✅ Project initialized successfully");
@@ -148,11 +159,12 @@ fn generate_config_from_template(template: &str) -> Result<HookConfig> {
             let mut fmt_job = JobConfig::new("cargo fmt --all -- --check");
             fmt_job.with_files("*.rs");
             config.add_pre_commit_hook("fmt".to_string(), fmt_job);
-            
-            let mut clippy_job = JobConfig::new("cargo clippy --all-targets --all-features -- -D warnings");
+
+            let mut clippy_job =
+                JobConfig::new("cargo clippy --all-targets --all-features -- -D warnings");
             clippy_job.with_files("*.rs");
             config.add_pre_commit_hook("clippy".to_string(), clippy_job);
-            
+
             let mut test_job = JobConfig::new("cargo test --all-targets --all-features");
             test_job.with_files("*.rs");
             config.add_pre_commit_hook("test".to_string(), test_job);
@@ -173,51 +185,52 @@ fn generate_config_from_template(template: &str) -> Result<HookConfig> {
 fi"#),
             );
         }
-        
+
         "node" => {
             // Node.js project template
             let mut lint_job = JobConfig::new("npm run lint");
             lint_job.with_files("*.js,*.ts,*.jsx,*.tsx");
             config.add_pre_commit_hook("lint".to_string(), lint_job);
-            
+
             config.add_pre_commit_hook("test".to_string(), JobConfig::new("npm test"));
             config.add_pre_push_hook("build".to_string(), JobConfig::new("npm run build"));
         }
-        
+
         "python" => {
             // Python project template
             let mut black_job = JobConfig::new("black --check .");
             black_job.with_files("*.py");
             config.add_pre_commit_hook("black".to_string(), black_job);
-            
+
             let mut flake8_job = JobConfig::new("flake8 .");
             flake8_job.with_files("*.py");
             config.add_pre_commit_hook("flake8".to_string(), flake8_job);
-            
+
             let mut pytest_job = JobConfig::new("pytest");
             pytest_job.with_files("*.py");
             config.add_pre_commit_hook("pytest".to_string(), pytest_job);
         }
-        
+
         "go" => {
             // Go project template
             let mut fmt_job = JobConfig::new("go fmt ./...");
             fmt_job.with_files("*.go");
             config.add_pre_commit_hook("fmt".to_string(), fmt_job);
-            
+
             let mut vet_job = JobConfig::new("go vet ./...");
             vet_job.with_files("*.go");
             config.add_pre_commit_hook("vet".to_string(), vet_job);
-            
+
             let mut test_job = JobConfig::new("go test ./...");
             test_job.with_files("*.go");
             config.add_pre_commit_hook("test".to_string(), test_job);
         }
-        
+
         _ => {
-            return Err(crate::error::LefthookError::Configuration(
-                format!("Unknown template: {}", template),
-            ));
+            return Err(crate::error::LefthookError::Configuration(format!(
+                "Unknown template: {}",
+                template
+            )));
         }
     }
 
@@ -230,15 +243,15 @@ async fn init_project(name: &str, dir: Option<PathBuf>, template: &str) -> Resul
     use tokio::fs as tokio_fs;
 
     let project_dir = dir.unwrap_or_else(|| PathBuf::from(name));
-    
+
     // Create project directory
     fs::create_dir_all(&project_dir)?;
-    
+
     // Generate configuration
     let config = generate_config_from_template(template)?;
     let config_path = project_dir.join("lefthook.yml");
     config.write_to_file(&config_path).await?;
-    
+
     // Create README
     let readme_content = format!(
         r#"# {}
@@ -282,30 +295,30 @@ lefthook run commit-msg
 "#,
         name, template
     );
-    
+
     let readme_path = project_dir.join("README.md");
     tokio_fs::write(readme_path, readme_content).await?;
-    
+
     // Initialize Git repository
     let git_status = std::process::Command::new("git")
         .arg("init")
         .current_dir(&project_dir)
         .status();
-    
+
     if git_status.is_ok() {
         println!("   Git repository initialized");
     }
-    
+
     // Install hooks
     let install_status = std::process::Command::new("lefthook")
         .arg("install")
         .current_dir(&project_dir)
         .status();
-    
+
     if install_status.is_ok() {
         println!("   Lefthook hooks installed");
     }
-    
+
     println!("   Project created at: {:?}", project_dir);
     println!("   Configuration: {:?}", config_path);
 
@@ -322,7 +335,7 @@ mod tests {
         assert!(config.pre_commit.is_some());
         assert!(config.pre_push.is_some());
         assert!(config.commit_msg.is_some());
-        
+
         let pre_commit = config.pre_commit.unwrap();
         assert!(pre_commit.jobs.contains_key("fmt"));
         assert!(pre_commit.jobs.contains_key("clippy"));

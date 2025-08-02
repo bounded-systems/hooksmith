@@ -49,12 +49,12 @@
 //! }
 //! ```
 
-pub mod config;
-pub mod cli;
 pub mod binary;
+pub mod cli;
+pub mod config;
 pub mod error;
 
-pub use config::{HookConfig, HookSection, JobConfig, GlobalConfig};
+pub use config::{GlobalConfig, HookConfig, HookSection, JobConfig};
 pub use error::{LefthookError, Result};
 
 use anyhow::Context;
@@ -79,14 +79,17 @@ use std::process::Command;
 /// - Current directory is not a Git repository
 pub async fn install() -> Result<()> {
     let binary = binary::find_lefthook_binary().await?;
-    
+
     let status = Command::new(binary)
         .arg("install")
         .status()
         .context("Failed to execute lefthook install")?;
 
     if !status.success() {
-        return Err(LefthookError::Installation(format!("Lefthook install failed with status: {}", status)));
+        return Err(LefthookError::Installation(format!(
+            "Lefthook install failed with status: {}",
+            status
+        )));
     }
 
     Ok(())
@@ -112,7 +115,7 @@ pub async fn install() -> Result<()> {
 /// - Hook name is invalid
 pub async fn run_hook(hook_name: &str) -> Result<()> {
     let binary = binary::find_lefthook_binary().await?;
-    
+
     let status = Command::new(binary)
         .arg("run")
         .arg(hook_name)
@@ -120,7 +123,10 @@ pub async fn run_hook(hook_name: &str) -> Result<()> {
         .context(format!("Failed to execute lefthook run {}", hook_name))?;
 
     if !status.success() {
-        return Err(LefthookError::CommandExecution(format!("Lefthook run {} failed with status: {}", hook_name, status)));
+        return Err(LefthookError::CommandExecution(format!(
+            "Lefthook run {} failed with status: {}",
+            hook_name, status
+        )));
     }
 
     Ok(())
@@ -150,8 +156,8 @@ pub async fn validate_config(config_path: &Path) -> Result<()> {
         .await
         .context("Failed to read configuration file")?;
 
-    let _config: HookConfig = serde_yaml::from_str(&content)
-        .context("Failed to parse configuration YAML")?;
+    let _config: HookConfig =
+        serde_yaml::from_str(&content).context("Failed to parse configuration YAML")?;
 
     Ok(())
 }
@@ -188,18 +194,20 @@ pub async fn check_installation() -> Result<()> {
 /// - Version command fails
 pub async fn get_version() -> Result<String> {
     let binary = binary::find_lefthook_binary().await?;
-    
+
     let output = Command::new(binary)
         .arg("version")
         .output()
         .context("Failed to execute lefthook version")?;
 
     if !output.status.success() {
-        return Err(LefthookError::Version(format!("Lefthook version failed with status: {}", output.status)));
+        return Err(LefthookError::Version(format!(
+            "Lefthook version failed with status: {}",
+            output.status
+        )));
     }
 
-    let version = String::from_utf8(output.stdout)
-        .context("Failed to parse version output")?;
+    let version = String::from_utf8(output.stdout).context("Failed to parse version output")?;
 
     Ok(version.trim().to_string())
 }
@@ -226,10 +234,7 @@ mod tests {
     async fn test_config_serialization() {
         let mut config = HookConfig::default();
         let mut pre_commit_jobs = std::collections::HashMap::new();
-        pre_commit_jobs.insert(
-            "test".to_string(),
-            JobConfig::new("echo 'test'"),
-        );
+        pre_commit_jobs.insert("test".to_string(), JobConfig::new("echo 'test'"));
         config.pre_commit = Some(HookSection::new(pre_commit_jobs));
 
         // Serialize to YAML

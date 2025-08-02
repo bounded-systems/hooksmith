@@ -1,7 +1,7 @@
 #![deny(missing_docs)]
 
 //! Hooksmith CLI Library
-//! 
+//!
 //! This library provides core functionality for building Rust binaries into Lefthook hooks with WASM components.
 
 /// Command implementations for the CLI
@@ -13,16 +13,8 @@ pub mod orchestrator;
 
 // Re-export main types
 pub use orchestrator::{
-    HooksmithOrchestrator,
-    CommandResult,
-    BuildConfig,
-    BuildResult,
-    LefthookConfig,
-    LefthookResult,
-    WorktreeOperation,
-    WorktreeResult,
-    ValidationConfig,
-    ValidationResult,
+    BuildConfig, BuildResult, CommandResult, HooksmithOrchestrator, LefthookConfig, LefthookResult,
+    ValidationConfig, ValidationResult, WorktreeOperation, WorktreeResult,
 };
 
 /// Result type for CLI operations
@@ -47,4 +39,4 @@ impl Default for CliConfig {
             dry_run: false,
         }
     }
-} 
+}

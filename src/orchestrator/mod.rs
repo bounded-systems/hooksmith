@@ -97,7 +97,7 @@ impl HooksmithOrchestrator {
         self.router.execute(command, args, &self.components).await
     }
 
-        /// Build a hook using the hook-builder component
+    /// Build a hook using the hook-builder component
     pub async fn build_hook(&self, config: BuildConfig) -> Result<BuildResult> {
         let hook_builder = self.get_component("hook-builder")?;
         let result = hook_builder.call("build-hook", config).await?;
@@ -119,7 +119,7 @@ impl HooksmithOrchestrator {
             },
         })
     }
-    
+
     /// Generate Lefthook configuration using the lefthook-generator component
     pub async fn generate_lefthook_config(&self, config: LefthookConfig) -> Result<LefthookResult> {
         let generator = self.get_component("lefthook-generator")?;
@@ -132,7 +132,7 @@ impl HooksmithOrchestrator {
             error: result.error,
         })
     }
-    
+
     /// Manage worktrees using the worktree-manager component
     pub async fn manage_worktree(&self, operation: WorktreeOperation) -> Result<WorktreeResult> {
         let manager = self.get_component("worktree-manager")?;
@@ -146,7 +146,7 @@ impl HooksmithOrchestrator {
             branch_name: None,
         })
     }
-    
+
     /// Validate configuration using the validation component
     pub async fn validate_config(&self, config: ValidationConfig) -> Result<ValidationResult> {
         let validator = self.get_component("validation")?;
@@ -281,9 +281,9 @@ pub enum WorktreeOperation {
         tool: Option<String>,
     },
     /// List all worktrees
-    List { 
+    List {
         /// Tool to use for listing
-        tool: Option<String> 
+        tool: Option<String>,
     },
     /// Switch to a worktree
     Switch {

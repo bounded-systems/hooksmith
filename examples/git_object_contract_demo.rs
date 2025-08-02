@@ -70,7 +70,8 @@ fn demo_line_contracts() -> Result<(), Box<dyn std::error::Error>> {
     println!("📄 Example 3: Line Contracts");
 
     let validator = GitObjectValidator::default();
-    let content = b"Line 1: Normal text\nLine 2: Has\x00NUL byte\nLine 3: CRLF\r\nLine 4: Valid again\n";
+    let content =
+        b"Line 1: Normal text\nLine 2: Has\x00NUL byte\nLine 3: CRLF\r\nLine 4: Valid again\n";
     let blob = validator.validate_blob("ghi789jkl012", content);
     let lines = validator.validate_blob_lines(&blob);
 
@@ -89,7 +90,10 @@ fn demo_line_contracts() -> Result<(), Box<dyn std::error::Error>> {
     let rejected = lines.iter().filter(|l| l.is_rejected()).count();
     let needs_fixing = lines.iter().filter(|l| l.needs_fixing()).count();
 
-    println!("  Summary: {} accepted, {} rejected, {} need fixing", accepted, rejected, needs_fixing);
+    println!(
+        "  Summary: {} accepted, {} rejected, {} need fixing",
+        accepted, rejected, needs_fixing
+    );
 
     println!();
     Ok(())
@@ -104,25 +108,37 @@ fn demo_chunk_contracts() -> Result<(), Box<dyn std::error::Error>> {
     let diff_lines = vec![
         (DiffLineType::Context, "Line 1: Unchanged".to_string()),
         (DiffLineType::Context, "Line 2: Also unchanged".to_string()),
-        (DiffLineType::Remove, "Line 3: This line was removed".to_string()),
+        (
+            DiffLineType::Remove,
+            "Line 3: This line was removed".to_string(),
+        ),
         (DiffLineType::Add, "Line 3: This line was added".to_string()),
         (DiffLineType::Add, "Line 4: Another added line".to_string()),
-        (DiffLineType::Context, "Line 5: Back to unchanged".to_string()),
+        (
+            DiffLineType::Context,
+            "Line 5: Back to unchanged".to_string(),
+        ),
     ];
 
     let chunk = validator.create_chunk_contract(
         "@@ -1,3 +1,4 @@",
-        1,  // old_start
-        3,  // old_lines
-        1,  // new_start
-        4,  // new_lines
+        1, // old_start
+        3, // old_lines
+        1, // new_start
+        4, // new_lines
         diff_lines,
     );
 
     println!("  {}", chunk.summary());
     println!("    Header: {}", chunk.header);
-    println!("    Old: {} lines starting at {}", chunk.old_lines, chunk.old_start);
-    println!("    New: {} lines starting at {}", chunk.new_lines, chunk.new_start);
+    println!(
+        "    Old: {} lines starting at {}",
+        chunk.old_lines, chunk.old_start
+    );
+    println!(
+        "    New: {} lines starting at {}",
+        chunk.new_lines, chunk.new_start
+    );
     println!("    Total lines in chunk: {}", chunk.lines.len());
 
     // Show individual diff lines
@@ -132,7 +148,13 @@ fn demo_chunk_contracts() -> Result<(), Box<dyn std::error::Error>> {
             DiffLineType::Add => "+",
             DiffLineType::Remove => "-",
         };
-        println!("    {} {}: {:?} {}", type_symbol, i + 1, line.content, if line.valid { "✅" } else { "❌" });
+        println!(
+            "    {} {}: {:?} {}",
+            type_symbol,
+            i + 1,
+            line.content,
+            if line.valid { "✅" } else { "❌" }
+        );
     }
 
     println!();
@@ -144,20 +166,20 @@ fn demo_complete_git_object_validation() -> Result<(), Box<dyn std::error::Error
 
     let validator = GitObjectValidator::new(true, true); // Enable both line and chunk validation
     let content = b"Line 1: Valid content\nLine 2: Has\x01control char\nLine 3: CRLF\r\nLine 4: Valid again\n";
-    
+
     // Validate as a complete Git object
     let git_object = validator.validate_git_object("mno345pqr678", content);
-    
+
     match git_object {
         GitObjectContract::Blob(blob) => {
             println!("  Git Object Type: Blob");
             println!("  {}", blob.summary());
-            
+
             // Validate lines
             let lines = validator.validate_blob_lines(&blob);
             let summary = validator.summarize_validation(&blob, &lines);
             println!("  {}", summary);
-            
+
             // Show line details
             for line in &lines {
                 let status = match line.action {
@@ -200,10 +222,10 @@ fn demo_diff_modeling() -> Result<(), Box<dyn std::error::Error>> {
 
     let chunk = validator.create_chunk_contract(
         "@@ -1,3 +1,4 @@",
-        1,  // old_start
-        3,  // old_lines
-        1,  // new_start
-        4,  // new_lines
+        1, // old_start
+        3, // old_lines
+        1, // new_start
+        4, // new_lines
         diff_lines,
     );
 
@@ -212,10 +234,22 @@ fn demo_diff_modeling() -> Result<(), Box<dyn std::error::Error>> {
     // Show the diff structure
     println!("  Diff Structure:");
     println!("    Pair of Blob Contracts:");
-    println!("      - Old: {} ({} lines)", old_blob.id, old_blob.lines.len());
-    println!("      - New: {} ({} lines)", new_blob.id, new_blob.lines.len());
+    println!(
+        "      - Old: {} ({} lines)",
+        old_blob.id,
+        old_blob.lines.len()
+    );
+    println!(
+        "      - New: {} ({} lines)",
+        new_blob.id,
+        new_blob.lines.len()
+    );
     println!("    Array of Chunk Contracts:");
-    println!("      - Chunk: {} ({} lines)", chunk.header, chunk.lines.len());
+    println!(
+        "      - Chunk: {} ({} lines)",
+        chunk.header,
+        chunk.lines.len()
+    );
 
     // Validate the diff
     let old_lines = validator.validate_blob_lines(&old_blob);
@@ -226,10 +260,31 @@ fn demo_diff_modeling() -> Result<(), Box<dyn std::error::Error>> {
     let chunk_valid = chunk.is_valid();
 
     println!("  Diff Validation:");
-    println!("    Old blob lines: {}", if old_valid { "✅ Valid" } else { "❌ Invalid" });
-    println!("    New blob lines: {}", if new_valid { "✅ Valid" } else { "❌ Invalid" });
-    println!("    Chunk: {}", if chunk_valid { "✅ Valid" } else { "❌ Invalid" });
+    println!(
+        "    Old blob lines: {}",
+        if old_valid {
+            "✅ Valid"
+        } else {
+            "❌ Invalid"
+        }
+    );
+    println!(
+        "    New blob lines: {}",
+        if new_valid {
+            "✅ Valid"
+        } else {
+            "❌ Invalid"
+        }
+    );
+    println!(
+        "    Chunk: {}",
+        if chunk_valid {
+            "✅ Valid"
+        } else {
+            "❌ Invalid"
+        }
+    );
 
     println!();
     Ok(())
-} 
+}

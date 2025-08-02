@@ -1,19 +1,19 @@
 //! Hierarchical Contract Validation Module
-//! 
+//!
 //! This module implements the bottom-up validation pipeline for nested contract scopes:
 //! Char → Line → Chunk → File → Directory → Repository
-//! 
+//!
 //! Each scope depends on the validation result of its child scopes, ensuring
 //! that changes at any level properly cascade through the validation hierarchy.
 
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs;
-use chrono::{DateTime, Utc};
-use sha2::{Sha256, Digest};
 
 /// Validation scope levels in hierarchical order
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -204,7 +204,7 @@ impl HierarchicalValidator {
     /// Detect changes in the repository and determine the smallest affected scope
     pub async fn detect_changes(&self, commit_range: Option<&str>) -> Result<Vec<ChangeScope>> {
         let mut changes = Vec::new();
-        
+
         // Get the diff range
         let diff_range = if let Some(range) = commit_range {
             range
@@ -220,7 +220,10 @@ impl HierarchicalValidator {
             .context("Failed to get git diff")?;
 
         if !output.status.success() {
-            anyhow::bail!("Git diff failed: {}", String::from_utf8_lossy(&output.stderr));
+            anyhow::bail!(
+                "Git diff failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
 
         let files: Vec<PathBuf> = String::from_utf8_lossy(&output.stdout)
@@ -240,14 +243,24 @@ impl HierarchicalValidator {
     }
 
     /// Detect changes in a specific file
-    async fn detect_file_changes(&self, file: &Path, diff_range: &str) -> Result<Option<Vec<ChangeScope>>> {
+    async fn detect_file_changes(
+        &self,
+        file: &Path,
+        diff_range: &str,
+    ) -> Result<Option<Vec<ChangeScope>>> {
         if !file.exists() {
             return Ok(None);
         }
 
         // Get word-level diff to detect character changes
         let word_diff = Command::new("git")
-            .args(&["diff", "--word-diff=porcelain", diff_range, "--", file.to_str().unwrap()])
+            .args(&[
+                "diff",
+                "--word-diff=porcelain",
+                diff_range,
+                "--",
+                file.to_str().unwrap(),
+            ])
             .current_dir(&self.repo_path)
             .output()
             .context("Failed to get word diff")?;
@@ -325,7 +338,10 @@ impl HierarchicalValidator {
     }
 
     /// Run hierarchical validation starting from the smallest affected scope
-    pub async fn validate_hierarchically(&self, changes: Vec<ChangeScope>) -> Result<Vec<ValidationResult>> {
+    pub async fn validate_hierarchically(
+        &self,
+        changes: Vec<ChangeScope>,
+    ) -> Result<Vec<ValidationResult>> {
         let mut results = Vec::new();
         let mut validated_scopes = HashSet::new();
 
@@ -335,9 +351,10 @@ impl HierarchicalValidator {
 
             // Validate bottom-up through the hierarchy
             while let Some(scope) = self.get_next_scope(current_scope) {
-                let scope_key = format!("{}:{}:{}", 
-                    change.file.display(), 
-                    scope as u8, 
+                let scope_key = format!(
+                    "{}:{}:{}",
+                    change.file.display(),
+                    scope as u8,
                     self.get_content_hash(&change.content, &change.range)
                 );
 
@@ -346,7 +363,9 @@ impl HierarchicalValidator {
                 }
 
                 let start_time = std::time::Instant::now();
-                let validation_result = self.validate_scope(scope, &change.file, &change.range, &change.content).await?;
+                let validation_result = self
+                    .validate_scope(scope, &change.file, &change.range, &change.content)
+                    .await?;
                 let duration = start_time.elapsed();
 
                 let result = ValidationResult {
@@ -361,7 +380,8 @@ impl HierarchicalValidator {
                 };
 
                 // Store validation note in Git
-                self.store_validation_note(&result, &validation_result).await?;
+                self.store_validation_note(&result, &validation_result)
+                    .await?;
 
                 validated_scopes.insert(scope_key);
                 current_result = Some(result.clone());
@@ -396,33 +416,33 @@ impl HierarchicalValidator {
 
     /// Validate a specific scope
     async fn validate_scope(
-        &self, 
-        scope: ValidationScope, 
-        file: &Path, 
-        range: &Option<ContentRange>, 
-        content: &str
+        &self,
+        scope: ValidationScope,
+        file: &Path,
+        range: &Option<ContentRange>,
+        content: &str,
     ) -> Result<ValidationNote> {
         let start_time = std::time::Instant::now();
-        
+
         // Extract content for the specific scope
         let scope_content = self.extract_scope_content(content, range, scope).await?;
         let hash = self.get_content_hash(&scope_content, range);
-        
+
         // Run the appropriate contract validator
         let (validated, errors) = self.run_contract_validator(scope, &scope_content).await?;
-        
+
         let duration = start_time.elapsed();
-        
+
         // Get commit hash
         let commit_hash = self.get_current_commit_hash().await?;
-        
+
         Ok(ValidationNote {
             scope: format!("{:?}", scope).to_lowercase(),
             file: file.to_string_lossy().to_string(),
             range: range.clone(),
             hash,
             parent_scope: scope.parent().map(|s| format!("{:?}", s).to_lowercase()),
-            parent_hash: None, // Will be set by caller
+            parent_hash: None,        // Will be set by caller
             child_scopes: Vec::new(), // Will be set by caller
             validated,
             validation_errors: errors,
@@ -436,7 +456,12 @@ impl HierarchicalValidator {
     }
 
     /// Extract content for a specific scope
-    async fn extract_scope_content(&self, content: &str, range: &Option<ContentRange>, scope: ValidationScope) -> Result<String> {
+    async fn extract_scope_content(
+        &self,
+        content: &str,
+        range: &Option<ContentRange>,
+        scope: ValidationScope,
+    ) -> Result<String> {
         match scope {
             ValidationScope::Char => {
                 if let Some(range) = range {
@@ -468,9 +493,7 @@ impl HierarchicalValidator {
                 // In a more sophisticated implementation, we'd parse function/block boundaries
                 Ok(content.to_string())
             }
-            ValidationScope::File => {
-                Ok(content.to_string())
-            }
+            ValidationScope::File => Ok(content.to_string()),
             ValidationScope::Directory => {
                 // For directory scope, we'd aggregate all files in the directory
                 // For now, we'll use the file content
@@ -485,13 +508,17 @@ impl HierarchicalValidator {
     }
 
     /// Run the appropriate contract validator for a scope
-    async fn run_contract_validator(&self, scope: ValidationScope, content: &str) -> Result<(bool, Vec<ValidationError>)> {
+    async fn run_contract_validator(
+        &self,
+        scope: ValidationScope,
+        content: &str,
+    ) -> Result<(bool, Vec<ValidationError>)> {
         // This is a placeholder implementation
         // In a real implementation, you would:
         // 1. Load the appropriate contract validator
         // 2. Run the validation
         // 3. Return the results
-        
+
         match scope {
             ValidationScope::Char => {
                 // Run char_contract validation
@@ -541,7 +568,10 @@ impl HierarchicalValidator {
         Ok((true, Vec::new()))
     }
 
-    async fn validate_tree_filename_chars_contract(&self, _content: &str) -> Result<(bool, Vec<ValidationError>)> {
+    async fn validate_tree_filename_chars_contract(
+        &self,
+        _content: &str,
+    ) -> Result<(bool, Vec<ValidationError>)> {
         // Placeholder: always pass
         Ok((true, Vec::new()))
     }
@@ -557,12 +587,16 @@ impl HierarchicalValidator {
         hasher.update(content.as_bytes());
 
         if let Some(range) = range {
-            hasher.update(format!("{}:{}:{}:{}",
-                range.start_line,
-                range.end_line,
-                range.start_char.unwrap_or(0),
-                range.end_char.unwrap_or(0)
-            ).as_bytes());
+            hasher.update(
+                format!(
+                    "{}:{}:{}:{}",
+                    range.start_line,
+                    range.end_line,
+                    range.start_char.unwrap_or(0),
+                    range.end_char.unwrap_or(0)
+                )
+                .as_bytes(),
+            );
         }
 
         format!("sha256:{:x}", hasher.finalize())
@@ -577,28 +611,44 @@ impl HierarchicalValidator {
             .context("Failed to get commit hash")?;
 
         if !output.status.success() {
-            anyhow::bail!("Failed to get commit hash: {}", String::from_utf8_lossy(&output.stderr));
+            anyhow::bail!(
+                "Failed to get commit hash: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
 
         Ok(String::from_utf8(output.stdout)?.trim().to_string())
     }
 
     /// Store validation note in Git notes
-    async fn store_validation_note(&self, result: &ValidationResult, note: &ValidationNote) -> Result<()> {
+    async fn store_validation_note(
+        &self,
+        result: &ValidationResult,
+        note: &ValidationNote,
+    ) -> Result<()> {
         let note_json = serde_json::to_string_pretty(note)?;
-        
+
         // Create a unique note reference
         let _note_ref = format!("refs/notes/contract-validation/{}", result.hash);
-        
+
         // Store the note
         let output = Command::new("git")
-            .args(&["notes", "--ref=contract-validation", "add", "-m", &note_json])
+            .args(&[
+                "notes",
+                "--ref=contract-validation",
+                "add",
+                "-m",
+                &note_json,
+            ])
             .current_dir(&self.repo_path)
             .output()
             .context("Failed to store validation note")?;
 
         if !output.status.success() {
-            anyhow::bail!("Failed to store validation note: {}", String::from_utf8_lossy(&output.stderr));
+            anyhow::bail!(
+                "Failed to store validation note: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
 
         Ok(())
@@ -608,7 +658,7 @@ impl HierarchicalValidator {
     pub async fn verify_validation_chain(&self, commit_hash: &str) -> Result<bool> {
         // Get all validation notes for the commit
         let notes = self.get_validation_notes(commit_hash).await?;
-        
+
         // Check that all parent-child relationships are consistent
         for note in &notes {
             if let Some(parent_hash) = &note.parent_hash {
@@ -616,19 +666,25 @@ impl HierarchicalValidator {
                 let parent_note = notes.iter().find(|n| n.hash == *parent_hash);
                 if let Some(parent) = parent_note {
                     // Verify that this note is listed as a child of the parent
-                    let is_child = parent.child_scopes.iter().any(|child| child.hash == note.hash);
+                    let is_child = parent
+                        .child_scopes
+                        .iter()
+                        .any(|child| child.hash == note.hash);
                     if !is_child {
                         eprintln!("Validation chain integrity error: note {} not found as child of parent {}", 
                             note.hash, parent_hash);
                         return Ok(false);
                     }
                 } else {
-                    eprintln!("Validation chain integrity error: parent note {} not found", parent_hash);
+                    eprintln!(
+                        "Validation chain integrity error: parent note {} not found",
+                        parent_hash
+                    );
                     return Ok(false);
                 }
             }
         }
-        
+
         Ok(true)
     }
 
@@ -646,7 +702,7 @@ impl HierarchicalValidator {
 
         let notes_text = String::from_utf8_lossy(&output.stdout);
         let mut notes = Vec::new();
-        
+
         // Parse the notes (this is a simplified parser)
         for line in notes_text.lines() {
             if line.trim().starts_with('{') {
@@ -655,7 +711,7 @@ impl HierarchicalValidator {
                 }
             }
         }
-        
+
         Ok(notes)
     }
 }
@@ -678,17 +734,20 @@ mod tests {
         assert_eq!(ValidationScope::Char.parent(), None);
         assert_eq!(ValidationScope::Line.parent(), Some(ValidationScope::Char));
         assert_eq!(ValidationScope::Repository.child(), None);
-        assert_eq!(ValidationScope::Directory.child(), Some(ValidationScope::Repository));
+        assert_eq!(
+            ValidationScope::Directory.child(),
+            Some(ValidationScope::Repository)
+        );
     }
 
     #[tokio::test]
     async fn test_content_hash_generation() {
         let temp_dir = TempDir::new().unwrap();
         let validator = HierarchicalValidator::new(temp_dir.path().to_path_buf());
-        
+
         let content = "test content";
         let hash = validator.get_content_hash(content, &None);
         assert!(hash.starts_with("sha256:"));
         assert_eq!(hash.len(), 71); // "sha256:" + 64 hex chars
     }
-} 
+}

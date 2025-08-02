@@ -50,7 +50,11 @@ fn demo_valid_type_matches() -> Result<(), Box<dyn std::error::Error>> {
 
     for entry in &valid_entries {
         println!("  {}", entry.summary());
-        println!("    Mode: {} -> Type: {:?}", entry.mode_string(), entry.object_type);
+        println!(
+            "    Mode: {} -> Type: {:?}",
+            entry.mode_string(),
+            entry.object_type
+        );
         println!("    Valid: {}", entry.is_valid());
         if !entry.errors.is_empty() {
             println!("    Errors: {:?}", entry.errors);
@@ -95,7 +99,11 @@ fn demo_invalid_type_mismatches() -> Result<(), Box<dyn std::error::Error>> {
 
     for entry in &invalid_entries {
         println!("  {}", entry.summary());
-        println!("    Mode: {} -> Type: {:?}", entry.mode_string(), entry.object_type);
+        println!(
+            "    Mode: {} -> Type: {:?}",
+            entry.mode_string(),
+            entry.object_type
+        );
         println!("    Valid: {}", entry.is_valid());
         if !entry.errors.is_empty() {
             println!("    Errors: {:?}", entry.errors);
@@ -126,7 +134,12 @@ fn demo_restricted_tree_modes() -> Result<(), Box<dyn std::error::Error>> {
     for mode in restricted_modes {
         match TreeMode::from_str(mode) {
             Some(tree_mode) => {
-                println!("  ✅ Mode {}: {} ({:?})", mode, tree_mode.description(), tree_mode.object_type());
+                println!(
+                    "  ✅ Mode {}: {} ({:?})",
+                    mode,
+                    tree_mode.description(),
+                    tree_mode.object_type()
+                );
             }
             None => {
                 println!("  ❌ Mode {}: Not allowed in restricted contract", mode);
@@ -189,15 +202,15 @@ fn demo_flat_contract_structure() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("  Validation Results:");
     println!("    {}", tree.summary());
-    
+
     let blob_entries = tree.get_blob_entries();
     let tree_entries = tree.get_tree_entries();
-    
+
     println!("    Blob entries: {}", blob_entries.len());
     for entry in blob_entries {
         println!("      - {} ({})", entry.filename, entry.mode.description());
     }
-    
+
     println!("    Tree entries: {}", tree_entries.len());
     for entry in tree_entries {
         println!("      - {} ({})", entry.filename, entry.mode.description());
@@ -205,4 +218,4 @@ fn demo_flat_contract_structure() -> Result<(), Box<dyn std::error::Error>> {
 
     println!();
     Ok(())
-} 
+}

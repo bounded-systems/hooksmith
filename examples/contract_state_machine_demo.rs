@@ -1,11 +1,11 @@
 //! Contract State Machine Demo
-//! 
+//!
 //! This example demonstrates the contract validation state machine
 //! with schema-driven validation and Git notes storage.
 
-use std::path::Path;
-use std::collections::HashMap;
 use chrono::Utc;
+use std::collections::HashMap;
+use std::path::Path;
 
 // In a real implementation, these would be imported from the xtask module
 // use xtask::contract_state_machine::{StateMachine, ContractState, ValidationResult};
@@ -111,7 +111,7 @@ impl StateMachine {
                 } else {
                     result.add_success("File exists".to_string());
                 }
-                
+
                 // Check if file is readable
                 if std::fs::read_to_string(file_path).is_err() {
                     result.add_error("File is not readable".to_string());
@@ -125,14 +125,14 @@ impl StateMachine {
                 } else {
                     result.add_success("File exists".to_string());
                 }
-                
+
                 // Check if file is readable
                 if std::fs::read_to_string(file_path).is_err() {
                     result.add_error("File is not readable".to_string());
                 } else {
                     result.add_success("File is readable".to_string());
                 }
-                
+
                 // Additional validation for validated state
                 result.add_success("Contract validation passed".to_string());
             }
@@ -142,14 +142,14 @@ impl StateMachine {
                 } else {
                     result.add_success("File exists".to_string());
                 }
-                
+
                 // Check if file is readable
                 if std::fs::read_to_string(file_path).is_err() {
                     result.add_error("File is not readable".to_string());
                 } else {
                     result.add_success("File is readable".to_string());
                 }
-                
+
                 // Additional validation for locked state
                 result.add_success("Contract validation passed".to_string());
                 result.add_success("File is locked".to_string());
@@ -159,7 +159,12 @@ impl StateMachine {
         result
     }
 
-    pub fn is_valid_transition(&self, from: &ContractState, to: &ContractState, transition: &str) -> bool {
+    pub fn is_valid_transition(
+        &self,
+        from: &ContractState,
+        to: &ContractState,
+        transition: &str,
+    ) -> bool {
         match (from, to, transition) {
             (ContractState::UNTRACKED, ContractState::UNVALIDATED, "detect_contract") => true,
             (ContractState::UNVALIDATED, ContractState::VALIDATED, "validate_contract") => true,
@@ -178,15 +183,24 @@ impl GitNotesManager {
         Ok(GitNotesManager)
     }
 
-    pub fn store_contract_state(&self, state: &ContractStateNote) -> Result<(), Box<dyn std::error::Error>> {
-        println!("💾 Storing contract state for {}: {}", state.file, state.state);
+    pub fn store_contract_state(
+        &self,
+        state: &ContractStateNote,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        println!(
+            "💾 Storing contract state for {}: {}",
+            state.file, state.state
+        );
         println!("   Hash: {}", state.hash);
         println!("   Validated by: {}", state.validated_by);
         println!("   Timestamp: {}", state.timestamp);
         Ok(())
     }
 
-    pub fn get_contract_state(&self, _file_path: &str) -> Result<Option<ContractStateNote>, Box<dyn std::error::Error>> {
+    pub fn get_contract_state(
+        &self,
+        _file_path: &str,
+    ) -> Result<Option<ContractStateNote>, Box<dyn std::error::Error>> {
         // Simulate no existing state
         Ok(None)
     }
@@ -200,9 +214,12 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
     // Create a temporary file for demonstration
     let temp_file = tempfile::NamedTempFile::new()?;
     let file_path = temp_file.path();
-    
+
     // Write some content to the file
-    std::fs::write(file_path, "// This is a sample Rust file\nfn main() {\n    println!(\"Hello, world!\");\n}")?;
+    std::fs::write(
+        file_path,
+        "// This is a sample Rust file\nfn main() {\n    println!(\"Hello, world!\");\n}",
+    )?;
 
     println!("📄 Created demo file: {:?}", file_path);
 
@@ -214,10 +231,14 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🔍 Step 1: Detecting contract...");
     let current_state = ContractState::UNTRACKED;
     let target_state = ContractState::UNVALIDATED;
-    
+
     if state_machine.is_valid_transition(&current_state, &target_state, "detect_contract") {
-        println!("✅ Valid transition: {} -> {}", current_state.to_string(), target_state.to_string());
-        
+        println!(
+            "✅ Valid transition: {} -> {}",
+            current_state.to_string(),
+            target_state.to_string()
+        );
+
         let validation_result = state_machine.validate_state(&target_state, file_path);
         if validation_result.is_valid {
             println!("✅ State validation passed");
@@ -238,21 +259,25 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🔍 Step 2: Validating contract...");
     let current_state = ContractState::UNVALIDATED;
     let target_state = ContractState::VALIDATED;
-    
+
     if state_machine.is_valid_transition(&current_state, &target_state, "validate_contract") {
-        println!("✅ Valid transition: {} -> {}", current_state.to_string(), target_state.to_string());
-        
+        println!(
+            "✅ Valid transition: {} -> {}",
+            current_state.to_string(),
+            target_state.to_string()
+        );
+
         let validation_result = state_machine.validate_state(&target_state, file_path);
         if validation_result.is_valid {
             println!("✅ State validation passed");
             for success in &validation_result.successes {
                 println!("   ✓ {}", success);
             }
-            
+
             // Store state in Git notes
             let file_content = std::fs::read_to_string(file_path)?;
             let hash = format!("sha256:{}", sha256::digest(&file_content));
-            
+
             let state_note = ContractStateNote {
                 file: file_path.to_string_lossy().to_string(),
                 contract: "blob".to_string(),
@@ -261,12 +286,15 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
                 validated_by: "xtask-contract-validate 0.1.0".to_string(),
                 timestamp: Utc::now().to_rfc3339(),
                 metadata: Some(HashMap::from([
-                    ("line_count".to_string(), file_content.lines().count().to_string()),
+                    (
+                        "line_count".to_string(),
+                        file_content.lines().count().to_string(),
+                    ),
                     ("file_size".to_string(), file_content.len().to_string()),
                     ("validation_errors".to_string(), "0".to_string()),
                 ])),
             };
-            
+
             notes_manager.store_contract_state(&state_note)?;
         } else {
             println!("❌ State validation failed");
@@ -282,21 +310,25 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🔍 Step 3: Locking contract...");
     let current_state = ContractState::VALIDATED;
     let target_state = ContractState::LOCKED;
-    
+
     if state_machine.is_valid_transition(&current_state, &target_state, "lock_contract") {
-        println!("✅ Valid transition: {} -> {}", current_state.to_string(), target_state.to_string());
-        
+        println!(
+            "✅ Valid transition: {} -> {}",
+            current_state.to_string(),
+            target_state.to_string()
+        );
+
         let validation_result = state_machine.validate_state(&target_state, file_path);
         if validation_result.is_valid {
             println!("✅ State validation passed");
             for success in &validation_result.successes {
                 println!("   ✓ {}", success);
             }
-            
+
             // Update state in Git notes
             let file_content = std::fs::read_to_string(file_path)?;
             let hash = format!("sha256:{}", sha256::digest(&file_content));
-            
+
             let state_note = ContractStateNote {
                 file: file_path.to_string_lossy().to_string(),
                 contract: "blob".to_string(),
@@ -305,13 +337,16 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
                 validated_by: "xtask-contract-validate 0.1.0".to_string(),
                 timestamp: Utc::now().to_rfc3339(),
                 metadata: Some(HashMap::from([
-                    ("line_count".to_string(), file_content.lines().count().to_string()),
+                    (
+                        "line_count".to_string(),
+                        file_content.lines().count().to_string(),
+                    ),
                     ("file_size".to_string(), file_content.len().to_string()),
                     ("validation_errors".to_string(), "0".to_string()),
                     ("locked".to_string(), "true".to_string()),
                 ])),
             };
-            
+
             notes_manager.store_contract_state(&state_note)?;
         } else {
             println!("❌ State validation failed");
@@ -339,4 +374,4 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     demo_contract_validation()
-} 
+}

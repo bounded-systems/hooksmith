@@ -64,15 +64,27 @@ fn demo_tree_entry_contracts() -> Result<(), Box<dyn std::error::Error>> {
     println!("📄 Example 2: Tree Entry Contracts");
 
     let entries = vec![
-        ("100644", "README.md", "a1b2c3d4e5f6789012345678901234567890abcd"),
-        ("100755", "script.sh", "b2c3d4e5f6789012345678901234567890abcde"),
+        (
+            "100644",
+            "README.md",
+            "a1b2c3d4e5f6789012345678901234567890abcd",
+        ),
+        (
+            "100755",
+            "script.sh",
+            "b2c3d4e5f6789012345678901234567890abcde",
+        ),
         ("040000", "src", "c3d4e5f6789012345678901234567890abcdef"),
     ];
 
     for (mode, filename, object_id) in entries {
         let entry = TreeEntryContract::new(mode, filename.to_string(), object_id.to_string());
         println!("  {}", entry.summary());
-        println!("    Mode: {} ({})", entry.mode_string(), entry.mode.description());
+        println!(
+            "    Mode: {} ({})",
+            entry.mode_string(),
+            entry.mode.description()
+        );
         println!("    Filename: {}", entry.filename);
         println!("    Object ID: {}", entry.object_id);
         println!("    Object type: {:?}", entry.object_type);
@@ -94,10 +106,26 @@ fn demo_tree_object_contracts() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create a tree with various entry types
     let raw_entries = vec![
-        ("100644".to_string(), "Cargo.toml".to_string(), "a1b2c3d4e5f6789012345678901234567890abcd".to_string()),
-        ("100644".to_string(), "README.md".to_string(), "b2c3d4e5f6789012345678901234567890abcde".to_string()),
-        ("040000".to_string(), "src".to_string(), "c3d4e5f6789012345678901234567890abcdef".to_string()),
-        ("100755".to_string(), "scripts/build.sh".to_string(), "d4e5f6789012345678901234567890abcdef0".to_string()),
+        (
+            "100644".to_string(),
+            "Cargo.toml".to_string(),
+            "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+        ),
+        (
+            "100644".to_string(),
+            "README.md".to_string(),
+            "b2c3d4e5f6789012345678901234567890abcde".to_string(),
+        ),
+        (
+            "040000".to_string(),
+            "src".to_string(),
+            "c3d4e5f6789012345678901234567890abcdef".to_string(),
+        ),
+        (
+            "100755".to_string(),
+            "scripts/build.sh".to_string(),
+            "d4e5f6789012345678901234567890abcdef0".to_string(),
+        ),
     ];
 
     let tree = validator.create_tree_object(raw_entries);
@@ -193,12 +221,36 @@ fn demo_complete_tree_object_validation() -> Result<(), Box<dyn std::error::Erro
 
     // Create a realistic tree structure
     let raw_entries = vec![
-        ("100644".to_string(), "Cargo.toml".to_string(), "a1b2c3d4e5f6789012345678901234567890abcd".to_string()),
-        ("100644".to_string(), "README.md".to_string(), "b2c3d4e5f6789012345678901234567890abcde".to_string()),
-        ("040000".to_string(), "src".to_string(), "c3d4e5f6789012345678901234567890abcdef".to_string()),
-        ("040000".to_string(), "tests".to_string(), "d4e5f6789012345678901234567890abcdef0".to_string()),
-        ("100755".to_string(), "scripts/build.sh".to_string(), "e5f6789012345678901234567890abcdef01".to_string()),
-        ("120000".to_string(), "link.txt".to_string(), "f6789012345678901234567890abcdef012".to_string()),
+        (
+            "100644".to_string(),
+            "Cargo.toml".to_string(),
+            "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
+        ),
+        (
+            "100644".to_string(),
+            "README.md".to_string(),
+            "b2c3d4e5f6789012345678901234567890abcde".to_string(),
+        ),
+        (
+            "040000".to_string(),
+            "src".to_string(),
+            "c3d4e5f6789012345678901234567890abcdef".to_string(),
+        ),
+        (
+            "040000".to_string(),
+            "tests".to_string(),
+            "d4e5f6789012345678901234567890abcdef0".to_string(),
+        ),
+        (
+            "100755".to_string(),
+            "scripts/build.sh".to_string(),
+            "e5f6789012345678901234567890abcdef01".to_string(),
+        ),
+        (
+            "120000".to_string(),
+            "link.txt".to_string(),
+            "f6789012345678901234567890abcdef012".to_string(),
+        ),
     ];
 
     let tree = validator.create_tree_object(raw_entries);
@@ -211,7 +263,12 @@ fn demo_complete_tree_object_validation() -> Result<(), Box<dyn std::error::Erro
             TreeObjectType::Blob => "📄",
             TreeObjectType::Tree => "📁",
         };
-        println!("      {} {} ({})", type_symbol, entry.filename, entry.mode.description());
+        println!(
+            "      {} {} ({})",
+            type_symbol,
+            entry.filename,
+            entry.mode.description()
+        );
     }
 
     println!();
@@ -240,12 +297,12 @@ fn demo_tree_in_git_object_contract() -> Result<(), Box<dyn std::error::Error>> 
     // Validate as a Git object
     let git_object = validator.validate_tree_object(entries);
 
-            match git_object {
-            GitObjectContract::Tree(tree) => {
-                println!("  Git Object Type: Tree");
-                println!("  {}", tree.summary());
-                println!("    Entries: {}", tree.entries.len());
-                println!("    Valid: {}", tree.is_valid());
+    match git_object {
+        GitObjectContract::Tree(tree) => {
+            println!("  Git Object Type: Tree");
+            println!("  {}", tree.summary());
+            println!("    Entries: {}", tree.entries.len());
+            println!("    Valid: {}", tree.is_valid());
 
             // Show entries
             for entry in &tree.entries {
@@ -259,4 +316,4 @@ fn demo_tree_in_git_object_contract() -> Result<(), Box<dyn std::error::Error>> 
 
     println!();
     Ok(())
-} 
+}

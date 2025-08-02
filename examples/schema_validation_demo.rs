@@ -63,13 +63,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 3: Generate a configuration with schema validation
     println!("\n3. Generating configuration with schema validation...");
     let output_path = Path::new("examples/generated_lefthook.yml");
-    
+
     match lefthook::generate_lefthook_config(
         output_path,
         "target/hooks",
         Some(vec!["components/worktree-runner".to_string()]),
         true, // Enable schema validation
-    ).await {
+    )
+    .await
+    {
         Ok(()) => println!("✅ Configuration generated and validated successfully"),
         Err(e) => println!("❌ Configuration generation failed: {}", e),
     }
@@ -77,7 +79,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 4: Validate an existing configuration file
     println!("\n4. Validating existing configuration file...");
     let existing_config_path = Path::new("lefthook.yml");
-    
+
     if existing_config_path.exists() {
         match lefthook::validate_existing_config(existing_config_path).await {
             Ok(()) => println!("✅ Existing configuration is valid"),
@@ -89,4 +91,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("\n🎉 Schema validation demo completed!");
     Ok(())
-} 
+}

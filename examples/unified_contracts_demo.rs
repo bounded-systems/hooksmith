@@ -39,27 +39,39 @@ fn demo_shared_primitives() -> Result<(), Box<dyn std::error::Error>> {
     // Test SHA-1 regex
     let valid_sha1 = "a1b2c3d4e5f6789012345678901234567890abcd";
     let invalid_sha1 = "invalid-hash";
-    
+
     println!("  SHA-1 validation:");
     println!("    '{}' -> {}", valid_sha1, SHA1_RE.is_match(valid_sha1));
-    println!("    '{}' -> {}", invalid_sha1, SHA1_RE.is_match(invalid_sha1));
+    println!(
+        "    '{}' -> {}",
+        invalid_sha1,
+        SHA1_RE.is_match(invalid_sha1)
+    );
 
     // Test filename regex
     let valid_filenames = vec!["README.md", "src/main.rs", "file-name.txt", "file_name.txt"];
     let invalid_filenames = vec!["file\x00name.txt", "file with spaces.txt"];
-    
+
     println!("  Filename validation:");
     for filename in valid_filenames {
-        println!("    '{}' -> {}", filename, VALID_FILENAME_RE.is_match(filename));
+        println!(
+            "    '{}' -> {}",
+            filename,
+            VALID_FILENAME_RE.is_match(filename)
+        );
     }
     for filename in invalid_filenames {
-        println!("    '{}' -> {}", filename, VALID_FILENAME_RE.is_match(filename));
+        println!(
+            "    '{}' -> {}",
+            filename,
+            VALID_FILENAME_RE.is_match(filename)
+        );
     }
 
     // Test character regex
     let valid_chars = vec!['a', 'Z', '5', '!', ' ', '\t'];
     let invalid_chars = vec!['\x00', '\x1f', '\x7f', 'é', 'ñ'];
-    
+
     println!("  Character validation:");
     for ch in valid_chars {
         let mut buf = [0u8; 4];
@@ -99,8 +111,12 @@ fn demo_blob_contracts() -> Result<(), Box<dyn std::error::Error>> {
         oid: "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
         size: 13,
         lines: vec![
-            UnifiedBlobLineContract { line: "Hello, ".to_string() },
-            UnifiedBlobLineContract { line: "World!".to_string() },
+            UnifiedBlobLineContract {
+                line: "Hello, ".to_string(),
+            },
+            UnifiedBlobLineContract {
+                line: "World!".to_string(),
+            },
         ],
     };
     println!("  {}", valid_blob.summary());
@@ -109,9 +125,9 @@ fn demo_blob_contracts() -> Result<(), Box<dyn std::error::Error>> {
     let invalid_blob = UnifiedBlobContract {
         oid: "invalid-hash".to_string(),
         size: 0,
-        lines: vec![
-            UnifiedBlobLineContract { line: "Hello\x00World!".to_string() },
-        ],
+        lines: vec![UnifiedBlobLineContract {
+            line: "Hello\x00World!".to_string(),
+        }],
     };
     println!("  {}", invalid_blob.summary());
     if !invalid_blob.get_errors().is_empty() {
@@ -129,7 +145,12 @@ fn demo_tree_contracts() -> Result<(), Box<dyn std::error::Error>> {
     println!("  Tree modes:");
     for mode_str in &["100644", "100755", "040000", "invalid"] {
         match UnifiedTreeMode::from_str(mode_str) {
-            Some(mode) => println!("    '{}' -> {} ({})", mode_str, mode.to_string(), mode.description()),
+            Some(mode) => println!(
+                "    '{}' -> {} ({})",
+                mode_str,
+                mode.to_string(),
+                mode.description()
+            ),
             None => println!("    '{}' -> Invalid", mode_str),
         }
     }
@@ -288,7 +309,9 @@ fn demo_unified_git_objects() -> Result<(), Box<dyn std::error::Error>> {
         GitObject::Blob(UnifiedBlobContract {
             oid: "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
             size: 5,
-            lines: vec![UnifiedBlobLineContract { line: "Hello".to_string() }],
+            lines: vec![UnifiedBlobLineContract {
+                line: "Hello".to_string(),
+            }],
         }),
         GitObject::Tree(UnifiedTreeContract {
             entries: vec![UnifiedTreeEntryContract {
@@ -333,7 +356,7 @@ fn demo_unified_validator() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create a validator that validates all object types
     let full_validator = UnifiedValidator::default();
-    
+
     // Create a validator that only validates blobs and trees
     let partial_validator = UnifiedValidator::new(true, true, false, false);
 
@@ -342,7 +365,9 @@ fn demo_unified_validator() -> Result<(), Box<dyn std::error::Error>> {
         GitObject::Blob(UnifiedBlobContract {
             oid: "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
             size: 5,
-            lines: vec![UnifiedBlobLineContract { line: "Hello".to_string() }],
+            lines: vec![UnifiedBlobLineContract {
+                line: "Hello".to_string(),
+            }],
         }),
         GitObject::Tree(UnifiedTreeContract {
             entries: vec![UnifiedTreeEntryContract {
@@ -364,17 +389,33 @@ fn demo_unified_validator() -> Result<(), Box<dyn std::error::Error>> {
     println!("  Full validator (all types):");
     let full_results = full_validator.validate_objects(&objects);
     for (i, (obj, result)) in objects.iter().zip(full_results.iter()).enumerate() {
-        println!("    Object {} ({}): {}", i + 1, obj.kind(), if *result { "✅ Valid" } else { "❌ Invalid" });
+        println!(
+            "    Object {} ({}): {}",
+            i + 1,
+            obj.kind(),
+            if *result { "✅ Valid" } else { "❌ Invalid" }
+        );
     }
-    println!("    Summary: {}", full_validator.summarize_validation(&objects));
+    println!(
+        "    Summary: {}",
+        full_validator.summarize_validation(&objects)
+    );
 
     // Test partial validator
     println!("  Partial validator (blobs and trees only):");
     let partial_results = partial_validator.validate_objects(&objects);
     for (i, (obj, result)) in objects.iter().zip(partial_results.iter()).enumerate() {
-        println!("    Object {} ({}): {}", i + 1, obj.kind(), if *result { "✅ Valid" } else { "❌ Invalid" });
+        println!(
+            "    Object {} ({}): {}",
+            i + 1,
+            obj.kind(),
+            if *result { "✅ Valid" } else { "❌ Invalid" }
+        );
     }
-    println!("    Summary: {}", partial_validator.summarize_validation(&objects));
+    println!(
+        "    Summary: {}",
+        partial_validator.summarize_validation(&objects)
+    );
 
     println!();
     Ok(())
@@ -387,7 +428,9 @@ fn demo_serialization() -> Result<(), Box<dyn std::error::Error>> {
     let git_object = GitObject::Blob(UnifiedBlobContract {
         oid: "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
         size: 5,
-        lines: vec![UnifiedBlobLineContract { line: "Hello".to_string() }],
+        lines: vec![UnifiedBlobLineContract {
+            line: "Hello".to_string(),
+        }],
     });
 
     // Serialize to JSON
@@ -416,4 +459,4 @@ fn demo_serialization() -> Result<(), Box<dyn std::error::Error>> {
 
     println!();
     Ok(())
-} 
+}

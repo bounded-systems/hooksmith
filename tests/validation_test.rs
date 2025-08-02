@@ -4,17 +4,26 @@ use hooksmith::modules::lefthook::{self, LefthookError, LefthookHook, LefthookRe
 fn test_file_types_compatibility() {
     // Test compatible file types
     assert!(lefthook::validate_file_types_compatibility(&["rust".to_string()]).is_ok());
-    assert!(lefthook::validate_file_types_compatibility(&["js".to_string(), "ts".to_string()]).is_ok());
-    assert!(lefthook::validate_file_types_compatibility(&["py".to_string(), "pyc".to_string()]).is_ok());
+    assert!(
+        lefthook::validate_file_types_compatibility(&["js".to_string(), "ts".to_string()]).is_ok()
+    );
+    assert!(
+        lefthook::validate_file_types_compatibility(&["py".to_string(), "pyc".to_string()]).is_ok()
+    );
 
     // Test incompatible file types
-    let result = lefthook::validate_file_types_compatibility(&["rust".to_string(), "js".to_string()]);
+    let result =
+        lefthook::validate_file_types_compatibility(&["rust".to_string(), "js".to_string()]);
     assert!(matches!(result, Err(LefthookError::FilesIncompatible(_))));
 
-    let result = lefthook::validate_file_types_compatibility(&["rust".to_string(), "python".to_string()]);
+    let result =
+        lefthook::validate_file_types_compatibility(&["rust".to_string(), "python".to_string()]);
     assert!(matches!(result, Err(LefthookError::FilesIncompatible(_))));
 
-    let result = lefthook::validate_file_types_compatibility(&["rust".to_string(), "javascript".to_string()]);
+    let result = lefthook::validate_file_types_compatibility(&[
+        "rust".to_string(),
+        "javascript".to_string(),
+    ]);
     assert!(matches!(result, Err(LefthookError::FilesIncompatible(_))));
 }
 
@@ -27,11 +36,14 @@ fn test_hook_configuration_validation() {
     // Test hook with empty run command
     let hook = LefthookHook::new("".to_string());
     let result = lefthook::validate_hook_configuration(&hook);
-    assert!(matches!(result, Err(LefthookError::MissingRequiredField(_))));
+    assert!(matches!(
+        result,
+        Err(LefthookError::MissingRequiredField(_))
+    ));
 
     // Test hook with valid file types
-    let hook = LefthookHook::new("cargo test".to_string())
-        .with_file_types(vec!["rust".to_string()]);
+    let hook =
+        LefthookHook::new("cargo test".to_string()).with_file_types(vec!["rust".to_string()]);
     assert!(lefthook::validate_hook_configuration(&hook).is_ok());
 
     // Test hook with incompatible file types
@@ -41,21 +53,24 @@ fn test_hook_configuration_validation() {
     assert!(matches!(result, Err(LefthookError::FilesIncompatible(_))));
 
     // Test hook with valid priority
-    let hook = LefthookHook::new("cargo test".to_string())
-        .with_priority(100);
+    let hook = LefthookHook::new("cargo test".to_string()).with_priority(100);
     assert!(lefthook::validate_hook_configuration(&hook).is_ok());
 
     // Test hook with invalid priority (too high)
-    let hook = LefthookHook::new("cargo test".to_string())
-        .with_priority(1001);
+    let hook = LefthookHook::new("cargo test".to_string()).with_priority(1001);
     let result = lefthook::validate_hook_configuration(&hook);
-    assert!(matches!(result, Err(LefthookError::InvalidConfiguration(_))));
+    assert!(matches!(
+        result,
+        Err(LefthookError::InvalidConfiguration(_))
+    ));
 
     // Test hook with invalid priority (too low)
-    let hook = LefthookHook::new("cargo test".to_string())
-        .with_priority(-1001);
+    let hook = LefthookHook::new("cargo test".to_string()).with_priority(-1001);
     let result = lefthook::validate_hook_configuration(&hook);
-    assert!(matches!(result, Err(LefthookError::InvalidConfiguration(_))));
+    assert!(matches!(
+        result,
+        Err(LefthookError::InvalidConfiguration(_))
+    ));
 }
 
 #[test]
@@ -66,7 +81,10 @@ fn test_configuration_validation() {
     // Test valid configuration
     let mut config = LefthookConfig::default();
     let mut hooks = HashMap::new();
-    hooks.insert("test".to_string(), LefthookHook::new("cargo test".to_string()));
+    hooks.insert(
+        "test".to_string(),
+        LefthookHook::new("cargo test".to_string()),
+    );
     config.pre_commit = Some(hooks);
     assert!(lefthook::validate_configuration(&config).is_ok());
 
@@ -76,7 +94,10 @@ fn test_configuration_validation() {
     hooks.insert("".to_string(), LefthookHook::new("cargo test".to_string()));
     config.pre_commit = Some(hooks);
     let result = lefthook::validate_configuration(&config);
-    assert!(matches!(result, Err(LefthookError::InvalidConfiguration(_))));
+    assert!(matches!(
+        result,
+        Err(LefthookError::InvalidConfiguration(_))
+    ));
 
     // Test configuration with invalid hook
     let mut config = LefthookConfig::default();
@@ -84,7 +105,10 @@ fn test_configuration_validation() {
     hooks.insert("test".to_string(), LefthookHook::new("".to_string()));
     config.pre_commit = Some(hooks);
     let result = lefthook::validate_configuration(&config);
-    assert!(matches!(result, Err(LefthookError::MissingRequiredField(_))));
+    assert!(matches!(
+        result,
+        Err(LefthookError::MissingRequiredField(_))
+    ));
 }
 
 #[test]
@@ -115,7 +139,7 @@ fn test_complex_validation_scenarios() {
     // Test multiple hooks with different file types
     let mut config = lefthook::LefthookConfig::default();
     let mut pre_commit_hooks = std::collections::HashMap::new();
-    
+
     // Valid Rust hook
     pre_commit_hooks.insert(
         "rust-test".to_string(),
@@ -123,7 +147,7 @@ fn test_complex_validation_scenarios() {
             .with_file_types(vec!["rust".to_string()])
             .with_priority(10),
     );
-    
+
     // Valid JavaScript hook
     pre_commit_hooks.insert(
         "js-lint".to_string(),
@@ -131,20 +155,20 @@ fn test_complex_validation_scenarios() {
             .with_file_types(vec!["js".to_string(), "ts".to_string()])
             .with_priority(5),
     );
-    
+
     config.pre_commit = Some(pre_commit_hooks);
     assert!(lefthook::validate_configuration(&config).is_ok());
 
     // Test configuration with mixed incompatible file types in same hook
     let mut config = lefthook::LefthookConfig::default();
     let mut pre_commit_hooks = std::collections::HashMap::new();
-    
+
     pre_commit_hooks.insert(
         "mixed-hook".to_string(),
         LefthookHook::new("echo test".to_string())
             .with_file_types(vec!["rust".to_string(), "js".to_string()]),
     );
-    
+
     config.pre_commit = Some(pre_commit_hooks);
     let result = lefthook::validate_configuration(&config);
     assert!(matches!(result, Err(LefthookError::FilesIncompatible(_))));
@@ -153,22 +177,24 @@ fn test_complex_validation_scenarios() {
 #[test]
 fn test_priority_validation_edge_cases() {
     // Test priority at boundaries
-    let hook = LefthookHook::new("cargo test".to_string())
-        .with_priority(-1000);
+    let hook = LefthookHook::new("cargo test".to_string()).with_priority(-1000);
     assert!(lefthook::validate_hook_configuration(&hook).is_ok());
 
-    let hook = LefthookHook::new("cargo test".to_string())
-        .with_priority(1000);
+    let hook = LefthookHook::new("cargo test".to_string()).with_priority(1000);
     assert!(lefthook::validate_hook_configuration(&hook).is_ok());
 
     // Test priority just outside boundaries
-    let hook = LefthookHook::new("cargo test".to_string())
-        .with_priority(-1001);
+    let hook = LefthookHook::new("cargo test".to_string()).with_priority(-1001);
     let result = lefthook::validate_hook_configuration(&hook);
-    assert!(matches!(result, Err(LefthookError::InvalidConfiguration(_))));
+    assert!(matches!(
+        result,
+        Err(LefthookError::InvalidConfiguration(_))
+    ));
 
-    let hook = LefthookHook::new("cargo test".to_string())
-        .with_priority(1001);
+    let hook = LefthookHook::new("cargo test".to_string()).with_priority(1001);
     let result = lefthook::validate_hook_configuration(&hook);
-    assert!(matches!(result, Err(LefthookError::InvalidConfiguration(_))));
-} 
+    assert!(matches!(
+        result,
+        Err(LefthookError::InvalidConfiguration(_))
+    ));
+}

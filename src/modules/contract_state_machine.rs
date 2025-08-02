@@ -1,10 +1,8 @@
-use crate::modules::hierarchical_validation::{
-    ValidationScope, ValidationNote
-};
+use crate::modules::hierarchical_validation::{ValidationNote, ValidationScope};
+use anyhow::{anyhow, Result};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use anyhow::{Result, anyhow};
-use chrono::Utc;
 
 /// Contract states in the validation lifecycle
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -65,7 +63,7 @@ impl ContractStateMachine {
             transitions: HashMap::new(),
             current_states: HashMap::new(),
         };
-        
+
         machine.initialize_transitions();
         machine
     }
@@ -84,7 +82,6 @@ impl ContractStateMachine {
                     "No existing Git note for file".to_string(),
                 ],
             },
-            
             // UNVALIDATED → VALIDATED
             StateTransition {
                 from: ContractState::UNVALIDATED,
@@ -97,7 +94,6 @@ impl ContractStateMachine {
                     "Git note created successfully".to_string(),
                 ],
             },
-            
             // VALIDATED → LOCKED
             StateTransition {
                 from: ContractState::VALIDATED,
@@ -109,7 +105,6 @@ impl ContractStateMachine {
                     "No pending changes".to_string(),
                 ],
             },
-            
             // LOCKED → UNVALIDATED
             StateTransition {
                 from: ContractState::LOCKED,
@@ -121,7 +116,6 @@ impl ContractStateMachine {
                     "Hash no longer matches".to_string(),
                 ],
             },
-            
             // UNVALIDATED → VALIDATED (re-validation)
             StateTransition {
                 from: ContractState::UNVALIDATED,
@@ -134,7 +128,6 @@ impl ContractStateMachine {
                     "Git note updated".to_string(),
                 ],
             },
-            
             // UNVALIDATED → VALIDATED (codegen)
             StateTransition {
                 from: ContractState::UNVALIDATED,
@@ -147,7 +140,6 @@ impl ContractStateMachine {
                     "Validation passes".to_string(),
                 ],
             },
-            
             // VALIDATED → VALIDATED (proof verification)
             StateTransition {
                 from: ContractState::VALIDATED,
@@ -160,7 +152,6 @@ impl ContractStateMachine {
                     "No tampering detected".to_string(),
                 ],
             },
-            
             // LOCKED → LOCKED (proof verification)
             StateTransition {
                 from: ContractState::LOCKED,
@@ -185,7 +176,10 @@ impl ContractStateMachine {
 
     /// Get the current state of a file
     pub fn get_state(&self, file: &str) -> ContractState {
-        self.current_states.get(file).cloned().unwrap_or(ContractState::UNTRACKED)
+        self.current_states
+            .get(file)
+            .cloned()
+            .unwrap_or(ContractState::UNTRACKED)
     }
 
     /// Set the current state of a file
@@ -195,26 +189,34 @@ impl ContractStateMachine {
 
     /// Check if a transition is valid
     pub fn can_transition(&self, from: &ContractState, event: &TransitionEvent) -> bool {
-        self.transitions.contains_key(&(from.clone(), event.clone()))
+        self.transitions
+            .contains_key(&(from.clone(), event.clone()))
     }
 
     /// Get the transition details for a state and event
-    pub fn get_transition(&self, from: &ContractState, event: &TransitionEvent) -> Option<&StateTransition> {
+    pub fn get_transition(
+        &self,
+        from: &ContractState,
+        event: &TransitionEvent,
+    ) -> Option<&StateTransition> {
         self.transitions.get(&(from.clone(), event.clone()))
     }
 
     /// Execute a state transition
     pub fn transition(&mut self, file: &str, event: TransitionEvent) -> Result<ContractState> {
         let current_state = self.get_state(file);
-        
+
         if !self.can_transition(&current_state, &event) {
             return Err(anyhow!(
                 "Invalid transition: {:?} → {:?} for file {}",
-                current_state, event, file
+                current_state,
+                event,
+                file
             ));
         }
 
-        let transition = self.get_transition(&current_state, &event)
+        let transition = self
+            .get_transition(&current_state, &event)
             .ok_or_else(|| anyhow!("Transition not found"))?;
 
         // Validate transition conditions
@@ -228,62 +230,66 @@ impl ContractStateMachine {
     }
 
     /// Validate transition conditions
-    fn validate_transition_conditions(&self, file: &str, transition: &StateTransition) -> Result<()> {
+    fn validate_transition_conditions(
+        &self,
+        file: &str,
+        transition: &StateTransition,
+    ) -> Result<()> {
         // This is a simplified validation - in practice, you would check each condition
         // against the actual file state, Git notes, etc.
-        
+
         match transition.event {
             TransitionEvent::DetectContract => {
                 // Check if file matches .gitattributes patterns
                 if !self.file_has_contract_attribute(file)? {
                     return Err(anyhow!("File {} does not have contract attribute", file));
                 }
-                
+
                 // Check if no existing Git note
                 if self.has_git_note(file)? {
                     return Err(anyhow!("File {} already has Git note", file));
                 }
-            },
-            
+            }
+
             TransitionEvent::ValidateContract => {
                 // Check if validation would pass
                 if !self.would_validation_pass(file)? {
                     return Err(anyhow!("Validation would fail for file {}", file));
                 }
-            },
-            
+            }
+
             TransitionEvent::LockContract => {
                 // Check if file is committed
                 if !self.is_file_committed(file)? {
                     return Err(anyhow!("File {} is not committed", file));
                 }
-                
+
                 // Check if no pending changes
                 if self.has_pending_changes(file)? {
                     return Err(anyhow!("File {} has pending changes", file));
                 }
-            },
-            
+            }
+
             TransitionEvent::ModifyContract => {
                 // Check if file content has changed
                 if !self.has_content_changed(file)? {
                     return Err(anyhow!("File {} content has not changed", file));
                 }
-            },
-            
+            }
+
             TransitionEvent::RegenCodegen => {
                 // Check if codegen regeneration would succeed
                 if !self.would_codegen_succeed(file)? {
                     return Err(anyhow!("Codegen regeneration would fail for file {}", file));
                 }
-            },
-            
+            }
+
             TransitionEvent::ReleaseProof => {
                 // Check if Merkle chain is valid
                 if !self.is_merkle_chain_valid(file)? {
                     return Err(anyhow!("Merkle chain is invalid for file {}", file));
                 }
-            },
+            }
         }
 
         Ok(())
@@ -444,7 +450,7 @@ mod tests {
     fn test_valid_transition() {
         let mut machine = ContractStateMachine::new();
         let file = "test.rs";
-        
+
         // UNTRACKED → UNVALIDATED
         let result = machine.transition(file, TransitionEvent::DetectContract);
         assert!(result.is_ok());
@@ -455,7 +461,7 @@ mod tests {
     fn test_invalid_transition() {
         let mut machine = ContractStateMachine::new();
         let file = "test.rs";
-        
+
         // Try to go directly from UNTRACKED to VALIDATED (invalid)
         let result = machine.transition(file, TransitionEvent::ValidateContract);
         assert!(result.is_err());
@@ -465,17 +471,23 @@ mod tests {
     fn test_transition_chain() {
         let mut machine = ContractStateMachine::new();
         let file = "test.rs";
-        
+
         // UNTRACKED → UNVALIDATED → VALIDATED → LOCKED
         assert_eq!(machine.get_state(file), ContractState::UNTRACKED);
-        
-        machine.transition(file, TransitionEvent::DetectContract).unwrap();
+
+        machine
+            .transition(file, TransitionEvent::DetectContract)
+            .unwrap();
         assert_eq!(machine.get_state(file), ContractState::UNVALIDATED);
-        
-        machine.transition(file, TransitionEvent::ValidateContract).unwrap();
+
+        machine
+            .transition(file, TransitionEvent::ValidateContract)
+            .unwrap();
         assert_eq!(machine.get_state(file), ContractState::VALIDATED);
-        
-        machine.transition(file, TransitionEvent::LockContract).unwrap();
+
+        machine
+            .transition(file, TransitionEvent::LockContract)
+            .unwrap();
         assert_eq!(machine.get_state(file), ContractState::LOCKED);
     }
 
@@ -483,8 +495,8 @@ mod tests {
     fn test_schema_generation() {
         let machine = ContractStateMachine::new();
         let schema = machine.to_schema();
-        
+
         assert!(schema.get("states").is_some());
         assert!(schema.get("transitions").is_some());
     }
-} 
+}

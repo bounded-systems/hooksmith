@@ -39,7 +39,7 @@ fn demo_character_validation() -> Result<(), Box<dyn std::error::Error>> {
     for ch in characters {
         let contract = CharContract::new(ch);
         println!("  {}", contract.summary());
-        
+
         if !contract.is_valid() {
             println!("    Error: {}", contract.error.as_ref().unwrap());
         }
@@ -72,8 +72,11 @@ fn demo_tree_filename_contract() -> Result<(), Box<dyn std::error::Error>> {
         println!("  {}", contract.summary());
         println!("    Length: {} characters", contract.len());
         println!("    Valid characters: {}", contract.get_valid_chars().len());
-        println!("    Invalid characters: {}", contract.get_invalid_chars().len());
-        
+        println!(
+            "    Invalid characters: {}",
+            contract.get_invalid_chars().len()
+        );
+
         if !contract.errors.is_empty() {
             println!("    Errors: {:?}", contract.errors);
         }
@@ -88,22 +91,22 @@ fn demo_invalid_characters() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚫 Example 3: Invalid Characters in Filenames");
 
     let filenames = vec![
-        "file\x00name.txt",      // NUL character
-        "file\x01name.txt",      // Control character
-        "file\x1fname.txt",      // Control character
-        "file\x7fname.txt",      // DEL character
-        "fileéname.txt",         // Non-ASCII
-        "fileñame.txt",          // Non-ASCII
-        "",                      // Empty filename
+        "file\x00name.txt", // NUL character
+        "file\x01name.txt", // Control character
+        "file\x1fname.txt", // Control character
+        "file\x7fname.txt", // DEL character
+        "fileéname.txt",    // Non-ASCII
+        "fileñame.txt",     // Non-ASCII
+        "",                 // Empty filename
     ];
 
     for filename in filenames {
         let contract = TreeFilenameContractChars::new(filename.to_string());
         println!("  {}", contract.summary());
-        
+
         if !contract.is_valid() {
             println!("    Errors: {:?}", contract.errors);
-            
+
             // Show invalid characters
             let invalid_chars = contract.get_invalid_chars();
             if !invalid_chars.is_empty() {
@@ -150,12 +153,16 @@ fn demo_batch_filename_validation() -> Result<(), Box<dyn std::error::Error>> {
     println!();
     println!("  Validation summary:");
     println!("    All valid: {}", validator.all_valid(&contracts));
-    
+
     let invalid_filenames = validator.get_invalid_filenames(&contracts);
     if !invalid_filenames.is_empty() {
         println!("    Invalid filenames:");
         for contract in invalid_filenames {
-            println!("      - '{}': {}", contract.as_string(), contract.errors.join(", "));
+            println!(
+                "      - '{}': {}",
+                contract.as_string(),
+                contract.errors.join(", ")
+            );
         }
     }
 
@@ -191,15 +198,20 @@ fn demo_integration_with_tree_entries() -> Result<(), Box<dyn std::error::Error>
     let filename_contracts = validator.validate_filenames(filenames);
 
     println!("  Tree entries with character-level filename validation:");
-    for (i, (tree_entry, filename_contract)) in tree_entries.iter().zip(filename_contracts.iter()).enumerate() {
+    for (i, (tree_entry, filename_contract)) in tree_entries
+        .iter()
+        .zip(filename_contracts.iter())
+        .enumerate()
+    {
         println!("    Entry {}: {}", i + 1, tree_entry.summary());
         println!("      Filename validation: {}", filename_contract.summary());
-        println!("      Character count: {} ({} valid, {} invalid)", 
+        println!(
+            "      Character count: {} ({} valid, {} invalid)",
             filename_contract.len(),
             filename_contract.get_valid_chars().len(),
             filename_contract.get_invalid_chars().len()
         );
-        
+
         if !filename_contract.errors.is_empty() {
             println!("      Filename errors: {:?}", filename_contract.errors);
         }
@@ -222,9 +234,13 @@ fn demo_character_analysis() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("  Character-by-character analysis:");
     for (i, char_contract) in contract.filename.iter().enumerate() {
-        let status = if char_contract.is_valid() { "✅" } else { "❌" };
+        let status = if char_contract.is_valid() {
+            "✅"
+        } else {
+            "❌"
+        };
         println!("    Position {}: {} '{}'", i, status, char_contract.char);
-        
+
         if !char_contract.is_valid() {
             println!("      Error: {}", char_contract.error.as_ref().unwrap());
         }
@@ -234,14 +250,21 @@ fn demo_character_analysis() -> Result<(), Box<dyn std::error::Error>> {
     println!("  Summary:");
     println!("    Total characters: {}", contract.len());
     println!("    Valid characters: {}", contract.get_valid_chars().len());
-    println!("    Invalid characters: {}", contract.get_invalid_chars().len());
-    
+    println!(
+        "    Invalid characters: {}",
+        contract.get_invalid_chars().len()
+    );
+
     let valid_chars: String = contract.get_valid_chars().iter().map(|c| c.char).collect();
-    let invalid_chars: Vec<char> = contract.get_invalid_chars().iter().map(|c| c.char).collect();
-    
+    let invalid_chars: Vec<char> = contract
+        .get_invalid_chars()
+        .iter()
+        .map(|c| c.char)
+        .collect();
+
     println!("    Valid string: '{}'", valid_chars);
     println!("    Invalid chars: {:?}", invalid_chars);
 
     println!();
     Ok(())
-} 
+}

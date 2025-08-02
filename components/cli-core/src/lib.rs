@@ -1,19 +1,19 @@
 //! CLI Core Component
-//! 
+//!
 //! This component provides core CLI operations for hooksmith development workflows.
 //! It's designed to be used as a Wasm component for modular CLI functionality.
 
-use serde::{Deserialize, Serialize};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 
 /// Core CLI operations trait
 pub trait CliOperations {
     /// Execute a CLI command
     fn execute(&self, command: &str, args: &[String]) -> Result<CliResult>;
-    
+
     /// Validate configuration
     fn validate_config(&self, config: &CliConfig) -> Result<ValidationResult>;
-    
+
     /// Get component information
     fn info(&self) -> ComponentInfo;
 }
@@ -66,26 +66,26 @@ impl CliOperations for DefaultCliOperations {
             data: None,
         })
     }
-    
+
     fn validate_config(&self, config: &CliConfig) -> Result<ValidationResult> {
         let mut errors = Vec::new();
         let warnings = Vec::new();
-        
+
         if config.aws_profile.is_empty() {
             errors.push("AWS profile cannot be empty".to_string());
         }
-        
+
         if config.target_env.is_empty() {
             errors.push("Target environment cannot be empty".to_string());
         }
-        
+
         Ok(ValidationResult {
             valid: errors.is_empty(),
             errors,
             warnings,
         })
     }
-    
+
     fn info(&self) -> ComponentInfo {
         ComponentInfo {
             name: "cli-core".to_string(),
@@ -101,4 +101,4 @@ impl CliOperations for DefaultCliOperations {
 }
 
 // Export the main operations
-pub use DefaultCliOperations as CliCore; 
+pub use DefaultCliOperations as CliCore;

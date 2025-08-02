@@ -118,7 +118,17 @@ fn test_wasm_build_command() -> anyhow::Result<()> {
 #[test]
 fn test_wasm_run_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "wasm", "run", "test.wasm", "--function", "test", "--args", "arg1,arg2"]);
+    cmd.args(&[
+        "run",
+        "--",
+        "wasm",
+        "run",
+        "test.wasm",
+        "--function",
+        "test",
+        "--args",
+        "arg1,arg2",
+    ]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -203,4 +213,4 @@ fn test_worktree_tools_command() -> anyhow::Result<()> {
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("Available worktree tools"));
     Ok(())
-} 
+}

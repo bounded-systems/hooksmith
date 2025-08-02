@@ -11,13 +11,13 @@ fn test_generated_file_validation() {
 
     // Test cases: (filepath, is_generated, should_have_linguist, expected_valid)
     let test_cases = vec![
-        ("target/build/app.js", true, true, true),   // Generated with linguist=true -> valid
-        ("gen/proto/message.rs", true, true, true),  // Generated with linguist=true -> valid
-        ("dist/bundle.js", true, true, true),        // Generated with linguist=true -> valid
-        ("src/main.rs", false, false, true),         // Source without linguist=true -> valid
-        ("docs/README.md", false, false, true),      // Docs without linguist=true -> valid
+        ("target/build/app.js", true, true, true), // Generated with linguist=true -> valid
+        ("gen/proto/message.rs", true, true, true), // Generated with linguist=true -> valid
+        ("dist/bundle.js", true, true, true),      // Generated with linguist=true -> valid
+        ("src/main.rs", false, false, true),       // Source without linguist=true -> valid
+        ("docs/README.md", false, false, true),    // Docs without linguist=true -> valid
         ("target/build/file.js", true, false, false), // Generated without linguist=true -> invalid
-        ("src/main.rs", false, true, true),          // Source with linguist=true -> warning but valid
+        ("src/main.rs", false, true, true),        // Source with linguist=true -> warning but valid
     ];
 
     for (filepath, is_generated, should_have_linguist, expected_valid) in test_cases {
@@ -51,7 +51,10 @@ fn test_generated_file_validation() {
 
         if !expected_valid {
             assert!(
-                contract.errors.iter().any(|e| e.contains("linguist-generated=true")),
+                contract
+                    .errors
+                    .iter()
+                    .any(|e| e.contains("linguist-generated=true")),
                 "Expected validation error for file: {}",
                 filepath
             );
@@ -75,7 +78,10 @@ fn test_tree_entry_attributes() {
     assert!(entry.is_valid());
     assert!(entry.has_attribute("linguist-generated=true"));
     assert!(entry.has_attribute("-diff"));
-    assert_eq!(entry.get_attribute_value("linguist-generated"), Some("true"));
+    assert_eq!(
+        entry.get_attribute_value("linguist-generated"),
+        Some("true")
+    );
 
     // Test generated file without required attributes
     let entry2 = TreeEntryContract::new_with_attributes(
@@ -88,7 +94,10 @@ fn test_tree_entry_attributes() {
     // The entry should be invalid due to missing linguist-generated=true
     assert!(!entry2.is_valid());
     // Check that the error message contains the expected text
-    let has_linguist_error = entry2.errors.iter().any(|e| e.contains("linguist-generated=true"));
+    let has_linguist_error = entry2
+        .errors
+        .iter()
+        .any(|e| e.contains("linguist-generated=true"));
     if !has_linguist_error {
         println!("Entry2 errors: {:?}", entry2.errors);
     }
@@ -115,10 +124,7 @@ fn test_blob_contract_attributes() {
     assert!(is_valid2); // Should be valid but might generate warnings
 
     // Test blob without linguist-generated for generated file
-    let mut blob2 = BlobContract::new(
-        "b2c3d4e5f6789012345678901234567890abcde".to_string(),
-        1024,
-    );
+    let mut blob2 = BlobContract::new("b2c3d4e5f6789012345678901234567890abcde".to_string(), 1024);
     let is_valid3 = blob2.validate_attributes_for_path("target/build/file.js");
     assert!(!is_valid3);
 }
@@ -167,7 +173,11 @@ fn test_attribute_format_validation() {
             Some(vec![attr.to_string()]),
             Some("test/file.txt"),
         );
-        assert!(!contract.is_valid(), "Attribute '{}' should be invalid", attr);
+        assert!(
+            !contract.is_valid(),
+            "Attribute '{}' should be invalid",
+            attr
+        );
     }
 }
 
@@ -195,7 +205,11 @@ fn test_generated_file_patterns() {
             None, // No linguist-generated attribute
             Some(filepath),
         );
-        assert!(!contract.is_valid(), "Generated file '{}' should require linguist-generated=true", filepath);
+        assert!(
+            !contract.is_valid(),
+            "Generated file '{}' should require linguist-generated=true",
+            filepath
+        );
     }
 
     // Test file patterns
@@ -214,7 +228,11 @@ fn test_generated_file_patterns() {
             None, // No linguist-generated attribute
             Some(filepath),
         );
-        assert!(!contract.is_valid(), "Generated file '{}' should require linguist-generated=true", filepath);
+        assert!(
+            !contract.is_valid(),
+            "Generated file '{}' should require linguist-generated=true",
+            filepath
+        );
     }
 
     // Test non-generated files
@@ -235,7 +253,11 @@ fn test_generated_file_patterns() {
             None, // No linguist-generated attribute
             Some(filepath),
         );
-        assert!(contract.is_valid(), "Non-generated file '{}' should be valid without linguist-generated=true", filepath);
+        assert!(
+            contract.is_valid(),
+            "Non-generated file '{}' should be valid without linguist-generated=true",
+            filepath
+        );
     }
 }
 
@@ -248,7 +270,11 @@ fn test_complete_workflow() {
     // Simulate a commit with multiple files
     let commit_files = vec![
         ("src/main.rs", "fn main() { }", None),
-        ("target/build/app.js", "console.log('Hello');", Some(vec!["linguist-generated=true".to_string()])),
+        (
+            "target/build/app.js",
+            "console.log('Hello');",
+            Some(vec!["linguist-generated=true".to_string()]),
+        ),
         ("target/build/file.js", "console.log('Generated');", None), // Missing attribute
     ];
 
@@ -282,11 +308,8 @@ fn test_complete_workflow() {
             tree_entries.push(tree_entry);
         } else {
             // Create tree entry without attributes
-            let tree_entry = TreeEntryContract::new(
-                "100644",
-                filepath.to_string(),
-                blob_contract.oid.clone(),
-            );
+            let tree_entry =
+                TreeEntryContract::new("100644", filepath.to_string(), blob_contract.oid.clone());
 
             // Create git object contract
             let git_contract = git_validator.validate_blob(&blob_contract, Some(filepath));
@@ -300,11 +323,24 @@ fn test_complete_workflow() {
 
     // Verify results
     let valid_count = all_contracts.iter().filter(|c| c.is_valid()).count();
-    assert_eq!(valid_count, 2, "Expected 2 valid contracts, got {}", valid_count);
+    assert_eq!(
+        valid_count, 2,
+        "Expected 2 valid contracts, got {}",
+        valid_count
+    );
 
     let invalid_count = all_contracts.iter().filter(|c| !c.is_valid()).count();
-    assert_eq!(invalid_count, 1, "Expected 1 invalid contract, got {}", invalid_count);
+    assert_eq!(
+        invalid_count, 1,
+        "Expected 1 invalid contract, got {}",
+        invalid_count
+    );
 
     // Verify tree object has the expected number of entries
-    assert_eq!(tree_object.entries.len(), 3, "Expected 3 tree entries, got {}", tree_object.entries.len());
-} 
+    assert_eq!(
+        tree_object.entries.len(),
+        3,
+        "Expected 3 tree entries, got {}",
+        tree_object.entries.len()
+    );
+}

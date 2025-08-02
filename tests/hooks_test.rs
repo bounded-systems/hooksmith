@@ -16,4 +16,4 @@ fn test_hook_commands() {
 fn test_wasm_commands() {
     // Test that WASM-related commands are available
     assert!(true); // Placeholder test
-} 
+}
