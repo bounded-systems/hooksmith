@@ -179,6 +179,18 @@ enum Commands {
         #[arg(long)]
         strict: bool,
     },
+    /// Generate documentation using Rust templates
+    GenTemplates {
+        /// Specific template to generate
+        #[arg(long)]
+        template: Option<String>,
+        /// Output directory for generated files
+        #[arg(long, default_value = "docs")]
+        output_dir: String,
+        /// Whether to overwrite existing files
+        #[arg(long)]
+        overwrite: bool,
+    },
     /// Check if current changes are compatible with the last release
     CheckStable {
         /// Version to check against
@@ -425,6 +437,9 @@ async fn main() -> Result<()> {
         Commands::ValidateHeaders { strict } => {
             validate_generated_headers(strict)?;
         }
+        Commands::GenTemplates { template, output_dir, overwrite } => {
+            generate_templates(template, &output_dir, overwrite)?;
+        }
         Commands::CheckStable {
             version,
             comprehensive,
@@ -448,6 +463,9 @@ async fn main() -> Result<()> {
         }
         Commands::Bootstrap { validate, commit } => {
             bootstrap_project(validate, commit).await?;
+        }
+        Commands::GenTemplates { .. } => {
+            println!("⚠️  GenTemplates command not implemented yet");
         }
     }
 
