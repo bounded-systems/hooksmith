@@ -3378,3 +3378,188 @@ fn setup_git_aliases(force: bool) -> Result<()> {
 
     Ok(())
 }
+
+/// Validate documentation generation (replaces validate-docs.sh)
+async fn validate_documentation(
+    strict: bool,
+    regenerate: bool,
+    check_uncommitted: bool,
+) -> Result<()> {
+    println!("🔍 Validating documentation generation...");
+
+    // Check if we're in a CI environment
+    if std::env::var("CI").is_ok() {
+        println!("🏗️  Running in CI environment");
+    }
+
+    let mut errors = Vec::new();
+    let mut warnings = Vec::new();
+
+    // Check for any markdown files that don't have auto-generated markers
+    println!("📋 Checking for direct markdown file creation...");
+
+    let md_files = glob::glob("**/*.md")
+        .context("Failed to glob markdown files")?
+        .filter_map(|entry| entry.ok())
+        .filter(|path| {
+            !path.to_string_lossy().contains("target/")
+                && !path.to_string_lossy().contains(".git/")
+        })
+        .collect::<Vec<_>>();
+
+    let excluded_files = [
+        "./README.md",
+        "./.gitignore",
+        "./LICENSE",
+        "./CHANGELOG.md",
+        "./CONTRIBUTING.md",
+        "./SECURITY.md",
+        "./CODE_OF_CONDUCT.md",
+    ];
+
+    for file in &md_files {
+        let file_str = file.to_string_lossy();
+        
+        // Skip explicitly excluded files
+        if excluded_files.iter().any(|excluded| file_str.contains(excluded)) {
+            println!("   ⏭️  Skipping manually maintained file: {}", file_str);
+            continue;
+        }
+
+        // Check if file contains auto-generated marker
+        let content = fs::read_to_string(file)
+            .with_context(|| format!("Failed to read file: {}", file_str))?;
+
+        if !content.contains("auto-generated") {
+            let error_msg = format!("Invalid file (no auto-generated marker): {}", file_str);
+            errors.push(error_msg.clone());
+            println!("   ❌ {}", error_msg);
+        } else {
+            println!("   ✅ Valid generated file: {}", file_str);
+        }
+    }
+
+    // Validate checksums if available
+    println!("");
+    println!("🔐 Validating checksums...");
+
+    let checksum_path = Path::new("docs/checksums.json");
+    if checksum_path.exists() {
+        match docs::validate_generated_files(Path::new("docs")) {
+            Ok(_) => println!("✅ Checksum validation passed"),
+            Err(e) => {
+                let error_msg = format!("Checksum validation failed: {}", e);
+                if strict {
+                    errors.push(error_msg.clone());
+                } else {
+                    warnings.push(error_msg.clone());
+                }
+                println!("❌ {}", error_msg);
+            }
+        }
+    } else {
+        println!("⚠️  No checksums.json found, skipping checksum validation");
+    }
+
+    // Check Git attributes
+    println!("");
+    println!("🏷️  Checking Git attributes...");
+
+    let gitattributes_path = Path::new(".gitattributes");
+    if gitattributes_path.exists() {
+        let content = fs::read_to_string(gitattributes_path)
+            .context("Failed to read .gitattributes")?;
+        
+        if content.contains("linguist-generated=true") {
+            println!("✅ Git attributes properly configured");
+        } else {
+            let warning_msg = "Git attributes may not be properly configured".to_string();
+            warnings.push(warning_msg.clone());
+            println!("⚠️  {}", warning_msg);
+        }
+    } else {
+        let warning_msg = "No .gitattributes file found".to_string();
+        warnings.push(warning_msg.clone());
+        println!("⚠️  {}", warning_msg);
+    }
+
+    // Generate fresh documentation if requested
+    if regenerate {
+        println!("");
+        println!("🔄 Generating fresh documentation...");
+
+        match generate_comprehensive_documentation(true, &None, "docs", true).await {
+            Ok(_) => println!("✅ Documentation generation successful"),
+            Err(e) => {
+                let error_msg = format!("Documentation generation failed: {}", e);
+                if strict {
+                    errors.push(error_msg.clone());
+                } else {
+                    warnings.push(error_msg.clone());
+                }
+                println!("❌ {}", error_msg);
+            }
+        }
+    }
+
+    // Check for uncommitted changes
+    if check_uncommitted {
+        println!("");
+        println!("📝 Checking for uncommitted changes...");
+
+        let status = Command::new("git")
+            .args(["status", "--porcelain"])
+            .output()
+            .context("Failed to run git status")?;
+
+        if !status.stdout.is_empty() {
+            let output = String::from_utf8_lossy(&status.stdout);
+            let warning_msg = format!("Uncommitted changes detected:\n{}", output);
+            warnings.push(warning_msg.clone());
+            println!("⚠️  {}", warning_msg);
+            
+            if strict {
+                println!("");
+                println!("Please commit all changes or run:");
+                println!("cargo xtask gen-docs-comprehensive --all --validate");
+                println!("git add .");
+                println!("git commit -m 'Update generated documentation'");
+            }
+        } else {
+            println!("✅ No uncommitted changes");
+        }
+    }
+
+    // Summary
+    println!("");
+    if errors.is_empty() && warnings.is_empty() {
+        println!("🎉 All documentation validation checks passed!");
+        println!("✅ No direct markdown file creation detected");
+        println!("✅ All files properly generated");
+        println!("✅ Checksums validated");
+        println!("✅ Git attributes configured");
+        if check_uncommitted {
+            println!("✅ No uncommitted changes");
+        }
+    } else {
+        if !warnings.is_empty() {
+            println!("⚠️  Warnings:");
+            for warning in &warnings {
+                println!("   {}", warning);
+            }
+        }
+        
+        if !errors.is_empty() {
+            println!("❌ Errors:");
+            for error in &errors {
+                println!("   {}", error);
+            }
+            
+            if strict {
+                anyhow::bail!("Documentation validation failed with {} errors", errors.len());
+            }
+        }
+    }
+
+    Ok(())
+}
