@@ -1,10 +1,25 @@
 # Hooksmith Verify-Hooks Command
 
-The `verify-hooks` command allows you to check if Hooksmith is properly registered in all Git hooks in your repository.
+The `verify-hooks` command allows you to check if Hooksmith hooks are properly defined in your Lefthook configuration and verifies that Lefthook is installed and active.
 
 ## Overview
 
-This command enumerates all hooks in `.git/hooks/` and checks if each hook script contains Hooksmith invocation. It provides immediate feedback about the registration status of Hooksmith in your Git workflow.
+This command checks your `lefthook.yml` configuration file to ensure that all expected Hooksmith hooks are properly defined. It also optionally verifies that Lefthook is installed and that hooks are active in your Git repository.
+
+## Architecture
+
+Hooksmith follows the proper Git hooks architecture:
+
+1. **Hooksmith** generates `lefthook.yml` configuration files
+2. **Lefthook** reads the configuration and manages Git hooks
+3. **Git** executes the hooks when appropriate events occur
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  Hooksmith  │───▶│  Lefthook   │───▶│     Git     │
+│  (CLI)      │    │  (Manager)  │    │  (Hooks)    │
+└─────────────┘    └─────────────┘    └─────────────┘
+```
 
 ## Usage
 
@@ -19,23 +34,34 @@ hooksmith verify-hooks --repo-path /path/to/repo
 
 # Show detailed information about each hook
 hooksmith verify-hooks --verbose
+
+# Check if Lefthook is installed and hooks are active
+hooksmith verify-hooks --check-installation
 ```
 
 ### Command Options
 
 - `--repo-path <PATH>`: Git repository root directory (default: current directory)
-- `--verbose`: Show detailed information about each hook including content preview
+- `--verbose`: Show detailed information about each hook including configuration
+- `--check-installation`: Check if Lefthook is installed and hooks are active
 - `-h, --help`: Print help information
 
 ## Example Output
 
 ```
-🔍 Verifying Git hooks registration: .
-✔ pre-commit ✅ Hooksmith registered
-✖ pre-push ❌ Missing Hooksmith
-✔ commit-msg ✅ Hooksmith registered
+🔍 Verifying Hooksmith hooks registration: .
+✔ pre-commit/hooksmith-fmt ✅ Hooksmith hook configured
+✔ pre-commit/hooksmith-clippy ✅ Hooksmith hook configured
+✔ pre-commit/hooksmith-test ✅ Hooksmith hook configured
+✔ pre-commit/hooksmith-gen-wit ✅ Hooksmith hook configured
+✔ pre-push/hooksmith-audit ✅ Hooksmith hook configured
+✔ pre-push/hooksmith-check-generated ✅ Hooksmith hook configured
+✔ commit-msg/hooksmith-conventional ✅ Hooksmith hook configured
+
+✅ Lefthook is installed
+⚠️  Lefthook hooks are not active (run 'lefthook install')
 ✅ Hook verification completed
-📊 2 / 3 hooks have Hooksmith registered
+📊 7 / 7 hooks have Hooksmith properly configured
 ```
 
 ### Verbose Output
@@ -43,28 +69,37 @@ hooksmith verify-hooks --verbose
 With `--verbose` flag, you get additional details:
 
 ```
-🔍 Verifying Git hooks registration: .
-✔ pre-commit ✅ Hooksmith registered
-   Content preview:
-   #!/bin/sh
-   # Pre-commit hook with Hooksmith integration
-   
-   echo "Running pre-commit checks..."
-   
-   ...
+🔍 Verifying Hooksmith hooks registration: .
+✔ pre-commit/hooksmith-fmt ✅ Hooksmith hook configured
+   Configuration:
+   glob: '*.rs'
+   run: cargo fmt --all -- --check
 
-✖ pre-push ❌ Missing Hooksmith
-   Content preview:
-   #!/bin/sh
-   # Pre-push hook for security checks
-   
-   echo "Running pre-push checks..."
-   
-   ...
+✔ pre-commit/hooksmith-clippy ✅ Hooksmith hook configured
+   Configuration:
+   glob: '*.rs'
+   run: cargo clippy --all-targets --all-features -- -D warnings
 
 ✅ Hook verification completed
-📊 1 / 2 hooks have Hooksmith registered
+📊 2 / 2 hooks have Hooksmith properly configured
 ```
+
+## Expected Hooksmith Hooks
+
+The command checks for these expected Hooksmith hooks in your `lefthook.yml`:
+
+### Pre-commit Hooks
+- `hooksmith-fmt`: Rust code formatting check
+- `hooksmith-clippy`: Rust linting with clippy
+- `hooksmith-test`: Run all tests
+- `hooksmith-gen-wit`: Generate WIT interfaces
+
+### Pre-push Hooks
+- `hooksmith-audit`: Security audit with cargo audit
+- `hooksmith-check-generated`: Verify generated files are up to date
+
+### Commit-msg Hooks
+- `hooksmith-conventional`: Validate conventional commit format
 
 ## Integration Options
 
@@ -78,35 +113,26 @@ hooksmith verify-hooks
 
 ### 2. Post-Push Hook Integration
 
-Add a post-push hook to automatically verify after each push:
+Add a post-push hook to automatically verify after each push. First, add it to your `lefthook.yml`:
 
-```bash
-# Create post-push hook
-cat > .git/hooks/post-push << 'EOF'
-#!/bin/sh
-# Post-push hook to verify Hooksmith registration
-
-echo "🔍 Verifying Hooksmith registration after push..."
-
-# Run Hooksmith verify-hooks command
-cargo run --bin hooksmith -- verify-hooks
-
-echo "✅ Post-push verification completed"
-EOF
-
-chmod +x .git/hooks/post-push
+```yaml
+post-push:
+  commands:
+    verify-hooksmith:
+      run: hooksmith verify-hooks
+      description: "Verify Hooksmith hooks are properly configured"
 ```
 
 ### 3. Lefthook Integration
 
-Add to your `lefthook.yml`:
+Your `lefthook.yml` should include the verify-hooks command:
 
 ```yaml
 # Post-push hook to verify Hooksmith registration
 post-push:
   commands:
     verify-hooksmith:
-      run: hooksmith verify-hooks
+      run: hooksmith verify-hooks --check-installation
       description: "Verify Hooksmith is properly registered in all Git hooks"
 ```
 
@@ -139,15 +165,15 @@ jobs:
     - name: Verify Hooksmith Registration
       run: |
         cargo build --bin hooksmith
-        cargo run --bin hooksmith -- verify-hooks
+        cargo run --bin hooksmith -- verify-hooks --check-installation
         
     - name: Check for missing hooks
       run: |
         output=$(cargo run --bin hooksmith -- verify-hooks 2>&1)
         echo "$output"
         
-        if echo "$output" | grep -q "❌ Missing Hooksmith"; then
-          echo "❌ Some Git hooks are missing Hooksmith registration"
+        if echo "$output" | grep -q "❌ Missing Hooksmith hook"; then
+          echo "❌ Some Hooksmith hooks are missing from lefthook.yml"
           exit 1
         fi
 ```
@@ -159,7 +185,7 @@ verify-hooksmith:
   stage: test
   script:
     - cargo build --bin hooksmith
-    - cargo run --bin hooksmith -- verify-hooks
+    - cargo run --bin hooksmith -- verify-hooks --check-installation
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -167,75 +193,50 @@ verify-hooksmith:
 
 ## Hook Detection Logic
 
-The command checks for the presence of these strings in hook files:
-- `hooksmith` (case-insensitive)
-- `Hooksmith` 
-- `HOOKSMITH`
+The command checks for the presence of expected Hooksmith hooks in your `lefthook.yml` configuration file. It looks for:
+
+1. **Hook sections**: `pre-commit`, `pre-push`, `commit-msg`
+2. **Hook commands**: Expected Hooksmith hook names within each section
+3. **Configuration**: Proper YAML structure and command definitions
 
 ### Supported Hook Types
 
-The command checks for these common Git hooks:
+The command checks for these hook sections in `lefthook.yml`:
 
-**Client-side hooks:**
-- `pre-commit`
-- `pre-push`
-- `commit-msg`
-- `post-commit`
-- `pre-rebase`
-- `post-merge`
-- `post-checkout`
-- `prepare-commit-msg`
-- `pre-merge-commit`
-- `post-rewrite`
-- `pre-auto-gc`
-- `fsmonitor-watchman`
-- `p4-changelist`
-- `p4-prepare-changelist`
-- `p4-post-changelist`
-- `p4-pre-submit`
-- `post-index-change`
-
-**Server-side hooks:**
-- `pre-receive`
-- `update`
-- `proc-receive`
-- `post-receive`
-- `post-update`
-- `reference-transaction`
-- `push-to-checkout`
-- `applypatch-msg`
-- `pre-applypatch`
-- `post-applypatch`
-- `sendemail-validate`
+- **pre-commit**: Hooks that run before each commit
+- **pre-push**: Hooks that run before pushing to remote
+- **commit-msg**: Hooks that validate commit messages
 
 ## Best Practices
 
 1. **Regular Verification**: Run `verify-hooks` regularly to ensure all hooks are properly configured
-2. **CI Integration**: Include verification in your CI pipeline to catch missing registrations early
+2. **CI Integration**: Include verification in your CI pipeline to catch missing configurations early
 3. **Post-Push Automation**: Use post-push hooks to get immediate feedback after pushing
-4. **Verbose Debugging**: Use `--verbose` flag when troubleshooting hook issues
+4. **Installation Check**: Use `--check-installation` to ensure Lefthook is properly set up
+5. **Verbose Debugging**: Use `--verbose` flag when troubleshooting hook issues
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **"Git hooks directory not found"**: Ensure you're running the command from a Git repository
-2. **"No Git hooks found"**: The repository doesn't have any hooks configured
-3. **False positives**: Check if hook content contains "hooksmith" in comments or strings
+1. **"Lefthook configuration not found"**: Ensure you have a `lefthook.yml` file in your repository root
+2. **"No Hooksmith hooks found"**: The `lefthook.yml` doesn't contain expected Hooksmith hooks
+3. **"Lefthook is not installed"**: Install Lefthook using `npm install -g @evilmartians/lefthook` or `brew install lefthook`
+4. **"Lefthook hooks are not active"**: Run `lefthook install` to activate hooks
 
 ### Debugging
 
-Use the verbose flag to see hook contents:
+Use the verbose flag to see hook configurations:
 
 ```bash
 hooksmith verify-hooks --verbose
 ```
 
-This will show you the first 5 lines of each hook file, helping you understand why a hook is or isn't being detected as having Hooksmith registered.
+This will show you the exact configuration for each hook, helping you understand why a hook is or isn't being detected as properly configured.
 
 ## Exit Codes
 
 - `0`: Success (verification completed)
-- `1`: Error (verification failed, hooks directory not found, etc.)
+- `1`: Error (verification failed, configuration not found, etc.)
 
 The command will exit with code 1 if there are any errors during verification, making it suitable for use in CI/CD pipelines. 
