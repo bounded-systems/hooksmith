@@ -123,7 +123,7 @@ impl GitStateMachine {
 4. ✅ Replace `.dot` files with Rust-generated Mermaid
 5. ✅ Remove Graphviz dependency
 
-### Phase 3: Configuration Generation
+### Phase 3: Configuration Generation ✅ (COMPLETED)
 
 #### 3.1 Standardize on YAML (.yml)
 
@@ -159,11 +159,11 @@ impl ContractStateMachine {
 ```
 
 **Migration Steps:**
-1. Create `xtask/src/config/mod.rs`
-2. Define Rust structs for all configurations
-3. Implement YAML generation from Rust structs
-4. Update xtask to generate YAML from Rust
-5. Remove static YAML files
+1. ✅ Create `xtask/src/config/mod.rs`
+2. ✅ Define Rust structs for all configurations
+3. ✅ Implement YAML generation from Rust structs
+4. ✅ Update xtask to generate YAML from Rust
+5. ✅ Remove static YAML files
 
 #### 3.2 Generate Lefthook Configuration
 
@@ -197,6 +197,13 @@ impl LefthookConfig {
     }
 }
 ```
+
+**Migration Steps:**
+1. ✅ Create `xtask/src/config/lefthook.rs`
+2. ✅ Define `LefthookConfig` and `HookCommand` structs
+3. ✅ Implement default hook configurations
+4. ✅ Add CLI commands `gen-config` and `validate-config`
+5. ✅ Generate `lefthook.yml` from Rust structs
 
 ### Phase 4: Documentation Generation
 
