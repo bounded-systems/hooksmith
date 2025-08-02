@@ -12,6 +12,9 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 mod hierarchical_validation;
+mod contract_state_machine;
+mod git_notes_manager;
+mod contract_commands;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]

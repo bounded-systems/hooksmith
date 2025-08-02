@@ -140,7 +140,11 @@ impl StateMachine {
     }
 
     /// Validate a contract state
-    pub fn validate_state(&self, state: &ContractState, file_path: &Path) -> Result<ValidationResult> {
+    pub fn validate_state(
+        &self,
+        state: &ContractState,
+        file_path: &Path,
+    ) -> Result<ValidationResult> {
         let state_str = state.to_string();
         let state_def = self
             .config
@@ -162,10 +166,18 @@ impl StateMachine {
 
         // Check thresholds
         let elapsed = start_time.elapsed()?;
-        if elapsed.as_secs() > self.config.validation_thresholds.max_validation_time_seconds {
+        if elapsed.as_secs()
+            > self
+                .config
+                .validation_thresholds
+                .max_validation_time_seconds
+        {
             result.add_error(
                 "validation_time",
-                &format!("Validation took {} seconds, exceeded limit", elapsed.as_secs()),
+                &format!(
+                    "Validation took {} seconds, exceeded limit",
+                    elapsed.as_secs()
+                ),
             );
         }
 
@@ -274,7 +286,8 @@ impl StateMachine {
         states.insert(
             "VALIDATED".to_string(),
             StateDefinition {
-                description: "File has contract/codegen attribute + matching note with hash".to_string(),
+                description: "File has contract/codegen attribute + matching note with hash"
+                    .to_string(),
                 allowed_transitions: vec!["LOCKED".to_string(), "UNVALIDATED".to_string()],
                 validation_rules: vec![
                     "Git note must exist with valid state".to_string(),
@@ -454,4 +467,4 @@ mod tests {
             .unwrap();
         assert!(result.is_valid());
     }
-} 
+}
