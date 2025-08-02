@@ -4,9 +4,9 @@ This directory contains a bootstrap script that can generate the complete Hooksm
 
 ## Prerequisites
 
-1. **Install cargo-script** (required to run the bootstrap script):
+1. **Install cargo-eval** (required to run the bootstrap script):
    ```bash
-   cargo install cargo-script
+   cargo install cargo-eval
    ```
 
 2. **Ensure you have Rust and Cargo installed** (the bootstrap script will use these to build the project)
@@ -16,7 +16,7 @@ This directory contains a bootstrap script that can generate the complete Hooksm
 ### Option 1: Run the bootstrap script directly
 
 ```bash
-cargo script bootstrap.rs
+cargo eval bootstrap.rs
 ```
 
 ### Option 2: Make it executable and run
@@ -64,6 +64,21 @@ hooksmith/
     └── src/
 ```
 
+## Dependencies Included
+
+The bootstrap script generates a complete workspace with all necessary dependencies:
+
+### Workspace Dependencies
+- **CLI Framework**: `clap`, `tokio`, `anyhow`, `console`, `indicatif`
+- **File System**: `serde`, `serde_json`, `serde_yaml`, `toml`
+- **Git Operations**: `git2`, `gix-filter`
+- **WASM Support**: `wasmtime`, `wit-bindgen`, `wit-parser`, `wit-component`
+- **Validation**: `jsonschema`, `reqwest`
+- **Utilities**: `sha2`, `chrono`, `thiserror`, `once_cell`, `regex`, `futures-io`
+
+### Component-Specific Dependencies
+Each component gets its own `Cargo.toml` with workspace dependencies, ensuring consistent versions across the project.
+
 ## Next Steps
 
 After running the bootstrap script:
@@ -85,10 +100,10 @@ After running the bootstrap script:
 
 ## Troubleshooting
 
-### If cargo-script is not found
+### If cargo-eval is not found
 Make sure you have installed it:
 ```bash
-cargo install cargo-script
+cargo install cargo-eval
 ```
 
 ### If the build fails
@@ -102,6 +117,9 @@ Make sure the script is executable:
 chmod +x bootstrap.rs
 ```
 
+### If dependencies are missing
+The bootstrap script includes all dependencies used by the existing source code. If you encounter missing dependency errors, they may be from newer code that wasn't included in the bootstrap template.
+
 ## Manual Setup (Alternative)
 
 If you prefer not to use the bootstrap script, you can manually:
@@ -110,4 +128,8 @@ If you prefer not to use the bootstrap script, you can manually:
 2. Create the component directories and their `Cargo.toml` files
 3. Run `cargo build` to verify everything works
 
-The bootstrap script just automates this process and ensures consistency. 
+The bootstrap script just automates this process and ensures consistency.
+
+## Script Files
+
+- `bootstrap.rs` - The working bootstrap script using `cargo-eval` 
