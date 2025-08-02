@@ -79,7 +79,15 @@ Hooksmith is designed to be a **CLI tool that builds Rust binaries into Lefthook
 - [x] Cross-platform compatibility
 - [x] Performance optimization (basic implementation)
 
-#### **Phase 5: Production Ready** ❌
+#### **Phase 5: Hierarchical Validation** ✅
+- [x] Bottom-up validation pipeline implementation
+- [x] Git Notes integration for validation history
+- [x] Hierarchical scope detection (Char → Line → Chunk → File → Directory → Repository)
+- [x] Validation chain integrity verification
+- [x] Git hooks integration (pre-commit, post-commit)
+- [x] Xtask CLI for validation management
+
+#### **Phase 6: Production Ready** ❌
 - [ ] Error handling and recovery
 - [ ] Performance benchmarking
 - [ ] Security audit
@@ -270,6 +278,11 @@ This project uses **xtask** for structured code generation and build tasks, repl
 
 # Check if generated files are up to date
 ./xtask.sh check --strict
+
+# Hierarchical contract validation
+./xtask.sh contract-validate validate --range HEAD~1..HEAD
+./xtask.sh contract-validate verify <commit-hash>
+./xtask.sh contract-validate show <commit-hash>
 ```
 
 **Benefits of Xtask:**
@@ -305,13 +318,24 @@ hooksmith/
 ├── Cargo.toml               # Workspace manifest
 ├── build.sh                 # Build script
 ├── README.md                # This file
+├── .gitattributes           # Hierarchical validation configuration
 ├── src/                     # Main CLI binary
 │   ├── main.rs              # CLI entry point (documented)
 │   ├── lib.rs               # Library exports
 │   ├── commands/            # Command structure
 │   └── modules/             # Module structure
+│       ├── wasm.rs          # WASM component management
+│       ├── hook_builder.rs  # Hook building and compilation
+│       └── hierarchical_validation.rs # Hierarchical contract validation
 ├── components/              # Modular components
-│   └── cli-core/            # Core CLI functionality
+│   ├── cli-core/            # Core CLI functionality
+│   ├── worktree-runner/     # Worktree management WASM component
+│   └── git-filter/          # Git filter components
+├── xtask/                   # Xtask build system
+│   ├── src/main.rs          # Xtask CLI
+│   └── src/hierarchical_validation.rs # Validation CLI
+├── docs/                    # Documentation
+│   └── git-notes-schema.json # Git Notes JSON schema
 ├── hooks/                   # Hook scripts directory
 ├── tests/                   # Test files
 └── target/doc/              # Generated documentation
@@ -321,6 +345,9 @@ hooksmith/
 
 - **hooksmith**: Main CLI binary for hook building and WASM management
 - **cli-core**: Core CLI functionality and utilities
+- **worktree-runner**: WASM component for worktree management
+- **git-filter**: Git filter components for hierarchical validation
+- **xtask**: Build system for code generation and validation tasks
 
 ## 🔗 Integration
 
