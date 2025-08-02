@@ -39,10 +39,15 @@ pub enum TransitionEvent {
 /// State transition with conditions and actions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StateTransition {
+    /// The state to transition from
     pub from: ContractState,
+    /// The state to transition to
     pub to: ContractState,
+    /// The event that triggers the transition
     pub event: TransitionEvent,
+    /// The action to perform during the transition
     pub action: String,
+    /// The conditions that must be met for the transition
     pub conditions: Vec<String>,
 }
 
