@@ -1,39 +1,54 @@
+# Lefthook configuration for Hooksmith
+# Enforces file type restrictions and generation markers
+
 pre-commit:
-  hooksmith-test:
-    run: cargo test --all-targets --all-features
-    files: '*.rs'
-    parallel: false
-    env: null
-  hooksmith-fmt:
-    run: cargo fmt --all -- --check
-    files: '*.rs'
-    parallel: false
-    env: null
-  hooksmith-gen-wit:
-    run: cargo xtask gen-wit
-    files: '*.rs'
-    parallel: false
-    env: null
-  hooksmith-clippy:
-    run: cargo clippy --all-targets --all-features -- -D warnings
-    files: '*.rs'
-    parallel: false
-    env: null
+  parallel: true
+  commands:
+    # Check file types and generation markers
+    check-files:
+      glob: "*.{rs,toml,md,yaml,yml,wit,json}"
+      run: cargo run -p xtask -- check-files --strict
+      
+    # Validate generated files
+    validate-generated:
+      glob: "*.{md,yaml,yml,wit,json}"
+      run: cargo run -p xtask -- validate-generated --strict
+      
+    # Check formatting
+    format:
+      glob: "*.rs"
+      run: cargo fmt --check
+      
+    # Run clippy
+    clippy:
+      glob: "*.rs"
+      run: cargo clippy -- -D warnings
+
 pre-push:
-  hooksmith-audit:
-    run: cargo audit
-    files: null
-    parallel: false
-    env: null
-  hooksmith-check-generated:
-    run: cargo xtask check --strict
-    files: null
-    parallel: false
-    env: null
-post-commit:
-  verify-hooksmith:
-    run: cargo run --bin hooksmith -- verify-hooks --check-installation
-    files: null
-    parallel: false
-    env: null
-commit-msg: null
+  parallel: true
+  commands:
+    # Generate and validate all files before push
+    generate-and-validate:
+      run: |
+        cargo run -p xtask -- gen-all --validate
+        cargo run -p xtask -- check-files --strict
+      
+    # Run tests
+    test:
+      run: cargo test --workspace
+
+commit-msg:
+  commands:
+    # Validate commit message format
+    validate-commit-msg:
+      run: |
+        # Check if commit message follows conventional commits
+        if ! echo "$1" | grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+"; then
+          echo "❌ Commit message must follow conventional commits format:"
+          echo "   <type>(<scope>): <description>"
+          echo "   Examples:"
+          echo "   feat: add new feature"
+          echo "   fix(api): resolve bug in API"
+          echo "   docs: update documentation"
+          exit 1
+        fi

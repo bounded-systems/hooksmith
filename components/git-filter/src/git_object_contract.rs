@@ -276,6 +276,8 @@ pub struct GitObjectValidator {
     validate_blobs: bool,
     /// Whether to validate lines
     validate_lines: bool,
+    /// Whether to validate attributes
+    validate_attributes: bool,
     /// Whether to enforce generated rules
     #[allow(dead_code)]
     enforce_generated_rules: bool,
@@ -289,6 +291,7 @@ impl Default for GitObjectValidator {
         Self {
             validate_blobs: true,
             validate_lines: true,
+            validate_attributes: true,
             enforce_generated_rules: true,
             tree_validator: TreeValidator::default(),
         }
@@ -300,12 +303,14 @@ impl GitObjectValidator {
     pub fn new(
         validate_blobs: bool,
         validate_lines: bool,
+        validate_attributes: bool,
         enforce_generated_rules: bool,
         tree_validator: TreeValidator,
     ) -> Self {
         Self {
             validate_blobs,
             validate_lines,
+            validate_attributes,
             enforce_generated_rules,
             tree_validator,
         }

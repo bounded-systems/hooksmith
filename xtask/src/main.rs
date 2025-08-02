@@ -15,6 +15,8 @@ use std::process::Command;
 
 mod hierarchical_validation;
 mod docs;
+mod generated_file_validator;
+mod file_audit;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -121,7 +123,7 @@ enum Commands {
         overwrite: bool,
     },
     /// Run all code generation tasks
-    GenAll {
+    GenAllLegacy {
         /// Whether to overwrite existing files
         #[arg(long)]
         overwrite: bool,
@@ -153,6 +155,30 @@ enum Commands {
         #[command(subcommand)]
         command: hierarchical_validation::Commands,
     },
+    /// Validate generated files to prevent manual modifications
+    ValidateGenerated {
+        /// Whether to check only staged files
+        #[arg(long)]
+        staged_only: bool,
+        /// Whether to exit with error on violations
+        #[arg(long)]
+        strict: bool,
+        /// Custom error message for violations
+        #[arg(long)]
+        custom_message: Option<String>,
+    },
+    /// Add generated file headers to all generated files
+    AddGeneratedHeaders {
+        /// Specific file to add header to
+        #[arg(long)]
+        file: Option<String>,
+    },
+    /// Validate that all generated files have proper headers
+    ValidateHeaders {
+        /// Whether to exit with error on violations
+        #[arg(long)]
+        strict: bool,
+    },
     /// Check if current changes are compatible with the last release
     CheckStable {
         /// Version to check against
@@ -179,6 +205,33 @@ enum Commands {
         /// Force overwrite existing configuration
         #[arg(long)]
         force: bool,
+    },
+    /// Check file types and generation markers
+    CheckFiles {
+        /// Whether to exit with error on violations
+        #[arg(long)]
+        strict: bool,
+        /// Show detailed output
+        #[arg(long)]
+        verbose: bool,
+    },
+    /// Generate all code-generated files
+    GenAll {
+        /// Whether to validate generated files
+        #[arg(long)]
+        validate: bool,
+        /// Whether to force regeneration
+        #[arg(long)]
+        force: bool,
+    },
+    /// Bootstrap the project with all generated files
+    Bootstrap {
+        /// Whether to validate after bootstrap
+        #[arg(long)]
+        validate: bool,
+        /// Whether to commit generated files
+        #[arg(long)]
+        commit: bool,
     },
 }
 
@@ -357,6 +410,19 @@ async fn main() -> Result<()> {
         Commands::ContractValidate { command } => {
             hierarchical_validation::run_command(command).await?;
         }
+        Commands::ValidateGenerated {
+            staged_only,
+            strict,
+            custom_message,
+        } => {
+            validate_generated_files(staged_only, strict, custom_message)?;
+        }
+        Commands::AddGeneratedHeaders { file } => {
+            add_generated_headers(file)?;
+        }
+        Commands::ValidateHeaders { strict } => {
+            validate_generated_headers(strict)?;
+        }
         Commands::CheckStable {
             version,
             comprehensive,
@@ -371,6 +437,15 @@ async fn main() -> Result<()> {
         }
         Commands::SetupGitFilters { force } => {
             setup_git_filters(force).await?;
+        }
+        Commands::CheckFiles { strict, verbose } => {
+            check_files(strict, verbose)?;
+        }
+        Commands::GenAll { validate, force } => {
+            generate_all_files(validate, force).await?;
+        }
+        Commands::Bootstrap { validate, commit } => {
+            bootstrap_project(validate, commit).await?;
         }
     }
 
@@ -2132,6 +2207,254 @@ async fn setup_git_filters(force: bool) -> Result<()> {
     println!("");
     println!("🔍 To verify the configuration, run:");
     println!("   git config --list | grep contract");
+
+    Ok(())
+}
+
+/// Validate generated files to prevent manual modifications
+fn validate_generated_files(
+    staged_only: bool,
+    strict: bool,
+    custom_message: Option<String>,
+) -> Result<()> {
+    use generated_file_validator::{GeneratedFileConfig, GeneratedFileValidator};
+
+    println!("Validating generated files...");
+
+    let config = GeneratedFileConfig {
+        staged_only,
+        strict,
+        custom_message,
+    };
+
+    match GeneratedFileValidator::validate(&config) {
+        Ok(result) => {
+            if result.is_valid {
+                println!("✅ All generated files are valid!");
+                Ok(())
+            } else {
+                println!("{}", result.error_message.unwrap());
+                if strict {
+                    std::process::exit(1);
+                }
+                Ok(())
+            }
+        }
+        Err(e) => {
+            eprintln!("❌ Generated file validation failed: {}", e);
+            if strict {
+                std::process::exit(1);
+            }
+            Ok(())
+        }
+    }
+}
+
+/// Add generated file headers to files
+fn add_generated_headers(file: Option<String>) -> Result<()> {
+    use generated_file_validator::GeneratedFileValidator;
+    use std::path::PathBuf;
+
+    println!("Adding generated file headers...");
+
+    if let Some(file_path) = file {
+        // Add header to specific file
+        let path = PathBuf::from(file_path);
+        GeneratedFileValidator::add_generated_header(&path)?;
+        println!("✅ Added header to {}", path.display());
+    } else {
+        // Add headers to all generated files
+        let generated_files = GeneratedFileValidator::get_all_generated_files()?;
+        GeneratedFileValidator::add_generated_headers(&generated_files)?;
+        println!("✅ Added headers to {} generated files", generated_files.len());
+    }
+
+    Ok(())
+}
+
+/// Validate that all generated files have proper headers
+fn validate_generated_headers(strict: bool) -> Result<()> {
+    use generated_file_validator::GeneratedFileValidator;
+
+    println!("Validating generated file headers...");
+
+    match GeneratedFileValidator::validate_headers() {
+        Ok(result) => {
+            if result.is_valid {
+                println!("✅ All generated files have proper headers!");
+                Ok(())
+            } else {
+                println!("{}", result.error_message.unwrap());
+                if strict {
+                    std::process::exit(1);
+                }
+                Ok(())
+            }
+        }
+        Err(e) => {
+            eprintln!("❌ Header validation failed: {}", e);
+            if strict {
+                std::process::exit(1);
+            }
+            Ok(())
+        }
+    }
+}
+
+/// Check file types and generation markers
+fn check_files(strict: bool, verbose: bool) -> Result<()> {
+    use file_audit::{check_files, FileAuditResult};
+
+    println!("🔍 Checking file types and generation markers...");
+
+    match check_files() {
+        Ok(result) => {
+            if verbose {
+                result.print_summary();
+            } else {
+                println!("📊 File Audit Summary");
+                println!("Total files checked: {}", result.total_files);
+                println!("Allowed files: {}", result.allowed_files);
+                println!("Generated files: {}", result.generated_files);
+                println!("Manual files: {}", result.manual_files);
+                println!("");
+
+                if result.has_errors() {
+                    println!("❌ Issues found:");
+                    if !result.forbidden_files.is_empty() {
+                        println!("   - {} forbidden file types", result.forbidden_files.len());
+                    }
+                    if !result.missing_markers.is_empty() {
+                        println!("   - {} files missing generation markers", result.missing_markers.len());
+                    }
+                    if !result.errors.is_empty() {
+                        println!("   - {} errors", result.errors.len());
+                    }
+                    println!("");
+                    println!("🔧 To fix issues:");
+                    println!("   cargo xtask gen-all --validate");
+                    println!("   cargo xtask check-files --strict");
+                } else {
+                    println!("✅ All files are properly configured!");
+                }
+            }
+
+            if strict && result.has_errors() {
+                std::process::exit(1);
+            }
+
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("❌ File audit failed: {}", e);
+            if strict {
+                std::process::exit(1);
+            }
+            Ok(())
+        }
+    }
+}
+
+/// Generate all code-generated files
+async fn generate_all_files(validate: bool, force: bool) -> Result<()> {
+    use file_audit::FileTypeConfig;
+
+    println!("🚀 Generating all code-generated files...");
+
+    let config = FileTypeConfig::load()?;
+    let mut generated_count = 0;
+
+    // Generate documentation
+    println!("   📚 Generating documentation...");
+    docs::generate_all_docs("docs", validate).await?;
+    generated_count += 1;
+
+    // Generate WIT interfaces
+    println!("   🔧 Generating WIT interfaces...");
+    generate_wit_interfaces("wit", force)?;
+    generated_count += 1;
+
+    // Generate Lefthook configuration
+    println!("   🪝 Generating Lefthook configuration...");
+    generate_lefthook_config("lefthook.yml", validate)?;
+    generated_count += 1;
+
+    // Generate mod.rs files
+    println!("   📁 Generating mod.rs files...");
+    generate_mod_files(force)?;
+    generated_count += 1;
+
+    // Generate hooks README
+    println!("   📖 Generating hooks README...");
+    generate_hooks_readme("hooks/README.md", force)?;
+    generated_count += 1;
+
+    // Generate README
+    println!("   📖 Generating README...");
+    generate_readme("README.md", force)?;
+    generated_count += 1;
+
+    println!("✅ Generated {} types of files", generated_count);
+
+    if validate {
+        println!("🔍 Validating generated files...");
+        file_audit::validate_generated_files()?;
+        println!("✅ All generated files validated successfully!");
+    }
+
+    Ok(())
+}
+
+/// Bootstrap the project with all generated files
+async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
+    println!("🚀 Bootstrapping project with all generated files...");
+
+    // Generate all files
+    generate_all_files(validate, true).await?;
+
+    // Check if everything is valid
+    println!("🔍 Running final validation...");
+    file_audit::validate_generated_files()?;
+
+    // Check file types
+    println!("🔍 Checking file types...");
+    let result = file_audit::check_files()?;
+    if result.has_errors() {
+        anyhow::bail!("Bootstrap validation failed. Please fix issues and try again.");
+    }
+
+    println!("✅ Bootstrap completed successfully!");
+
+    if commit {
+        println!("📝 Committing generated files...");
+        let status = std::process::Command::new("git")
+            .args(["add", "."])
+            .status()
+            .context("Failed to add files to git")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to add files to git");
+        }
+
+        let status = std::process::Command::new("git")
+            .args(["commit", "-m", "Bootstrap: Add all generated files"])
+            .status()
+            .context("Failed to commit files")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to commit files");
+        }
+
+        println!("✅ Generated files committed successfully!");
+    }
+
+    println!("🎉 Project bootstrap completed!");
+    println!("");
+    println!("📋 Next steps:");
+    println!("1. Review generated files");
+    println!("2. Run tests: cargo test");
+    println!("3. Build project: cargo build");
+    println!("4. Start development!");
 
     Ok(())
 }

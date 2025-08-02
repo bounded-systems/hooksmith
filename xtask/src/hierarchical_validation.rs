@@ -75,6 +75,9 @@ pub enum Commands {
         /// Repository path
         #[arg(long, default_value = ".")]
         repo: PathBuf,
+        /// Whether to validate generated files
+        #[arg(long)]
+        validate_generated: bool,
     },
     /// Post-commit hook for validation
     PostCommit {
@@ -114,8 +117,11 @@ pub async fn run_command(command: Commands) -> Result<()> {
         Commands::Show { commit, repo } => {
             show_validation_notes(&commit, &repo).await?;
         }
-        Commands::PreCommit { repo } => {
-            pre_commit_hook(&repo).await?;
+        Commands::PreCommit {
+            repo,
+            validate_generated,
+        } => {
+            pre_commit_hook(&repo, validate_generated).await?;
         }
         Commands::PostCommit { repo } => {
             post_commit_hook(&repo).await?;
@@ -332,7 +338,7 @@ async fn show_validation_notes(commit: &str, repo: &PathBuf) -> Result<()> {
 }
 
 /// Pre-commit hook for validation
-async fn pre_commit_hook(repo: &PathBuf) -> Result<()> {
+async fn pre_commit_hook(repo: &PathBuf, validate_generated: bool) -> Result<()> {
     println!("🔧 Running pre-commit validation hook...");
 
     // Get staged changes
@@ -360,6 +366,33 @@ async fn pre_commit_hook(repo: &PathBuf) -> Result<()> {
     println!("📝 Found {} staged files:", staged_files.len());
     for file in &staged_files {
         println!("  - {}", file);
+    }
+
+    // Validate generated files if requested
+    if validate_generated {
+        println!("🔍 Validating generated files...");
+        use crate::generated_file_validator::{GeneratedFileConfig, GeneratedFileValidator};
+
+        let config = GeneratedFileConfig {
+            staged_only: true,
+            strict: true,
+            custom_message: None,
+        };
+
+        match GeneratedFileValidator::validate(&config) {
+            Ok(result) => {
+                if !result.is_valid {
+                    eprintln!("❌ Generated file validation failed:");
+                    eprintln!("{}", result.error_message.unwrap());
+                    std::process::exit(1);
+                }
+                println!("✅ Generated file validation passed");
+            }
+            Err(e) => {
+                eprintln!("❌ Generated file validation failed: {}", e);
+                std::process::exit(1);
+            }
+        }
     }
 
     // For pre-commit, we'll validate the current working directory state
