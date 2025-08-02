@@ -724,12 +724,12 @@ async fn generate_schema_documentation(
 
     // Generate JSON Schema documentation
     let schema_docs = generate_json_schema_documentation()?;
-    fs::write(output_path.join("SCHEMA_DOCUMENTATION.md"), schema_docs)
+    fs::write(output_path.join("SCHEMA_DOCUMENTATION.md"), &schema_docs)
         .context("Failed to write schema documentation")?;
 
     // Generate WIT documentation
     let wit_docs = generate_wit_documentation()?;
-    fs::write(output_path.join("WIT_DOCUMENTATION.md"), wit_docs)
+    fs::write(output_path.join("WIT_DOCUMENTATION.md"), &wit_docs)
         .context("Failed to write WIT documentation")?;
 
     // Generate combined documentation
