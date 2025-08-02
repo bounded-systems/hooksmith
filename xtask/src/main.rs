@@ -349,6 +349,33 @@ enum Commands {
         #[arg(trailing_var_arg = true)]
         args: Vec<String>,
     },
+    /// Set up pre-commit hook (replaces setup-pre-commit.sh)
+    SetupPreCommit {
+        /// Use enhanced pre-commit hook with auto-fix capabilities
+        #[arg(long)]
+        enhanced: bool,
+        /// Force overwrite existing hook
+        #[arg(long)]
+        force: bool,
+        /// Use lefthook instead of direct git hooks
+        #[arg(long)]
+        lefthook: bool,
+    },
+    /// Run pre-commit validation (replaces pre-commit script)
+    PreCommit {
+        /// Use enhanced validation with auto-fix
+        #[arg(long)]
+        enhanced: bool,
+        /// Only check staged files
+        #[arg(long)]
+        staged_only: bool,
+        /// Exit with error on violations
+        #[arg(long)]
+        strict: bool,
+        /// Auto-fix issues where possible
+        #[arg(long)]
+        auto_fix: bool,
+    },
 }
 
 /// WIT schema for function definition
@@ -619,8 +646,20 @@ async fn main() -> Result<()> {
         } => {
             git_commit(message, allow_empty_message, args).await?;
         }
-        Commands::SetupGitAliases { force } => {
-            setup_git_aliases(force)?;
+        Commands::SetupPreCommit {
+            enhanced,
+            force,
+            lefthook,
+        } => {
+            setup_pre_commit(enhanced, force, lefthook).await?;
+        }
+        Commands::PreCommit {
+            enhanced,
+            staged_only,
+            strict,
+            auto_fix,
+        } => {
+            run_pre_commit(enhanced, staged_only, strict, auto_fix).await?;
         }
     }
 
