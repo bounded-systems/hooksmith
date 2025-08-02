@@ -137,6 +137,27 @@ enum Commands {
         #[command(subcommand)]
         command: hierarchical_validation::Commands,
     },
+    /// Check if current changes are compatible with the last release
+    CheckStable {
+        /// Version to check against
+        #[arg(long, default_value = "0.1.0")]
+        version: String,
+        /// Run comprehensive compatibility tests
+        #[arg(long)]
+        comprehensive: bool,
+    },
+    /// Test current version against released version
+    TestWithRelease {
+        /// Version to test against
+        #[arg(long, default_value = "0.1.0")]
+        version: String,
+    },
+    /// Compare outputs between current and released version
+    CompareWithRelease {
+        /// Version to compare against
+        #[arg(long, default_value = "0.1.0")]
+        version: String,
+    },
 }
 
 
@@ -293,6 +314,15 @@ async fn main() -> Result<()> {
 
         Commands::ContractValidate { command } => {
             hierarchical_validation::run_command(command).await?;
+        }
+        Commands::CheckStable { version, comprehensive } => {
+            check_stable_compatibility(&version, comprehensive).await?;
+        }
+        Commands::TestWithRelease { version } => {
+            test_with_release(&version).await?;
+        }
+        Commands::CompareWithRelease { version } => {
+            compare_with_release(&version).await?;
         }
     }
 
