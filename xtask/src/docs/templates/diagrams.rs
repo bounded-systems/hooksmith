@@ -65,7 +65,7 @@ impl GitStateMachine {
                 output.push_str(&format!("    {} : {}\n", state.name, state.description));
             }
         }
-        
+
         // Render transitions
         for transition in &self.transitions {
             if let Some(condition) = &transition.condition {

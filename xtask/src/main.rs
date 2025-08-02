@@ -762,49 +762,16 @@ fn generate_lefthook_config(output: &str, validate: bool) -> Result<()> {
     println!("📝 Generating Lefthook configuration...");
     println!("   Output: {}", output);
 
-    // Use lefthook-rs to generate configuration
-    let mut config = lefthook_rs::HookConfig::default();
-
-    // Pre-commit hooks
-    let mut fmt_job = lefthook_rs::JobConfig::new("cargo fmt --all -- --check");
-    fmt_job.with_files("*.rs");
-    config.add_pre_commit_hook("hooksmith-fmt".to_string(), fmt_job);
-
-    let mut clippy_job =
-        lefthook_rs::JobConfig::new("cargo clippy --all-targets --all-features -- -D warnings");
-    clippy_job.with_files("*.rs");
-    config.add_pre_commit_hook("hooksmith-clippy".to_string(), clippy_job);
-
-    let mut test_job = lefthook_rs::JobConfig::new("cargo test --all-targets --all-features");
-    test_job.with_files("*.rs");
-    config.add_pre_commit_hook("hooksmith-test".to_string(), test_job);
-
-    let mut gen_wit_job = lefthook_rs::JobConfig::new("cargo xtask gen-wit");
-    gen_wit_job.with_files("*.rs");
-    config.add_pre_commit_hook("hooksmith-gen-wit".to_string(), gen_wit_job);
-
-    // Pre-push hooks
-    config.add_pre_push_hook(
-        "hooksmith-audit".to_string(),
-        lefthook_rs::JobConfig::new("cargo audit"),
-    );
-    config.add_pre_push_hook(
-        "hooksmith-check-generated".to_string(),
-        lefthook_rs::JobConfig::new("cargo xtask check --strict"),
-    );
-
-    // Write configuration using lefthook-rs
-    tokio::runtime::Runtime::new()?.block_on(async { config.write_to_file(output).await })?;
+    // Lefthook configuration generation disabled due to missing dependency
+    println!("⚠️  Lefthook configuration generation disabled");
+    println!("   To enable, add lefthook_rs dependency to xtask/Cargo.toml");
+    println!("   For now, using existing lefthook.yml file");
 
     if validate {
-        println!("   Validating configuration...");
-        // Use lefthook-rs validation
-        tokio::runtime::Runtime::new()?
-            .block_on(async { lefthook_rs::validate_config(std::path::Path::new(output)).await })?;
-        println!("   Configuration validation passed");
+        println!("   Skipping validation (lefthook_rs not available)");
     }
 
-    println!("✅ Lefthook configuration generated successfully");
+    println!("✅ Lefthook configuration generation skipped");
     Ok(())
 }
 
