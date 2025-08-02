@@ -281,7 +281,7 @@ async fn main() -> Result<()> {
             println!("{} {}", style("✅").green(), style(format!("Test successful: {}", message)).green());
         }
         Commands::Build { hook_name, output } => {
-            println!("{} {} {}", style("🔨").blue(), style("Building hook:").blue(), style(hook_name).yellow());
+            println!("{} {} {}", style("🔨").blue(), style("Building hook:").blue(), style(&hook_name).yellow());
             println!("{} {}", style("📁").blue(), style(format!("Output: {}", output)).blue());
 
             use hooksmith::modules::hook_builder::{HookBuilder, HookBuildConfig};
@@ -412,7 +412,7 @@ async fn main() -> Result<()> {
         }
         Commands::Install { hooks } => {
             let hook_list = hooks.unwrap_or_else(|| "all".to_string());
-            println!("{} {} {}", style("🔧").blue(), style("Installing hooks:").blue(), style(hook_list).yellow());
+            println!("{} {} {}", style("🔧").blue(), style("Installing hooks:").blue(), style(&hook_list).yellow());
 
             use hooksmith::modules::hook_builder::install_hooks;
             use std::path::PathBuf;
@@ -530,14 +530,14 @@ async fn main() -> Result<()> {
         Commands::Wasm { wasm } => {
             match wasm {
                 WasmCommands::Build { wit_file, output } => {
-                    println!("{} {} {}", style("🔨").blue(), style("Building WASM from WIT:").blue(), style(wit_file).yellow());
+                    println!("{} {} {}", style("🔨").blue(), style("Building WASM from WIT:").blue(), style(&wit_file).yellow());
                     println!("{} {}", style("📁").blue(), style(format!("Output: {}", output)).blue());
 
                     use hooksmith::modules::wasm::{WasmManager, WasmBuildConfig};
                     use std::path::PathBuf;
 
                     let config = WasmBuildConfig {
-                        wit_file: PathBuf::from(wit_file),
+                        wit_file: PathBuf::from(&wit_file),
                         output_dir: PathBuf::from(output),
                         ..Default::default()
                     };
@@ -575,8 +575,8 @@ async fn main() -> Result<()> {
                     }
                 }
                 WasmCommands::Run { wasm_file, function, args } => {
-                    println!("{} {} {}", style("⚡").blue(), style("Running WASM:").blue(), style(wasm_file).yellow());
-                    println!("{} {} {}", style("🔧").blue(), style("Function:").blue(), style(function).yellow());
+                    println!("{} {} {}", style("⚡").blue(), style("Running WASM:").blue(), style(&wasm_file).yellow());
+                    println!("{} {} {}", style("🔧").blue(), style("Function:").blue(), style(&function).yellow());
                     println!("{} {} {:?}", style("📝").blue(), style("Args:").blue(), args);
 
                     use hooksmith::modules::wasm::{WasmManager, WasmRunConfig};
@@ -584,7 +584,7 @@ async fn main() -> Result<()> {
                     use std::collections::HashMap;
 
                     let config = WasmRunConfig {
-                        wasm_file: PathBuf::from(wasm_file),
+                        wasm_file: PathBuf::from(&wasm_file),
                         function: function.clone(),
                         args: args.clone(),
                         enable_wasi: true,
@@ -630,14 +630,14 @@ async fn main() -> Result<()> {
                     }
                 }
                 WasmCommands::Bindings { wit_file, output } => {
-                    println!("{} {} {}", style("🔗").blue(), style("Generating bindings from WIT:").blue(), style(wit_file).yellow());
+                    println!("{} {} {}", style("🔗").blue(), style("Generating bindings from WIT:").blue(), style(&wit_file).yellow());
                     println!("{} {}", style("📁").blue(), style(format!("Output: {}", output)).blue());
 
                     use hooksmith::modules::wasm::{WasmManager, WasmBuildConfig};
                     use std::path::PathBuf;
 
                     let config = WasmBuildConfig {
-                        wit_file: PathBuf::from(wit_file),
+                        wit_file: PathBuf::from(&wit_file),
                         output_dir: PathBuf::from(output),
                         generate_bindings: true,
                         ..Default::default()
@@ -677,11 +677,11 @@ async fn main() -> Result<()> {
         Commands::Worktree { worktree } => {
             match worktree {
                 WorktreeCommands::Create { branch_name, tool, base } => {
-                    println!("{} {} {}", style("🌳").blue(), style("Creating worktree:").blue(), style(branch_name).yellow());
-                    if let Some(tool) = tool {
+                    println!("{} {} {}", style("🌳").blue(), style("Creating worktree:").blue(), style(&branch_name).yellow());
+                    if let Some(ref tool) = tool {
                         println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
                     }
-                    println!("{} {} {}", style("📁").blue(), style("Base directory:").blue(), style(base).yellow());
+                    println!("{} {} {}", style("📁").blue(), style("Base directory:").blue(), style(&base).yellow());
 
                     // For now, we'll use a simple implementation that calls the worktree tools directly
                     // In the future, this will use the WASM component
@@ -728,7 +728,7 @@ async fn main() -> Result<()> {
                 }
                 WorktreeCommands::List { tool } => {
                     println!("{} {}", style("📋").blue(), style("Listing worktrees:").blue());
-                    if let Some(tool) = tool {
+                    if let Some(ref tool) = tool {
                         println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
                     }
 
@@ -776,8 +776,8 @@ async fn main() -> Result<()> {
                     }
                 }
                 WorktreeCommands::Switch { worktree_name, tool } => {
-                    println!("{} {} {}", style("🔄").blue(), style("Switching to worktree:").blue(), style(worktree_name).yellow());
-                    if let Some(tool) = tool {
+                    println!("{} {} {}", style("🔄").blue(), style("Switching to worktree:").blue(), style(&worktree_name).yellow());
+                    if let Some(ref tool) = tool {
                         println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
                     }
 
@@ -833,11 +833,11 @@ async fn main() -> Result<()> {
                     }
                 }
                 WorktreeCommands::Remove { worktree_name, with_branch, tool } => {
-                    println!("{} {} {}", style("🗑️").blue(), style("Removing worktree:").blue(), style(worktree_name).yellow());
+                    println!("{} {} {}", style("🗑️").blue(), style("Removing worktree:").blue(), style(&worktree_name).yellow());
                     if with_branch {
                         println!("{} {}", style("🌿").blue(), style("Also removing branch").blue());
                     }
-                    if let Some(tool) = tool {
+                    if let Some(ref tool) = tool {
                         println!("{} {} {}", style("🔧").blue(), style("Using tool:").blue(), style(tool).yellow());
                     }
 

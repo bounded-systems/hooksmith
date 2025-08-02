@@ -1,0 +1,67 @@
+# Hierarchical Contract Validation Configuration
+# This file defines which contract validators apply to different file types and scopes
+
+# Rust source files - full hierarchical validation
+*.rs filter=contract-validate
+*.rs diff=contract-diff
+
+# Cargo configuration files
+Cargo.toml filter=contract-validate
+Cargo.lock filter=contract-validate
+*.toml filter=contract-validate
+
+# Documentation files
+*.md filter=contract-validate
+*.txt filter=contract-validate
+
+# Configuration files
+*.yml filter=contract-validate
+*.yaml filter=contract-validate
+*.json filter=contract-validate
+
+# Script files
+*.sh filter=contract-validate
+*.bash filter=contract-validate
+*.zsh filter=contract-validate
+
+# WebAssembly and WIT files
+*.wasm filter=contract-validate
+*.wit filter=contract-validate
+
+# Git configuration
+.gitattributes filter=contract-validate
+.gitignore filter=contract-validate
+.gitmodules filter=contract-validate
+
+# Contract validation scopes
+# Format: scope=char:line:chunk:file:dir
+*.rs scope=char:line:chunk:file:dir
+*.toml scope=char:line:file:dir
+*.md scope=char:line:file:dir
+*.yml scope=char:line:file:dir
+*.json scope=char:line:file:dir
+*.sh scope=char:line:file:dir
+*.wit scope=char:line:file:dir
+
+# Binary files - no validation
+*.wasm -filter
+*.exe -filter
+*.dll -filter
+*.so -filter
+*.dylib -filter
+
+# Generated files - no validation
+target/ -filter
+dist/ -filter
+build/ -filter
+node_modules/ -filter
+
+# Contract validation tool configuration
+[filter "contract-validate"]
+    clean = xtask-contract-validate clean
+    smudge = xtask-contract-validate smudge
+    required = true
+
+[diff "contract-diff"]
+    textconv = xtask-contract-validate diff
+    cachetextconv = true 

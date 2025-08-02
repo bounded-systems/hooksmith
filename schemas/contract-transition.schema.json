@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Contract Transition Log",
+  "description": "Schema for contract state machine transition logs",
+  "type": "object",
+  "properties": {
+    "transition": {
+      "type": "string",
+      "enum": ["detect_contract", "validate_contract", "lock_contract", "modify_contract", "regen_codegen", "release_proof"],
+      "description": "Type of transition that occurred"
+    },
+    "from": {
+      "type": "string",
+      "enum": ["UNTRACKED", "UNVALIDATED", "VALIDATED", "LOCKED"],
+      "description": "Previous state before transition"
+    },
+    "to": {
+      "type": "string",
+      "enum": ["UNTRACKED", "UNVALIDATED", "VALIDATED", "LOCKED"],
+      "description": "New state after transition"
+    },
+    "file": {
+      "type": "string",
+      "description": "File path that underwent the transition",
+      "pattern": "^[^/].*$",
+      "minLength": 1
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "SHA-256 hash of the file content at transition time"
+    },
+    "tool": {
+      "type": "string",
+      "description": "Tool that performed the transition",
+      "pattern": "^[a-zA-Z0-9_-]+\\s+[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the transition"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Human-readable reason for transition",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "commit_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$",
+      "description": "Git commit hash when transition occurred"
+    },
+    "user": {
+      "type": "string",
+      "description": "User who triggered the transition",
+      "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+    },
+    "environment": {
+      "type": "string",
+      "enum": ["local", "ci", "staging", "production"],
+      "description": "Environment where transition occurred"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional transition-specific metadata",
+      "additionalProperties": true,
+      "properties": {
+        "validation_duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Time taken for validation in milliseconds"
+        },
+        "errors_found": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of validation errors found"
+        },
+        "warnings_found": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of validation warnings found"
+        },
+        "contract_type": {
+          "type": "string",
+          "description": "Type of contract being validated"
+        },
+        "file_size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "File size at transition time"
+        }
+      }
+    }
+  },
+  "required": ["transition", "from", "to", "file", "hash", "tool", "timestamp"],
+  "additionalProperties": false
+} 

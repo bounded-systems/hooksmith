@@ -14,3 +14,5 @@ pub mod lefthook;
 pub mod wasm;
 /// Hook building and compilation
 pub mod hook_builder;
+/// Hierarchical contract validation
+pub mod hierarchical_validation;
