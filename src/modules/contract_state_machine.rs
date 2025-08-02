@@ -1,14 +1,13 @@
 use crate::modules::hierarchical_validation::{
-    ValidationScope, ValidationNote, ValidationError, ValidationResult
+    ValidationScope, ValidationNote
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use anyhow::{Result, anyhow};
-use chrono::{DateTime, Utc};
-use sha2::{Sha256, Digest};
+use chrono::Utc;
 
 /// Contract states in the validation lifecycle
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ContractState {
     /// File has no contract or codegen attribute
     UNTRACKED,
@@ -21,7 +20,7 @@ pub enum ContractState {
 }
 
 /// Transition events that can change contract state
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TransitionEvent {
     /// Contract attribute detected in .gitattributes
     DetectContract,
@@ -292,43 +291,43 @@ impl ContractStateMachine {
     }
 
     /// Check if file has existing Git note
-    fn has_git_note(&self, file: &str) -> Result<bool> {
+    fn has_git_note(&self, _file: &str) -> Result<bool> {
         // Simplified implementation - would check Git notes
         Ok(false)
     }
 
     /// Check if validation would pass
-    fn would_validation_pass(&self, file: &str) -> Result<bool> {
+    fn would_validation_pass(&self, _file: &str) -> Result<bool> {
         // Simplified implementation - would run actual validation
         Ok(true)
     }
 
     /// Check if file is committed
-    fn is_file_committed(&self, file: &str) -> Result<bool> {
+    fn is_file_committed(&self, _file: &str) -> Result<bool> {
         // Simplified implementation - would check Git status
         Ok(true)
     }
 
     /// Check if file has pending changes
-    fn has_pending_changes(&self, file: &str) -> Result<bool> {
+    fn has_pending_changes(&self, _file: &str) -> Result<bool> {
         // Simplified implementation - would check Git status
         Ok(false)
     }
 
     /// Check if file content has changed
-    fn has_content_changed(&self, file: &str) -> Result<bool> {
+    fn has_content_changed(&self, _file: &str) -> Result<bool> {
         // Simplified implementation - would compare hashes
         Ok(true)
     }
 
     /// Check if codegen regeneration would succeed
-    fn would_codegen_succeed(&self, file: &str) -> Result<bool> {
+    fn would_codegen_succeed(&self, _file: &str) -> Result<bool> {
         // Simplified implementation - would test codegen
         Ok(true)
     }
 
     /// Check if Merkle chain is valid
-    fn is_merkle_chain_valid(&self, file: &str) -> Result<bool> {
+    fn is_merkle_chain_valid(&self, _file: &str) -> Result<bool> {
         // Simplified implementation - would verify Merkle chain
         Ok(true)
     }
@@ -343,20 +342,18 @@ impl ContractStateMachine {
         hash: &str,
     ) -> ValidationNote {
         ValidationNote {
-            file: file.to_string(),
-            contract: "validation".to_string(),
-            state: format!("{:?}", state),
             scope: format!("{:?}", scope),
+            file: file.to_string(),
+            range: None,
             hash: format!("sha256:{}", hash),
-            validated_by: "xtask-contract-validate 0.2.0".to_string(),
-            timestamp: Utc::now().to_rfc3339(),
             parent_scope: None,
             parent_hash: None,
             child_scopes: vec![],
             validated: state == &ContractState::VALIDATED || state == &ContractState::LOCKED,
             validation_errors: vec![],
             contract_type: "rust_validation".to_string(),
-            tool: "xtask-contract-validate".to_string(),
+            tool: "xtask-contract-validate 0.2.0".to_string(),
+            timestamp: Utc::now().to_rfc3339(),
             commit_hash: None,
             validation_duration_ms: 0,
             metadata: HashMap::new(),
@@ -380,7 +377,7 @@ impl ContractStateMachine {
             "hash": format!("sha256:{}", hash),
             "tool": "xtask-contract-validate 0.2.0",
             "timestamp": Utc::now().to_rfc3339(),
-            "commit_hash": None,
+            "commit_hash": None::<String>,
             "metadata": {
                 "validation_errors": [],
                 "duration_ms": 0
