@@ -469,7 +469,10 @@ async fn validate_extensions(repo: &PathBuf, staged_only: bool) -> Result<()> {
         return Ok(());
     }
 
-    println!("📝 Found {} changes for extension validation:", changes.len());
+    println!(
+        "📝 Found {} changes for extension validation:",
+        changes.len()
+    );
     for change in &changes {
         println!("  - {}: {:?} scope", change.file.display(), change.scope);
     }
