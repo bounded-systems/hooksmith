@@ -119,7 +119,19 @@ brew install lefthook
 lefthook install
 ```
 
-### 4. Generate Code and Build the Project
+### 4. Set Up Git Filters for Contract Validation
+
+```bash
+# Set up Git filters and diffs for contract validation
+./scripts/setup-git-filters.sh
+
+# Verify the configuration
+git config --list | grep contract
+```
+
+This sets up the hierarchical contract validation system that integrates with Git's filter and diff mechanisms.
+
+### 5. Generate Code and Build the Project
 
 ```bash
 # Generate all code and documentation
@@ -129,7 +141,7 @@ lefthook install
 ./build.sh
 ```
 
-### 5. Run Tests
+### 6. Run Tests
 
 ```bash
 cargo test --all-targets --all-features
@@ -335,6 +347,10 @@ cargo doc --no-deps --open
 git clone https://github.com/bdelanghe/hooksmith.git
 cd hooksmith
 ./xtask.sh gen-all --overwrite
+
+# Set up Git filters for contract validation
+./scripts/setup-git-filters.sh
+
 cargo test
 ```
 

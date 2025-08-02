@@ -27,21 +27,21 @@ pub struct Cli {
 pub enum Commands {
     /// Clean operation for Git filter
     Clean {
-        /// Input file path
+        /// Input file path (optional, reads from stdin if not provided)
         #[arg(value_name = "FILE")]
-        file: PathBuf,
+        file: Option<PathBuf>,
     },
     /// Smudge operation for Git filter
     Smudge {
-        /// Input file path
+        /// Input file path (optional, reads from stdin if not provided)
         #[arg(value_name = "FILE")]
-        file: PathBuf,
+        file: Option<PathBuf>,
     },
     /// Diff operation for Git diff
     Diff {
-        /// Input file path
+        /// Input file path (optional, reads from stdin if not provided)
         #[arg(value_name = "FILE")]
-        file: PathBuf,
+        file: Option<PathBuf>,
     },
     /// Validate changes in a commit range
     Validate {
@@ -88,13 +88,13 @@ pub enum Commands {
 pub async fn run_command(command: Commands) -> Result<()> {
     match command {
         Commands::Clean { file } => {
-            clean_operation(&file).await?;
+            clean_operation(file.as_ref()).await?;
         }
         Commands::Smudge { file } => {
-            smudge_operation(&file).await?;
+            smudge_operation(file.as_ref()).await?;
         }
         Commands::Diff { file } => {
-            diff_operation(&file).await?;
+            diff_operation(file.as_ref()).await?;
         }
         Commands::Validate { range, repo } => {
             validate_changes(&range, &repo).await?;
@@ -117,11 +117,19 @@ pub async fn run_command(command: Commands) -> Result<()> {
 }
 
 /// Git filter clean operation
-async fn clean_operation(file: &PathBuf) -> Result<()> {
-    // Read the file content
-    let content = fs::read_to_string(file)
-        .await
-        .context("Failed to read file")?;
+async fn clean_operation(file: Option<&PathBuf>) -> Result<()> {
+    let content = if let Some(file_path) = file {
+        // Read from file if provided
+        fs::read_to_string(file_path)
+            .await
+            .context("Failed to read file")?
+    } else {
+        // Read from stdin (Git filter mode)
+        let mut content = String::new();
+        std::io::Read::read_to_string(&mut std::io::stdin(), &mut content)
+            .context("Failed to read stdin")?;
+        content
+    };
 
     // For clean operation, we just output the content as-is
     // In a real implementation, you might want to validate the content
@@ -131,11 +139,19 @@ async fn clean_operation(file: &PathBuf) -> Result<()> {
 }
 
 /// Git filter smudge operation
-async fn smudge_operation(_file: &PathBuf) -> Result<()> {
-    // Read the file content from stdin (Git filter input)
-    let mut content = String::new();
-    std::io::Read::read_to_string(&mut std::io::stdin(), &mut content)
-        .context("Failed to read stdin")?;
+async fn smudge_operation(file: Option<&PathBuf>) -> Result<()> {
+    let content = if let Some(file_path) = file {
+        // Read from file if provided
+        fs::read_to_string(file_path)
+            .await
+            .context("Failed to read file")?
+    } else {
+        // Read from stdin (Git filter mode)
+        let mut content = String::new();
+        std::io::Read::read_to_string(&mut std::io::stdin(), &mut content)
+            .context("Failed to read stdin")?;
+        content
+    };
 
     // For smudge operation, we just output the content as-is
     // In a real implementation, you might want to validate the content
@@ -145,11 +161,19 @@ async fn smudge_operation(_file: &PathBuf) -> Result<()> {
 }
 
 /// Git diff operation
-async fn diff_operation(file: &PathBuf) -> Result<()> {
-    // Read the file content
-    let content = fs::read_to_string(file)
-        .await
-        .context("Failed to read file")?;
+async fn diff_operation(file: Option<&PathBuf>) -> Result<()> {
+    let content = if let Some(file_path) = file {
+        // Read from file if provided
+        fs::read_to_string(file_path)
+            .await
+            .context("Failed to read file")?
+    } else {
+        // Read from stdin (Git filter mode)
+        let mut content = String::new();
+        std::io::Read::read_to_string(&mut std::io::stdin(), &mut content)
+            .context("Failed to read stdin")?;
+        content
+    };
 
     // For diff operation, we output the content for text conversion
     print!("{}", content);
