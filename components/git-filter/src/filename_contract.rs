@@ -137,7 +137,7 @@ impl FilenameValidator {
     }
 
     /// Get invalid filenames
-    pub fn get_invalid_filenames(&self, contracts: &[FilenameContract]) -> Vec<&FilenameContract> {
+    pub fn get_invalid_filenames<'a>(&self, contracts: &'a [FilenameContract]) -> Vec<&'a FilenameContract> {
         contracts.iter().filter(|c| !c.is_valid()).collect()
     }
 }
@@ -161,7 +161,9 @@ mod tests {
 
         assert!(!contract.is_valid());
         assert!(!contract.errors.is_empty());
-        assert!(contract.errors.contains(&"Filename must not be empty".to_string()));
+        assert!(contract
+            .errors
+            .contains(&"Filename must not be empty".to_string()));
     }
 
     #[test]
@@ -179,7 +181,9 @@ mod tests {
 
         assert!(!contract.is_valid());
         assert!(!contract.errors.is_empty());
-        assert!(contract.errors.contains(&"Filename must not contain '/'".to_string()));
+        assert!(contract
+            .errors
+            .contains(&"Filename must not contain '/'".to_string()));
     }
 
     #[test]
@@ -237,4 +241,4 @@ mod tests {
         let summary = validator.summarize_validation(&contracts);
         assert_eq!(summary, "Filenames: 3 total (2 valid, 1 invalid)");
     }
-} 
+}

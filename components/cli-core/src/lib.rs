@@ -1,6 +1,6 @@
 //! CLI Core Component
 //! 
-//! This component provides core CLI operations for pushd-web development workflows.
+//! This component provides core CLI operations for hooksmith development workflows.
 //! It's designed to be used as a Wasm component for modular CLI functionality.
 
 use serde::{Deserialize, Serialize};

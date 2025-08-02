@@ -2,7 +2,7 @@
 name = "hooksmith"
 version = "0.1.0"
 edition = "2021"
-authors = ["Pushd Team"]
+authors = ["Hooksmith Team"]
 description = "CLI tool for building Rust binaries into Lefthook hooks with WASM components"
 license = "MIT"
 documentation = "https://docs.rs/hooksmith"
@@ -22,7 +22,7 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = ["Pushd Team"]
+authors = ["Hooksmith Team"]
 license = "MIT"
 
 [workspace.dependencies]
