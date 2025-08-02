@@ -1417,3 +1417,37 @@ mod tests {
         assert!(matches!(config.format, OutputFormat::Table));
     }
 }
+
+/// Run migration progress check with strict validation
+pub async fn run_migration_progress_check(strict: bool) -> Result<()> {
+    let progress = get_migration_progress().await?;
+
+    // Check if migration progress meets goals
+    let goal_progress = 95.0; // Target 95% migration progress
+    let current_progress = progress.migration_progress;
+
+    if current_progress < goal_progress {
+        let error_msg = format!(
+            "Migration progress below goal: {:.1}% (target: {:.1}%)",
+            current_progress, goal_progress
+        );
+        if strict {
+            return Err(anyhow::anyhow!(error_msg));
+        } else {
+            println!("⚠️  {}", error_msg);
+        }
+    }
+
+    Ok(())
+}
+
+/// Run trend generation
+pub async fn run_trend_generation(output_dir: &str) -> Result<()> {
+    track_status_trend(output_dir).await
+}
+
+/// Run file types analysis
+pub async fn run_file_types_analysis(format: &str) -> Result<()> {
+    let output_format = parse_output_format(format)?;
+    analyze_file_types(false, output_format).await
+}

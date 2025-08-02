@@ -3173,7 +3173,7 @@ async fn run_contract_check(
     // Summary
     println!("\n📊 Contract Check Summary");
     println!("========================");
-    
+
     if all_passed {
         println!("✅ All critical checks passed!");
         if !errors.is_empty() {
