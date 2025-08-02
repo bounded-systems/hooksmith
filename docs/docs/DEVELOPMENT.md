@@ -88,10 +88,28 @@ cargo build
 │   │   ├── SCHEMA_VALIDATION.md
 │   │   ├── SCHEMA_DOCUMENTATION.md
 │   │   ├── merkle-chain-spec.md
+│   │   ├── docs/
+│   │   │   ├── EXAMPLES.md
+│   │   │   ├── ARCHITECTURE.md
+│   │   │   ├── STRUCTURE.md
+│   │   │   ├── API.md
+│   │   │   ├── TESTING.md
+│   │   │   ├── CONTRIBUTING.md
+│   │   │   ├── CLI_HELP.md
+│   │       └── DEVELOPMENT.md
 │   │   ├── git_filter_system.md
 │   │   ├── README.md
 │   │   ├── contract-state-machine.md
 │   │   ├── filename_contract_system.md
+│   │   ├── components/
+│   │   │   ├── hook-builder/
+│   │   │       └── README.md
+│   │   │   ├── cli-core/
+│   │   │       └── README.md
+│   │   │   ├── git-filter/
+│   │   │       └── README.md
+│   │       └── worktree-runner/
+│   │           └── README.md
 │   │   ├── attributes_validation.md
 │   │   ├── git_workflow.md
 │   │   ├── DEVELOPMENT_SUMMARY.md
@@ -103,6 +121,7 @@ cargo build
 │   │   ├── contract-state-machine-README.md
 │   │   ├── character_contract_system.md
 │   │   ├── tree_filename_chars_contract_system.md
+│   │   ├── checksums.json
 │   │   ├── CONTRACT_STATE_MACHINE.md
 │   │   ├── git-notes-schema.json
 │   │   ├── CONTRACT_VALIDATION_SUMMARY.md

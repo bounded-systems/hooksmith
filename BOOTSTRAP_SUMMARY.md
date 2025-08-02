@@ -44,6 +44,7 @@ The script performs these steps:
 3. **Generate component `Cargo.toml` files** - Individual package configs
 4. **Generate `xtask/Cargo.toml`** - Build tool configuration
 5. **Build xtask** - Compile the build tool
+6. **Generate documentation** - Use existing doc gen system
 
 ### 3. Complete Dependency Coverage
 The script includes all dependencies used by existing source code:
@@ -54,6 +55,14 @@ The script includes all dependencies used by existing source code:
 - **WASM Support**: `wasmtime`, `wit-bindgen`, `wit-parser`, `wit-component`
 - **Validation**: `jsonschema`, `reqwest`
 - **Utilities**: `sha2`, `chrono`, `thiserror`, `once_cell`, `regex`, `futures-io`
+
+### 4. Documentation Generation Integration
+The bootstrap script leverages Hooksmith's existing documentation generation system:
+
+- **Uses `xtask gen-readme`** - Generates README.md from source code
+- **Uses `xtask gen-docs-comprehensive`** - Generates full documentation suite
+- **Source-based generation** - All docs come from actual source code
+- **Consistent with main project** - Uses same generation system
 
 ## Usage Instructions
 
@@ -86,6 +95,9 @@ cargo build
 
 # Run tests
 cargo test
+
+# Regenerate documentation if needed
+./target/debug/xtask gen-docs-comprehensive --all
 ```
 
 ## Project Structure Generated
@@ -93,6 +105,7 @@ cargo test
 ```
 hooksmith/
 ├── Cargo.toml                    # Main workspace configuration
+├── README.md                     # Generated from source using doc gen system
 ├── components/
 │   ├── cli-core/
 │   │   ├── Cargo.toml
@@ -136,6 +149,12 @@ hooksmith/
 - Compatible with current Rust toolchain
 - No legacy dependency issues
 
+### ✅ Documentation Integration
+- Uses existing doc gen system
+- Generates README.md from source
+- Supports comprehensive documentation generation
+- Consistent with main project workflow
+
 ## Troubleshooting
 
 ### Common Issues
@@ -151,8 +170,12 @@ hooksmith/
 
 3. **Permission errors**
    ```bash
-   chmod +x bootstrap-simple.rs
+   chmod +x bootstrap.rs
    ```
+
+4. **Documentation generation failures**
+   - Bootstrap continues even if doc generation fails
+   - Can manually regenerate later: `./target/debug/xtask gen-docs-comprehensive --all`
 
 ### Debugging
 
@@ -167,6 +190,7 @@ cargo eval bootstrap-test.rs
 2. **rustc directly** - ❌ No dependency support
 3. **Manual setup** - ❌ Error-prone and time-consuming
 4. **Template copying** - ❌ Less flexible than code generation
+5. **Manual README creation** - ❌ Would duplicate existing doc gen system
 
 ## Conclusion
 
@@ -177,5 +201,6 @@ The solution is:
 - **Complete**: Generates all necessary project files
 - **Maintainable**: Uses modern tooling with active development
 - **Documented**: Clear usage instructions and troubleshooting
+- **Integrated**: Uses existing documentation generation system
 
 This bootstrap approach can serve as a template for other complex Rust workspace projects that need similar bootstrapping capabilities. 

@@ -8,29 +8,29 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **console**: ^0.15
-- **toml**: ^0.8
 - **tracing**: ^0.1
-- **wasmtime**: ^18.0
-- **tempfile**: dev
-- **indicatif**: ^0.17
-- **wit-bindgen**: ^0.20
-- **chrono**: ^0.4
 - **jsonschema**: ^0.17
-- **clap**: ^4.0
-- **cli-core**: *
-- **git2**: ^0.18
-- **reqwest**: ^0.11
-- **wasmtime-wasi**: ^18.0
-- **git-filter**: *
-- **anyhow**: ^1.0
-- **serde**: ^1.0
-- **serde_json**: ^1.0
-- **sha2**: ^0.10
-- **serde_yaml**: ^0.9
-- **which**: ^5.0
 - **tokio**: ^1.0
+- **indicatif**: ^0.17
+- **cli-core**: *
+- **chrono**: ^0.4
+- **serde_yaml**: ^0.9
+- **sha2**: ^0.10
+- **wasmtime**: ^18.0
+- **console**: ^0.15
+- **git2**: ^0.18
+- **anyhow**: ^1.0
+- **toml**: ^0.8
+- **which**: ^5.0
+- **serde_json**: ^1.0
+- **wit-bindgen**: ^0.20
+- **serde**: ^1.0
+- **tempfile**: dev
+- **git-filter**: *
+- **reqwest**: ^0.11
 - **tracing-subscriber**: ^0.3
+- **clap**: ^4.0
+- **wasmtime-wasi**: ^18.0
 
 ## Installation
 
@@ -112,10 +112,28 @@ hooksmith --help
 │   │   ├── SCHEMA_VALIDATION.md
 │   │   ├── SCHEMA_DOCUMENTATION.md
 │   │   ├── merkle-chain-spec.md
+│   │   ├── docs/
+│   │   │   ├── EXAMPLES.md
+│   │   │   ├── ARCHITECTURE.md
+│   │   │   ├── STRUCTURE.md
+│   │   │   ├── API.md
+│   │   │   ├── TESTING.md
+│   │   │   ├── CONTRIBUTING.md
+│   │   │   ├── CLI_HELP.md
+│   │       └── DEVELOPMENT.md
 │   │   ├── git_filter_system.md
 │   │   ├── README.md
 │   │   ├── contract-state-machine.md
 │   │   ├── filename_contract_system.md
+│   │   ├── components/
+│   │   │   ├── hook-builder/
+│   │   │       └── README.md
+│   │   │   ├── cli-core/
+│   │   │       └── README.md
+│   │   │   ├── git-filter/
+│   │   │       └── README.md
+│   │       └── worktree-runner/
+│   │           └── README.md
 │   │   ├── attributes_validation.md
 │   │   ├── git_workflow.md
 │   │   ├── DEVELOPMENT_SUMMARY.md
@@ -127,6 +145,7 @@ hooksmith --help
 │   │   ├── contract-state-machine-README.md
 │   │   ├── character_contract_system.md
 │   │   ├── tree_filename_chars_contract_system.md
+│   │   ├── checksums.json
 │   │   ├── CONTRACT_STATE_MACHINE.md
 │   │   ├── git-notes-schema.json
 │   │   ├── CONTRACT_VALIDATION_SUMMARY.md
