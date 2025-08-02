@@ -14,6 +14,7 @@ pub mod examples;
 pub mod manifest;
 pub mod source_extraction;
 pub mod structure;
+pub mod templates;
 
 pub use checksum::{
     generate_checksum, generate_checksum_report, update_checksums, validate_generated_files,
