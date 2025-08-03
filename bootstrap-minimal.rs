@@ -102,7 +102,7 @@ macro_rules! log_event {
             level: $level.to_string(),
             action: $action.to_string(),
             message: $msg.to_string(),
-            details: $details.map(|s| s.to_string()),
+            details: $details.map(|s: &str| s.to_string()),
             file: None,
             line: None,
         };
@@ -171,7 +171,7 @@ fn check_git_state() -> Result<()> {
         let mut changed_files = Vec::new();
         for entry in statuses.iter() {
             if let Some(path) = entry.path() {
-                changed_files.push(path.to_string_lossy().to_string());
+                changed_files.push(path.to_string());
             }
         }
         
