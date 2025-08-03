@@ -190,6 +190,8 @@ mod status;
 mod structured_auto_push;
 mod structured_logging;
 mod wasm_event_bus;
+mod events;
+mod emit;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -758,6 +760,21 @@ enum Commands {
         #[arg(long)]
         trigger: bool,
     },
+    /// Generate JSON schema for AutoPushEvent
+    GenSchema {
+        /// Output file path (default: stdout)
+        #[arg(long)]
+        output: Option<String>,
+    },
+    /// Validate JSONL output against schema
+    ValidateSchema {
+        /// Input file (default: stdin)
+        #[arg(long)]
+        input: Option<String>,
+        /// Exit with error on validation failures
+        #[arg(long)]
+        strict: bool,
+    },
 }
 
 /// WIT schema for function definition
@@ -895,9 +912,9 @@ async fn main() -> Result<()> {
             generate_wit_interfaces(&output_dir, overwrite)?;
         }
         Commands::GenLefthook { output, validate } => {
-            log_warning!("hooksmith", "lefthook", "Lefthook generation disabled - lefthook_rs dependency missing");
-            log_info!("hooksmith", "lefthook", "Output: {output}");
-            log_info!("hooksmith", "lefthook", "Validate: {validate}");
+            emit_warning!("hooksmith", "lefthook", "Lefthook generation disabled - lefthook_rs dependency missing");
+            emit_info!("hooksmith", "lefthook", "Output: {output}");
+            emit_info!("hooksmith", "lefthook", "Validate: {validate}");
         }
         Commands::GenDocs { output_dir, open } => {
             generate_documentation(&output_dir, open)?;
@@ -1298,6 +1315,12 @@ async fn main() -> Result<()> {
                 trigger,
             )
             .await?;
+        }
+        Commands::GenSchema { output } => {
+            generate_schema_command(output)?;
+        }
+        Commands::ValidateSchema { input, strict } => {
+            validate_schema_command(input, strict)?;
         }
     }
 
@@ -6520,4 +6543,43 @@ async fn run_dashboard_command(
         .map_err(|e| anyhow::anyhow!("Dashboard error: {}", e))?;
 
     Ok(())
+}
+
+/// Generate JSON schema for AutoPushEvent
+fn generate_schema_command(output: Option<String>) -> Result<()> {
+    let schema = emit::generate_schema()?;
+    
+    if let Some(output_path) = output {
+        std::fs::write(&output_path, schema)?;
+        emit_info!("hooksmith", "schema", "Schema written to: {}", output_path);
+    } else {
+        println!("{}", schema);
+    }
+    
+    Ok(())
+}
+
+/// Validate JSONL output against schema
+fn validate_schema_command(input: Option<String>, strict: bool) -> Result<()> {
+    let result = if let Some(input_path) = input {
+        let file = std::fs::File::open(&input_path)?;
+        emit::validate_output(file)
+    } else {
+        emit::validate_output(std::io::stdin())
+    };
+    
+    match result {
+        Ok(()) => {
+            emit_success!("hooksmith", "validation", "Schema validation passed");
+            Ok(())
+        }
+        Err(e) => {
+            emit_failure!("hooksmith", "validation", "Schema validation failed: {}", e);
+            if strict {
+                Err(anyhow::anyhow!("Schema validation failed: {}", e))
+            } else {
+                Ok(())
+            }
+        }
+    }
 }
