@@ -158,7 +158,7 @@ check_uncommitted_changes() {
         print_status "warning" "You have uncommitted changes"
         print_status "info" "Consider committing or stashing changes before pushing"
         
-        log_event "warning" "Uncommitted changes detected" "{\"has_uncommitted": true}"
+        log_event "warning" "Uncommitted changes detected" '{"has_uncommitted": true}'
         
         read -p "Continue with push anyway? (y/N): " -n 1 -r
         echo
