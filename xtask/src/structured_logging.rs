@@ -38,17 +38,17 @@ impl StructuredEvent {
 
 #[derive(Serialize)]
 pub struct BootstrapEvent {
-    timestamp: String,
-    level: String,
-    action: String,
-    message: String,
-    details: Option<String>,
+    pub timestamp: String,
+    pub level: String,
+    pub action: String,
+    pub message: String,
+    pub details: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    file: Option<String>,
+    pub file: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    line: Option<u32>,
+    pub line: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    metadata: Option<HashMap<String, String>>,
+    pub metadata: Option<HashMap<String, String>>,
 }
 
 #[derive(Serialize)]

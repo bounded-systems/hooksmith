@@ -146,6 +146,7 @@ reqwest.workspace = true
 
 # Cryptographic hashing
 sha2.workspace = true
+hex.workspace = true
 
 # Text processing
 regex.workspace = true

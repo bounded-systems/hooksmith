@@ -3679,7 +3679,12 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                 );
             }
             Ok(_) => {
-                log_event!("error", "git_commit_failed", "Failed to commit files", None);
+                log_event!(
+                    "error",
+                    "git_commit_failed",
+                    "Failed to commit files",
+                    None::<String>
+                );
                 emit_sarif_error("xtask/src/main.rs", 3530, "Failed to commit files");
                 anyhow::bail!("Failed to commit files");
             }
@@ -3715,7 +3720,7 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
     ];
 
     for step in next_steps {
-        log_event!("info", "next_step", step, None);
+        log_event!("info", "next_step", step, None::<String>);
     }
 
     Ok(())
