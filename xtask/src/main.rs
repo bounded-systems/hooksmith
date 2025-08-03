@@ -1532,6 +1532,20 @@ fn generate_mod_content(dir: &Path, dir_name: &str) -> Result<String> {
         if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("rs") {
             let filename = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
             if filename != "mod" {
+                // Convert snake_case to Title Case for better documentation
+                let title = filename
+                    .split('_')
+                    .map(|word| {
+                        let mut chars = word.chars();
+                        match chars.next() {
+                            None => String::new(),
+                            Some(first) => first.to_uppercase().chain(chars).collect(),
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join(" ");
+
+                content.push_str(&format!("/// {title} functionality\n"));
                 content.push_str(&format!("pub mod {filename};\n"));
             }
         }

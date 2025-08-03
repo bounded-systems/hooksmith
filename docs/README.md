@@ -8,32 +8,32 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **wit-bindgen**: ^0.20
-- **chrono**: ^0.4
-- **clap**: ^4.0
-- **tracing-subscriber**: ^0.3
-- **console**: ^0.15
-- **which**: ^5.0
 - **tokio**: ^1.0
-- **tempfile**: dev
-- **hex**: ^0.4
-- **indicatif**: ^0.17
-- **git2**: ^0.18
-- **reqwest**: ^0.11
-- **serde**: ^1.0
-- **sha2**: ^0.10
-- **regex**: ^1.0
-- **wasmtime-wasi**: ^18.0
-- **jsonschema**: ^0.17
-- **git-filter**: *
-- **schemars**: ^0.8
-- **cli-core**: *
-- **anyhow**: ^1.0
-- **serde_json**: ^1.0
-- **serde_yaml**: ^0.9
 - **toml**: ^0.8
+- **jsonschema**: ^0.17
+- **regex**: ^1.0
+- **console**: ^0.15
+- **cli-core**: *
+- **serde_yaml**: ^0.9
+- **sha2**: ^0.10
+- **serde**: ^1.0
+- **reqwest**: ^0.11
 - **tracing**: ^0.1
+- **tracing-subscriber**: ^0.3
+- **wasmtime-wasi**: ^18.0
+- **which**: ^5.0
+- **git2**: ^0.18
+- **indicatif**: ^0.17
+- **tempfile**: dev
+- **chrono**: ^0.4
+- **wit-bindgen**: ^0.20
+- **clap**: ^4.0
+- **anyhow**: ^1.0
+- **schemars**: ^0.8
+- **git-filter**: *
+- **hex**: ^0.4
 - **wasmtime**: ^18.0
+- **serde_json**: ^1.0
 
 ## Installation
 
