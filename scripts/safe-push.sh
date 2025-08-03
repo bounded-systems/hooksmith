@@ -320,7 +320,7 @@ execute_push() {
             retry_count=$((retry_count + 1))
             
             print_status "error" "Push failed (attempt $retry_count/$MAX_RETRIES)"
-            log_event "push_failure" "Push failed" "{\"attempt": $retry_count, \"exit_code\": $exit_code, \"output\": \"$output\"}"
+            log_event "push_failure" "Push failed" "{\"attempt\": $retry_count, \"exit_code\": $exit_code, \"output\": \"$output\"}"
             
             if [[ $retry_count -lt $MAX_RETRIES ]]; then
                 print_status "info" "Retrying in $RETRY_DELAY seconds..."
