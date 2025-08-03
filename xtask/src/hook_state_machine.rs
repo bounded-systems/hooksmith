@@ -451,17 +451,11 @@ impl HooksmithHook for AutoPushHook {
             ));
         }
 
-        // Step 6: Push changes
+        // Step 6: Push changes (never force push)
         println!("🚀 Pushing changes...");
-        let mut push_args = vec!["push"];
-
-        if ctx.force {
-            push_args.push("--force");
-            println!("⚠️  Force pushing (use with caution!)");
-        }
 
         let push_output = Command::new("git")
-            .args(&push_args)
+            .args(["push"])
             .output()
             .context("Failed to execute git push")?;
 

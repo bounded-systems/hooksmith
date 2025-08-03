@@ -665,9 +665,7 @@ enum Commands {
         /// Whether to skip validation
         #[arg(long)]
         skip_validation: bool,
-        /// Force push
-        #[arg(long)]
-        force: bool,
+
         /// Commit message template
         #[arg(short, long)]
         message: Option<String>,
@@ -1132,7 +1130,6 @@ async fn main() -> Result<()> {
             show_dashboard,
             auto_push,
             skip_validation,
-            force,
             message,
             file_watch,
             trigger,
@@ -1142,7 +1139,6 @@ async fn main() -> Result<()> {
                 show_dashboard,
                 auto_push,
                 skip_validation,
-                force,
                 message,
                 file_watch,
                 trigger,
@@ -6092,7 +6088,6 @@ async fn run_dashboard_command(
     show_dashboard: bool,
     auto_push: bool,
     skip_validation: bool,
-    force: bool,
     message: Option<String>,
     file_watch: bool,
     trigger: bool,
@@ -6120,15 +6115,19 @@ async fn run_dashboard_command(
             enabled: auto_push,
             commit_message: message,
             skip_validation,
-            force,
         },
         file_watch_mode: file_watch,
         heartbeat_interval: interval,
     };
 
     if trigger {
-        // Just run a single validation cycle and exit
-        println!("🔍 Running single validation cycle...");
+        // For trigger mode, we want to show the dashboard and emit events
+        // Create a temporary dashboard to display the events
+        let mut temp_config = config.clone();
+        temp_config.show_dashboard = true; // Force show dashboard for trigger mode
+
+        let mut dashboard = dashboard::Dashboard::new(temp_config)
+            .map_err(|e| anyhow::anyhow!("Failed to create dashboard: {}", e))?;
 
         // Emit validation start event
         let validation_event = event_bus::HooksmithEvent::new(
@@ -6141,79 +6140,96 @@ async fn run_dashboard_command(
         );
         event_bus::emit_event(validation_event)?;
 
-        // Run validation and auto-push
-        if !skip_validation {
-            // Emit validation events for each step
-            let steps = vec![
-                "cargo_fix",
-                "cargo_fmt",
-                "cargo_clippy",
-                "contract_validation",
-            ];
-            for step in steps {
-                let step_event = event_bus::HooksmithEvent::new(
-                    "dashboard".to_string(),
-                    format!("{}_started", step),
-                    serde_json::json!({
-                        "step": step,
-                        "timestamp": chrono::Utc::now()
-                    }),
-                );
-                event_bus::emit_event(step_event)?;
+        // Run validation and auto-push in background
+        let config_clone = config.clone();
+        tokio::spawn(async move {
+            // Run validation and auto-push
+            if !config_clone.auto_push_config.skip_validation {
+                // Emit validation events for each step
+                let steps = vec![
+                    "cargo_fix",
+                    "cargo_fmt",
+                    "cargo_clippy",
+                    "contract_validation",
+                ];
+                for step in steps {
+                    let step_event = event_bus::HooksmithEvent::new(
+                        "dashboard".to_string(),
+                        format!("{}_started", step),
+                        serde_json::json!({
+                            "step": step,
+                            "timestamp": chrono::Utc::now()
+                        }),
+                    );
+                    let _ = event_bus::emit_event(step_event);
 
-                // Simulate step completion
-                let step_complete_event = event_bus::HooksmithEvent::new(
+                    // Simulate step completion
+                    let step_complete_event = event_bus::HooksmithEvent::new(
+                        "dashboard".to_string(),
+                        format!("{}_completed", step),
+                        serde_json::json!({
+                            "step": step,
+                            "success": true,
+                            "timestamp": chrono::Utc::now()
+                        }),
+                    );
+                    let _ = event_bus::emit_event(step_complete_event);
+                }
+
+                // Emit validation success event
+                let validation_success_event = event_bus::HooksmithEvent::new(
                     "dashboard".to_string(),
-                    format!("{}_completed", step),
+                    "validation_passed".to_string(),
                     serde_json::json!({
-                        "step": step,
-                        "success": true,
                         "timestamp": chrono::Utc::now()
                     }),
                 );
-                event_bus::emit_event(step_complete_event)?;
+                let _ = event_bus::emit_event(validation_success_event);
             }
 
-            // Emit validation success event
-            let validation_success_event = event_bus::HooksmithEvent::new(
-                "dashboard".to_string(),
-                "validation_passed".to_string(),
-                serde_json::json!({
-                    "timestamp": chrono::Utc::now()
-                }),
-            );
-            event_bus::emit_event(validation_success_event)?;
-        }
+            if config_clone.auto_push_config.enabled {
+                // Emit auto-push start event
+                let auto_push_event = event_bus::HooksmithEvent::new(
+                    "dashboard".to_string(),
+                    "auto_push_started".to_string(),
+                    serde_json::json!({
+                        "timestamp": chrono::Utc::now()
+                    }),
+                );
+                let _ = event_bus::emit_event(auto_push_event);
 
-        if auto_push {
-            // Emit auto-push start event
-            let auto_push_event = event_bus::HooksmithEvent::new(
-                "dashboard".to_string(),
-                "auto_push_started".to_string(),
-                serde_json::json!({
-                    "force": force,
-                    "timestamp": chrono::Utc::now()
-                }),
-            );
-            event_bus::emit_event(auto_push_event)?;
+                // Run auto-push
+                if let Err(e) = dashboard::Dashboard::run_auto_push_cycle(&config_clone.auto_push_config).await {
+                    // Emit auto-push failure event
+                    let auto_push_failed_event = event_bus::HooksmithEvent::new(
+                        "dashboard".to_string(),
+                        "auto_push_failed".to_string(),
+                        serde_json::json!({
+                            "error": e.to_string(),
+                            "timestamp": chrono::Utc::now()
+                        }),
+                    );
+                    let _ = event_bus::emit_event(auto_push_failed_event);
+                } else {
+                    // Emit auto-push success event
+                    let auto_push_success_event = event_bus::HooksmithEvent::new(
+                        "dashboard".to_string(),
+                        "auto_push_succeeded".to_string(),
+                        serde_json::json!({
+                            "timestamp": chrono::Utc::now()
+                        }),
+                    );
+                    let _ = event_bus::emit_event(auto_push_success_event);
+                }
+            }
+        });
 
-            // Run auto-push
-            dashboard::Dashboard::run_auto_push_cycle(&config.auto_push_config)
-                .await
-                .map_err(|e| anyhow::anyhow!("Auto-push error: {}", e))?;
+        // Start the dashboard to show the events
+        dashboard
+            .start()
+            .await
+            .map_err(|e| anyhow::anyhow!("Dashboard error: {}", e))?;
 
-            // Emit auto-push success event
-            let auto_push_success_event = event_bus::HooksmithEvent::new(
-                "dashboard".to_string(),
-                "auto_push_succeeded".to_string(),
-                serde_json::json!({
-                    "timestamp": chrono::Utc::now()
-                }),
-            );
-            event_bus::emit_event(auto_push_success_event)?;
-        }
-
-        println!("✅ Validation cycle completed!");
         return Ok(());
     }
 
