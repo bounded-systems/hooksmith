@@ -388,6 +388,15 @@ main() {
     local dry_run=false
     local verbose=false
     
+    # Initialize logging
+    log_event "script_start" "Safe push script started" "{\"version\": \"$SCRIPT_VERSION\", \"args\": [$(printf '"%s",' "$@" | sed 's/,$//')]}"
+    
+    # Check if we're in a git repository
+    check_git_repo
+    
+    # Validate all arguments first (including forbidden flags)
+    validate_arguments "$@"
+    
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -422,15 +431,6 @@ main() {
                 ;;
         esac
     done
-    
-    # Initialize logging
-    log_event "script_start" "Safe push script started" "{\"version\": \"$SCRIPT_VERSION\", \"args\": [$(printf '"%s",' "${args[@]}" | sed 's/,$//')]}"
-    
-    # Check if we're in a git repository
-    check_git_repo
-    
-    # Validate arguments
-    validate_arguments "${args[@]}"
     
     # Run safety checks
     check_uncommitted_changes

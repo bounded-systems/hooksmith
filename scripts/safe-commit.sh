@@ -190,7 +190,7 @@ validate_commit_message() {
     # Check conventional commit format
     local is_conventional=false
     for type in "${CONVENTIONAL_TYPES[@]}"; do
-        if [[ "$message" =~ ^$type(\([^)]+\))?: ]]; then
+        if [[ "$message" =~ ^$type: ]] || [[ "$message" =~ ^$type\(.*\): ]]; then
             is_conventional=true
             break
         fi
@@ -402,6 +402,15 @@ main() {
     local commit_message=""
     local stage_all=false
     
+    # Initialize logging
+    log_event "script_start" "Safe commit script started" "{\"version\": \"$SCRIPT_VERSION\", \"args\": [$(printf '"%s",' "$@" | sed 's/,$//')]}"
+    
+    # Check if we're in a git repository
+    check_git_repo
+    
+    # Validate all arguments first (including forbidden flags)
+    validate_arguments "$@"
+    
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -449,15 +458,6 @@ main() {
                 ;;
         esac
     done
-    
-    # Initialize logging
-    log_event "script_start" "Safe commit script started" "{\"version\": \"$SCRIPT_VERSION\", \"args\": [$(printf '"%s",' "${args[@]}" | sed 's/,$//')]}"
-    
-    # Check if we're in a git repository
-    check_git_repo
-    
-    # Validate arguments
-    validate_arguments "${args[@]}"
     
     # Stage all files if requested
     if [[ "$stage_all" == "true" ]]; then
