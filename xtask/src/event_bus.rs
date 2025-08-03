@@ -563,7 +563,6 @@ impl EventProcessor {
 }
 
 /// Default event handlers
-
 /// Auto-push handler
 pub struct AutoPushHandler {
     /// Whether auto-push is enabled
