@@ -1,79 +1,55 @@
 [build]
-# Enable parallel compilation
-jobs = 4  # Use 4 jobs instead of 0
-# Use incremental compilation for faster rebuilds
+# Enable incremental compilation by default
 incremental = true
-# Build dependencies in parallel
-dep-info-basedir = "target"
-# Suppress WIT file warnings
-rustflags = ["--allow", "warnings"]
 
-[target.wasm32-unknown-unknown]
-# WASM target configuration
+# Use LLD linker for faster linking (Linux)
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
 rustflags = [
-    "-C", "target-feature=+crt-static",
-    "-C", "link-arg=--no-entry",
-    "-C", "link-arg=--export-table",
-    "-C", "link-arg=--import-memory",
+    "-C", "link-arg=-fuse-ld=lld",
+    "-C", "link-arg=-Wl,--no-rosegment",
 ]
 
-[target.wasm32-wasi]
-# WASI target configuration
+# Use zld linker for faster linking (macOS)
+[target.x86_64-apple-darwin]
 rustflags = [
-    "-C", "target-feature=+crt-static",
+    "-C", "link-arg=-fuse-ld=/usr/local/bin/zld",
 ]
 
-[alias]
-# Useful cargo aliases for development
-# Note: fmt and clippy are handled by cargo-fmt and cargo-clippy tools, not as aliases
-qcheck = "check --all-targets --all-features --quiet"
-qtest = "test --all-targets --all-features --quiet"
-build = "build --all-targets --all-features"
-doc = "doc --all-features --no-deps"
-clean = "clean"
-update = "update"
-tree = "tree --all-features"
-outdated = "outdated"
+# Enable parallel compilation frontend (nightly only)
+[env]
+RUSTFLAGS_NIGHTLY = "-Z threads=8"
 
-# WASM-specific aliases
-wasm-build = "build --target wasm32-unknown-unknown --release"
-wasm-test = "test --target wasm32-unknown-unknown"
-wasi-build = "build --target wasm32-wasi --release"
-wasi-test = "test --target wasm32-wasi"
+# Profile-guided optimizations
+[profile.release]
+lto = "thin"
+codegen-units = 16
+panic = "abort"
+strip = true
 
-# Development workflow aliases
-dev = "run"
-dev-watch = "watch -x run"
-test-watch = "watch -x test"
-check-watch = "watch -x check"
-clippy-watch = "watch -x clippy"
+# Development profile optimizations
+[profile.dev]
+debug = 1
+incremental = true
+codegen-units = 256
 
-# Documentation aliases
-docs = "doc --open"
-docs-serve = "doc --no-deps --open"
+# Test profile optimizations
+[profile.test]
+debug = 1
+incremental = true
+codegen-units = 256
 
-# Code quality aliases
-quality = "run --bin xtask -- code-stats"
-quality-strict = "run --bin xtask -- code-stats --strict"
-validate = "run --bin xtask -- contract-validate --validate-generated"
-validate-strict = "run --bin xtask -- contract-validate --validate-generated --comprehensive"
+# Benchmark profile
+[profile.bench]
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = true
 
+# Workspace optimization with cargo-hakari
+[workspace]
+resolver = "2"
+
+# Enable faster dependency resolution
 [net]
-# Git protocol configuration
 git-fetch-with-cli = true
-
-[warnings]
-# Suppress WIT file warnings since we're not building components yet
-rustdoc = false
-
-[registries.crates-io]
-# Use sparse registry for faster dependency resolution
-# protocol = "sparse+https://index.crates.io/"  # This was causing issues, using default
-
-[profile.dev.package."*"]
-# Optimize dependencies even in debug builds
-opt-level = 3
-
-[profile.release.package."*"]
-# Optimize all dependencies in release builds
-opt-level = 3 

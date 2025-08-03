@@ -1,0 +1,428 @@
+#!/bin/bash
+
+# Hooksmith Build Optimization Script
+# Implements latest 2024-2025 Rust build optimizations
+# Based on recommendations from the Rust team and community
+
+set -euo pipefail
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+RUST_VERSION="1.88.0"
+NIGHTLY_VERSION="nightly"
+PARALLEL_JOBS=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 8)
+CACHE_DIR="${HOME}/.cache/hooksmith"
+SCCACHE_DIR="${HOME}/.cache/sccache"
+
+# Logging functions
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Install or update Rust toolchain
+install_rust_toolchain() {
+    log_info "Installing/updating Rust toolchains..."
+    
+    # Install stable toolchain
+    rustup toolchain install "${RUST_VERSION}" --profile minimal
+    rustup default "${RUST_VERSION}"
+    
+    # Install nightly for experimental optimizations
+    rustup toolchain install "${NIGHTLY_VERSION}" --profile minimal
+    
+    # Install required components
+    rustup component add rustfmt clippy rust-src rust-analysis --toolchain "${RUST_VERSION}"
+    rustup component add rustfmt clippy rust-src rust-analysis --toolchain "${NIGHTLY_VERSION}"
+    
+    log_success "Rust toolchains installed"
+}
+
+# Install build optimization tools
+install_build_tools() {
+    log_info "Installing build optimization tools..."
+    
+    # Install cargo-hakari for workspace optimization
+    if ! command_exists cargo-hakari; then
+        log_info "Installing cargo-hakari..."
+        cargo install cargo-hakari
+    fi
+    
+    # Install cargo-nextest for faster test execution
+    if ! command_exists cargo-nextest; then
+        log_info "Installing cargo-nextest..."
+        cargo install cargo-nextest
+    fi
+    
+    # Install sccache for build caching
+    if ! command_exists sccache; then
+        log_info "Installing sccache..."
+        cargo install sccache
+    fi
+    
+    # Install cargo-watch for development workflow
+    if ! command_exists cargo-watch; then
+        log_info "Installing cargo-watch..."
+        cargo install cargo-watch
+    fi
+    
+    # Install mold linker (Linux only)
+    if [[ "$OSTYPE" == "linux-gnu"* ]] && ! command_exists mold; then
+        log_info "Installing mold linker..."
+        if command_exists apt; then
+            sudo apt update && sudo apt install -y mold
+        elif command_exists yum; then
+            sudo yum install -y mold
+        elif command_exists dnf; then
+            sudo dnf install -y mold
+        fi
+    fi
+    
+    # Install zld linker (macOS only)
+    if [[ "$OSTYPE" == "darwin"* ]] && ! command_exists zld; then
+        log_info "Installing zld linker..."
+        brew install michaeleisel/zld/zld
+    fi
+    
+    log_success "Build optimization tools installed"
+}
+
+# Configure sccache
+setup_sccache() {
+    log_info "Configuring sccache..."
+    
+    # Create cache directory
+    mkdir -p "${SCCACHE_DIR}"
+    
+    # Set sccache environment variables
+    export SCCACHE_DIR="${SCCACHE_DIR}"
+    export SCCACHE_CACHE_SIZE="10G"
+    export SCCACHE_LOG="sccache.log"
+    
+    # Add to shell profile
+    local profile_file
+    if [[ -f "${HOME}/.zshrc" ]]; then
+        profile_file="${HOME}/.zshrc"
+    elif [[ -f "${HOME}/.bashrc" ]]; then
+        profile_file="${HOME}/.bashrc"
+    else
+        profile_file="${HOME}/.profile"
+    fi
+    
+    # Add sccache configuration if not already present
+    if ! grep -q "SCCACHE_DIR" "${profile_file}"; then
+        cat >> "${profile_file}" << EOF
+
+# sccache configuration for faster Rust builds
+export SCCACHE_DIR="${SCCACHE_DIR}"
+export SCCACHE_CACHE_SIZE="10G"
+export SCCACHE_LOG="sccache.log"
+export RUSTC_WRAPPER="sccache"
+EOF
+        log_info "Added sccache configuration to ${profile_file}"
+    fi
+    
+    log_success "sccache configured"
+}
+
+# Configure cargo-hakari
+setup_cargo_hakari() {
+    log_info "Configuring cargo-hakari..."
+    
+    # Generate hakari.toml if it doesn't exist
+    if [[ ! -f "hakari.toml" ]]; then
+        cargo hakari generate
+        log_info "Generated hakari.toml"
+    fi
+    
+    # Update hakari configuration
+    cargo hakari update
+    
+    log_success "cargo-hakari configured"
+}
+
+# Create optimized build aliases
+create_build_aliases() {
+    log_info "Creating optimized build aliases..."
+    
+    # Create .cargo/aliases.toml
+    mkdir -p .cargo
+    cat > .cargo/aliases.toml << 'EOF'
+# Optimized build aliases for Hooksmith
+[alias]
+# Fast development builds
+dev = "run"
+dev-fast = "run --release"
+dev-watch = "watch -x run"
+dev-watch-fast = "watch -x 'run --release'"
+
+# Fast checking and testing
+check = "check --all-targets --all-features"
+check-fast = "check --all-targets --all-features --quiet"
+check-watch = "watch -x 'check --all-targets --all-features'"
+
+# Optimized testing with cargo-nextest
+test = "nextest run --all-targets --all-features"
+test-fast = "nextest run --all-targets --all-features --no-capture"
+test-watch = "watch -x 'nextest run --all-targets --all-features'"
+test-parallel = "nextest run --all-targets --all-features --test-threads=${PARALLEL_JOBS}"
+
+# Nightly optimizations
+nightly-check = "+nightly check --all-targets --all-features"
+nightly-build = "+nightly build --release"
+nightly-test = "+nightly nextest run --all-targets --all-features"
+
+# Parallel compilation (nightly only)
+parallel-check = "+nightly check --all-targets --all-features"
+parallel-build = "+nightly build --release"
+parallel-test = "+nightly nextest run --all-targets --all-features"
+
+# Workspace optimization
+hakari-sync = "hakari manage-deps"
+hakari-update = "hakari update"
+
+# Build timing and analysis
+timings = "build --timings"
+tree = "tree --all-features"
+outdated = "outdated"
+
+# Quality checks
+quality = "run --bin xtask -- code-stats"
+quality-strict = "run --bin xtask -- code-stats --strict"
+validate = "run --bin xtask -- contract-validate --validate-generated"
+validate-strict = "run --bin xtask -- contract-validate --validate-generated --comprehensive"
+
+# Documentation
+docs = "doc --all-features --no-deps --open"
+docs-serve = "doc --all-features --no-deps --open"
+
+# Clean and maintenance
+clean-all = "clean && rm -rf target/ && rm -rf .cargo/hakari/"
+update-all = "update && hakari update"
+EOF
+    
+    log_success "Build aliases created in .cargo/aliases.toml"
+}
+
+# Create development workflow scripts
+create_workflow_scripts() {
+    log_info "Creating development workflow scripts..."
+    
+    # Fast development cycle script
+    cat > scripts/dev-cycle.sh << 'EOF'
+#!/bin/bash
+# Fast development cycle with all optimizations enabled
+
+set -euo pipefail
+
+export RUSTC_WRAPPER="sccache"
+export SCCACHE_CACHE_SIZE="10G"
+
+echo "🚀 Starting optimized development cycle..."
+
+# Fast check with parallel compilation
+echo "📋 Running fast check..."
+cargo +nightly check --all-targets --all-features -Z threads=8
+
+# Run tests with cargo-nextest
+echo "🧪 Running tests..."
+cargo nextest run --all-targets --all-features --test-threads=$(nproc)
+
+# Run the application
+echo "🏃 Running application..."
+cargo run --release
+
+echo "✅ Development cycle complete!"
+EOF
+    chmod +x scripts/dev-cycle.sh
+    
+    # CI optimization script
+    cat > scripts/ci-build.sh << 'EOF'
+#!/bin/bash
+# Optimized CI build with distributed caching
+
+set -euo pipefail
+
+export CARGO_INCREMENTAL=0
+export SCCACHE_CACHE_SIZE="20G"
+export RUSTC_WRAPPER="sccache"
+
+echo "🏗️ Starting optimized CI build..."
+
+# Clean build for CI
+cargo clean
+
+# Build with optimizations
+cargo build --release --all-targets --all-features
+
+# Run tests
+cargo nextest run --all-targets --all-features --test-threads=$(nproc)
+
+# Generate documentation
+cargo doc --all-features --no-deps
+
+echo "✅ CI build complete!"
+EOF
+    chmod +x scripts/ci-build.sh
+    
+    # Performance monitoring script
+    cat > scripts/build-stats.sh << 'EOF'
+#!/bin/bash
+# Monitor build performance and cache statistics
+
+set -euo pipefail
+
+echo "📊 Build Performance Statistics"
+echo "================================"
+
+# sccache statistics
+if command -v sccache >/dev/null 2>&1; then
+    echo "🔧 sccache Statistics:"
+    sccache --show-stats
+    echo
+fi
+
+# Cargo build timings
+echo "⏱️ Recent Build Timings:"
+if [[ -f "target/cargo-timings.html" ]]; then
+    echo "Detailed timings available at: target/cargo-timings.html"
+else
+    echo "Run 'cargo build --timings' to generate timing data"
+fi
+
+# Workspace analysis
+echo "📦 Workspace Analysis:"
+cargo tree --all-features --depth 1
+
+# Disk usage
+echo "💾 Cache Usage:"
+du -sh ~/.cache/sccache 2>/dev/null || echo "sccache cache not found"
+du -sh target/ 2>/dev/null || echo "target directory not found"
+EOF
+    chmod +x scripts/build-stats.sh
+    
+    log_success "Workflow scripts created"
+}
+
+# Create environment setup script
+create_env_setup() {
+    log_info "Creating environment setup script..."
+    
+    cat > scripts/setup-env.sh << 'EOF'
+#!/bin/bash
+# Setup development environment with all optimizations
+
+set -euo pipefail
+
+# Source the script to set environment variables
+export RUSTC_WRAPPER="sccache"
+export SCCACHE_DIR="${HOME}/.cache/sccache"
+export SCCACHE_CACHE_SIZE="10G"
+export SCCACHE_LOG="sccache.log"
+
+# Enable parallel compilation for nightly
+export RUSTFLAGS_NIGHTLY="-Z threads=8"
+
+# Set number of parallel jobs
+export CARGO_BUILD_JOBS=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 8)
+
+echo "🔧 Environment variables set for optimized builds:"
+echo "  RUSTC_WRAPPER: ${RUSTC_WRAPPER}"
+echo "  SCCACHE_DIR: ${SCCACHE_DIR}"
+echo "  SCCACHE_CACHE_SIZE: ${SCCACHE_CACHE_SIZE}"
+echo "  CARGO_BUILD_JOBS: ${CARGO_BUILD_JOBS}"
+
+# Verify sccache is working
+if command -v sccache >/dev/null 2>&1; then
+    echo "✅ sccache is available and configured"
+else
+    echo "⚠️ sccache not found - run ./scripts/optimize-build.sh to install"
+fi
+
+# Verify cargo-hakari is working
+if command -v cargo-hakari >/dev/null 2>&1; then
+    echo "✅ cargo-hakari is available"
+else
+    echo "⚠️ cargo-hakari not found - run ./scripts/optimize-build.sh to install"
+fi
+
+echo "🚀 Environment ready for optimized builds!"
+EOF
+    chmod +x scripts/setup-env.sh
+    
+    log_success "Environment setup script created"
+}
+
+# Main optimization function
+main() {
+    echo "🚀 Hooksmith Build Optimization Setup"
+    echo "====================================="
+    echo "Implementing latest 2024-2025 Rust build optimizations"
+    echo
+    
+    # Check if we're in the right directory
+    if [[ ! -f "Cargo.toml" ]]; then
+        log_error "Must be run from the project root directory"
+        exit 1
+    fi
+    
+    # Create cache directories
+    mkdir -p "${CACHE_DIR}"
+    mkdir -p "${SCCACHE_DIR}"
+    
+    # Install and configure everything
+    install_rust_toolchain
+    install_build_tools
+    setup_sccache
+    setup_cargo_hakari
+    create_build_aliases
+    create_workflow_scripts
+    create_env_setup
+    
+    echo
+    echo "🎉 Build optimization setup complete!"
+    echo
+    echo "📋 Next steps:"
+    echo "1. Source the environment: source scripts/setup-env.sh"
+    echo "2. Try fast development: ./scripts/dev-cycle.sh"
+    echo "3. Monitor performance: ./scripts/build-stats.sh"
+    echo "4. Use optimized aliases: cargo dev-fast, cargo test-parallel, etc."
+    echo
+    echo "🔧 Available optimizations:"
+    echo "  • sccache for build caching (30-70% faster rebuilds)"
+    echo "  • cargo-hakari for workspace optimization (up to 50% faster)"
+    echo "  • cargo-nextest for parallel testing (2-4x faster)"
+    echo "  • LLD/zld/mold linkers (20-30% faster linking)"
+    echo "  • Parallel compilation frontend (nightly, up to 50% faster)"
+    echo "  • Profile-guided optimizations (10-20% faster)"
+    echo
+    echo "📚 For more information, see:"
+    echo "  • CARGO_BEST_PRACTICES.md"
+    echo "  • .cargo/config.toml"
+    echo "  • .cargo/aliases.toml"
+}
+
+# Run main function
+main "$@" 

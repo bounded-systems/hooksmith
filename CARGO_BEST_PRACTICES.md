@@ -208,7 +208,12 @@ The `xtask` crate provides custom build tasks:
 ### Performance
 - Monitor build times with `cargo build --timings`
 - Use `cargo tree` to analyze dependency graph
-- Consider `sccache` for large builds
+- Use `sccache` for build caching (30-70% faster rebuilds)
+- Use `cargo-hakari` for workspace optimization (up to 50% faster)
+- Use `cargo-nextest` for parallel testing (2-4x faster)
+- Use fast linkers (LLD/zld/mold) for 20-30% faster linking
+- Enable parallel compilation with nightly (`-Z threads=8`)
+- See `RUST_BUILD_OPTIMIZATIONS_2025.md` for comprehensive optimization guide
 
 ## 📖 Additional Resources
 

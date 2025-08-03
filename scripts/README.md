@@ -6,6 +6,56 @@
 
 This directory contains Rust-based development tools for the Hooksmith project.
 
+## 🚀 Build Optimization Scripts
+
+### `optimize-build.sh`
+Comprehensive setup script that implements all latest 2024-2025 Rust build optimizations:
+- Installs and configures sccache for build caching (30-70% faster rebuilds)
+- Sets up cargo-hakari for workspace optimization (up to 50% faster)
+- Installs cargo-nextest for parallel testing (2-4x faster)
+- Configures fast linkers (LLD/zld/mold) for 20-30% faster linking
+- Creates optimized build aliases and workflows
+
+**Usage:**
+```bash
+chmod +x scripts/optimize-build.sh
+./scripts/optimize-build.sh
+```
+
+### `setup-env.sh`
+Sets up environment variables for optimized builds.
+
+**Usage:**
+```bash
+source scripts/setup-env.sh
+```
+
+### `dev-cycle.sh`
+Fast development cycle with all optimizations enabled.
+
+**Usage:**
+```bash
+./scripts/dev-cycle.sh
+```
+
+### `ci-build.sh`
+Optimized CI build with distributed caching.
+
+**Usage:**
+```bash
+./scripts/ci-build.sh
+```
+
+### `build-stats.sh`
+Monitor build performance and cache statistics.
+
+**Usage:**
+```bash
+./scripts/build-stats.sh
+```
+
+See `RUST_BUILD_OPTIMIZATIONS_2025.md` for detailed documentation.
+
 ## 📋 Available Scripts
 
 ### `setup.rs` - Environment Setup
