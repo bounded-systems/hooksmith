@@ -22,17 +22,20 @@ path_to_slug() {
     local path="$1"
     local file_type="$2"
 
-    # For files without extensions, use the full path
-    if [[ -z "$file_type" ]]; then
-        local slug_path="$path"
-    else
-        # Remove the extension from the path for slug generation
-        local slug_path="${path%.*}"
-    fi
-
-    # Convert to kebab-case
-    # Replace slashes and dots with hyphens, convert to lowercase
-    echo "$slug_path" | sed 's/[\/\.]/-/g' | tr '[:upper:]' '[:lower:]' | sed 's/-*$//'
+    # For special files without extensions, create a meaningful slug
+    case "$path" in
+        ".editorconfig") echo "root-editorconfig" ;;
+        ".envrc") echo "root-envrc" ;;
+        ".gitattributes") echo "root-gitattributes" ;;
+        ".gitignore") echo "root-gitignore" ;;
+        "Makefile") echo "root-makefile" ;;
+        "CODEOWNERS") echo "root-codeowners" ;;
+        *) 
+            # For regular files, remove extension and convert to kebab-case
+            local slug_path="${path%.*}"
+            echo "$slug_path" | sed 's/[\/\.]/-/g' | tr '[:upper:]' '[:lower:]' | sed 's/-*$//'
+            ;;
+    esac
 }
 
 # Function to get file type (extension or special type)
@@ -128,33 +131,33 @@ while IFS= read -r -d '' file; do
     if [[ "$file" == *.rs ]] || [[ "$file" == *.jsonc ]]; then
         continue
     fi
-    
-               # Get relative path (remove leading ./)
-           relative_path="${file#./}"
 
-           # Get file type
-           file_type=$(get_file_type "$relative_path")
+    # Get relative path (remove leading ./)
+    relative_path="${file#./}"
 
-           # Generate slug
-           slug=$(path_to_slug "$relative_path" "$file_type")
+    # Get file type
+    file_type=$(get_file_type "$relative_path")
 
-           # Add comma if not first
-           if [[ "$FIRST" == "true" ]]; then
-               FIRST=false
-           else
-               echo "," >> "$OUTPUT_FILE"
-           fi
+    # Generate slug
+    slug=$(path_to_slug "$relative_path" "$file_type")
 
-           # Add file entry
-           cat >> "$OUTPUT_FILE" << EOF
-           {
-             "slug": "$slug",
-             "path": "$relative_path",
-             "type": "$file_type"
-           }
-       EOF
+    # Add comma if not first
+    if [[ "$FIRST" == "true" ]]; then
+        FIRST=false
+    else
+        echo "," >> "$OUTPUT_FILE"
+    fi
 
-           echo -e "${GREEN}✅ Added: $relative_path (slug: $slug, type: $file_type)${NC}"
+    # Add file entry
+    cat >> "$OUTPUT_FILE" << EOF
+    {
+      "slug": "$slug",
+      "path": "$relative_path",
+      "type": "$file_type"
+    }
+EOF
+
+    echo -e "${GREEN}✅ Added: $relative_path (slug: $slug, type: $file_type)${NC}"
     
 done < <(eval "$FIND_CMD" -print0 | sort -z)
 

@@ -13,1245 +13,1251 @@
     }
 ,
     {
-      "slug": "-envrc",
+      "slug": "root-envrc",
       "path": ".envrc",
-      "extension": ""
+      "type": "envrc"
     }
 ,
     {
-      "slug": "-gitattributes",
+      "slug": "root-gitattributes",
       "path": ".gitattributes",
-      "extension": ""
+      "type": "gitattributes"
     }
 ,
     {
-      "slug": "-gitignore",
+      "slug": "root-gitignore",
       "path": ".gitignore",
-      "extension": ""
+      "type": "gitignore"
     }
 ,
     {
-      "slug": "-hooksmith-events-jsonl",
+      "slug": "-hooksmith-events",
       "path": ".hooksmith/events.jsonl",
-      "extension": ""
+      "type": "jsonl"
     }
 ,
     {
-      "slug": "-hooksmith-logs-safe-commit-jsonl",
+      "slug": "-hooksmith-logs-safe-commit",
       "path": ".hooksmith/logs/safe-commit.jsonl",
-      "extension": ""
+      "type": "jsonl"
     }
 ,
     {
-      "slug": "-hooksmith-logs-safe-push-jsonl",
+      "slug": "-hooksmith-logs-safe-push",
       "path": ".hooksmith/logs/safe-push.jsonl",
-      "extension": ""
+      "type": "jsonl"
     }
 ,
     {
       "slug": "architecture",
       "path": "ARCHITECTURE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "autopush_workflow",
       "path": "AUTOPUSH_WORKFLOW.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "build_optimization_summary",
       "path": "BUILD_OPTIMIZATION_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "cargo_best_practices",
       "path": "CARGO_BEST_PRACTICES.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "cargo",
       "path": "Cargo.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "changelog",
       "path": "CHANGELOG.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "ci_cd_integration_summary",
       "path": "CI_CD_INTEGRATION_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "ci_cd_integration_verification",
       "path": "CI_CD_INTEGRATION_VERIFICATION.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "ci_integration_report",
       "path": "CI_INTEGRATION_REPORT.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "cleaned_file_policy_summary",
       "path": "CLEANED_FILE_POLICY_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "clippy_fixes_summary",
       "path": "CLIPPY_FIXES_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "clippy",
       "path": "clippy.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "code_stats_system_summary",
       "path": "CODE_STATS_SYSTEM_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "codegen_markers",
       "path": "CODEGEN_MARKERS.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "codegen_summary",
       "path": "CODEGEN_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
-      "slug": "codeowners",
+      "slug": "root-codeowners",
       "path": "CODEOWNERS",
-      "extension": ""
+      "type": "CODEOWNERS"
     }
 ,
     {
       "slug": "components-cli-core-cargo",
       "path": "components/cli-core/Cargo.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "components-git-filter-cargo",
       "path": "components/git-filter/Cargo.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "components-git-filter-readme",
       "path": "components/git-filter/README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "components-hook-builder-cargo",
       "path": "components/hook-builder/Cargo.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "components-hook-builder-wit-hook-builder",
       "path": "components/hook-builder/wit/hook-builder.wit",
-      "extension": "wit"
+      "type": "wit"
     }
 ,
     {
       "slug": "components-validation-handler-cargo",
       "path": "components/validation-handler/Cargo.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "components-worktree-runner-cargo",
       "path": "components/worktree-runner/Cargo.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "components-worktree-runner-wit-worktree-runner",
       "path": "components/worktree-runner/wit/worktree-runner.wit",
-      "extension": "wit"
+      "type": "wit"
     }
 ,
     {
       "slug": "comprehensive_docs_summary",
       "path": "COMPREHENSIVE_DOCS_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "contract_workflow_design",
       "path": "CONTRACT_WORKFLOW_DESIGN.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "contributing",
       "path": "CONTRIBUTING.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "deny",
       "path": "deny.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "diagrams-git_commit_workflow",
       "path": "diagrams/git_commit_workflow.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "diagrams-git_comprehensive",
       "path": "diagrams/git_comprehensive.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "diagrams-git_file_states",
       "path": "diagrams/git_file_states.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "diagrams-git_skip_only_conditions",
       "path": "diagrams/git_skip_only_conditions.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "direnv_integration_summary",
       "path": "DIRENV_INTEGRATION_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "direnv_setup",
       "path": "DIRENV_SETUP.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-api",
       "path": "docs/api.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-architecture_diagram",
       "path": "docs/ARCHITECTURE_DIAGRAM.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-attributes_validation",
       "path": "docs/attributes_validation.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-blob_contract_system",
       "path": "docs/blob_contract_system.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-character_contract_system",
       "path": "docs/character_contract_system.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-checksum_report",
       "path": "docs/CHECKSUM_REPORT.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-checksums",
       "path": "docs/checksums.json",
-      "extension": "json"
+      "type": "json"
     }
 ,
     {
       "slug": "docs-clean_auto_push",
       "path": "docs/CLEAN_AUTO_PUSH.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-cli_help",
       "path": "docs/CLI_HELP.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-components-cli-core-readme",
       "path": "docs/components/cli-core/README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-components-git-filter-readme",
       "path": "docs/components/git-filter/README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-components-hook-builder-readme",
       "path": "docs/components/hook-builder/README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-components-worktree-runner-readme",
       "path": "docs/components/worktree-runner/README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-contract_check_system",
       "path": "docs/CONTRACT_CHECK_SYSTEM.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-contract_state_machine",
       "path": "docs/CONTRACT_STATE_MACHINE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-contract_validation_summary",
       "path": "docs/CONTRACT_VALIDATION_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-contract_validation_system",
       "path": "docs/CONTRACT_VALIDATION_SYSTEM.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-contract_validation_with_git_notes",
       "path": "docs/CONTRACT_VALIDATION_WITH_GIT_NOTES.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-contract-state-machine-readme",
       "path": "docs/contract-state-machine-README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-contract-state-machine-schema",
       "path": "docs/contract-state-machine-schema.json",
-      "extension": "json"
+      "type": "json"
     }
 ,
     {
       "slug": "docs-contract-state-machine",
       "path": "docs/contract-state-machine.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-contract-validation-architecture",
       "path": "docs/contract-validation-architecture.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-development_summary",
       "path": "docs/DEVELOPMENT_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-development",
       "path": "docs/DEVELOPMENT.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-docs-api",
       "path": "docs/docs/API.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-docs-architecture",
       "path": "docs/docs/ARCHITECTURE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-docs-cli_help",
       "path": "docs/docs/CLI_HELP.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-docs-contributing",
       "path": "docs/docs/CONTRIBUTING.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-docs-development",
       "path": "docs/docs/DEVELOPMENT.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-docs-examples",
       "path": "docs/docs/EXAMPLES.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-docs-structure",
       "path": "docs/docs/STRUCTURE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-docs-testing",
       "path": "docs/docs/TESTING.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-examples",
       "path": "docs/examples.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-filename_contract_system",
       "path": "docs/filename_contract_system.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-generated_file_validation",
       "path": "docs/GENERATED_FILE_VALIDATION.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-git_filter_system",
       "path": "docs/git_filter_system.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-git_lefthook_integration",
       "path": "docs/GIT_LEFTHOOK_INTEGRATION.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-git_model_contracts",
       "path": "docs/git_model_contracts.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-git_object_contract_system",
       "path": "docs/git_object_contract_system.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-git_state_machine",
       "path": "docs/git_state_machine.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-git_workflow",
       "path": "docs/git_workflow.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-git-notes-schema",
       "path": "docs/git-notes-schema.json",
-      "extension": "json"
+      "type": "json"
     }
 ,
     {
       "slug": "docs-hook_state_machine",
       "path": "docs/HOOK_STATE_MACHINE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-jql_with_structured_logging",
       "path": "docs/JQL_WITH_STRUCTURED_LOGGING.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-line_contract_system",
       "path": "docs/line_contract_system.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-merkle-chain-spec",
       "path": "docs/merkle-chain-spec.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-readme",
       "path": "docs/README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-safe_git_workflow",
       "path": "docs/SAFE_GIT_WORKFLOW.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-sarif_codecl_integration",
       "path": "docs/SARIF_CODECL_INTEGRATION.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-schema_documentation",
       "path": "docs/SCHEMA_DOCUMENTATION.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-schema_validation",
       "path": "docs/SCHEMA_VALIDATION.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-structure",
       "path": "docs/STRUCTURE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-structured_logging_migration",
       "path": "docs/STRUCTURED_LOGGING_MIGRATION.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-structured_logging_tools",
       "path": "docs/STRUCTURED_LOGGING_TOOLS.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-structured_logging",
       "path": "docs/STRUCTURED_LOGGING.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-style",
       "path": "docs/style.css",
-      "extension": "css"
+      "type": "css"
     }
 ,
     {
       "slug": "docs-test_summary",
       "path": "docs/TEST_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-tree_contract_system",
       "path": "docs/tree_contract_system.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-tree_filename_chars_contract_system",
       "path": "docs/tree_filename_chars_contract_system.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-trunk_style_commits",
       "path": "docs/TRUNK_STYLE_COMMITS.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-trunk_style_quickstart",
       "path": "docs/TRUNK_STYLE_QUICKSTART.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-tui_dashboard_modernization",
       "path": "docs/TUI_DASHBOARD_MODERNIZATION.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-unified_contracts_system",
       "path": "docs/unified_contracts_system.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-verify_hooks",
       "path": "docs/VERIFY_HOOKS.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "docs-wit_documentation",
       "path": "docs/WIT_DOCUMENTATION.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "examples_fixes_summary",
       "path": "EXAMPLES_FIXES_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "file_type_enforcement_summary",
       "path": "FILE_TYPE_ENFORCEMENT_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "fix_format",
       "path": "fix_format.sed",
-      "extension": "sed"
+      "type": "sed"
     }
 ,
     {
       "slug": "generated_file_demo",
       "path": "generated_file_demo",
-      "extension": ""
+      "type": ""
     }
 ,
     {
       "slug": "generated_file_validation_summary",
       "path": "GENERATED_FILE_VALIDATION_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "generated_files_system_summary",
       "path": "GENERATED_FILES_SYSTEM_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "hook_state_machine_implementation_summary",
       "path": "HOOK_STATE_MACHINE_IMPLEMENTATION_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "hooks",
       "path": "hooks/.gitattributes",
-      "extension": "gitattributes"
+      "type": "gitattributes"
     }
 ,
     {
       "slug": "hooks-readme",
       "path": "hooks/README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "hooksmith-events",
       "path": "hooksmith-events.jsonl",
-      "extension": "jsonl"
+      "type": "jsonl"
+    }
+,
+    {
+      "slug": "improved_generated_files_system",
+      "path": "IMPROVED_GENERATED_FILES_SYSTEM.md",
+      "type": "md"
     }
 ,
     {
       "slug": "jql_integration_complete",
       "path": "JQL_INTEGRATION_COMPLETE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "lefthook-rs-cargo",
       "path": "lefthook-rs/Cargo.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "macos_optimization_verification",
       "path": "MACOS_OPTIMIZATION_VERIFICATION.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "macos_optimizations",
       "path": "MACOS_OPTIMIZATIONS.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
-      "slug": "makefile",
+      "slug": "root-makefile",
       "path": "Makefile",
-      "extension": ""
+      "type": "makefile"
     }
 ,
     {
       "slug": "migration_plan",
       "path": "MIGRATION_PLAN.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "migration_summary",
       "path": "MIGRATION_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "optimized_default_workflow",
       "path": "OPTIMIZED_DEFAULT_WORKFLOW.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "phase_3_configuration_generation_summary",
       "path": "PHASE_3_CONFIGURATION_GENERATION_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "phase_4_complete_summary",
       "path": "PHASE_4_COMPLETE_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "phase_4_file_type_normalization",
       "path": "PHASE_4_FILE_TYPE_NORMALIZATION.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "phase_4_implementation_summary",
       "path": "PHASE_4_IMPLEMENTATION_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "phase_5_ci_enforcement_summary",
       "path": "PHASE_5_CI_ENFORCEMENT_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "project_structure",
       "path": "PROJECT_STRUCTURE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "quickstart_optimized",
       "path": "QUICKSTART_OPTIMIZED.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "readme_structure",
       "path": "README_STRUCTURE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "readme",
       "path": "README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "rust_build_optimizations_2025",
       "path": "RUST_BUILD_OPTIMIZATIONS_2025.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "rust_tooling_setup",
       "path": "RUST_TOOLING_SETUP.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "rust_tooling_summary",
       "path": "RUST_TOOLING_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "rust-toolchain",
       "path": "rust-toolchain.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "rustfmt",
       "path": "rustfmt.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "safeguards_summary",
       "path": "SAFEGUARDS_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "schema_validated_logging_complete",
       "path": "SCHEMA_VALIDATED_LOGGING_COMPLETE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "schemas-contract-state-schema",
       "path": "schemas/contract-state.schema.json",
-      "extension": "json"
+      "type": "json"
     }
 ,
     {
       "slug": "schemas-contract-transition-schema",
       "path": "schemas/contract-transition.schema.json",
-      "extension": "json"
+      "type": "json"
     }
 ,
     {
       "slug": "schemas-merkle-proof-schema",
       "path": "schemas/merkle-proof.schema.json",
-      "extension": "json"
+      "type": "json"
     }
 ,
     {
       "slug": "scripts-advanced-git-aliases",
       "path": "scripts/advanced-git-aliases.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-build-stats",
       "path": "scripts/build-stats.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-check-errors",
       "path": "scripts/check-errors.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-ci-build",
       "path": "scripts/ci-build.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-cleanup-logs",
       "path": "scripts/cleanup-logs.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-debug-pre-push",
       "path": "scripts/debug-pre-push.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-demo_jql_analysis",
       "path": "scripts/demo_jql_analysis.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-dev-cycle",
       "path": "scripts/dev-cycle.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-enforce_structured_logging",
       "path": "scripts/enforce_structured_logging.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-generate-files-config",
       "path": "scripts/generate-files-config.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-install_logging_tools",
       "path": "scripts/install_logging_tools.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-log-stats",
       "path": "scripts/log-stats.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-macos-optimize",
       "path": "scripts/macos-optimize.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-monitor_errors",
       "path": "scripts/monitor_errors.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-monitor-errors",
       "path": "scripts/monitor-errors.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-optimize-build",
       "path": "scripts/optimize-build.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-readme",
       "path": "scripts/README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "scripts-safe-commit",
       "path": "scripts/safe-commit.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-safe-git-aliases",
       "path": "scripts/safe-git-aliases.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-safe-pre-push-hook",
       "path": "scripts/safe-pre-push-hook.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-safe-push",
       "path": "scripts/safe-push.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-security-check",
       "path": "scripts/security-check.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-setup-default",
       "path": "scripts/setup-default.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-setup-env",
       "path": "scripts/setup-env.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-setup-log-cleanup",
       "path": "scripts/setup-log-cleanup.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-simple-git-aliases",
       "path": "scripts/simple-git-aliases.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-update-ci-integration",
       "path": "scripts/update-ci-integration.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-validate-ci-setup",
       "path": "scripts/validate-ci-setup.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-validation_summary",
       "path": "scripts/validation_summary.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-verify-ci-readiness",
       "path": "scripts/verify-ci-readiness.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "scripts-watch-dashboard",
       "path": "scripts/watch-dashboard.sh",
-      "extension": "sh"
+      "type": "sh"
     }
 ,
     {
       "slug": "security_guide",
       "path": "SECURITY_GUIDE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "security_summary",
       "path": "SECURITY_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "shell_script_migration_complete",
       "path": "SHELL_SCRIPT_MIGRATION_COMPLETE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "shell_script_migration_summary",
       "path": "SHELL_SCRIPT_MIGRATION_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "source_based_docs",
       "path": "SOURCE_BASED_DOCS.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "status_system_design",
       "path": "STATUS_SYSTEM_DESIGN.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "status_system_json_codegen_summary",
       "path": "STATUS_SYSTEM_JSON_CODEGEN_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "status_system_summary",
       "path": "STATUS_SYSTEM_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "status-badge",
       "path": "status-badge.json",
-      "extension": "json"
+      "type": "json"
     }
 ,
     {
       "slug": "strict_file_policy_summary",
       "path": "STRICT_FILE_POLICY_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "structure",
       "path": "STRUCTURE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "structured_logging_complete",
       "path": "STRUCTURED_LOGGING_COMPLETE.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "structured_logging_implementation_summary",
       "path": "STRUCTURED_LOGGING_IMPLEMENTATION_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "stuff",
       "path": "stuff.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "template_system_summary",
       "path": "TEMPLATE_SYSTEM_SUMMARY.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "templates-readme",
       "path": "templates/README.hbs",
-      "extension": "hbs"
+      "type": "hbs"
     }
 ,
     {
       "slug": "warning_and_validation_fixes",
       "path": "WARNING_AND_VALIDATION_FIXES.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "wit-event-bus",
       "path": "wit/event-bus.wit",
-      "extension": "wit"
+      "type": "wit"
     }
 ,
     {
       "slug": "wit-hook-builder",
       "path": "wit/hook-builder.wit",
-      "extension": "wit"
+      "type": "wit"
     }
 ,
     {
       "slug": "wit-hooksmith",
       "path": "wit/hooksmith.wit",
-      "extension": "wit"
+      "type": "wit"
     }
 ,
     {
       "slug": "wit-lefthook-generator",
       "path": "wit/lefthook-generator.wit",
-      "extension": "wit"
+      "type": "wit"
     }
 ,
     {
       "slug": "wit-validation",
       "path": "wit/validation.wit",
-      "extension": "wit"
+      "type": "wit"
     }
 ,
     {
       "slug": "wit-worktree-runner",
       "path": "wit/worktree-runner.wit",
-      "extension": "wit"
+      "type": "wit"
     }
 ,
     {
       "slug": "workspace_layout",
       "path": "WORKSPACE_LAYOUT.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "xtask_commands",
       "path": "XTASK_COMMANDS.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "xtask-cargo",
       "path": "xtask/Cargo.toml",
-      "extension": "toml"
+      "type": "toml"
     }
 ,
     {
       "slug": "xtask-docs-cli_help",
       "path": "xtask/docs/CLI_HELP.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "xtask-hooks",
       "path": "xtask/hooks/.gitattributes",
-      "extension": "gitattributes"
+      "type": "gitattributes"
     }
 ,
     {
       "slug": "xtask-hooks-readme",
       "path": "xtask/hooks/README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "xtask-readme",
       "path": "xtask/README.md",
-      "extension": "md"
+      "type": "md"
     }
 ,
     {
       "slug": "xtask-status-badge",
       "path": "xtask/status-badge.json",
-      "extension": "json"
+      "type": "json"
     }
 ,
     {
       "slug": "xtask-status-trends-status-2025-08-02",
       "path": "xtask/status-trends/status-2025-08-02.json",
-      "extension": "json"
+      "type": "json"
     }
 ,
     {
       "slug": "xtask-wit-hooksmith",
       "path": "xtask/wit/hooksmith.wit",
-      "extension": "wit"
+      "type": "wit"
     }
 ,
     {
       "slug": "xtask-wit-worktree-runner",
       "path": "xtask/wit/worktree-runner.wit",
-      "extension": "wit"
+      "type": "wit"
     }
   ],
 
