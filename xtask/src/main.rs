@@ -282,6 +282,7 @@ mod status;
 mod structured_auto_push;
 mod structured_logging;
 mod wasm_event_bus;
+mod strict_file_validator;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -485,6 +486,15 @@ enum Commands {
     },
     /// Check file types and generation markers
     CheckFiles {
+        /// Whether to exit with error on violations
+        #[arg(long)]
+        strict: bool,
+        /// Show detailed output
+        #[arg(long)]
+        verbose: bool,
+    },
+    /// Validate files against strict extension policy (.rs and .jsonc only)
+    ValidateFiles {
         /// Whether to exit with error on violations
         #[arg(long)]
         strict: bool,
@@ -1099,6 +1109,9 @@ async fn main() -> Result<()> {
         }
         Commands::CheckFiles { strict, verbose } => {
             check_files(strict, verbose)?;
+        }
+        Commands::ValidateFiles { strict, verbose } => {
+            validate_files_strict(strict, verbose)?;
         }
         Commands::GenAll { validate, force } => {
             generate_all_files(validate, force).await?;
@@ -3349,6 +3362,69 @@ fn check_files(strict: bool, verbose: bool) -> Result<()> {
         }
         Err(e) => {
             eprintln!("❌ File audit failed: {e}");
+            if strict {
+                std::process::exit(1);
+            }
+            Ok(())
+        }
+    }
+}
+
+fn validate_files_strict(strict: bool, verbose: bool) -> Result<()> {
+    use strict_file_validator::validate_files;
+
+    println!("🔍 Validating files against strict extension policy...");
+
+    match validate_files() {
+        Ok(result) => {
+            if verbose {
+                result.print_summary();
+            } else {
+                println!("📊 Strict File Extension Policy Summary");
+                println!("Total files checked: {}", result.total_files);
+                println!("✅ Allowed files (.rs, .jsonc): {}", result.allowed_files);
+                println!("🔧 Generated files: {}", result.generated_files);
+                println!("🚫 Ignored files: {}", result.ignored_files);
+                println!("🛡️  Exempt files: {}", result.exempt_files);
+                println!();
+
+                if result.has_violations() {
+                    println!("❌ Policy violations found:");
+                    for violation in &result.violations {
+                        match violation {
+                            strict_file_validator::FileViolation::DisallowedExtension { file, extension } => {
+                                println!("   ❌ Disallowed extension '{}' in: {}", extension, file);
+                            }
+                            strict_file_validator::FileViolation::MissingGeneratedHeader { file, extension } => {
+                                println!("   ❌ Missing generated header in: {} (extension: {})", file, extension);
+                            }
+                        }
+                    }
+
+                    if !result.errors.is_empty() {
+                        println!("   ❌ Errors:");
+                        for error in &result.errors {
+                            println!("      - {}", error);
+                        }
+                    }
+                    println!();
+                    println!("🔧 To fix violations:");
+                    println!("   - Convert files to .rs or .jsonc for manual maintenance");
+                    println!("   - Add generated headers to files that should be code-generated");
+                    println!("   - Run: cargo xtask gen-all --validate");
+                } else {
+                    println!("✅ All files comply with the strict extension policy!");
+                }
+            }
+
+            if strict && result.has_violations() {
+                std::process::exit(1);
+            }
+
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("❌ Strict file validation failed: {e}");
             if strict {
                 std::process::exit(1);
             }

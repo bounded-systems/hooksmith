@@ -38,6 +38,8 @@ pathdiff = "0.2"
 crossterm = "0.29.0"
 ratatui = { version = "0.26.0", features = ["crossterm"] }
 termcolor = "1.4"
+# File system traversal
+walkdir = "2.4"
 
 [dev-dependencies]
 tempfile = "3.0"
