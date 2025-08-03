@@ -1084,6 +1084,12 @@ enum Commands {
         #[command(subcommand)]
         command: GitLefthookCommands,
     },
+    /// Manage generated files registry
+    Registry {
+        /// Registry command to execute
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
+    },
 }
 
 /// WIT schema for function definition
