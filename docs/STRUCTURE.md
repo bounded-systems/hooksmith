@@ -43,6 +43,7 @@ This document shows the complete file structure of the repository.
 ├── .trunk/
   ├── trunk.yaml
 ├── ARCHITECTURE.md
+├── AUTOPUSH_WORKFLOW.md
 ├── BOOTSTRAP.md
 ├── BOOTSTRAP_SUMMARY.md
 ├── CARGO_BEST_PRACTICES.md
@@ -250,6 +251,8 @@ This document shows the complete file structure of the repository.
   ├── CONTRACT_VALIDATION_SUMMARY.md
 ├── docs/
   ├── CONTRACT_VALIDATION_SYSTEM.md
+├── docs/
+  ├── CONTRACT_VALIDATION_WITH_GIT_NOTES.md
 ├── docs/
   ├── DEVELOPMENT.md
 ├── docs/
@@ -576,6 +579,9 @@ This document shows the complete file structure of the repository.
     ├── contract_state_machine.rs
 ├── xtask/
   ├── src/
+    ├── contract_validation.rs
+├── xtask/
+  ├── src/
     ├── docs/
       ├── checksum.rs
 ├── xtask/
@@ -674,23 +680,23 @@ This document shows the complete file structure of the repository.
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .lock | 2 | Other files |
-| .backup | 1 | Other files |
-| .json | 10 | JSON schema and config files |
-| .epub | 1 | EPUB documentation |
-| .bash | 1 | Other files |
 | .yaml | 4 | YAML configuration files |
+| .md | 131 | Markdown documentation |
+| .yml | 9 | YAML configuration files |
+| .toml | 16 | Cargo and configuration files |
+| .bash | 1 | Other files |
 | .css | 1 | Stylesheet files |
-| .rs | 124 | Rust source files |
 | .dot | 1 | Other files |
 | .html | 1 | HTML documentation |
-| .hbs | 1 | Other files |
-| .toml | 16 | Cargo and configuration files |
-| .sed | 2 | Other files |
+| .epub | 1 | EPUB documentation |
+| .json | 10 | JSON schema and config files |
 | .wit | 9 | WebAssembly Interface Type definitions |
-| .yml | 9 | YAML configuration files |
+| .lock | 2 | Other files |
 | .pdf | 1 | PDF documentation |
-| .md | 131 | Markdown documentation |
+| .sed | 2 | Other files |
+| .backup | 1 | Other files |
+| .rs | 124 | Rust source files |
+| .hbs | 1 | Other files |
 
 ## 🧩 Component Breakdown
 
@@ -721,9 +727,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 168
-- **Modified Files**: 15
+- **Total Commits**: 169
+- **Modified Files**: 4
 
 ---
 
-*Generated on Sun Aug  3 01:07:12 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 01:07:35 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
