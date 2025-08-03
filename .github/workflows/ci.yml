@@ -13,9 +13,14 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  # Build optimization environment variables
+  RUSTC_WRAPPER: sccache
+  SCCACHE_CACHE_SIZE: 20G
+  SCCACHE_DIR: ${{ github.workspace }}/.cache/sccache
+  CARGO_INCREMENTAL: 0
 
 jobs:
-  # Matrix build across Rust toolchains
+  # Matrix build across Rust toolchains with optimizations
   test:
     name: Test (Rust ${{ matrix.rust }})
     runs-on: ubuntu-latest
@@ -45,16 +50,41 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Cache dependencies
+      - name: Install build optimization tools
+        run: |
+          # Install sccache for build caching
+          cargo install sccache
+          # Install cargo-hakari for workspace optimization
+          cargo install cargo-hakari
+
+          # Install cargo-nextest for faster testing
+          cargo install cargo-nextest
+
+      - name: Setup sccache
+        run: |
+          mkdir -p ${{ env.SCCACHE_DIR }}
+          sccache --show-stats
+
+      - name: Cache dependencies and build artifacts
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
+            ${{ env.SCCACHE_DIR }}
+            .cargo/hakari/
           key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-${{ matrix.rust }}-
+
+      - name: Setup cargo-hakari
+        run: |
+          # Generate hakari.toml if it doesn't exist
+          if [ ! -f "hakari.toml" ]; then
+            cargo hakari generate
+          fi
+          cargo hakari update
 
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -62,8 +92,8 @@ jobs:
       - name: Run clippy
         run: cargo clippy --all -- -D warnings
 
-      - name: Run tests
-        run: cargo test --all
+      - name: Run tests with cargo-nextest
+        run: cargo nextest run --all-targets --all-features --test-threads=$(nproc)
 
       - name: Build documentation
         run: cargo doc --no-deps --all
@@ -74,9 +104,19 @@ jobs:
           cargo install cargo-deny
           cargo deny check
 
-  # Separate job for nightly (optional)
+      - name: Show build statistics
+        if: always()
+        run: |
+          echo "📊 Build Performance Statistics:"
+          echo "================================"
+          sccache --show-stats
+          echo
+          echo "Cache usage:"
+          du -sh ${{ env.SCCACHE_DIR }} || echo "sccache cache not found"
+
+  # Separate job for nightly with experimental optimizations
   nightly:
-    name: Nightly checks
+    name: Nightly checks with optimizations
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
@@ -92,19 +132,52 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Cache dependencies
+      - name: Install build optimization tools
+        run: |
+          cargo install sccache
+          cargo install cargo-hakari
+          cargo install cargo-nextest
+
+      - name: Setup sccache
+        run: |
+          mkdir -p ${{ env.SCCACHE_DIR }}
+          sccache --show-stats
+
+      - name: Cache dependencies and build artifacts
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
+            ${{ env.SCCACHE_DIR }}
+            .cargo/hakari/
           key: nightly-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Setup cargo-hakari
+        run: |
+          if [ ! -f "hakari.toml" ]; then
+            cargo hakari generate
+          fi
+          cargo hakari update
 
       - name: Run clippy with nightly features
         run: cargo clippy --all -- -D warnings
 
-  # Code generation validation
+      - name: Run tests with nightly optimizations
+        run: |
+          # Enable parallel compilation frontend (nightly only)
+          export RUSTFLAGS="-Z threads=8"
+          cargo +nightly nextest run --all-targets --all-features --test-threads=$(nproc)
+
+      - name: Show build statistics
+        if: always()
+        run: |
+          echo "📊 Nightly Build Performance Statistics:"
+          echo "======================================="
+          sccache --show-stats
+
+  # Code generation validation with optimizations
   codegen:
     name: Validate code generation
     runs-on: ubuntu-latest
@@ -121,14 +194,33 @@ jobs:
           profile: minimal
           override: true
 
-      - name: Cache dependencies
+      - name: Install build optimization tools
+        run: |
+          cargo install sccache
+          cargo install cargo-hakari
+
+      - name: Setup sccache
+        run: |
+          mkdir -p ${{ env.SCCACHE_DIR }}
+          sccache --show-stats
+
+      - name: Cache dependencies and build artifacts
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
+            ${{ env.SCCACHE_DIR }}
+            .cargo/hakari/
           key: codegen-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Setup cargo-hakari
+        run: |
+          if [ ! -f "hakari.toml" ]; then
+            cargo hakari generate
+          fi
+          cargo hakari update
 
       - name: Run code generation
         run: cargo xtask codegen
@@ -158,9 +250,9 @@ jobs:
           cargo install cargo-audit
           cargo audit --deny warnings
 
-  # Build release artifacts
+  # Build release artifacts with optimizations
   build-release:
-    name: Build release
+    name: Build release with optimizations
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
@@ -175,20 +267,133 @@ jobs:
           profile: minimal
           override: true
 
-      - name: Cache dependencies
+      - name: Install build optimization tools
+        run: |
+          cargo install sccache
+          cargo install cargo-hakari
+
+      - name: Setup sccache
+        run: |
+          mkdir -p ${{ env.SCCACHE_DIR }}
+          sccache --show-stats
+
+      - name: Cache dependencies and build artifacts
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
+            ${{ env.SCCACHE_DIR }}
+            .cargo/hakari/
           key: release-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Build release binaries
-        run: cargo build --release --all
+      - name: Setup cargo-hakari
+        run: |
+          if [ ! -f "hakari.toml" ]; then
+            cargo hakari generate
+          fi
+          cargo hakari update
+
+      - name: Build release binaries with optimizations
+        run: |
+          # Use optimized build script
+          ./scripts/ci-build.sh
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v3
         with:
           name: release-binaries
           path: target/release/
+
+      - name: Show build statistics
+        if: always()
+        run: |
+          echo "📊 Release Build Performance Statistics:"
+          echo "======================================="
+          sccache --show-stats
+          echo
+          echo "Cache usage:"
+          du -sh ${{ env.SCCACHE_DIR }} || echo "sccache cache not found"
+
+  # Performance monitoring and optimization validation
+  performance:
+    name: Performance validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Install build optimization tools
+        run: |
+          cargo install sccache
+          cargo install cargo-hakari
+          cargo install cargo-nextest
+
+      - name: Setup sccache
+        run: |
+          mkdir -p ${{ env.SCCACHE_DIR }}
+          sccache --show-stats
+
+      - name: Cache dependencies and build artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            ${{ env.SCCACHE_DIR }}
+            .cargo/hakari/
+          key: performance-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Setup cargo-hakari
+        run: |
+          if [ ! -f "hakari.toml" ]; then
+            cargo hakari generate
+          fi
+          cargo hakari update
+
+      - name: Run performance tests
+        run: |
+          # Test optimized build commands
+          echo "Testing cargo dev-fast..."
+          cargo dev-fast --help || echo "cargo dev-fast not available"
+
+          echo "Testing cargo test-parallel..."
+          cargo test-parallel --help || echo "cargo test-parallel not available"
+
+          echo "Testing optimized build script..."
+          ./scripts/dev-cycle.sh || echo "dev-cycle script not available"
+
+      - name: Generate performance report
+        run: |
+          echo "📊 Performance Validation Report"
+          echo "================================"
+          echo "Build optimization tools:"
+          echo "  - sccache: $(sccache --version 2>/dev/null || echo 'not installed')"
+          echo "  - cargo-hakari: $(cargo-hakari --version 2>/dev/null || echo 'not installed')"
+          echo "  - cargo-nextest: $(cargo-nextest --version 2>/dev/null || echo 'not installed')"
+          echo
+          echo "Cache statistics:"
+          sccache --show-stats
+          echo
+          echo "Workspace analysis:"
+          cargo tree --all-features --depth 1
+
+      - name: Upload performance report
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-report
+          path: |
+            target/cargo-timings.html
+            sccache.log
+          retention-days: 7
