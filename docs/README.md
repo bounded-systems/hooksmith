@@ -8,30 +8,31 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **tempfile**: dev
-- **regex**: ^1.0
-- **indicatif**: ^0.17
-- **jsonschema**: ^0.17
-- **serde_yaml**: ^0.9
-- **cli-core**: *
-- **sha2**: ^0.10
-- **tokio**: ^1.0
-- **toml**: ^0.8
-- **tracing-subscriber**: ^0.3
+- **which**: ^5.0
 - **console**: ^0.15
-- **reqwest**: ^0.11
-- **git2**: ^0.18
 - **git-filter**: *
 - **serde**: ^1.0
-- **anyhow**: ^1.0
-- **tracing**: ^0.1
 - **wasmtime**: ^18.0
-- **wasmtime-wasi**: ^18.0
-- **wit-bindgen**: ^0.20
-- **chrono**: ^0.4
-- **which**: ^5.0
-- **serde_json**: ^1.0
+- **cli-core**: *
+- **toml**: ^0.8
 - **clap**: ^4.0
+- **tracing-subscriber**: ^0.3
+- **tempfile**: dev
+- **chrono**: ^0.4
+- **reqwest**: ^0.11
+- **git2**: ^0.18
+- **wasmtime-wasi**: ^18.0
+- **serde_yaml**: ^0.9
+- **regex**: ^1.0
+- **anyhow**: ^1.0
+- **jsonschema**: ^0.17
+- **schemars**: ^0.8
+- **tokio**: ^1.0
+- **indicatif**: ^0.17
+- **tracing**: ^0.1
+- **serde_json**: ^1.0
+- **wit-bindgen**: ^0.20
+- **sha2**: ^0.10
 
 ## Installation
 
@@ -114,6 +115,7 @@ hooksmith --help
 │   │   ├── GENERATED_FILE_VALIDATION.md
 │   │   ├── contract-validation-architecture.md
 │   │   ├── blob_contract_system.md
+│   │   ├── CONTRACT_VALIDATION_SYSTEM.md
 │   │   ├── tree_contract_system.md
 │   │   ├── TEST_SUMMARY.md
 │   │   ├── STRUCTURE.md
@@ -246,6 +248,7 @@ hooksmith --help
 │   │   ├── combined_contract_demo.rs
 │   │   ├── tree_filename_chars_contract_demo.rs
 │   │   ├── tree_contract_demo.rs
+│   │   ├── contract_validation_demo.rs
 │       └── git_model_demo.rs
 │   ├── scripts/
 │       └── README.md
@@ -332,9 +335,11 @@ hooksmith --help
     │   ├── lib.rs
     │   ├── main.rs
     │   ├── commands/
+    │   │   ├── contract_validation.rs
     │       └── mod.rs
     │   ├── modules/
     │   │   ├── contract_state_machine.rs
+    │   │   ├── contract_validation.rs
     │   │   ├── hook_builder.rs
     │   │   ├── mod.rs
     │   │   ├── git_model.rs

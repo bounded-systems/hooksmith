@@ -6,6 +6,8 @@
 
 /// Contract state machine for validation lifecycle
 pub mod contract_state_machine;
+/// Contract validation with JSON Schema and Git notes
+pub mod contract_validation;
 /// Structured code generation
 pub mod generator;
 /// Git file states, actions, and hooks model

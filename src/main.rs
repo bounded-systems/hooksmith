@@ -54,6 +54,11 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use console::style;
 
+// Import contract validation commands
+use hooksmith::commands::contract_validation::{
+    run_contract_validation, ContractValidationCommand,
+};
+
 // All functionality is implemented directly in main.rs
 
 /// Main CLI application for Hooksmith
@@ -183,6 +188,14 @@ enum Commands {
         #[command(subcommand)]
         worktree: WorktreeCommands,
     },
+    /// Contract validation with JSON Schema and Git notes
+    ///
+    /// Commands for validating data against contracts using JSON Schema
+    /// generated from Rust types, with proof storage in Git notes.
+    Contract {
+        #[command(subcommand)]
+        contract: ContractCommands,
+    },
 }
 
 /// Worktree management commands
@@ -279,6 +292,85 @@ enum WasmCommands {
         #[arg(long, default_value = "target/bindings")]
         output: String,
     },
+}
+
+/// Contract validation commands
+#[derive(Subcommand)]
+enum ContractCommands {
+    /// Validate data against a contract
+    Validate {
+        /// Contract name to validate against
+        #[arg(long)]
+        contract: String,
+
+        /// File path to validate
+        #[arg(long)]
+        file: String,
+
+        /// Whether to store proof after validation
+        #[arg(long, default_value = "false")]
+        store_proof: bool,
+
+        /// Whether to use strict validation
+        #[arg(long, default_value = "false")]
+        strict: bool,
+    },
+    /// Generate JSON Schema from Rust types
+    GenerateSchema {
+        /// Rust type to generate schema for
+        #[arg(long)]
+        type_name: String,
+
+        /// Output file for the schema
+        #[arg(long)]
+        output: Option<String>,
+    },
+    /// Store validation proof as Git note
+    StoreProof {
+        /// File path to store proof for
+        #[arg(long)]
+        file: String,
+
+        /// Validation result JSON
+        #[arg(long)]
+        result: String,
+    },
+    /// Verify validation proof from Git note
+    VerifyProof {
+        /// File path to verify proof for
+        #[arg(long)]
+        file: String,
+
+        /// Expected content hash
+        #[arg(long)]
+        hash: String,
+    },
+    /// Create a new contract definition
+    Create {
+        /// Contract name
+        #[arg(long)]
+        name: String,
+
+        /// Contract version
+        #[arg(long, default_value = "1.0.0")]
+        version: String,
+
+        /// Contract description
+        #[arg(long)]
+        description: Option<String>,
+
+        /// JSON Schema file
+        #[arg(long)]
+        schema_file: String,
+
+        /// Output file for contract definition
+        #[arg(long)]
+        output: Option<String>,
+    },
+    /// List registered contracts
+    List,
+    /// Run the contract validation demo
+    Demo,
 }
 
 /// Main application entry point
@@ -1428,6 +1520,69 @@ async fn main() -> Result<()> {
                 }
             }
         }
+        Commands::Contract { contract } => match contract {
+            ContractCommands::Validate {
+                contract,
+                file,
+                store_proof,
+                strict,
+            } => {
+                let cmd = ContractValidationCommand::Validate(
+                    hooksmith::commands::contract_validation::ValidateArgs {
+                        contract,
+                        file,
+                        store_proof,
+                        strict,
+                    },
+                );
+                run_contract_validation(cmd).await?;
+            }
+            ContractCommands::GenerateSchema { type_name, output } => {
+                let cmd = ContractValidationCommand::GenerateSchema(
+                    hooksmith::commands::contract_validation::GenerateSchemaArgs {
+                        type_name,
+                        output,
+                    },
+                );
+                run_contract_validation(cmd).await?;
+            }
+            ContractCommands::StoreProof { file, result } => {
+                let cmd = ContractValidationCommand::StoreProof(
+                    hooksmith::commands::contract_validation::StoreProofArgs { file, result },
+                );
+                run_contract_validation(cmd).await?;
+            }
+            ContractCommands::VerifyProof { file, hash } => {
+                let cmd = ContractValidationCommand::VerifyProof(
+                    hooksmith::commands::contract_validation::VerifyProofArgs { file, hash },
+                );
+                run_contract_validation(cmd).await?;
+            }
+            ContractCommands::Create {
+                name,
+                version,
+                description,
+                schema_file,
+                output,
+            } => {
+                let cmd = ContractValidationCommand::Create(
+                    hooksmith::commands::contract_validation::CreateArgs {
+                        name,
+                        version,
+                        description,
+                        schema_file,
+                        output,
+                    },
+                );
+                run_contract_validation(cmd).await?;
+            }
+            ContractCommands::List => {
+                run_contract_validation(ContractValidationCommand::List).await?;
+            }
+            ContractCommands::Demo => {
+                run_contract_validation(ContractValidationCommand::Demo).await?;
+            }
+        },
     }
 
     Ok(())

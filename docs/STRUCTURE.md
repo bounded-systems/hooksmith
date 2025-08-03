@@ -45,6 +45,7 @@ This document shows the complete file structure of the repository.
 ├── ARCHITECTURE.md
 ├── BOOTSTRAP.md
 ├── BOOTSTRAP_SUMMARY.md
+├── CARGO_BEST_PRACTICES.md
 ├── CHANGELOG.md
 ├── CLIPPY_FIXES_SUMMARY.md
 ├── CODEGEN_MARKERS.md
@@ -222,6 +223,7 @@ This document shows the complete file structure of the repository.
   ├── file_types.yaml
 ├── config/
   ├── state-transitions.yml
+├── deny.toml
 ├── diagrams/
   ├── git_commit_workflow.md
 ├── diagrams/
@@ -652,33 +654,33 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       327
-- **Rust Files**:        120 (.rs)
+- **Total Files**:       331
+- **Rust Files**:        123 (.rs)
 - **Configuration Files**:        39 (.toml, .yaml, .rc)
-- **Documentation**:        127 (.md)
+- **Documentation**:        128 (.md)
 - **Scripts**:        0 (.sh)
 
 ## 📋 File Type Breakdown
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .sed | 2 | Other files |
-| .bash | 1 | Other files |
-| .css | 1 | Stylesheet files |
-| .rs | 120 | Rust source files |
-| .hbs | 1 | Other files |
-| .toml | 16 | Cargo and configuration files |
-| .lock | 2 | Other files |
-| .json | 10 | JSON schema and config files |
-| .yml | 9 | YAML configuration files |
-| .html | 1 | HTML documentation |
-| .epub | 1 | EPUB documentation |
-| .pdf | 1 | PDF documentation |
 | .yaml | 4 | YAML configuration files |
-| .md | 127 | Markdown documentation |
+| .bash | 1 | Other files |
+| .yml | 9 | YAML configuration files |
+| .hbs | 1 | Other files |
+| .html | 1 | HTML documentation |
+| .wit | 9 | WebAssembly Interface Type definitions |
 | .dot | 1 | Other files |
 | .backup | 1 | Other files |
-| .wit | 9 | WebAssembly Interface Type definitions |
+| .md | 128 | Markdown documentation |
+| .json | 10 | JSON schema and config files |
+| .epub | 1 | EPUB documentation |
+| .sed | 2 | Other files |
+| .pdf | 1 | PDF documentation |
+| .css | 1 | Stylesheet files |
+| .toml | 16 | Cargo and configuration files |
+| .lock | 2 | Other files |
+| .rs | 123 | Rust source files |
 
 ## 🧩 Component Breakdown
 
@@ -709,9 +711,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 166
-- **Modified Files**: 5
+- **Total Commits**: 167
+- **Modified Files**: 10
 
 ---
 
-*Generated on Sun Aug  3 00:34:02 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 00:50:46 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

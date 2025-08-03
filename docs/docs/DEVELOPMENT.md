@@ -89,6 +89,7 @@ cargo build
 │   │   ├── GENERATED_FILE_VALIDATION.md
 │   │   ├── contract-validation-architecture.md
 │   │   ├── blob_contract_system.md
+│   │   ├── CONTRACT_VALIDATION_SYSTEM.md
 │   │   ├── tree_contract_system.md
 │   │   ├── TEST_SUMMARY.md
 │   │   ├── STRUCTURE.md
@@ -221,6 +222,7 @@ cargo build
 │   │   ├── combined_contract_demo.rs
 │   │   ├── tree_filename_chars_contract_demo.rs
 │   │   ├── tree_contract_demo.rs
+│   │   ├── contract_validation_demo.rs
 │       └── git_model_demo.rs
 │   ├── scripts/
 │       └── README.md
@@ -307,9 +309,11 @@ cargo build
     │   ├── lib.rs
     │   ├── main.rs
     │   ├── commands/
+    │   │   ├── contract_validation.rs
     │       └── mod.rs
     │   ├── modules/
     │   │   ├── contract_state_machine.rs
+    │   │   ├── contract_validation.rs
     │   │   ├── hook_builder.rs
     │   │   ├── mod.rs
     │   │   ├── git_model.rs
