@@ -87,6 +87,95 @@ enum EventStreamCommands {
     },
 }
 
+/// SARIF and CodeQL commands
+#[derive(Debug, Clone, clap::Subcommand)]
+enum SarifCommands {
+    /// Convert JSONL events to SARIF format
+    JsonlToSarif {
+        /// Input JSONL file
+        #[arg(long)]
+        input: String,
+        /// Output SARIF file
+        #[arg(long)]
+        output: String,
+        /// Validate output SARIF
+        #[arg(long)]
+        validate: bool,
+    },
+    /// Convert SARIF to JSONL events
+    SarifToJsonl {
+        /// Input SARIF file
+        #[arg(long)]
+        input: String,
+        /// Output JSONL file
+        #[arg(long)]
+        output: String,
+        /// Validate input SARIF
+        #[arg(long)]
+        validate: bool,
+    },
+    /// Run CodeQL analysis and convert to structured events
+    CodeqlAnalysis {
+        /// CodeQL CLI path (optional, will search PATH)
+        #[arg(long)]
+        cli_path: Option<String>,
+        /// Database directory
+        #[arg(long, default_value = "codeql-db")]
+        db_dir: String,
+        /// Query suite to run
+        #[arg(long, default_value = "codeql-cpp-queries.qls")]
+        query_suite: String,
+        /// Language to analyze
+        #[arg(long, default_value = "cpp")]
+        language: String,
+        /// Build command
+        #[arg(long, default_value = "cargo build")]
+        build_command: String,
+        /// Output SARIF file
+        #[arg(long)]
+        output: Option<String>,
+        /// Convert to JSONL events
+        #[arg(long)]
+        to_jsonl: bool,
+    },
+    /// Validate SARIF file
+    ValidateSarif {
+        /// SARIF file to validate
+        #[arg(long)]
+        file: String,
+        /// Exit with error on validation failures
+        #[arg(long)]
+        strict: bool,
+    },
+    /// Merge multiple SARIF files
+    MergeSarif {
+        /// Input SARIF files
+        #[arg(long)]
+        inputs: Vec<String>,
+        /// Output merged SARIF file
+        #[arg(long)]
+        output: String,
+        /// Validate merged output
+        #[arg(long)]
+        validate: bool,
+    },
+    /// Integrate CodeQL into validation pipeline
+    IntegrateCodeql {
+        /// Whether to run CodeQL analysis
+        #[arg(long)]
+        run_analysis: bool,
+        /// Whether to convert results to JSONL
+        #[arg(long)]
+        to_jsonl: bool,
+        /// Whether to merge with existing validation results
+        #[arg(long)]
+        merge: bool,
+        /// Output directory for results
+        #[arg(long, default_value = "validation-results")]
+        output_dir: String,
+    },
+}
+
 /// Event bus commands
 #[derive(Debug, Clone, clap::Subcommand)]
 enum EventBusCommands {
@@ -192,6 +281,7 @@ mod structured_logging;
 mod wasm_event_bus;
 mod events;
 mod emit;
+mod sarif_integration;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -775,6 +865,11 @@ enum Commands {
         #[arg(long)]
         strict: bool,
     },
+    /// SARIF and CodeQL integration commands
+    Sarif {
+        #[command(subcommand)]
+        command: SarifCommands,
+    },
 }
 
 /// WIT schema for function definition
@@ -1321,6 +1416,48 @@ async fn main() -> Result<()> {
         }
         Commands::ValidateSchema { input, strict } => {
             validate_schema_command(input, strict)?;
+        }
+        Commands::Sarif { command } => match command {
+            SarifCommands::JsonlToSarif { input, output, validate } => {
+                run_jsonl_to_sarif_command(input, output, validate).await?
+            }
+            SarifCommands::SarifToJsonl { input, output, validate } => {
+                run_sarif_to_jsonl_command(input, output, validate).await?
+            }
+            SarifCommands::CodeqlAnalysis {
+                cli_path,
+                db_dir,
+                query_suite,
+                language,
+                build_command,
+                output,
+                to_jsonl,
+            } => {
+                run_codeql_analysis_command(
+                    cli_path.as_deref(),
+                    db_dir,
+                    query_suite,
+                    language,
+                    build_command,
+                    output.as_deref(),
+                    *to_jsonl,
+                )
+                .await
+            }
+            SarifCommands::ValidateSarif { file, strict } => {
+                run_validate_sarif_command(file, *strict)
+            }
+            SarifCommands::MergeSarif { inputs, output, validate } => {
+                run_merge_sarif_command(inputs, output, *validate)
+            }
+            SarifCommands::IntegrateCodeql {
+                run_analysis,
+                to_jsonl,
+                merge,
+                output_dir,
+            } => {
+                run_integrate_codeql_command(*run_analysis, *to_jsonl, *merge, output_dir).await
+            }
         }
     }
 
@@ -6582,4 +6719,294 @@ fn validate_schema_command(input: Option<String>, strict: bool) -> Result<()> {
             }
         }
     }
+}
+
+/// Convert JSONL events to SARIF format
+async fn run_jsonl_to_sarif_command(input: String, output: String, validate: bool) -> Result<()> {
+    println!("🔄 Converting JSONL to SARIF...");
+    println!("   Input: {}", input);
+    println!("   Output: {}", output);
+
+    let logger = structured_logging::StructuredLogger::new();
+    let integration = sarif_integration::SarifIntegration::new(logger);
+
+    let sarif_content = integration.jsonl_to_sarif(Path::new(&input))?;
+
+    // Write SARIF output
+    std::fs::write(&output, &sarif_content)
+        .context(format!("Failed to write SARIF file: {}", output))?;
+
+    println!("✅ Successfully converted JSONL to SARIF");
+
+    if validate {
+        println!("🔍 Validating SARIF output...");
+        let is_valid = integration.validate_sarif(Path::new(&output))?;
+        if is_valid {
+            println!("✅ SARIF validation passed");
+        } else {
+            anyhow::bail!("❌ SARIF validation failed");
+        }
+    }
+
+    Ok(())
+}
+
+/// Convert SARIF to JSONL events
+async fn run_sarif_to_jsonl_command(input: String, output: String, validate: bool) -> Result<()> {
+    println!("🔄 Converting SARIF to JSONL...");
+    println!("   Input: {}", input);
+    println!("   Output: {}", output);
+
+    let logger = structured_logging::StructuredLogger::new();
+    let integration = sarif_integration::SarifIntegration::new(logger);
+
+    if validate {
+        println!("🔍 Validating SARIF input...");
+        let is_valid = integration.validate_sarif(Path::new(&input))?;
+        if !is_valid {
+            anyhow::bail!("❌ SARIF validation failed");
+        }
+        println!("✅ SARIF validation passed");
+    }
+
+    let events = integration.sarif_to_jsonl(Path::new(&input))?;
+
+    // Write JSONL output
+    let mut output_file = std::fs::File::create(&output)
+        .context(format!("Failed to create output file: {}", output))?;
+    
+    for event in events {
+        let jsonl = event.to_jsonl()?;
+        use std::io::Write;
+        writeln!(output_file, "{}", jsonl)?;
+    }
+
+    println!("✅ Successfully converted SARIF to JSONL ({} events)", events.len());
+
+    Ok(())
+}
+
+/// Run CodeQL analysis and convert to structured events
+async fn run_codeql_analysis_command(
+    cli_path: Option<&str>,
+    db_dir: String,
+    query_suite: String,
+    language: String,
+    build_command: String,
+    output: Option<&str>,
+    to_jsonl: bool,
+) -> Result<()> {
+    println!("🔍 Running CodeQL analysis...");
+    println!("   Database: {}", db_dir);
+    println!("   Query suite: {}", query_suite);
+    println!("   Language: {}", language);
+    println!("   Build command: {}", build_command);
+
+    let logger = structured_logging::StructuredLogger::new();
+    
+    let mut config = sarif_integration::CodeQLConfig::default();
+    config.cli_path = cli_path.map(|s| s.to_string());
+    config.db_dir = PathBuf::from(db_dir);
+    config.query_suite = query_suite;
+    config.language = language;
+    config.build_command = build_command.split_whitespace().map(|s| s.to_string()).collect();
+
+    let integration = sarif_integration::SarifIntegration::new(logger).with_config(config);
+
+    // Run CodeQL analysis
+    let events = integration.run_codeql_analysis().await?;
+
+    println!("✅ CodeQL analysis completed with {} results", events.len());
+
+    // Save SARIF output if requested
+    if let Some(output_path) = output {
+        println!("💾 Saving SARIF output to: {}", output_path);
+        
+        // Convert events back to SARIF for output
+        let temp_jsonl = format!("{}.tmp.jsonl", output_path);
+        let temp_file = std::fs::File::create(&temp_jsonl)
+            .context("Failed to create temporary JSONL file")?;
+        
+        use std::io::Write;
+        for event in &events {
+            let jsonl = event.to_jsonl()?;
+            writeln!(temp_file, "{}", jsonl)?;
+        }
+        drop(temp_file);
+
+        // Convert JSONL to SARIF
+        let sarif_content = integration.jsonl_to_sarif(Path::new(&temp_jsonl))?;
+        std::fs::write(output_path, &sarif_content)
+            .context(format!("Failed to write SARIF file: {}", output_path))?;
+
+        // Clean up temp file
+        let _ = std::fs::remove_file(&temp_jsonl);
+    }
+
+    // Convert to JSONL if requested
+    if to_jsonl {
+        let jsonl_output = output.map(|s| format!("{}.jsonl", s)).unwrap_or_else(|| "codeql-results.jsonl".to_string());
+        println!("💾 Saving JSONL output to: {}", jsonl_output);
+        
+        let mut output_file = std::fs::File::create(&jsonl_output)
+            .context(format!("Failed to create JSONL file: {}", jsonl_output))?;
+        
+        use std::io::Write;
+        for event in events {
+            let jsonl = event.to_jsonl()?;
+            writeln!(output_file, "{}", jsonl)?;
+        }
+    }
+
+    Ok(())
+}
+
+/// Validate SARIF file
+fn run_validate_sarif_command(file: String, strict: bool) -> Result<()> {
+    println!("🔍 Validating SARIF file: {}", file);
+
+    let logger = structured_logging::StructuredLogger::new();
+    let integration = sarif_integration::SarifIntegration::new(logger);
+
+    let is_valid = integration.validate_sarif(Path::new(&file))?;
+
+    if is_valid {
+        println!("✅ SARIF validation passed");
+    } else {
+        println!("❌ SARIF validation failed");
+        if strict {
+            anyhow::bail!("SARIF validation failed");
+        }
+    }
+
+    Ok(())
+}
+
+/// Merge multiple SARIF files
+fn run_merge_sarif_command(inputs: Vec<String>, output: String, validate: bool) -> Result<()> {
+    println!("🔄 Merging SARIF files...");
+    println!("   Inputs: {:?}", inputs);
+    println!("   Output: {}", output);
+
+    let logger = structured_logging::StructuredLogger::new();
+    let integration = sarif_integration::SarifIntegration::new(logger);
+
+    let input_paths: Vec<PathBuf> = inputs.iter().map(|s| PathBuf::from(s)).collect();
+    let merged_content = integration.merge_sarif_files(&input_paths)?;
+
+    // Write merged SARIF
+    std::fs::write(&output, &merged_content)
+        .context(format!("Failed to write merged SARIF file: {}", output))?;
+
+    println!("✅ Successfully merged {} SARIF files", inputs.len());
+
+    if validate {
+        println!("🔍 Validating merged SARIF...");
+        let is_valid = integration.validate_sarif(Path::new(&output))?;
+        if is_valid {
+            println!("✅ Merged SARIF validation passed");
+        } else {
+            anyhow::bail!("❌ Merged SARIF validation failed");
+        }
+    }
+
+    Ok(())
+}
+
+/// Integrate CodeQL into validation pipeline
+async fn run_integrate_codeql_command(
+    run_analysis: bool,
+    to_jsonl: bool,
+    merge: bool,
+    output_dir: String,
+) -> Result<()> {
+    println!("🔧 Integrating CodeQL into validation pipeline...");
+    println!("   Output directory: {}", output_dir);
+
+    // Create output directory
+    let output_path = Path::new(&output_dir);
+    if !output_path.exists() {
+        std::fs::create_dir_all(output_path)
+            .context(format!("Failed to create output directory: {}", output_dir))?;
+    }
+
+    let logger = structured_logging::StructuredLogger::new();
+    let integration = sarif_integration::SarifIntegration::new(logger);
+
+    if run_analysis {
+        println!("🔍 Running CodeQL analysis...");
+        let events = integration.run_codeql_analysis().await?;
+        println!("✅ CodeQL analysis completed with {} results", events.len());
+
+        // Save results
+        let sarif_output = output_path.join("codeql-results.sarif");
+        let jsonl_output = output_path.join("codeql-results.jsonl");
+
+        // Convert to SARIF
+        let temp_jsonl = output_path.join("temp.jsonl");
+        let temp_file = std::fs::File::create(&temp_jsonl)
+            .context("Failed to create temporary JSONL file")?;
+        
+        use std::io::Write;
+        for event in &events {
+            let jsonl = event.to_jsonl()?;
+            writeln!(temp_file, "{}", jsonl)?;
+        }
+        drop(temp_file);
+
+        let sarif_content = integration.jsonl_to_sarif(&temp_jsonl)?;
+        std::fs::write(&sarif_output, &sarif_content)
+            .context("Failed to write SARIF file")?;
+
+        // Save JSONL if requested
+        if to_jsonl {
+            let mut output_file = std::fs::File::create(&jsonl_output)
+                .context("Failed to create JSONL file")?;
+            
+            use std::io::Write;
+            for event in events {
+                let jsonl = event.to_jsonl()?;
+                writeln!(output_file, "{}", jsonl)?;
+            }
+        }
+
+        // Clean up temp file
+        let _ = std::fs::remove_file(&temp_jsonl);
+
+        println!("💾 Results saved:");
+        println!("   SARIF: {}", sarif_output.display());
+        if to_jsonl {
+            println!("   JSONL: {}", jsonl_output.display());
+        }
+    }
+
+    if merge {
+        println!("🔄 Merging with existing validation results...");
+        
+        // Look for existing SARIF files in output directory
+        let mut sarif_files = Vec::new();
+        for entry in std::fs::read_dir(output_path)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("sarif") {
+                sarif_files.push(path);
+            }
+        }
+
+        if sarif_files.len() > 1 {
+            let merged_output = output_path.join("merged-results.sarif");
+            let merged_content = integration.merge_sarif_files(&sarif_files)?;
+            
+            std::fs::write(&merged_output, &merged_content)
+                .context("Failed to write merged SARIF file")?;
+            
+            println!("✅ Merged {} SARIF files into: {}", sarif_files.len(), merged_output.display());
+        } else {
+            println!("ℹ️  No multiple SARIF files found to merge");
+        }
+    }
+
+    println!("✅ CodeQL integration completed");
+
+    Ok(())
 }

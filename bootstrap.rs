@@ -134,6 +134,7 @@ chrono = { version = "0.4", features = ["serde"] }
 
 # JSON Schema validation
 jsonschema = "0.17"
+schemars = "0.8"
 reqwest = { version = "0.11", features = ["json"] }
 
 # Cryptographic hashing
@@ -197,6 +198,7 @@ chrono.workspace = true
 
 # JSON Schema validation
 jsonschema.workspace = true
+schemars.workspace = true
 reqwest.workspace = true
 
 # Cryptographic hashing
@@ -374,7 +376,17 @@ jsonschema = "0.17"
 schemars = "0.8"
 toml = "0.8"
 glob = "0.3"
+git2 = "0.18"
+hex = "0.4"
+uuid = { version = "1.0", features = ["v4"] }
+wasmtime = "18.0"
+wasmtime-wasi = "18.0"
+once_cell = "1.0"
 hooksmith = { path = ".." }
+# SARIF and CodeQL support
+reqwest = { version = "0.11", features = ["json"] }
+futures = "0.3"
+pathdiff = "0.2"
 
 [dev-dependencies]
 tempfile = "3.0"
