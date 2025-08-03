@@ -17,16 +17,19 @@ rustflags = [
 ]
 
 # Use LLD linker for faster linking (macOS) - Best practice for Apple Silicon
+# Note: LLD is not available by default on macOS, so we use the system linker
 [target.aarch64-apple-darwin]
-rustflags = [
-    "-C", "link-arg=-fuse-ld=lld",
-]
+# Use system linker for macOS - LLD requires manual installation
+# rustflags = [
+#     "-C", "link-arg=-fuse-ld=lld",
+# ]
 
 # Legacy x86_64 support (if needed)
 [target.x86_64-apple-darwin]
-rustflags = [
-    "-C", "link-arg=-fuse-ld=lld",
-]
+# Use system linker for macOS - LLD requires manual installation
+# rustflags = [
+#     "-C", "link-arg=-fuse-ld=lld",
+# ]
 
 # Enable parallel compilation frontend (nightly only)
 [env]
@@ -65,3 +68,55 @@ resolver = "2"
 # Enable faster dependency resolution
 [net]
 git-fetch-with-cli = true
+
+# Optimized build aliases for Hooksmith
+[alias]
+# Fast development builds
+dev = "run"
+dev-fast = "run --release"
+dev-watch = "watch -x run"
+dev-watch-fast = "watch -x 'run --release'"
+
+# Fast checking and testing
+check = "check --all-targets --all-features"
+check-fast = "check --all-targets --all-features --quiet"
+check-watch = "watch -x 'check --all-targets --all-features'"
+
+# Optimized testing with cargo-nextest
+test = "nextest run --all-targets --all-features"
+test-fast = "nextest run --all-targets --all-features --no-capture"
+test-watch = "watch -x 'nextest run --all-targets --all-features'"
+test-parallel = "nextest run --all-targets --all-features --test-threads=12"
+
+# Nightly optimizations
+nightly-check = "+nightly check --all-targets --all-features"
+nightly-build = "+nightly build --release"
+nightly-test = "+nightly nextest run --all-targets --all-features"
+
+# Parallel compilation (nightly only)
+parallel-check = "+nightly check --all-targets --all-features"
+parallel-build = "+nightly build --release"
+parallel-test = "+nightly nextest run --all-targets --all-features"
+
+# Workspace optimization
+hakari-sync = "hakari manage-deps"
+hakari-update = "hakari update"
+
+# Build timing and analysis
+timings = "build --timings"
+tree = "tree --all-features"
+outdated = "outdated"
+
+# Quality checks
+quality = "run -p xtask -- code-stats"
+quality-strict = "run -p xtask -- code-stats --strict"
+validate = "run -p xtask -- contract-validate --validate-generated"
+validate-strict = "run -p xtask -- contract-validate --validate-generated --comprehensive"
+
+# Documentation
+docs = "doc --all-features --no-deps --open"
+docs-serve = "doc --all-features --no-deps --open"
+
+# Clean and maintenance
+clean-all = "clean && rm -rf target/ && rm -rf .cargo/hakari/"
+update-all = "update && hakari update"

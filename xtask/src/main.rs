@@ -579,6 +579,18 @@ enum Commands {
         #[arg(long)]
         strict: bool,
     },
+    /// Comprehensive check: cargo check + contract validation
+    CheckAll {
+        /// Whether to exit with error on contract violations
+        #[arg(long)]
+        strict: bool,
+        /// Whether to run only on staged files
+        #[arg(long)]
+        staged_only: bool,
+        /// Whether to show detailed output
+        #[arg(long)]
+        verbose: bool,
+    },
     /// Validate project configuration
     Validate {
         /// Validate Trunk configuration

@@ -106,7 +106,7 @@ Options:
    
    # Verify security (important)
    ./scripts/security-check.sh
-   
+
    # Verify CI readiness (recommended)
    ./scripts/verify-ci-readiness.sh
    ```
@@ -170,31 +170,31 @@ This project uses **xtask** for structured code generation and build tasks, repl
 
 ```bash
 # Build the project and all components
-./xtask.sh build --target all --release
+cargo run -p xtask -- build --target all --release
 
 # Generate WIT interface definitions
-./xtask.sh gen-wit --overwrite
+cargo run -p xtask -- gen-wit --overwrite
 
 # Generate Lefthook configuration
-./xtask.sh gen-lefthook --validate
+cargo run -p xtask -- gen-lefthook --validate
 
 # Generate documentation
-./xtask.sh gen-docs --open
+cargo run -p xtask -- gen-docs --open
 
 # Generate README with CLI help
-./xtask.sh gen-readme --overwrite
+cargo run -p xtask -- gen-readme --overwrite
 
 # Generate mod.rs files
-./xtask.sh gen-mods --overwrite
+cargo run -p xtask -- gen-mods --overwrite
 
 # Run all code generation tasks
-./xtask.sh gen-all --overwrite
+cargo run -p xtask -- gen-all --overwrite
 
 # Check if generated files are up to date
-./xtask.sh check --strict
+cargo run -p xtask -- check --strict
 
 # Validate project configuration
-./xtask.sh validate --all
+cargo run -p xtask -- validate --all
 ```
 
 **Benefits of Optimized Builds:**
@@ -216,7 +216,7 @@ This project uses **xtask** for structured code generation and build tasks, repl
 ```
 hooksmith/
 ├── Cargo.toml               # Workspace manifest
-├── xtask.sh                 # Xtask wrapper script
+├── xtask/                   # Xtask workspace member
 ├── README.md                # This file (auto-generated)
 ├── src/                     # Main CLI binary
 │   ├── main.rs              # CLI entry point

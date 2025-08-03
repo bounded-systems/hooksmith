@@ -33,6 +33,7 @@ make dev
 make build    # Fast development build
 make test     # Parallel test execution
 make check    # Fast checking
+make dev      # Complete development cycle
 ```
 
 ### 3. Available Optimized Commands
