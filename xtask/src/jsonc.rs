@@ -73,17 +73,20 @@ impl JsoncManager {
     /// Load all JSONC files in the config directory
     pub fn load_all(&self) -> Result<Vec<JsoncFile>> {
         let mut files = Vec::new();
-        
+
         if !self.config_dir.exists() {
             return Ok(files);
         }
 
-        for entry in std::fs::read_dir(&self.config_dir)
-            .with_context(|| format!("Failed to read config directory: {}", self.config_dir.display()))?
-        {
+        for entry in std::fs::read_dir(&self.config_dir).with_context(|| {
+            format!(
+                "Failed to read config directory: {}",
+                self.config_dir.display()
+            )
+        })? {
             let entry = entry?;
             let path = entry.path();
-            
+
             if path.extension().and_then(|s| s.to_str()) == Some("jsonc") {
                 if let Ok(file) = self.load_file(path.file_name().unwrap().to_str().unwrap()) {
                     files.push(file);
@@ -98,31 +101,32 @@ impl JsoncManager {
     pub fn to_toml(&self, jsonc_file: &JsoncFile) -> Result<String> {
         let toml_value: toml::Value = toml::Value::try_from(jsonc_file.content.clone())
             .context("Failed to convert JSONC to TOML")?;
-        
-        toml::to_string_pretty(&toml_value)
-            .context("Failed to serialize TOML")
+
+        toml::to_string_pretty(&toml_value).context("Failed to serialize TOML")
     }
 
     /// Convert JSONC to YAML
     pub fn to_yaml(&self, jsonc_file: &JsoncFile) -> Result<String> {
-        serde_yaml::to_string(&jsonc_file.content)
-            .context("Failed to convert JSONC to YAML")
+        serde_yaml::to_string(&jsonc_file.content).context("Failed to convert JSONC to YAML")
     }
 
     /// Convert JSONC to JSON
     pub fn to_json(&self, jsonc_file: &JsoncFile) -> Result<String> {
-        serde_json::to_string_pretty(&jsonc_file.content)
-            .context("Failed to convert JSONC to JSON")
+        serde_json::to_string_pretty(&jsonc_file.content).context("Failed to convert JSONC to JSON")
     }
 
     /// Process template variables in JSONC content
-    pub fn process_template(&self, jsonc_file: &JsoncFile, vars: &HashMap<String, String>) -> Result<JsoncFile> {
+    pub fn process_template(
+        &self,
+        jsonc_file: &JsoncFile,
+        vars: &HashMap<String, String>,
+    ) -> Result<JsoncFile> {
         if !jsonc_file.metadata.is_template {
             return Ok(jsonc_file.clone());
         }
 
         let mut processed_content = jsonc_file.original_content.clone();
-        
+
         // Replace template variables
         for (key, value) in vars {
             let placeholder = format!("${{{}}}", key);
@@ -131,8 +135,13 @@ impl JsoncManager {
 
         // Re-parse the processed content
         let json_content = self.strip_comments(&processed_content)?;
-        let parsed_content: serde_json::Value = serde_json::from_str(&json_content)
-            .with_context(|| format!("Failed to parse processed JSONC content: {}", jsonc_file.path.display()))?;
+        let parsed_content: serde_json::Value =
+            serde_json::from_str(&json_content).with_context(|| {
+                format!(
+                    "Failed to parse processed JSONC content: {}",
+                    jsonc_file.path.display()
+                )
+            })?;
 
         Ok(JsoncFile {
             path: jsonc_file.path.clone(),
@@ -143,13 +152,19 @@ impl JsoncManager {
     }
 
     /// Validate JSONC content against a schema
-    pub fn validate_schema(&self, jsonc_file: &JsoncFile, schema: &serde_json::Value) -> Result<()> {
+    pub fn validate_schema(
+        &self,
+        jsonc_file: &JsoncFile,
+        schema: &serde_json::Value,
+    ) -> Result<()> {
         use jsonschema::JSONSchema;
-        
-        let compiled_schema = JSONSchema::compile(schema)
-            .context("Failed to compile JSON schema")?;
-        
-        compiled_schema.validate(&jsonc_file.content)
+
+        let schema_clone = schema.clone();
+        let compiled_schema =
+            JSONSchema::compile(&schema_clone).context("Failed to compile JSON schema")?;
+
+        compiled_schema
+            .validate(&jsonc_file.content)
             .map_err(|errors| {
                 let error_messages: Vec<String> = errors
                     .map(|e| format!("{}: {}", e.instance_path, e.to_string()))
@@ -161,7 +176,12 @@ impl JsoncManager {
     }
 
     /// Write processed JSONC to output file
-    pub fn write_output(&self, jsonc_file: &JsoncFile, output_path: &Path, format: &str) -> Result<()> {
+    pub fn write_output(
+        &self,
+        jsonc_file: &JsoncFile,
+        output_path: &Path,
+        format: &str,
+    ) -> Result<()> {
         let content = match format {
             "toml" => self.to_toml(jsonc_file)?,
             "yaml" | "yml" => self.to_yaml(jsonc_file)?,
@@ -171,8 +191,9 @@ impl JsoncManager {
 
         // Ensure output directory exists
         if let Some(parent) = output_path.parent() {
-            std::fs::create_dir_all(parent)
-                .with_context(|| format!("Failed to create output directory: {}", parent.display()))?;
+            std::fs::create_dir_all(parent).with_context(|| {
+                format!("Failed to create output directory: {}", parent.display())
+            })?;
         }
 
         std::fs::write(output_path, content)
@@ -259,11 +280,11 @@ impl JsoncManager {
 
         for line in content.lines() {
             let line = line.trim();
-            
+
             // Look for metadata comments
             if line.starts_with("//") {
                 let comment = line[2..].trim();
-                
+
                 if comment.starts_with("@type:") {
                     metadata.file_type = comment[6..].trim().to_string();
                 } else if comment.starts_with("@format:") {
@@ -282,10 +303,14 @@ impl JsoncManager {
     /// Create a sample JSONC file
     pub fn create_sample(&self, filename: &str, file_type: &str) -> Result<()> {
         let file_path = self.config_dir.join(filename);
-        
+
         // Ensure config directory exists
-        std::fs::create_dir_all(&self.config_dir)
-            .with_context(|| format!("Failed to create config directory: {}", self.config_dir.display()))?;
+        std::fs::create_dir_all(&self.config_dir).with_context(|| {
+            format!(
+                "Failed to create config directory: {}",
+                self.config_dir.display()
+            )
+        })?;
 
         let sample_content = match file_type {
             "cargo" => self.create_cargo_sample(),
@@ -298,6 +323,16 @@ impl JsoncManager {
             .with_context(|| format!("Failed to write sample file: {}", file_path.display()))?;
 
         Ok(())
+    }
+
+    /// Get a schema by name
+    pub fn get_schema(&self, name: &str) -> Option<&serde_json::Value> {
+        self.schemas.get(name)
+    }
+
+    /// Add a schema
+    pub fn add_schema(&mut self, name: String, schema: serde_json::Value) {
+        self.schemas.insert(name, schema);
     }
 
     fn create_cargo_sample(&self) -> String {
@@ -313,7 +348,8 @@ impl JsoncManager {
         "serde": { "version": "1.0", "features": ["derive"] },
         "tokio": { "version": "1.0", "features": ["full"] }
     }
-}"#.to_string()
+}"#
+        .to_string()
     }
 
     fn create_config_sample(&self) -> String {
@@ -328,7 +364,8 @@ impl JsoncManager {
         "debug": true,
         "verbose": false
     }
-}"#.to_string()
+}"#
+        .to_string()
     }
 
     fn create_template_sample(&self) -> String {
@@ -340,7 +377,8 @@ impl JsoncManager {
     "version": "${VERSION}",
     "description": "${DESCRIPTION}",
     "author": "${AUTHOR}"
-}"#.to_string()
+}"#
+        .to_string()
     }
 }
 
@@ -357,10 +395,10 @@ mod tests {
             "key": "value", /* another comment */
             "number": 42
         }"#;
-        
+
         let stripped = manager.strip_comments(jsonc).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&stripped).unwrap();
-        
+
         assert_eq!(parsed["key"], "value");
         assert_eq!(parsed["number"], 42);
     }
@@ -374,7 +412,7 @@ mod tests {
 {
     "name": "test"
 }"#;
-        
+
         let metadata = manager.extract_metadata(content).unwrap();
         assert_eq!(metadata.file_type, "cargo");
         assert_eq!(metadata.target_format, Some("toml".to_string()));
@@ -390,7 +428,7 @@ mod tests {
                 "version": "0.1.0"
             }
         }"#;
-        
+
         let jsonc_file = JsoncFile {
             path: PathBuf::from("test.jsonc"),
             content: serde_json::from_str(jsonc_content).unwrap(),
@@ -403,7 +441,7 @@ mod tests {
                 schema: None,
             },
         };
-        
+
         let toml_content = manager.to_toml(&jsonc_file).unwrap();
         assert!(toml_content.contains("[package]"));
         assert!(toml_content.contains("name = \"test\""));

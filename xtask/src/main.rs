@@ -15,6 +15,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use hook_state_machine::{HookContext, HookManager, HookType};
+use git_lefthook_integration::ViolationSeverity;
 
 /// CLI argument enum for hook types
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -174,6 +175,129 @@ enum SarifCommands {
         #[arg(long, default_value = "validation-results")]
         output_dir: String,
     },
+}
+
+/// Git + Lefthook integration commands
+#[derive(Debug, Clone, clap::Subcommand)]
+enum GitLefthookCommands {
+    /// Execute a complete Git workflow (commit + hooks + push)
+    Workflow {
+        /// Commit message
+        #[arg(short, long)]
+        message: String,
+        /// Files to commit (optional, will stage all if not specified)
+        #[arg(long)]
+        files: Option<Vec<String>>,
+        /// Lefthook hook to run after commit
+        #[arg(long, default_value = "post-commit")]
+        hook: String,
+        /// Remote to push to
+        #[arg(long, default_value = "origin")]
+        remote: String,
+        /// Branch to push to
+        #[arg(long)]
+        branch: Option<String>,
+        /// Force push
+        #[arg(long)]
+        force: bool,
+        /// Quiet Lefthook output
+        #[arg(long)]
+        quiet: bool,
+        /// Generate SARIF output file
+        #[arg(long)]
+        sarif_output: Option<String>,
+    },
+    /// Execute Git commit with structured events
+    Commit {
+        /// Commit message
+        #[arg(short, long)]
+        message: String,
+        /// Files to commit
+        #[arg(long)]
+        files: Option<Vec<String>>,
+    },
+    /// Execute Lefthook hooks with structured events
+    Hooks {
+        /// Hook name to run
+        #[arg(long)]
+        hook: String,
+        /// Quiet output
+        #[arg(long)]
+        quiet: bool,
+    },
+    /// Execute Git push with structured events
+    Push {
+        /// Remote to push to
+        #[arg(long, default_value = "origin")]
+        remote: String,
+        /// Branch to push to
+        #[arg(long)]
+        branch: Option<String>,
+        /// Force push
+        #[arg(long)]
+        force: bool,
+    },
+    /// Add contract validation with SARIF integration
+    Validate {
+        /// Contract ID
+        #[arg(long)]
+        contract_id: String,
+        /// File to validate
+        #[arg(long)]
+        file: String,
+        /// Rule ID
+        #[arg(long)]
+        rule_id: String,
+        /// Validation message
+        #[arg(long)]
+        message: String,
+        /// Severity level
+        #[arg(long, value_enum, default_value = "error")]
+        severity: ViolationSeverityArg,
+        /// Line number (1-indexed)
+        #[arg(long)]
+        line: Option<u32>,
+        /// Column number (1-indexed)
+        #[arg(long)]
+        column: Option<u32>,
+        /// End line number
+        #[arg(long)]
+        end_line: Option<u32>,
+        /// End column number
+        #[arg(long)]
+        end_column: Option<u32>,
+        /// Blocking contract IDs (comma-separated)
+        #[arg(long)]
+        blocked_by: Option<String>,
+    },
+    /// Generate SARIF document from validation results
+    GenerateSarif {
+        /// Output file path
+        #[arg(long)]
+        output: String,
+    },
+    /// Show current state and validation results
+    Status,
+}
+
+/// Violation severity levels for CLI
+#[derive(Debug, Clone, clap::ValueEnum)]
+enum ViolationSeverityArg {
+    Info,
+    Warning,
+    Error,
+    Critical,
+}
+
+impl From<ViolationSeverityArg> for git_lefthook_integration::ViolationSeverity {
+    fn from(arg: ViolationSeverityArg) -> Self {
+        match arg {
+            ViolationSeverityArg::Info => git_lefthook_integration::ViolationSeverity::Info,
+            ViolationSeverityArg::Warning => git_lefthook_integration::ViolationSeverity::Warning,
+            ViolationSeverityArg::Error => git_lefthook_integration::ViolationSeverity::Error,
+            ViolationSeverityArg::Critical => git_lefthook_integration::ViolationSeverity::Critical,
+        }
+    }
 }
 
 /// Event bus commands
@@ -337,6 +461,7 @@ mod structured_auto_push;
 mod structured_logging;
 mod wasm_event_bus;
 mod jsonc;
+mod git_lefthook_integration;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -940,6 +1065,12 @@ enum Commands {
         #[command(subcommand)]
         command: SarifCommands,
     },
+    /// Git + Lefthook integration with event-driven state machine
+    GitLefthook {
+        /// Execute a complete Git workflow with structured events
+        #[command(subcommand)]
+        command: GitLefthookCommands,
+    },
 }
 
 /// WIT schema for function definition
@@ -1539,6 +1670,159 @@ async fn main() -> Result<()> {
                 merge,
                 output_dir,
             } => run_integrate_codeql_command(run_analysis, to_jsonl, merge, output_dir).await?,
+        },
+        Commands::GitLefthook { command } => match command {
+            GitLefthookCommands::Workflow {
+                message,
+                files,
+                hook,
+                remote,
+                branch,
+                force,
+                quiet,
+                sarif_output,
+            } => {
+                git_lefthook_integration::run_workflow_command(
+                    message,
+                    files,
+                    hook,
+                    remote,
+                    branch,
+                    force,
+                    quiet,
+                    sarif_output,
+                )
+                .await?
+            }
+            GitLefthookCommands::Commit { message, files } => {
+                git_lefthook_integration::run_commit_command(message, files).await?
+            }
+            GitLefthookCommands::Hooks { hook, quiet } => {
+                git_lefthook_integration::run_hooks_command(hook, quiet).await?
+            }
+            GitLefthookCommands::Push {
+                remote,
+                branch,
+                force,
+            } => {
+                git_lefthook_integration::run_push_command(remote, branch, force).await?
+            }
+            GitLefthookCommands::Validate {
+                contract_id,
+                file,
+                rule_id,
+                message,
+                severity,
+                line,
+                column,
+                end_line,
+                end_column,
+                blocked_by,
+            } => {
+                git_lefthook_integration::run_validate_command(
+                    contract_id,
+                    file,
+                    rule_id,
+                    message,
+                    severity.into(),
+                    line,
+                    column,
+                    end_line,
+                    end_column,
+                    blocked_by,
+                )
+                .await?
+            }
+            GitLefthookCommands::GenerateSarif { output } => {
+                git_lefthook_integration::run_generate_sarif_command(output).await?
+            }
+            GitLefthookCommands::Status => {
+                git_lefthook_integration::run_status_command().await?
+            }
+        },
+        Commands::Jsonc { command } => match command {
+            JsoncCommands::Process {
+                config_dir,
+                output_dir,
+                validate,
+                vars,
+            } => {
+                let manager = jsonc::JsoncManager::new(config_dir);
+                let files = manager.load_all()?;
+                
+                // Process template variables
+                let mut template_vars = HashMap::new();
+                for var in vars {
+                    if let Some((key, value)) = var.split_once('=') {
+                        template_vars.insert(key.to_string(), value.to_string());
+                    }
+                }
+                
+                // Process each file
+                for file in files {
+                    let processed_file = if !template_vars.is_empty() {
+                        manager.process_template(&file, &template_vars)?
+                    } else {
+                        file
+                    };
+                    
+                    let output_path = Path::new(&output_dir).join(processed_file.path.file_name().unwrap());
+                    manager.write_output(&processed_file, &output_path, "json")?;
+                }
+                
+                if validate {
+                    println!("✅ JSONC files processed and validated successfully");
+                } else {
+                    println!("✅ JSONC files processed successfully");
+                }
+            }
+            JsoncCommands::CreateSample {
+                config_dir,
+                file_type,
+                filename,
+            } => {
+                let manager = jsonc::JsoncManager::new(&config_dir);
+                let file_path = Path::new(&config_dir).join(&filename);
+                manager.create_sample(&filename, &file_type)?;
+                println!("✅ Sample {} file created: {}", file_type, file_path.display());
+            }
+            JsoncCommands::Validate {
+                config_dir,
+                strict,
+            } => {
+                let manager = jsonc::JsoncManager::new(config_dir);
+                let files = manager.load_all()?;
+                
+                let mut has_errors = false;
+                for file in files {
+                    if let Some(schema_name) = &file.metadata.schema {
+                        if let Some(schema) = manager.get_schema(schema_name) {
+                            match manager.validate_schema(&file, schema) {
+                                Ok(_) => println!("✅ {}: Valid", file.path.display()),
+                                Err(e) => {
+                                    println!("❌ {}: {}", file.path.display(), e);
+                                    has_errors = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if has_errors && strict {
+                    anyhow::bail!("JSONC validation failed");
+                }
+            }
+            JsoncCommands::Convert {
+                input,
+                format,
+                output,
+            } => {
+                let manager = jsonc::JsoncManager::new(".");
+                let file = manager.load_file(&input)?;
+                let output_path = Path::new(&output);
+                manager.write_output(&file, output_path, &format)?;
+                println!("✅ Converted {} to {}: {}", input, format, output);
+            }
         },
     }
 
@@ -3706,7 +3990,7 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                     "error",
                     "git_add_failed",
                     "Failed to add files to git",
-                    None
+                    None::<String>
                 );
                 emit_sarif_error("xtask/src/main.rs", 3520, "Failed to add files to git");
                 anyhow::bail!("Failed to add files to git");
@@ -3716,7 +4000,7 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                     "error",
                     "git_add_error",
                     &format!("Git add error: {}", e),
-                    None
+                    None::<String>
                 );
                 emit_sarif_error("xtask/src/main.rs", 3520, &format!("Git add error: {}", e));
                 return Err(e);
@@ -3735,7 +4019,7 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                     "info",
                     "git_commit_success",
                     "✅ Generated files committed successfully",
-                    None
+                    None::<String>
                 );
             }
             Ok(_) => {
@@ -3753,7 +4037,7 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                     "error",
                     "git_commit_error",
                     &format!("Git commit error: {}", e),
-                    None
+                    None::<String>
                 );
                 emit_sarif_error(
                     "xtask/src/main.rs",
@@ -3769,7 +4053,7 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
         "info",
         "bootstrap_complete",
         "🎉 Project bootstrap completed",
-        None
+        None::<String>
     );
 
     let next_steps = vec![
