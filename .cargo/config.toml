@@ -32,8 +32,6 @@ clean = "clean"
 update = "update"
 tree = "tree --all-features"
 outdated = "outdated"
-audit = "audit"
-deny = "deny check"
 
 # WASM-specific aliases
 wasm-build = "build --target wasm32-unknown-unknown --release"
