@@ -46,7 +46,7 @@ fn demo_tree_mode_validation() -> Result<(), Box<dyn std::error::Error>> {
                 println!("    Object type: {:?}", mode.object_type());
             }
             None => {
-                println!("  ❌ Invalid mode: {}", mode_str);
+                println!("  ❌ Invalid mode: {mode_str}");
             }
         }
         println!();
@@ -54,7 +54,7 @@ fn demo_tree_mode_validation() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test invalid mode
     let invalid_mode = TreeMode::parse_from_str("999999");
-    println!("  Invalid mode test: {:?}", invalid_mode);
+    println!("  Invalid mode test: {invalid_mode:?}");
 
     println!();
     Ok(())
@@ -200,7 +200,7 @@ fn demo_tree_validation_with_errors() -> Result<(), Box<dyn std::error::Error>> 
     if !errors.is_empty() {
         println!("    Errors:");
         for error in &errors {
-            println!("      - {}", error);
+            println!("      - {error}");
         }
     }
 
@@ -256,7 +256,7 @@ fn demo_complete_tree_object_validation() -> Result<(), Box<dyn std::error::Erro
     let tree = validator.create_tree_object(raw_entries);
     let summary = validator.summarize_tree(&tree);
 
-    println!("  {}", summary);
+    println!("  {summary}");
     println!("    Tree structure:");
     for entry in &tree.entries {
         let type_symbol = match entry.object_type {

@@ -671,8 +671,10 @@ mod tests {
     #[test]
     fn test_file_writing() -> Result<()> {
         let temp_dir = TempDir::new()?;
-        let mut config = GeneratorConfig::default();
-        config.output_dir = temp_dir.path().to_path_buf();
+        let config = GeneratorConfig {
+            output_dir: temp_dir.path().to_path_buf(),
+            ..Default::default()
+        };
 
         let generator = CodeGenerator::with_config(config);
         let result = generator.generate_structure_docs()?;

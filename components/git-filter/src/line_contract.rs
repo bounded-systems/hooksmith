@@ -366,7 +366,7 @@ mod tests {
     fn test_line_validator_utf8_validation() {
         let validator = LineValidator::default();
         let valid_line = b"Hello, World!";
-        let (contract, processed) = validator.validate_line("abc123", 1, 0, valid_line);
+        let (contract, _processed) = validator.validate_line("abc123", 1, 0, valid_line);
 
         assert!(contract.valid_utf8);
         assert!(contract.is_accepted());

@@ -489,7 +489,7 @@ mod tests {
     fn test_blob_validator_utf8_validation() {
         let validator = BlobValidator::default();
         let valid_content = b"Hello, World!\n";
-        let (contract, processed, _) = validator.validate_blob("abc123", valid_content);
+        let (contract, _processed, _) = validator.validate_blob("abc123", valid_content);
 
         assert!(contract.valid_utf8);
         assert!(contract.is_accepted());

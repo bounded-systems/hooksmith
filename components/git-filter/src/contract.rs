@@ -340,7 +340,7 @@ mod tests {
 
         // Invalid file with forbidden character
         let content = b"Hello\x00World";
-        let (result, _) = validator.validate_file(content);
+        let (result, _processed) = validator.validate_file(content);
         assert!(!result.is_valid);
         assert_eq!(result.forbidden_count, 1);
     }

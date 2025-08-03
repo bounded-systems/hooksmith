@@ -249,9 +249,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_runtime_config() {
-        let mut config = RuntimeConfig::default();
-        config.max_memory_mb = 1024;
-        config.debug_logging = true;
+        let config = RuntimeConfig {
+            max_memory_mb: 1024,
+            debug_logging: true,
+            ..Default::default()
+        };
 
         let runtime = WasmRuntime::new(&config).await;
         assert!(runtime.is_ok());

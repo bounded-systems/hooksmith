@@ -1,6 +1,6 @@
 use git_filter::{
     blob_contract::{BlobContract, BlobValidator},
-    git_object_contract::{GitObjectContract, GitObjectType, GitObjectValidator},
+    git_object_contract::{GitObjectType, GitObjectValidator},
     tree_contract::{TreeEntryContract, TreeObjectContract, TreeValidator},
 };
 
@@ -219,7 +219,7 @@ fn demo_complete_workflow() -> Result<(), Box<dyn std::error::Error>> {
     let mut tree_entries = Vec::new();
 
     for (filepath, content, attributes) in commit_files {
-        println!("Processing: {}", filepath);
+        println!("Processing: {filepath}");
 
         // Create blob contract
         let (blob_contract, _) = blob_validator.validate_blob_simple(

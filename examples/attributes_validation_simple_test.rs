@@ -107,12 +107,12 @@ fn test_blob_contract_attributes() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test validation for generated file path
     let is_valid = blob.validate_attributes_for_path("target/build/app.js");
-    println!("  ✅ Generated file path validation: {}", is_valid);
+    println!("  ✅ Generated file path validation: {is_valid}");
     assert!(is_valid);
 
     // Test validation for non-generated file path
     let is_valid2 = blob.validate_attributes_for_path("src/main.rs");
-    println!("  ✅ Non-generated file path validation: {}", is_valid2);
+    println!("  ✅ Non-generated file path validation: {is_valid2}");
     assert!(is_valid2);
 
     // Test blob without linguist-generated for generated file
