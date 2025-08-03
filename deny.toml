@@ -14,13 +14,15 @@ allow-osi-fsf-free = "both"
 confidence-threshold = 0.8
 
 [licenses.allow]
-"MIT"
-"MIT-0"
-"Apache-2.0"
-"BSD-2-Clause"
-"BSD-3-Clause"
-"ISC"
-"Unlicense"
+licenses = [
+    "MIT",
+    "MIT-0",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unlicense",
+]
 
 [licenses.deny]
 "GPL-2.0" = "GPL v2 is copyleft"

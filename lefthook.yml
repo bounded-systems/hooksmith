@@ -31,7 +31,7 @@ pre-push:
     #   run: cargo run -p xtask -- validate-generated --strict
     validate-headers:
       run: cargo run -p xtask -- validate-headers --strict
-    # Temporarily disabled due to configuration issues
+    # TODO: Re-enable security checks once deny.toml configuration is fixed
     # security-audit:
     #   run: cargo audit
     # security-deny:
