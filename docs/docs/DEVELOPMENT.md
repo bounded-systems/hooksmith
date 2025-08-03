@@ -130,6 +130,7 @@ cargo build
 │   │   ├── git_workflow.md
 │   │   ├── DEVELOPMENT_SUMMARY.md
 │   │   ├── TRUNK_STYLE_QUICKSTART.md
+│   │   ├── CONTRACT_VALIDATION_WITH_GIT_NOTES.md
 │   │   ├── style.css
 │   │   ├── git_object_contract_system.md
 │   │   ├── CONTRACT_STATE_MACHINE.pdf
@@ -148,6 +149,7 @@ cargo build
 │   │   ├── line_contract_system.md
 │       └── state-transitions.yaml
 │   ├── MIGRATION_PLAN.md
+│   ├── AUTOPUSH_WORKFLOW.md
 │   ├── schemas/
 │   │   ├── merkle-proof.schema.json
 │   │   ├── contract-transition.schema.json
@@ -251,6 +253,7 @@ cargo build
 │       └── src/
 │       │   ├── contract_state_machine.rs
 │       │   ├── contract_commands.rs
+│       │   ├── contract_validation.rs
 │       │   ├── config/
 │       │   │   ├── mod.rs
 │       │   │   ├── lefthook.rs

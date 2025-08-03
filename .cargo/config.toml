@@ -1,6 +1,6 @@
 [build]
 # Enable parallel compilation
-# jobs = 0  # This was causing issues, using default
+jobs = 4  # Use 4 jobs instead of 0
 # Use incremental compilation for faster rebuilds
 incremental = true
 # Build dependencies in parallel

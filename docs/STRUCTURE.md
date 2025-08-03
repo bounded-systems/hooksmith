@@ -249,6 +249,8 @@ This document shows the complete file structure of the repository.
 ├── docs/
   ├── CONTRACT_VALIDATION_SUMMARY.md
 ├── docs/
+  ├── CONTRACT_VALIDATION_SYSTEM.md
+├── docs/
   ├── DEVELOPMENT.md
 ├── docs/
   ├── DEVELOPMENT_SUMMARY.md
@@ -368,6 +370,8 @@ This document shows the complete file structure of the repository.
 ├── examples/
   ├── contract_state_machine_demo.rs
 ├── examples/
+  ├── contract_validation_demo.rs
+├── examples/
   ├── contract_workflow_demo.rs
 ├── examples/
   ├── filename_contract_demo.rs
@@ -446,6 +450,9 @@ This document shows the complete file structure of the repository.
     ├── setup.rs
 ├── src/
   ├── commands/
+    ├── contract_validation.rs
+├── src/
+  ├── commands/
     ├── mod.rs
 ├── src/
   ├── lib.rs
@@ -454,6 +461,9 @@ This document shows the complete file structure of the repository.
 ├── src/
   ├── modules/
     ├── contract_state_machine.rs
+├── src/
+  ├── modules/
+    ├── contract_validation.rs
 ├── src/
   ├── modules/
     ├── generator.rs
@@ -654,33 +664,33 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       331
-- **Rust Files**:        123 (.rs)
+- **Total Files**:       335
+- **Rust Files**:        124 (.rs)
 - **Configuration Files**:        39 (.toml, .yaml, .rc)
-- **Documentation**:        128 (.md)
+- **Documentation**:        131 (.md)
 - **Scripts**:        0 (.sh)
 
 ## 📋 File Type Breakdown
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .yaml | 4 | YAML configuration files |
-| .bash | 1 | Other files |
-| .yml | 9 | YAML configuration files |
-| .hbs | 1 | Other files |
-| .html | 1 | HTML documentation |
-| .wit | 9 | WebAssembly Interface Type definitions |
-| .dot | 1 | Other files |
+| .lock | 2 | Other files |
 | .backup | 1 | Other files |
-| .md | 128 | Markdown documentation |
 | .json | 10 | JSON schema and config files |
 | .epub | 1 | EPUB documentation |
-| .sed | 2 | Other files |
-| .pdf | 1 | PDF documentation |
+| .bash | 1 | Other files |
+| .yaml | 4 | YAML configuration files |
 | .css | 1 | Stylesheet files |
+| .rs | 124 | Rust source files |
+| .dot | 1 | Other files |
+| .html | 1 | HTML documentation |
+| .hbs | 1 | Other files |
 | .toml | 16 | Cargo and configuration files |
-| .lock | 2 | Other files |
-| .rs | 123 | Rust source files |
+| .sed | 2 | Other files |
+| .wit | 9 | WebAssembly Interface Type definitions |
+| .yml | 9 | YAML configuration files |
+| .pdf | 1 | PDF documentation |
+| .md | 131 | Markdown documentation |
 
 ## 🧩 Component Breakdown
 
@@ -711,9 +721,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 167
-- **Modified Files**: 10
+- **Total Commits**: 168
+- **Modified Files**: 15
 
 ---
 
-*Generated on Sun Aug  3 00:50:46 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 01:07:12 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

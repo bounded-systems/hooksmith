@@ -1,9 +1,8 @@
 use anyhow::{Context, Result};
-use chrono::{DateTime, Utc};
-use git2::{Note, Oid, Repository, Signature};
+use git2::{Repository, Signature};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// Contract state stored in Git notes
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,6 +36,7 @@ pub struct TransitionLogEntry {
 }
 
 /// Git notes manager for contract states
+#[allow(dead_code)]
 pub struct GitNotesManager {
     repo: Repository,
     contracts_ref: String,
@@ -48,7 +48,7 @@ impl GitNotesManager {
     /// Create a new Git notes manager
     pub fn new(repo_path: &Path) -> Result<Self> {
         let repo = Repository::open(repo_path)
-            .with_context(|| format!("Failed to open repository at {:?}", repo_path))?;
+            .with_context(|| format!("Failed to open repository at {repo_path:?}"))?;
 
         Ok(GitNotesManager {
             repo,
@@ -69,7 +69,7 @@ impl GitNotesManager {
         // Create blob with state content
         let blob_oid = self
             .repo
-            .blob(&content.as_bytes())
+            .blob(content.as_bytes())
             .context("Failed to create blob")?;
 
         // Create tree with the file path as the note name
@@ -80,7 +80,7 @@ impl GitNotesManager {
 
         let note_name = self.sanitize_note_name(&state.file);
         tree_builder
-            .insert(&note_name, &blob_oid, 0o100644)
+            .insert(&note_name, blob_oid, 0o100644)
             .context("Failed to insert note")?;
 
         let new_tree_oid = tree_builder.write().context("Failed to write tree")?;
@@ -114,6 +114,7 @@ impl GitNotesManager {
     }
 
     /// Retrieve a contract state
+    #[allow(dead_code)]
     pub fn get_contract_state(&self, file_path: &str) -> Result<Option<ContractStateNote>> {
         let note_name = self.sanitize_note_name(file_path);
 
@@ -138,7 +139,7 @@ impl GitNotesManager {
         // Create blob with transition content
         let blob_oid = self
             .repo
-            .blob(&content.as_bytes())
+            .blob(content.as_bytes())
             .context("Failed to create blob")?;
 
         // Create tree with timestamp as the note name
@@ -153,7 +154,7 @@ impl GitNotesManager {
             self.sanitize_note_name(&entry.file)
         );
         tree_builder
-            .insert(&note_name, &blob_oid, 0o100644)
+            .insert(&note_name, blob_oid, 0o100644)
             .context("Failed to insert note")?;
 
         let new_tree_oid = tree_builder.write().context("Failed to write tree")?;
@@ -187,6 +188,7 @@ impl GitNotesManager {
     }
 
     /// Get all contract states
+    #[allow(dead_code)]
     pub fn get_all_contract_states(&self) -> Result<HashMap<String, ContractStateNote>> {
         let mut states = HashMap::new();
 
@@ -211,6 +213,7 @@ impl GitNotesManager {
     }
 
     /// Get transition history for a file
+    #[allow(dead_code)]
     pub fn get_transition_history(&self, file_path: &str) -> Result<Vec<TransitionLogEntry>> {
         let mut transitions = Vec::new();
 
@@ -267,7 +270,7 @@ impl GitNotesManager {
 
                 let parent_commit = self.get_or_create_notes_commit(&self.contracts_ref)?;
 
-                let commit_message = format!("Delete contract state for {}", file_path);
+                let commit_message = format!("Delete contract state for {file_path}");
                 let commit_oid = self
                     .repo
                     .commit(
@@ -280,10 +283,7 @@ impl GitNotesManager {
                     )
                     .context("Failed to create commit")?;
 
-                println!(
-                    "✅ Deleted contract state for {}: {}",
-                    file_path, commit_oid
-                );
+                println!("✅ Deleted contract state for {file_path}: {commit_oid}",);
             }
             None => {
                 // No notes tree exists, nothing to delete
@@ -368,6 +368,7 @@ impl GitNotesManager {
     }
 
     /// Get note content
+    #[allow(dead_code)]
     fn get_note_content(&self, ref_name: &str, note_name: &str) -> Result<Option<String>> {
         match self.get_notes_tree(ref_name)? {
             Some(tree) => {
@@ -407,31 +408,25 @@ impl GitNotesManager {
 
     /// Sanitize note name for Git
     fn sanitize_note_name(&self, file_path: &str) -> String {
-        file_path
-            .replace('/', "_")
-            .replace('\\', "_")
-            .replace(':', "_")
-            .replace('*', "_")
-            .replace('?', "_")
-            .replace('"', "_")
-            .replace('<', "_")
-            .replace('>', "_")
-            .replace('|', "_")
+        file_path.replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "_")
     }
 
     /// List all contract files
+    #[allow(dead_code)]
     pub fn list_contract_files(&self) -> Result<Vec<String>> {
         let states = self.get_all_contract_states()?;
         Ok(states.keys().cloned().collect())
     }
 
     /// Check if a file has a contract state
+    #[allow(dead_code)]
     pub fn has_contract_state(&self, file_path: &str) -> Result<bool> {
         let state = self.get_contract_state(file_path)?;
         Ok(state.is_some())
     }
 
     /// Get repository path
+    #[allow(dead_code)]
     pub fn repo_path(&self) -> &Path {
         self.repo.path().parent().unwrap()
     }
@@ -445,7 +440,7 @@ mod tests {
     #[test]
     fn test_git_notes_manager_creation() {
         let temp_dir = TempDir::new().unwrap();
-        let repo = git2::Repository::init(temp_dir.path()).unwrap();
+        let _repo = git2::Repository::init(temp_dir.path()).unwrap();
 
         let manager = GitNotesManager::new(temp_dir.path()).unwrap();
         assert_eq!(manager.repo_path(), temp_dir.path());

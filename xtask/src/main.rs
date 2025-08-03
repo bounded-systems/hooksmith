@@ -10,13 +10,17 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
+use std::time::Duration;
+use tokio::time::sleep;
 
 mod code_stats;
 mod config;
 mod contract;
+mod contract_validation;
 mod docs;
 mod file_audit;
 mod generated_file_validator;
+mod git_notes_manager;
 mod hierarchical_validation;
 mod status;
 
@@ -279,6 +283,11 @@ enum Commands {
         #[command(subcommand)]
         command: contract::ContractCommands,
     },
+    /// Enhanced contract validation with Git notes
+    ContractValidation {
+        #[command(subcommand)]
+        command: contract_validation::ContractValidationCommands,
+    },
     /// Track Rust-owned project files and coverage
     Status {
         #[command(subcommand)]
@@ -309,8 +318,7 @@ enum Commands {
     },
     /// Validate commit message (Trunk-style: allows empty messages)
     ValidateCommitMsg {
-        /// Commit message file path (default: $1 from lefthook)
-        #[arg(long)]
+        /// Commit message file path (from lefthook {1})
         file: Option<String>,
         /// Whether to allow empty commit messages (Trunk-style)
         #[arg(long, default_value = "true")]
@@ -390,6 +398,30 @@ enum Commands {
         /// Output format for results
         #[arg(long, default_value = "text")]
         format: String,
+    },
+    /// Automated git workflow: validate, add, commit, and push
+    AutoPush {
+        /// Commit message (optional, will prompt if not provided)
+        #[arg(short, long)]
+        message: Option<String>,
+        /// Allow empty commit message (Trunk-style)
+        #[arg(long)]
+        allow_empty_message: bool,
+        /// Skip validation checks
+        #[arg(long)]
+        skip_validation: bool,
+        /// Run in watchdog mode (continuous monitoring)
+        #[arg(long)]
+        watchdog: bool,
+        /// Watchdog interval in seconds
+        #[arg(long, default_value = "30")]
+        interval: u64,
+        /// Force push (use with caution)
+        #[arg(long)]
+        force: bool,
+        /// Additional git commit arguments
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
     },
 }
 
@@ -623,6 +655,10 @@ async fn main() -> Result<()> {
         Commands::Contract { command } => {
             contract::run_contract_command(command).await?;
         }
+        Commands::ContractValidation { command } => {
+            let validator = contract_validation::ContractValidator::new()?;
+            validator.run(command).await?;
+        }
         Commands::Status { command } => {
             status::run_status_command(command).await?;
         }
@@ -684,6 +720,26 @@ async fn main() -> Result<()> {
             format,
         } => {
             run_dead_code_check(strict, include_generated, restore, format).await?;
+        }
+        Commands::AutoPush {
+            message,
+            allow_empty_message,
+            skip_validation,
+            watchdog,
+            interval,
+            force,
+            args,
+        } => {
+            run_auto_push(
+                message,
+                allow_empty_message,
+                skip_validation,
+                watchdog,
+                interval,
+                force,
+                args,
+            )
+            .await?;
         }
     }
 
@@ -3396,7 +3452,7 @@ fn validate_commit_message(
     let file_path = match file {
         Some(path) => path,
         None => {
-            // Default to $1 from lefthook (first argument)
+            // Try to get from command line arguments (for lefthook integration)
             std::env::args()
                 .nth(1)
                 .ok_or_else(|| anyhow::anyhow!("No commit message file path provided"))?
@@ -3478,6 +3534,18 @@ fn setup_git_aliases(force: bool) -> Result<()> {
             "!cargo run -p xtask -- git-commit --allow-empty-message",
         ),
         ("ncommit", "commit"), // Normal commit (requires message)
+        // Auto-push aliases
+        ("acp", "!cargo run -p xtask -- autopush"),
+        (
+            "acpe",
+            "!cargo run -p xtask -- autopush --allow-empty-message",
+        ),
+        (
+            "acp-skip",
+            "!cargo run -p xtask -- autopush --skip-validation",
+        ),
+        ("acp-force", "!cargo run -p xtask -- autopush --force"),
+        ("acp-watchdog", "!cargo run -p xtask -- autopush --watchdog"),
     ];
 
     for (alias, command) in aliases {
@@ -3512,11 +3580,20 @@ fn setup_git_aliases(force: bool) -> Result<()> {
     println!("   git cc [options]     - Regular commit (requires message)");
     println!("   git ce [options]     - Quick empty commit (Trunk-style)");
     println!("   git ncommit [options] - Normal commit (requires message)");
+    println!("\n🚀 Auto-push commands:");
+    println!("   git acp [message]    - Auto-push with validation (prompts for message)");
+    println!("   git acpe             - Auto-push with empty message");
+    println!("   git acp-skip         - Auto-push without validation");
+    println!("   git acp-force        - Auto-push with force push");
+    println!("   git acp-watchdog     - Auto-push in watchdog mode (continuous)");
     println!("\n💡 Examples:");
     println!("   git cm                    # Commit with empty message (Trunk-style)");
     println!("   git cm -m 'feat: add feature'  # Commit with conventional message");
     println!("   git ce                    # Quick empty commit");
     println!("   git ncommit -m 'fix: bug'      # Normal commit with message");
+    println!("   git acp 'feat: new feature'    # Auto-push with message");
+    println!("   git acpe                     # Auto-push with empty message");
+    println!("   git acp-watchdog              # Start watchdog mode");
     println!("\n📚 Important Notes:");
     println!("   • git cm and git ce use our Rust command which handles --allow-empty-message");
     println!("   • git cc and git ncommit are standard git commit (require messages)");
@@ -4541,4 +4618,221 @@ struct DeadCodeReport {
     files_checked: usize,
     errors: Vec<String>,
     warnings: Vec<String>,
+}
+
+/// Run automated git workflow: validate, add, commit, and push
+async fn run_auto_push(
+    message: Option<String>,
+    allow_empty_message: bool,
+    skip_validation: bool,
+    watchdog: bool,
+    interval: u64,
+    force: bool,
+    args: Vec<String>,
+) -> Result<()> {
+    if watchdog {
+        println!("🔄 Starting watchdog mode with {interval}s interval...");
+        println!("   Press Ctrl+C to stop");
+
+        loop {
+            match run_single_auto_push(&message, allow_empty_message, skip_validation, force, &args)
+                .await
+            {
+                Ok(_) => {
+                    println!("✅ Watchdog cycle completed successfully");
+                }
+                Err(e) => {
+                    eprintln!("❌ Watchdog cycle failed: {e}");
+                    if !skip_validation {
+                        eprintln!("   Validation errors detected - skipping commit/push");
+                    }
+                }
+            }
+
+            println!("⏰ Waiting {interval} seconds before next cycle...");
+            sleep(Duration::from_secs(interval)).await;
+        }
+    } else {
+        run_single_auto_push(&message, allow_empty_message, skip_validation, force, &args).await
+    }
+}
+
+/// Run a single auto-push cycle
+async fn run_single_auto_push(
+    message: &Option<String>,
+    allow_empty_message: bool,
+    skip_validation: bool,
+    force: bool,
+    args: &[String],
+) -> Result<()> {
+    println!("🚀 Starting automated git workflow...");
+
+    // Step 1: Run validation checks (unless skipped)
+    if !skip_validation {
+        println!("🔍 Running validation checks...");
+
+        // Run cargo fix
+        println!("   🔧 Running cargo fix...");
+        let fix_status = Command::new("cargo")
+            .args(["fix", "--allow-dirty", "--allow-staged"])
+            .status()
+            .context("Failed to run cargo fix")?;
+
+        if !fix_status.success() {
+            anyhow::bail!("cargo fix failed");
+        }
+
+        // Run cargo fmt
+        println!("   🎨 Running cargo fmt...");
+        let fmt_status = Command::new("cargo")
+            .args(["fmt", "--all"])
+            .status()
+            .context("Failed to run cargo fmt")?;
+
+        if !fmt_status.success() {
+            anyhow::bail!("cargo fmt failed");
+        }
+
+        // Run cargo clippy
+        println!("   🔍 Running cargo clippy...");
+        let clippy_status = Command::new("cargo")
+            .args([
+                "clippy",
+                "--workspace",
+                "--all-targets",
+                "--all-features",
+                "--",
+                "-D",
+                "warnings",
+            ])
+            .status()
+            .context("Failed to run cargo clippy")?;
+
+        if !clippy_status.success() {
+            anyhow::bail!("cargo clippy failed");
+        }
+
+        // Run contract validation
+        println!("   📋 Running contract validation...");
+        let contract_status = Command::new("cargo")
+            .args(["run", "-p", "xtask", "--", "contract-check", "--strict"])
+            .status()
+            .context("Failed to run contract validation")?;
+
+        if !contract_status.success() {
+            anyhow::bail!("Contract validation failed");
+        }
+
+        // Run generated file validation
+        println!("   📄 Running generated file validation...");
+        let generated_status = Command::new("cargo")
+            .args(["run", "-p", "xtask", "--", "validate-generated", "--strict"])
+            .status()
+            .context("Failed to run generated file validation")?;
+
+        if !generated_status.success() {
+            anyhow::bail!("Generated file validation failed");
+        }
+
+        println!("✅ All validation checks passed!");
+    } else {
+        println!("⚠️  Skipping validation checks");
+    }
+
+    // Step 2: Check if there are any changes to commit
+    println!("📊 Checking for changes...");
+    let status_output = Command::new("git")
+        .args(["status", "--porcelain"])
+        .output()
+        .context("Failed to check git status")?;
+
+    let status_text = String::from_utf8_lossy(&status_output.stdout);
+    if status_text.trim().is_empty() {
+        println!("✅ No changes to commit");
+        return Ok(());
+    }
+
+    println!("📝 Found changes to commit:");
+    for line in status_text.lines() {
+        if !line.trim().is_empty() {
+            println!("   {line}");
+        }
+    }
+
+    // Step 3: Add all changes
+    println!("📦 Adding changes...");
+    let add_status = Command::new("git")
+        .args(["add", "."])
+        .status()
+        .context("Failed to add changes")?;
+
+    if !add_status.success() {
+        anyhow::bail!("git add failed");
+    }
+
+    // Step 4: Get commit message
+    let commit_message = if let Some(msg) = message {
+        msg.clone()
+    } else {
+        // Prompt for commit message
+        println!("💬 Enter commit message (or press Enter for empty message):");
+        let mut input = String::new();
+        std::io::stdin().read_line(&mut input)?;
+        input.trim().to_string()
+    };
+
+    // Step 5: Commit changes
+    println!("💾 Committing changes...");
+    let mut commit_args = vec!["commit"];
+
+    if allow_empty_message || commit_message.is_empty() {
+        commit_args.extend_from_slice(&["--allow-empty-message", "-m", ""]);
+    } else {
+        commit_args.extend_from_slice(&["-m", &commit_message]);
+    }
+
+    // Add any additional arguments
+    for arg in args {
+        commit_args.push(arg);
+    }
+
+    let commit_status = Command::new("git")
+        .args(&commit_args)
+        .status()
+        .context("Failed to commit changes")?;
+
+    if !commit_status.success() {
+        anyhow::bail!("git commit failed");
+    }
+
+    // Step 6: Push changes
+    println!("🚀 Pushing changes...");
+    let mut push_args = vec!["push"];
+
+    if force {
+        push_args.push("--force");
+        println!("⚠️  Force pushing (use with caution!)");
+    }
+
+    let push_status = Command::new("git")
+        .args(&push_args)
+        .status()
+        .context("Failed to push changes")?;
+
+    if !push_status.success() {
+        anyhow::bail!("git push failed");
+    }
+
+    println!("✅ Automated git workflow completed successfully!");
+    println!(
+        "   📝 Committed with message: {}",
+        if commit_message.is_empty() {
+            "(empty)"
+        } else {
+            &commit_message
+        }
+    );
+    println!("   🚀 Pushed to remote repository");
+
+    Ok(())
 }

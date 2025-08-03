@@ -506,7 +506,6 @@ mod tests {
                 .unwrap()
                 .clone()
                 .into_iter()
-                .map(|(k, v)| (k, v))
                 .collect(),
                 required: true,
                 severity: RuleSeverity::Error,
