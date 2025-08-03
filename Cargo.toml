@@ -6,6 +6,7 @@
 name = "hooksmith"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.70"
 authors = ["Hooksmith Team"]
 description = "CLI tool for building Rust binaries into Lefthook hooks with WASM components"
 license = "MIT"

@@ -28,6 +28,7 @@ cargo build
 │   ├── Cargo.toml
 │   ├── WARNING_AND_VALIDATION_FIXES.md
 │   ├── CODEGEN_MARKERS.md
+│   ├── deny.toml
 │   ├── ARCHITECTURE.md
 │   ├── STRUCTURE.md
 │   ├── SOURCE_BASED_DOCS.md
@@ -224,6 +225,7 @@ cargo build
 │   ├── scripts/
 │       └── README.md
 │   ├── lefthook.yml
+│   ├── CARGO_BEST_PRACTICES.md
 │   ├── BOOTSTRAP.md
 │   ├── clippy.toml
 │   ├── templates/

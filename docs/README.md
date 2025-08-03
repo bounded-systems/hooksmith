@@ -8,30 +8,30 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **git-filter**: *
-- **reqwest**: ^0.11
-- **clap**: ^4.0
+- **tempfile**: dev
 - **regex**: ^1.0
-- **tracing**: ^0.1
-- **which**: ^5.0
-- **serde_json**: ^1.0
 - **indicatif**: ^0.17
-- **wasmtime**: ^18.0
-- **cli-core**: *
-- **wit-bindgen**: ^0.20
-- **git2**: ^0.18
-- **wasmtime-wasi**: ^18.0
-- **serde**: ^1.0
-- **anyhow**: ^1.0
-- **console**: ^0.15
-- **chrono**: ^0.4
 - **jsonschema**: ^0.17
 - **serde_yaml**: ^0.9
+- **cli-core**: *
 - **sha2**: ^0.10
+- **tokio**: ^1.0
 - **toml**: ^0.8
 - **tracing-subscriber**: ^0.3
-- **tempfile**: dev
-- **tokio**: ^1.0
+- **console**: ^0.15
+- **reqwest**: ^0.11
+- **git2**: ^0.18
+- **git-filter**: *
+- **serde**: ^1.0
+- **anyhow**: ^1.0
+- **tracing**: ^0.1
+- **wasmtime**: ^18.0
+- **wasmtime-wasi**: ^18.0
+- **wit-bindgen**: ^0.20
+- **chrono**: ^0.4
+- **which**: ^5.0
+- **serde_json**: ^1.0
+- **clap**: ^4.0
 
 ## Installation
 
@@ -53,6 +53,7 @@ hooksmith --help
 │   ├── Cargo.toml
 │   ├── WARNING_AND_VALIDATION_FIXES.md
 │   ├── CODEGEN_MARKERS.md
+│   ├── deny.toml
 │   ├── ARCHITECTURE.md
 │   ├── STRUCTURE.md
 │   ├── SOURCE_BASED_DOCS.md
@@ -249,6 +250,7 @@ hooksmith --help
 │   ├── scripts/
 │       └── README.md
 │   ├── lefthook.yml
+│   ├── CARGO_BEST_PRACTICES.md
 │   ├── BOOTSTRAP.md
 │   ├── clippy.toml
 │   ├── templates/

@@ -1,20 +1,20 @@
 {
   "files": {
-    "docs/STRUCTURE.md": "9da949b731db96633074aaefa820e15b522740e30f8899b292e202710894f8bf",
-    "components/worktree-runner/README.md": "be46f887fce4e393a03eb5d64ec139a56c77eb1a1ab6e81be0fcdc0f2f122252",
-    "components/git-filter/README.md": "3e3634b84fc73d6a954f55ae61d06aa6dc06fe230c5f92f78ac023d940c0ca3c",
-    "docs/TESTING.md": "96367b489da4cf41e2bff43d1c8947af93f716b0dc394d489482d5450d9c7f1a",
-    "docs/ARCHITECTURE.md": "b3a3c6aa7299d7b2a4bd91f7785f29740a5d82dd2503b0462f9a1dbc9f29e0dd",
-    "docs/API.md": "181c6123c9602506630b39faf15e38ad58a3f64fe298ffb00a052b28c82436ae",
-    "docs/DEVELOPMENT.md": "2eb251f4299fb0c5a0e7fd29313b318cbc0789556d578b4656f668cceecc1671",
-    "docs/EXAMPLES.md": "cd4900764962b7b7ef6e2a188782940a5b62898e68f631886971460cd70b94f1",
-    "STRUCTURE.md": "0397ad55a77f084eda0ff988383c483d72cec4c8193bb780a63d74e718418862",
-    "README.md": "1714a6d0c4072172f25853c7f77ce1b3392ba116596aee63e62645ca7795ec5c",
+    "docs/CLI_HELP.md": "7dead89c9b4855f37badd29058b3ee77e976d471031da1bdeba97bb8079eeb4b",
     "docs/CONTRIBUTING.md": "cfb8304420e6fe4b159ab36355ae0b569919fb34eb1c2c6cfec27ffdd88b5955",
-    "components/cli-core/README.md": "95efb6d48b8e767c11da29483b2fb23c50f7bc6f610bbfa8d8125947ea5d54ca",
+    "docs/ARCHITECTURE.md": "b3a3c6aa7299d7b2a4bd91f7785f29740a5d82dd2503b0462f9a1dbc9f29e0dd",
+    "docs/DEVELOPMENT.md": "7335d04d23f3d6e04cf142e0aea09ea5a4150340e12bacf40afc7b4a083bb3e9",
+    "components/git-filter/README.md": "3e3634b84fc73d6a954f55ae61d06aa6dc06fe230c5f92f78ac023d940c0ca3c",
     "components/hook-builder/README.md": "91c0ffe08ac7b07fa03023e603f4f91163b4982c4522f2febe8341babd21e19c",
-    "docs/CLI_HELP.md": "7dead89c9b4855f37badd29058b3ee77e976d471031da1bdeba97bb8079eeb4b"
+    "README.md": "cec764ab56aacbf1b94f014c3c7780bd5ff56791af56f8016df7fde9477043d6",
+    "docs/EXAMPLES.md": "cd4900764962b7b7ef6e2a188782940a5b62898e68f631886971460cd70b94f1",
+    "components/worktree-runner/README.md": "be46f887fce4e393a03eb5d64ec139a56c77eb1a1ab6e81be0fcdc0f2f122252",
+    "components/cli-core/README.md": "95efb6d48b8e767c11da29483b2fb23c50f7bc6f610bbfa8d8125947ea5d54ca",
+    "docs/STRUCTURE.md": "90447d7cdf05123262babec719f88a1f86e440d9d791b3e0dc4c8f3e4311df1a",
+    "STRUCTURE.md": "0ecfa2480403b3190e1d3f835a7651348bf675e8acbf000622665d1185d9081f",
+    "docs/TESTING.md": "96367b489da4cf41e2bff43d1c8947af93f716b0dc394d489482d5450d9c7f1a",
+    "docs/API.md": "181c6123c9602506630b39faf15e38ad58a3f64fe298ffb00a052b28c82436ae"
   },
-  "generated_at": "2025-08-03T00:31:25.816168+00:00",
+  "generated_at": "2025-08-03T00:34:02.462051+00:00",
   "generator_version": "0.1.0"
 }

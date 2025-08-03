@@ -46,6 +46,7 @@ This document shows the complete file structure of the repository.
 ├── BOOTSTRAP.md
 ├── BOOTSTRAP_SUMMARY.md
 ├── CHANGELOG.md
+├── CLIPPY_FIXES_SUMMARY.md
 ├── CODEGEN_MARKERS.md
 ├── CODEGEN_SUMMARY.md
 ├── CODEOWNERS
@@ -651,33 +652,33 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       323
+- **Total Files**:       327
 - **Rust Files**:        120 (.rs)
-- **Configuration Files**:        37 (.toml, .yaml, .rc)
-- **Documentation**:        125 (.md)
+- **Configuration Files**:        39 (.toml, .yaml, .rc)
+- **Documentation**:        127 (.md)
 - **Scripts**:        0 (.sh)
 
 ## 📋 File Type Breakdown
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .json | 10 | JSON schema and config files |
-| .md | 125 | Markdown documentation |
-| .lock | 2 | Other files |
-| .dot | 1 | Other files |
-| .toml | 14 | Cargo and configuration files |
 | .sed | 2 | Other files |
-| .css | 1 | Stylesheet files |
-| .hbs | 1 | Other files |
-| .pdf | 1 | PDF documentation |
-| .yml | 9 | YAML configuration files |
-| .epub | 1 | EPUB documentation |
-| .wit | 9 | WebAssembly Interface Type definitions |
-| .backup | 1 | Other files |
-| .html | 1 | HTML documentation |
-| .rs | 120 | Rust source files |
-| .yaml | 4 | YAML configuration files |
 | .bash | 1 | Other files |
+| .css | 1 | Stylesheet files |
+| .rs | 120 | Rust source files |
+| .hbs | 1 | Other files |
+| .toml | 16 | Cargo and configuration files |
+| .lock | 2 | Other files |
+| .json | 10 | JSON schema and config files |
+| .yml | 9 | YAML configuration files |
+| .html | 1 | HTML documentation |
+| .epub | 1 | EPUB documentation |
+| .pdf | 1 | PDF documentation |
+| .yaml | 4 | YAML configuration files |
+| .md | 127 | Markdown documentation |
+| .dot | 1 | Other files |
+| .backup | 1 | Other files |
+| .wit | 9 | WebAssembly Interface Type definitions |
 
 ## 🧩 Component Breakdown
 
@@ -708,9 +709,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 165
-- **Modified Files**: 3
+- **Total Commits**: 166
+- **Modified Files**: 5
 
 ---
 
-*Generated on Sun Aug  3 00:31:25 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 00:34:02 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

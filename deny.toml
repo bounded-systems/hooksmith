@@ -1,0 +1,32 @@
+# Cargo-deny configuration for dependency safety
+
+[advisories]
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+vulnerability = "deny"
+unsound = "deny"
+notice = "warn"
+
+[licenses]
+default = "deny"
+copyleft = "deny"
+allow-osi-fsf-free = "both"
+confidence-threshold = 0.8
+
+[licenses.allow]
+"MIT" = ["MIT", "MIT-0"]
+"Apache-2.0" = ["Apache-2.0"]
+"BSD-2-Clause" = ["BSD-2-Clause"]
+"BSD-3-Clause" = ["BSD-3-Clause"]
+"ISC" = ["ISC"]
+"Unlicense" = ["Unlicense"]
+
+[licenses.deny]
+"GPL-2.0" = "GPL v2 is copyleft"
+"GPL-3.0" = "GPL v3 is copyleft"
+"AGPL-3.0" = "AGPL v3 is copyleft"
+
+[bans]
+multiple-versions = "deny"
+highlight = "all"
+tree = true 
