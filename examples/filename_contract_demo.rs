@@ -130,7 +130,7 @@ fn demo_batch_filename_validation() -> Result<(), Box<dyn std::error::Error>> {
     let contracts = validator.validate_filenames(filenames);
     let summary = validator.summarize_validation(&contracts);
 
-    println!("  {}", summary);
+    println!("  {summary}");
     println!();
 
     println!("  Individual results:");

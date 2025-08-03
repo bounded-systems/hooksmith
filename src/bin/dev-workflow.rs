@@ -3,13 +3,10 @@
 //! This script provides a unified interface for common development tasks,
 //! integrating all the Rust tooling and Git hooks we've set up.
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::{Parser, Subcommand, ValueEnum};
 use console::{style, Term};
 use indicatif::{ProgressBar, ProgressStyle};
-use std::collections::HashMap;
-use std::env;
-use std::path::Path;
 use std::process::{Command, Stdio};
 
 #[derive(Parser)]
@@ -137,7 +134,7 @@ struct WorkflowResult {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let term = Term::stdout();
+    let _term = Term::stdout();
 
     if cli.verbose {
         println!("🔧 Hooksmith Development Workflow");
@@ -149,7 +146,7 @@ fn main() -> Result<()> {
     }
 
     let result = match cli.command {
-        Commands::Setup { force } => {
+        Commands::Setup { force: _ } => {
             println!("Note: Setup is now handled by the dedicated setup script");
             println!("Run: cargo run --bin setup");
             Ok(WorkflowResult {
@@ -185,12 +182,12 @@ fn main() -> Result<()> {
     if result.success {
         println!("{} {}", style("✅").green(), result.message);
         if let Some(details) = result.details {
-            println!("{}", details);
+            println!("{details}");
         }
     } else {
         println!("{} {}", style("❌").red(), result.message);
         if let Some(details) = result.details {
-            eprintln!("{}", details);
+            eprintln!("{details}");
         }
         std::process::exit(1);
     }
@@ -249,7 +246,7 @@ fn run_quality_checks(
             progress.set_message(check_name);
 
             if verbose {
-                println!("Running: {}", command);
+                println!("Running: {command}");
             }
 
             let output = Command::new("sh")
@@ -262,7 +259,7 @@ fn run_quality_checks(
             if !output.status.success() {
                 failed_checks.push(check_name);
                 if verbose {
-                    println!("❌ {} failed", check_name);
+                    println!("❌ {check_name} failed");
                     if !output.stdout.is_empty() {
                         println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
                     }
@@ -332,7 +329,7 @@ fn build_project(
             progress.set_message(build_name);
 
             if verbose {
-                println!("Running: {}", command);
+                println!("Running: {command}");
             }
 
             let output = Command::new("sh")
@@ -345,7 +342,7 @@ fn build_project(
             if !output.status.success() {
                 failed_builds.push(build_name);
                 if verbose {
-                    println!("❌ {} failed", build_name);
+                    println!("❌ {build_name} failed");
                     if !output.stderr.is_empty() {
                         println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
                     }
@@ -390,11 +387,11 @@ fn run_tests(
         command.push_str(" --all-features");
     }
     if let Some(filter) = filter {
-        command.push_str(&format!(" {}", filter));
+        command.push_str(&format!(" {filter}"));
     }
 
     if dry_run {
-        println!("Would run: {}", command);
+        println!("Would run: {command}");
         return Ok(WorkflowResult {
             success: true,
             message: "Test command prepared".to_string(),
@@ -403,7 +400,7 @@ fn run_tests(
     }
 
     if verbose {
-        println!("Running: {}", command);
+        println!("Running: {command}");
     }
 
     let output = Command::new("sh")
@@ -437,7 +434,7 @@ fn generate_docs(open: bool, serve: bool, verbose: bool, dry_run: bool) -> Resul
     }
 
     if dry_run {
-        println!("Would run: {}", command);
+        println!("Would run: {command}");
         return Ok(WorkflowResult {
             success: true,
             message: "Documentation command prepared".to_string(),
@@ -446,7 +443,7 @@ fn generate_docs(open: bool, serve: bool, verbose: bool, dry_run: bool) -> Resul
     }
 
     if verbose {
-        println!("Running: {}", command);
+        println!("Running: {command}");
     }
 
     let output = Command::new("sh")
@@ -488,10 +485,10 @@ fn generate_docs(open: bool, serve: bool, verbose: bool, dry_run: bool) -> Resul
 fn run_hooks(hook: HookType, verbose: bool, dry_run: bool) -> Result<WorkflowResult> {
     println!("🎣 Running Git hooks...");
 
-    let command = format!("lefthook run {}", hook);
+    let command = format!("lefthook run {hook}");
 
     if dry_run {
-        println!("Would run: {}", command);
+        println!("Would run: {command}");
         return Ok(WorkflowResult {
             success: true,
             message: "Hook command prepared".to_string(),
@@ -500,7 +497,7 @@ fn run_hooks(hook: HookType, verbose: bool, dry_run: bool) -> Result<WorkflowRes
     }
 
     if verbose {
-        println!("Running: {}", command);
+        println!("Running: {command}");
     }
 
     let output = Command::new("sh")
@@ -513,13 +510,13 @@ fn run_hooks(hook: HookType, verbose: bool, dry_run: bool) -> Result<WorkflowRes
     if output.status.success() {
         Ok(WorkflowResult {
             success: true,
-            message: format!("{} hook completed successfully", hook),
+            message: format!("{hook} hook completed successfully"),
             details: None,
         })
     } else {
         Ok(WorkflowResult {
             success: false,
-            message: format!("{} hook failed", hook),
+            message: format!("{hook} hook failed"),
             details: Some(String::from_utf8_lossy(&output.stderr).to_string()),
         })
     }
@@ -531,7 +528,7 @@ fn generate_cargo_toml(verbose: bool, dry_run: bool) -> Result<WorkflowResult> {
     let command = "cargo run --bin generate-cargo-toml";
 
     if dry_run {
-        println!("Would run: {}", command);
+        println!("Would run: {command}");
         return Ok(WorkflowResult {
             success: true,
             message: "Cargo.toml generation command prepared".to_string(),
@@ -540,7 +537,7 @@ fn generate_cargo_toml(verbose: bool, dry_run: bool) -> Result<WorkflowResult> {
     }
 
     if verbose {
-        println!("Running: {}", command);
+        println!("Running: {command}");
     }
 
     let output = Command::new("sh")
@@ -585,7 +582,7 @@ fn update_dependencies(aggressive: bool, verbose: bool, dry_run: bool) -> Result
             progress.set_message(command);
 
             if verbose {
-                println!("Running: {}", command);
+                println!("Running: {command}");
             }
 
             let output = Command::new("sh")
@@ -598,7 +595,7 @@ fn update_dependencies(aggressive: bool, verbose: bool, dry_run: bool) -> Result
             if !output.status.success() {
                 failed_updates.push(command);
                 if verbose {
-                    println!("❌ {} failed", command);
+                    println!("❌ {command} failed");
                 }
             }
 
@@ -642,7 +639,7 @@ fn clean_project(all: bool, verbose: bool, dry_run: bool) -> Result<WorkflowResu
             progress.set_message(command);
 
             if verbose {
-                println!("Running: {}", command);
+                println!("Running: {command}");
             }
 
             let output = Command::new("sh")
@@ -653,7 +650,7 @@ fn clean_project(all: bool, verbose: bool, dry_run: bool) -> Result<WorkflowResu
                 .output()?;
 
             if !output.status.success() && verbose {
-                println!("⚠️  {} had issues", command);
+                println!("⚠️  {command} had issues");
             }
 
             progress.inc(1);
@@ -669,7 +666,7 @@ fn clean_project(all: bool, verbose: bool, dry_run: bool) -> Result<WorkflowResu
     })
 }
 
-fn show_status(verbose: bool) -> Result<WorkflowResult> {
+fn show_status(_verbose: bool) -> Result<WorkflowResult> {
     println!("📊 Project Status");
 
     let mut status_info = Vec::new();
@@ -709,7 +706,7 @@ fn show_status(verbose: bool) -> Result<WorkflowResult> {
         .output()?;
     if git_output.status.success() {
         let changes = String::from_utf8_lossy(&git_output.stdout).lines().count();
-        status_info.push(format!("Git changes: {}", changes));
+        status_info.push(format!("Git changes: {changes}"));
     }
 
     let details = status_info.join("\n");
@@ -731,7 +728,7 @@ fn run_dev_server(watch: bool, verbose: bool, dry_run: bool) -> Result<WorkflowR
     };
 
     if dry_run {
-        println!("Would run: {}", command);
+        println!("Would run: {command}");
         return Ok(WorkflowResult {
             success: true,
             message: "Development server command prepared".to_string(),
@@ -740,7 +737,7 @@ fn run_dev_server(watch: bool, verbose: bool, dry_run: bool) -> Result<WorkflowR
     }
 
     if verbose {
-        println!("Running: {}", command);
+        println!("Running: {command}");
     }
 
     // For development server, we want to run it in the foreground

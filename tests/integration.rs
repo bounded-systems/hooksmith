@@ -7,7 +7,7 @@ use std::process::Command;
 #[test]
 fn test_cli_help() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "--help"]);
+    cmd.args(["run", "--", "--help"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -20,7 +20,7 @@ fn test_cli_help() -> anyhow::Result<()> {
 #[test]
 fn test_cli_version() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "--version"]);
+    cmd.args(["run", "--", "--version"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -32,7 +32,7 @@ fn test_cli_version() -> anyhow::Result<()> {
 #[test]
 fn test_test_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "test"]);
+    cmd.args(["run", "--", "test"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -44,7 +44,7 @@ fn test_test_command() -> anyhow::Result<()> {
 #[test]
 fn test_test_command_with_message() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "test", "--message", "Custom message"]);
+    cmd.args(["run", "--", "test", "--message", "Custom message"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -56,7 +56,7 @@ fn test_test_command_with_message() -> anyhow::Result<()> {
 #[test]
 fn test_list_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "list"]);
+    cmd.args(["run", "--", "list"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -68,7 +68,7 @@ fn test_list_command() -> anyhow::Result<()> {
 #[test]
 fn test_build_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "build", "test-hook"]);
+    cmd.args(["run", "--", "build", "test-hook"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -81,7 +81,7 @@ fn test_build_command() -> anyhow::Result<()> {
 #[test]
 fn test_generate_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "generate"]);
+    cmd.args(["run", "--", "generate"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -93,7 +93,7 @@ fn test_generate_command() -> anyhow::Result<()> {
 #[test]
 fn test_install_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "install"]);
+    cmd.args(["run", "--", "install"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -105,7 +105,7 @@ fn test_install_command() -> anyhow::Result<()> {
 #[test]
 fn test_wasm_build_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "wasm", "build", "test.wit"]);
+    cmd.args(["run", "--", "wasm", "build", "test.wit"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -118,7 +118,7 @@ fn test_wasm_build_command() -> anyhow::Result<()> {
 #[test]
 fn test_wasm_run_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&[
+    cmd.args([
         "run",
         "--",
         "wasm",
@@ -142,7 +142,7 @@ fn test_wasm_run_command() -> anyhow::Result<()> {
 #[test]
 fn test_wasm_bindings_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "wasm", "bindings", "test.wit"]);
+    cmd.args(["run", "--", "wasm", "bindings", "test.wit"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -155,7 +155,7 @@ fn test_wasm_bindings_command() -> anyhow::Result<()> {
 #[test]
 fn test_worktree_create_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "worktree", "create", "feature/test"]);
+    cmd.args(["run", "--", "worktree", "create", "feature/test"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -168,7 +168,7 @@ fn test_worktree_create_command() -> anyhow::Result<()> {
 #[test]
 fn test_worktree_list_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "worktree", "list"]);
+    cmd.args(["run", "--", "worktree", "list"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -180,7 +180,7 @@ fn test_worktree_list_command() -> anyhow::Result<()> {
 #[test]
 fn test_worktree_switch_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "worktree", "switch", "test-worktree"]);
+    cmd.args(["run", "--", "worktree", "switch", "test-worktree"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -193,7 +193,7 @@ fn test_worktree_switch_command() -> anyhow::Result<()> {
 #[test]
 fn test_worktree_remove_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "worktree", "remove", "test-worktree"]);
+    cmd.args(["run", "--", "worktree", "remove", "test-worktree"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());
@@ -206,7 +206,7 @@ fn test_worktree_remove_command() -> anyhow::Result<()> {
 #[test]
 fn test_worktree_tools_command() -> anyhow::Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--", "worktree", "tools"]);
+    cmd.args(["run", "--", "worktree", "tools"]);
     let output = cmd.output()?;
 
     assert!(output.status.success());

@@ -4,15 +4,13 @@
 //! and generates appropriate Cargo.toml files for crates that don't have them.
 //! It also attempts to infer dependencies from use statements.
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::Parser;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
-use toml;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct CargoToml {
@@ -141,7 +139,7 @@ fn main() -> Result<()> {
     );
 
     for crate_info in missing_crates {
-        generate_cargo_toml(&crate_info)?;
+        generate_cargo_toml(crate_info)?;
     }
 
     println!("\n🎉 Cargo.toml generation complete!");
@@ -240,12 +238,10 @@ fn find_crates_recursive(
 
     // Recursively search subdirectories
     if let Ok(entries) = current_path.read_dir() {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if path.is_dir() {
-                    find_crates_recursive(repo_root, &path, crates, visited)?;
-                }
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                find_crates_recursive(repo_root, &path, crates, visited)?;
             }
         }
     }
@@ -253,7 +249,7 @@ fn find_crates_recursive(
     Ok(())
 }
 
-fn infer_crate_name(crate_path: &Path, repo_root: &Path) -> String {
+fn infer_crate_name(crate_path: &Path, _repo_root: &Path) -> String {
     // Try to get name from existing Cargo.toml first
     if let Ok(content) = fs::read_to_string(crate_path.join("Cargo.toml")) {
         if let Ok(cargo_toml) = toml::from_str::<CargoToml>(&content) {
@@ -295,29 +291,27 @@ fn analyze_dependencies_recursive(
     dependencies: &mut HashSet<String>,
 ) -> Result<()> {
     if let Ok(entries) = path.read_dir() {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                let path = entry.path();
+        for entry in entries.flatten() {
+            let path = entry.path();
 
-                if path.is_dir() {
-                    analyze_dependencies_recursive(&path, use_regex, extern_regex, dependencies)?;
-                } else if path.extension().and_then(|s| s.to_str()) == Some("rs") {
-                    if let Ok(content) = fs::read_to_string(&path) {
-                        // Find use statements
-                        for cap in use_regex.captures_iter(&content) {
-                            if let Some(crate_name) = cap.get(1) {
-                                let name = crate_name.as_str().split("::").next().unwrap_or("");
-                                if !name.is_empty() && !is_std_crate(name) {
-                                    dependencies.insert(name.to_string());
-                                }
+            if path.is_dir() {
+                analyze_dependencies_recursive(&path, use_regex, extern_regex, dependencies)?;
+            } else if path.extension().and_then(|s| s.to_str()) == Some("rs") {
+                if let Ok(content) = fs::read_to_string(&path) {
+                    // Find use statements
+                    for cap in use_regex.captures_iter(&content) {
+                        if let Some(crate_name) = cap.get(1) {
+                            let name = crate_name.as_str().split("::").next().unwrap_or("");
+                            if !name.is_empty() && !is_std_crate(name) {
+                                dependencies.insert(name.to_string());
                             }
                         }
+                    }
 
-                        // Find extern crate statements
-                        for cap in extern_regex.captures_iter(&content) {
-                            if let Some(crate_name) = cap.get(1) {
-                                dependencies.insert(crate_name.as_str().to_string());
-                            }
+                    // Find extern crate statements
+                    for cap in extern_regex.captures_iter(&content) {
+                        if let Some(crate_name) = cap.get(1) {
+                            dependencies.insert(crate_name.as_str().to_string());
                         }
                     }
                 }
@@ -537,7 +531,7 @@ fn generate_cargo_toml(crate_info: &CrateInfo) -> Result<()> {
             dep.clone(),
             Dependency::Detailed {
                 version: None,
-                path: Some(format!("../{}", dep)),
+                path: Some(format!("../{dep}")),
                 features: None,
                 optional: None,
             },

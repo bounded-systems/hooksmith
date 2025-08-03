@@ -45,13 +45,13 @@ fn demo_safe_ascii_validation() -> Result<(), Box<dyn std::error::Error>> {
     // Test valid content
     match filter.process_file(valid_content, &file_state, &operation) {
         Ok(_) => println!("✅ Valid content passed"),
-        Err(e) => println!("❌ Valid content failed: {}", e),
+        Err(e) => println!("❌ Valid content failed: {e}"),
     }
 
     // Test invalid content
     match filter.process_file(invalid_content, &file_state, &operation) {
         Ok(_) => println!("❌ Invalid content should have failed"),
-        Err(e) => println!("✅ Invalid content correctly rejected: {}", e),
+        Err(e) => println!("✅ Invalid content correctly rejected: {e}"),
     }
 
     println!();
@@ -82,9 +82,9 @@ fn demo_eol_normalization() -> Result<(), Box<dyn std::error::Error>> {
             // Count line endings in normalized content
             let lf_count = normalized.iter().filter(|&&b| b == b'\n').count();
             let cr_count = normalized.iter().filter(|&&b| b == b'\r').count();
-            println!("   LF count: {}, CR count: {}", lf_count, cr_count);
+            println!("   LF count: {lf_count}, CR count: {cr_count}");
         }
-        Err(e) => println!("❌ EOL normalization failed: {}", e),
+        Err(e) => println!("❌ EOL normalization failed: {e}"),
     }
 
     println!();

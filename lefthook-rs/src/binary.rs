@@ -277,7 +277,7 @@ mod tests {
         if result.is_ok() {
             let version = result.unwrap();
             assert!(!version.is_empty());
-            println!("Lefthook version: {}", version);
+            println!("Lefthook version: {version}");
         } else {
             println!(
                 "Could not get lefthook version (expected if not installed): {:?}",

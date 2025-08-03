@@ -1,0 +1,2 @@
+s/format!("Generated file '{}' must have 'linguist-generated=true' attribute", filename)/format!("Generated file '{filename}' must have 'linguist-generated=true' attribute")/g
+s/format!("Non-generated file '{}' should not have 'linguist-generated=true' attribute", filename)/format!("Non-generated file '{filename}' should not have 'linguist-generated=true' attribute")/g

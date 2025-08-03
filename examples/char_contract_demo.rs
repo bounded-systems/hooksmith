@@ -130,8 +130,8 @@ fn demo_line_ending_normalization() -> Result<(), Box<dyn std::error::Error>> {
     let processed_lf = processed.iter().filter(|&&b| b == b'\n').count();
     let processed_cr = processed.iter().filter(|&&b| b == b'\r').count();
 
-    println!("  Original: {} LF, {} CR", original_lf, original_cr);
-    println!("  Processed: {} LF, {} CR", processed_lf, processed_cr);
+    println!("  Original: {original_lf} LF, {original_cr} CR");
+    println!("  Processed: {processed_lf} LF, {processed_cr} CR");
 
     println!();
     Ok(())

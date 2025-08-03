@@ -139,7 +139,7 @@ fn demo_batch_filename_validation() -> Result<(), Box<dyn std::error::Error>> {
     let contracts = validator.validate_filenames(filenames);
     let summary = validator.summarize_validation(&contracts);
 
-    println!("  {}", summary);
+    println!("  {summary}");
     println!();
 
     println!("  Individual results:");
@@ -228,7 +228,7 @@ fn demo_character_analysis() -> Result<(), Box<dyn std::error::Error>> {
     let filename = "file\x00with\x01invalid\x1fchars.txt";
     let contract = TreeFilenameContractChars::new(filename.to_string());
 
-    println!("  Filename: '{}'", filename);
+    println!("  Filename: '{filename}'");
     println!("  Overall: {}", contract.summary());
     println!();
 
@@ -262,8 +262,8 @@ fn demo_character_analysis() -> Result<(), Box<dyn std::error::Error>> {
         .map(|c| c.char)
         .collect();
 
-    println!("    Valid string: '{}'", valid_chars);
-    println!("    Invalid chars: {:?}", invalid_chars);
+    println!("    Valid string: '{valid_chars}'");
+    println!("    Invalid chars: {invalid_chars:?}");
 
     println!();
     Ok(())

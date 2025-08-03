@@ -296,7 +296,7 @@ async fn main() -> Result<()> {
             println!(
                 "{} {}",
                 style("✅").green(),
-                style(format!("Test successful: {}", message)).green()
+                style(format!("Test successful: {message}")).green()
             );
         }
         Commands::Build { hook_name, output } => {
@@ -309,7 +309,7 @@ async fn main() -> Result<()> {
             println!(
                 "{} {}",
                 style("📁").blue(),
-                style(format!("Output: {}", output)).blue()
+                style(format!("Output: {output}")).blue()
             );
 
             use hooksmith::modules::hook_builder::{HookBuildConfig, HookBuilder};
@@ -335,7 +335,7 @@ async fn main() -> Result<()> {
                             println!(
                                 "{} {}",
                                 style("📦").blue(),
-                                style(format!("Binary: {:?}", binary_path)).blue()
+                                style(format!("Binary: {binary_path:?}")).blue()
                             );
                         }
                         println!(
@@ -355,7 +355,7 @@ async fn main() -> Result<()> {
                     eprintln!(
                         "{} {}",
                         style("❌").red(),
-                        style(format!("Build error: {}", e)).red()
+                        style(format!("Build error: {e}")).red()
                     );
                     std::process::exit(1);
                 }
@@ -400,7 +400,7 @@ async fn main() -> Result<()> {
                     eprintln!(
                         "{} {}",
                         style("❌").red(),
-                        style(format!("Failed to generate configuration: {}", e)).red()
+                        style(format!("Failed to generate configuration: {e}")).red()
                     );
                     std::process::exit(1);
                 }
@@ -444,8 +444,7 @@ async fn main() -> Result<()> {
                         "{} {}",
                         style("❌").red(),
                         style(format!(
-                            "Failed to generate comprehensive configuration: {}",
-                            e
+                            "Failed to generate comprehensive configuration: {e}"
                         ))
                         .red()
                     );
@@ -615,7 +614,7 @@ async fn main() -> Result<()> {
                     eprintln!(
                         "{} {}",
                         style("❌").red(),
-                        style(format!("Failed to install hooks: {}", e)).red()
+                        style(format!("Failed to install hooks: {e}")).red()
                     );
                     std::process::exit(1);
                 }
@@ -657,10 +656,10 @@ async fn main() -> Result<()> {
                         for hook in hooks {
                             println!("  {} {}", style("🔧").green(), style(&hook.name).yellow());
                             if let Some(description) = hook.description {
-                                println!("     Description: {}", description);
+                                println!("     Description: {description}");
                             }
                             if let Some(version) = hook.version {
-                                println!("     Version: {}", version);
+                                println!("     Version: {version}");
                             }
                             if !hook.supported_hooks.is_empty() {
                                 println!(
@@ -686,7 +685,7 @@ async fn main() -> Result<()> {
                     eprintln!(
                         "{} {}",
                         style("❌").red(),
-                        style(format!("Failed to list hooks: {}", e)).red()
+                        style(format!("Failed to list hooks: {e}")).red()
                     );
                     std::process::exit(1);
                 }
@@ -714,7 +713,7 @@ async fn main() -> Result<()> {
                     eprintln!(
                         "{} {}",
                         style("❌").red(),
-                        style(format!("Configuration validation failed: {}", e)).red()
+                        style(format!("Configuration validation failed: {e}")).red()
                     );
                     std::process::exit(1);
                 }
@@ -753,7 +752,7 @@ async fn main() -> Result<()> {
                     eprintln!(
                         "{} {}",
                         style("❌").red(),
-                        style(format!("Hook verification failed: {}", e)).red()
+                        style(format!("Hook verification failed: {e}")).red()
                     );
                     std::process::exit(1);
                 }
@@ -770,7 +769,7 @@ async fn main() -> Result<()> {
                 println!(
                     "{} {}",
                     style("📁").blue(),
-                    style(format!("Output: {}", output)).blue()
+                    style(format!("Output: {output}")).blue()
                 );
 
                 use hooksmith::modules::wasm::{WasmBuildConfig, WasmManager};
@@ -787,7 +786,7 @@ async fn main() -> Result<()> {
                         eprintln!(
                             "{} {}",
                             style("❌").red(),
-                            style(format!("Failed to create WASM manager: {}", e)).red()
+                            style(format!("Failed to create WASM manager: {e}")).red()
                         );
                         std::process::exit(1);
                     })
@@ -805,14 +804,14 @@ async fn main() -> Result<()> {
                                 println!(
                                     "{} {}",
                                     style("📦").blue(),
-                                    style(format!("WASM: {:?}", wasm_file)).blue()
+                                    style(format!("WASM: {wasm_file:?}")).blue()
                                 );
                             }
                             if let Some(bindings_file) = result.bindings_file {
                                 println!(
                                     "{} {}",
                                     style("🔗").blue(),
-                                    style(format!("Bindings: {:?}", bindings_file)).blue()
+                                    style(format!("Bindings: {bindings_file:?}")).blue()
                                 );
                             }
                             println!(
@@ -838,7 +837,7 @@ async fn main() -> Result<()> {
                         eprintln!(
                             "{} {}",
                             style("❌").red(),
-                            style(format!("WASM build error: {}", e)).red()
+                            style(format!("WASM build error: {e}")).red()
                         );
                         std::process::exit(1);
                     }
@@ -886,7 +885,7 @@ async fn main() -> Result<()> {
                         eprintln!(
                             "{} {}",
                             style("❌").red(),
-                            style(format!("Failed to create WASM manager: {}", e)).red()
+                            style(format!("Failed to create WASM manager: {e}")).red()
                         );
                         std::process::exit(1);
                     })
@@ -937,7 +936,7 @@ async fn main() -> Result<()> {
                         eprintln!(
                             "{} {}",
                             style("❌").red(),
-                            style(format!("WASM execution error: {}", e)).red()
+                            style(format!("WASM execution error: {e}")).red()
                         );
                         std::process::exit(1);
                     }
@@ -953,7 +952,7 @@ async fn main() -> Result<()> {
                 println!(
                     "{} {}",
                     style("📁").blue(),
-                    style(format!("Output: {}", output)).blue()
+                    style(format!("Output: {output}")).blue()
                 );
 
                 use hooksmith::modules::wasm::{WasmBuildConfig, WasmManager};
@@ -971,7 +970,7 @@ async fn main() -> Result<()> {
                         eprintln!(
                             "{} {}",
                             style("❌").red(),
-                            style(format!("Failed to create WASM manager: {}", e)).red()
+                            style(format!("Failed to create WASM manager: {e}")).red()
                         );
                         std::process::exit(1);
                     })
@@ -989,7 +988,7 @@ async fn main() -> Result<()> {
                                 println!(
                                     "{} {}",
                                     style("📦").blue(),
-                                    style(format!("Bindings: {:?}", bindings_file)).blue()
+                                    style(format!("Bindings: {bindings_file:?}")).blue()
                                 );
                             }
                             println!(
@@ -1019,7 +1018,7 @@ async fn main() -> Result<()> {
                         eprintln!(
                             "{} {}",
                             style("❌").red(),
-                            style(format!("Bindings generation error: {}", e)).red()
+                            style(format!("Bindings generation error: {e}")).red()
                         );
                         std::process::exit(1);
                     }
@@ -1076,7 +1075,7 @@ async fn main() -> Result<()> {
                             cmd.args([
                                 "worktree",
                                 "add",
-                                &format!("{}/{}", base, branch_name),
+                                &format!("{base}/{branch_name}"),
                                 &branch_name,
                             ]);
                         }
@@ -1103,7 +1102,7 @@ async fn main() -> Result<()> {
                                     "{} {} {}",
                                     style("📁").blue(),
                                     style("Location:").blue(),
-                                    style(format!("{}/{}", base, branch_name)).yellow()
+                                    style(format!("{base}/{branch_name}")).yellow()
                                 );
                             } else {
                                 eprintln!(
@@ -1174,7 +1173,7 @@ async fn main() -> Result<()> {
                             if output.status.success() {
                                 let _stdout = String::from_utf8_lossy(&output.stdout);
                                 println!("{} {}", style("✅").green(), style("Worktrees:").green());
-                                println!("{}", _stdout);
+                                println!("{_stdout}");
                             } else {
                                 let stderr = String::from_utf8_lossy(&output.stderr);
                                 eprintln!(
@@ -1182,7 +1181,7 @@ async fn main() -> Result<()> {
                                     style("❌").red(),
                                     style("Failed to list worktrees").red()
                                 );
-                                eprintln!("{}", stderr);
+                                eprintln!("{stderr}");
                                 std::process::exit(1);
                             }
                         }
@@ -1559,38 +1558,32 @@ async fn verify_hooksmith_hooks(
                     };
 
                     summary.hook_details.push(HookDetail {
-                        name: format!("{}/{}", hook_type, expected_hook_name),
+                        name: format!("{hook_type}/{expected_hook_name}"),
                         status: HookStatus::Configured,
                         config_preview: config_preview.clone(),
                     });
 
-                    println!(
-                        "✔ {}/{} ✅ Hooksmith hook configured",
-                        hook_type, expected_hook_name
-                    );
+                    println!("✔ {hook_type}/{expected_hook_name} ✅ Hooksmith hook configured");
 
                     if verbose && config_preview.is_some() {
                         println!("   Configuration:");
                         for line in config_preview.as_ref().unwrap().lines() {
-                            println!("   {}", line);
+                            println!("   {line}");
                         }
                         println!();
                     }
                 } else {
                     summary
                         .missing_hooks
-                        .push(format!("{}/{}", hook_type, expected_hook_name));
+                        .push(format!("{hook_type}/{expected_hook_name}"));
 
                     summary.hook_details.push(HookDetail {
-                        name: format!("{}/{}", hook_type, expected_hook_name),
+                        name: format!("{hook_type}/{expected_hook_name}"),
                         status: HookStatus::Missing,
                         config_preview: None,
                     });
 
-                    println!(
-                        "✖ {}/{} ❌ Missing Hooksmith hook",
-                        hook_type, expected_hook_name
-                    );
+                    println!("✖ {hook_type}/{expected_hook_name} ❌ Missing Hooksmith hook");
                 }
             }
         }
@@ -1612,7 +1605,7 @@ async fn verify_hooksmith_hooks(
     }
 
     if summary.total_hooks == 0 {
-        println!("ℹ️  No Hooksmith hooks found in {:?}", lefthook_config_path);
+        println!("ℹ️  No Hooksmith hooks found in {lefthook_config_path:?}");
     }
 
     Ok(summary)

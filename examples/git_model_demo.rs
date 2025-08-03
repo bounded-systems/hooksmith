@@ -11,7 +11,7 @@ fn main() {
     // Example 1: Basic usage with individual functions
     println!("📋 Example 1: Basic API Usage");
     let staged_actions = allowed_actions(FileStateKind::Staged);
-    println!("  Staged file actions: {:?}", staged_actions);
+    println!("  Staged file actions: {staged_actions:?}");
 
     let commit_hooks = hooks_for_action(ActionKind::Commit);
     println!(
@@ -50,7 +50,7 @@ fn main() {
     println!("\n📋 Example 3: Actions and Hooks for File State");
     let staged_actions_hooks = actions_for_file(FileStateKind::Staged);
     for (action, hooks) in staged_actions_hooks {
-        println!("  Action: {:?}", action);
+        println!("  Action: {action:?}");
         for hook in hooks {
             println!(
                 "    Hook: {} ({})",
@@ -82,7 +82,7 @@ fn main() {
             file_info
                 .actions
                 .iter()
-                .map(|(action, _)| format!("{:?}", action))
+                .map(|(action, _)| format!("{action:?}"))
                 .collect::<Vec<_>>()
                 .join(", ")
         );
@@ -260,7 +260,7 @@ fn main() {
             state,
             actions
                 .iter()
-                .map(|a| format!("{:?}", a))
+                .map(|a| format!("{a:?}"))
                 .collect::<Vec<_>>()
                 .join(", ")
         );
@@ -289,7 +289,7 @@ fn main() {
             .map(|h| h.hook.filename())
             .collect();
 
-        println!("  • {:?}:", action);
+        println!("  • {action:?}:");
         println!(
             "    - All hooks: {}",
             hooks
@@ -566,8 +566,8 @@ fn main() {
     for command in commands {
         let resolved = context.substitute_files(command);
         let used_subs = context.get_used_substitutions(command);
-        println!("    Original: {}", command);
-        println!("    Resolved: {}", resolved);
+        println!("    Original: {command}");
+        println!("    Resolved: {resolved}");
         println!("    Used substitutions: {}", used_subs.join(", "));
         println!();
     }
@@ -1014,59 +1014,50 @@ fn main() {
     }
 
     // Export DOT diagram
-    let dot_path = format!("{}/git_file_states.dot", diagrams_dir);
+    let dot_path = format!("{diagrams_dir}/git_file_states.dot");
     fs::write(&dot_path, diagrams::export_file_state_diagram())
         .expect("Failed to write DOT diagram");
-    println!("    ✅ Exported DOT diagram to: {}", dot_path);
+    println!("    ✅ Exported DOT diagram to: {dot_path}");
 
     // Export Mermaid diagrams
-    let mermaid_path = format!("{}/git_file_states.md", diagrams_dir);
+    let mermaid_path = format!("{diagrams_dir}/git_file_states.md");
     let mermaid_content = format!(
         "# Git File States Diagram\n\n```mermaid\n{}\n```\n",
         diagrams::export_file_state_mermaid()
     );
     fs::write(&mermaid_path, mermaid_content).expect("Failed to write Mermaid diagram");
-    println!("    ✅ Exported Mermaid diagram to: {}", mermaid_path);
+    println!("    ✅ Exported Mermaid diagram to: {mermaid_path}");
 
     // Export comprehensive diagram
-    let comprehensive_path = format!("{}/git_comprehensive.md", diagrams_dir);
+    let comprehensive_path = format!("{diagrams_dir}/git_comprehensive.md");
     let comprehensive_content = format!(
         "# Git Comprehensive Diagram\n\n```mermaid\n{}\n```\n",
         diagrams::export_comprehensive_diagram()
     );
     fs::write(&comprehensive_path, comprehensive_content)
         .expect("Failed to write comprehensive diagram");
-    println!(
-        "    ✅ Exported comprehensive diagram to: {}",
-        comprehensive_path
-    );
+    println!("    ✅ Exported comprehensive diagram to: {comprehensive_path}");
 
     // Export commit workflow
-    let workflow_path = format!("{}/git_commit_workflow.md", diagrams_dir);
+    let workflow_path = format!("{diagrams_dir}/git_commit_workflow.md");
     let workflow_content = format!(
         "# Git Commit Workflow\n\n```mermaid\n{}\n```\n",
         diagrams::export_commit_workflow_diagram()
     );
     fs::write(&workflow_path, workflow_content).expect("Failed to write commit workflow diagram");
-    println!("    ✅ Exported commit workflow to: {}", workflow_path);
+    println!("    ✅ Exported commit workflow to: {workflow_path}");
 
     // Export skip/only conditions
-    let skip_only_path = format!("{}/git_skip_only_conditions.md", diagrams_dir);
+    let skip_only_path = format!("{diagrams_dir}/git_skip_only_conditions.md");
     let skip_only_content = format!(
         "# Git Skip/Only Conditions\n\n```mermaid\n{}\n```\n",
         diagrams::export_skip_only_diagram()
     );
     fs::write(&skip_only_path, skip_only_content)
         .expect("Failed to write skip/only conditions diagram");
-    println!(
-        "    ✅ Exported skip/only conditions to: {}",
-        skip_only_path
-    );
+    println!("    ✅ Exported skip/only conditions to: {skip_only_path}");
 
-    println!(
-        "\n    📁 All diagrams exported to '{}' directory",
-        diagrams_dir
-    );
+    println!("\n    📁 All diagrams exported to '{diagrams_dir}' directory");
     println!("    💡 You can render these diagrams using:");
     println!("       - Graphviz: dot -Tpng git_file_states.dot -o git_file_states.png");
     println!("       - Mermaid: Use the .md files in GitHub, GitLab, or Mermaid Live Editor");
@@ -1075,10 +1066,7 @@ fn main() {
 
 /// Advanced contract validation function that can be used in real-world scenarios
 fn validate_git_contract(state: FileStateKind, action: ActionKind, hook: HookKind) {
-    println!(
-        "  Validating contract: {:?} + {:?} + {:?}",
-        state, action, hook
-    );
+    println!("  Validating contract: {state:?} + {action:?} + {hook:?}");
 
     let result = validate_contract(state, action, hook);
 

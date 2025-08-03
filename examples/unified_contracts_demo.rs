@@ -145,13 +145,8 @@ fn demo_tree_contracts() -> Result<(), Box<dyn std::error::Error>> {
     println!("  Tree modes:");
     for mode_str in &["100644", "100755", "040000", "invalid"] {
         match UnifiedTreeMode::parse_from_str(mode_str) {
-            Some(mode) => println!(
-                "    '{}' -> {} ({})",
-                mode_str,
-                mode.to_string(),
-                mode.description()
-            ),
-            None => println!("    '{}' -> Invalid", mode_str),
+            Some(mode) => println!("    '{}' -> {} ({})", mode_str, mode, mode.description()),
+            None => println!("    '{mode_str}' -> Invalid"),
         }
     }
 
@@ -290,9 +285,9 @@ fn demo_tag_contracts() -> Result<(), Box<dyn std::error::Error>> {
         let tag = TagContract {
             object: "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
             obj_type: obj_type.to_string(),
-            tag: format!("tag-{}", obj_type),
+            tag: format!("tag-{obj_type}"),
             tagger: "John Doe <john@example.com>".to_string(),
-            message: format!("Tag for {}", obj_type),
+            message: format!("Tag for {obj_type}"),
         };
         println!("  {}", tag.summary());
     }
@@ -345,7 +340,7 @@ fn demo_unified_git_objects() -> Result<(), Box<dyn std::error::Error>> {
     println!("  Polymorphic validation:");
     let valid_count = git_objects.iter().filter(|obj| obj.validate()).count();
     let total_count = git_objects.len();
-    println!("    Valid: {}/{}", valid_count, total_count);
+    println!("    Valid: {valid_count}/{total_count}");
 
     println!();
     Ok(())
@@ -436,7 +431,7 @@ fn demo_serialization() -> Result<(), Box<dyn std::error::Error>> {
     // Serialize to JSON
     let json = serde_json::to_string_pretty(&git_object)?;
     println!("  Serialized JSON:");
-    println!("{}", json);
+    println!("{json}");
 
     // Deserialize from JSON
     let deserialized: GitObject = serde_json::from_str(&json)?;

@@ -47,6 +47,7 @@ struct SetupResult {
 struct ToolInfo {
     name: String,
     install_command: String,
+    #[allow(dead_code)]
     check_command: String,
     description: String,
 }
@@ -69,12 +70,12 @@ fn main() -> Result<()> {
     if result.success {
         println!("{} {}", style("✅").green(), result.message);
         if let Some(details) = result.details {
-            println!("{}", details);
+            println!("{details}");
         }
     } else {
         println!("{} {}", style("❌").red(), result.message);
         if let Some(details) = result.details {
-            eprintln!("{}", details);
+            eprintln!("{details}");
         }
         std::process::exit(1);
     }
@@ -129,7 +130,7 @@ fn setup_environment(cli: &Cli) -> Result<SetupResult> {
             progress.set_message(step_name);
 
             if cli.verbose {
-                println!("Running: {}", step_name);
+                println!("Running: {step_name}");
             }
 
             let result = step_fn(cli)?;
@@ -137,12 +138,12 @@ fn setup_environment(cli: &Cli) -> Result<SetupResult> {
 
             if cli.verbose {
                 match &result {
-                    SetupResult { success: true, .. } => println!("✅ {} completed", step_name),
+                    SetupResult { success: true, .. } => println!("✅ {step_name} completed"),
                     SetupResult {
                         success: false,
                         message,
                         ..
-                    } => println!("❌ {} failed: {}", step_name, message),
+                    } => println!("❌ {step_name} failed: {message}"),
                 }
             }
 
@@ -152,7 +153,7 @@ fn setup_environment(cli: &Cli) -> Result<SetupResult> {
         progress.finish_with_message("✅ Setup complete");
     } else {
         for (step_name, _) in steps {
-            println!("Would run: {}", step_name);
+            println!("Would run: {step_name}");
         }
     }
 
@@ -230,14 +231,14 @@ fn install_rust_toolchain(cli: &Cli) -> Result<SetupResult> {
 
     for component in &components {
         if cli.dry_run {
-            println!("Would install component: {}", component);
+            println!("Would install component: {component}");
             continue;
         }
 
         let output = Command::new("rustup")
             .args(["component", "add", component])
             .output()
-            .with_context(|| format!("Failed to install component: {}", component))?;
+            .with_context(|| format!("Failed to install component: {component}"))?;
 
         if !output.status.success() && cli.verbose {
             println!(
@@ -253,14 +254,14 @@ fn install_rust_toolchain(cli: &Cli) -> Result<SetupResult> {
 
     for target in &targets {
         if cli.dry_run {
-            println!("Would install target: {}", target);
+            println!("Would install target: {target}");
             continue;
         }
 
         let output = Command::new("rustup")
             .args(["target", "add", target])
             .output()
-            .with_context(|| format!("Failed to install target: {}", target))?;
+            .with_context(|| format!("Failed to install target: {target}"))?;
 
         if !output.status.success() && cli.verbose {
             println!(
@@ -371,7 +372,7 @@ fn install_cargo_tools(cli: &Cli) -> Result<SetupResult> {
         Ok(SetupResult {
             success: false,
             message: "Some tools failed to install".to_string(),
-            details: Some(format!("Failed: {:?}", failed_tools)),
+            details: Some(format!("Failed: {failed_tools:?}")),
         })
     }
 }
@@ -397,12 +398,12 @@ fn verify_installation(cli: &Cli) -> Result<SetupResult> {
         if command_exists(tool)? {
             available_tools.push(*tool);
             if cli.verbose {
-                println!("✅ {} is available", tool);
+                println!("✅ {tool} is available");
             }
         } else {
             missing_tools.push(*tool);
             if cli.verbose {
-                println!("❌ {} is not available", tool);
+                println!("❌ {tool} is not available");
             }
         }
     }
@@ -438,12 +439,12 @@ fn setup_project_config(cli: &Cli) -> Result<SetupResult> {
         if Path::new(file).exists() {
             existing_files.push(*file);
             if cli.verbose {
-                println!("✅ {} exists", file);
+                println!("✅ {file} exists");
             }
         } else {
             missing_files.push(*file);
             if cli.verbose {
-                println!("⚠️  {} is missing", file);
+                println!("⚠️  {file} is missing");
             }
         }
     }
