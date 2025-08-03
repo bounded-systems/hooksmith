@@ -159,6 +159,10 @@ This document shows the complete file structure of the repository.
 ├── components/
   ├── git-filter/
     ├── src/
+      ├── tree_contract.rs.backup
+├── components/
+  ├── git-filter/
+    ├── src/
       ├── tree_filename_chars_contract.rs
 ├── components/
   ├── git-filter/
@@ -382,6 +386,7 @@ This document shows the complete file structure of the repository.
   ├── tree_filename_chars_contract_demo.rs
 ├── examples/
   ├── unified_contracts_demo.rs
+├── fix_format.sed
 ├── generated_file_demo
 ├── hooks/
   ├── .gitattributes
@@ -646,33 +651,33 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       321
+- **Total Files**:       323
 - **Rust Files**:        120 (.rs)
 - **Configuration Files**:        37 (.toml, .yaml, .rc)
-- **Documentation**:        123 (.md)
+- **Documentation**:        125 (.md)
 - **Scripts**:        0 (.sh)
 
 ## 📋 File Type Breakdown
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .bash | 1 | Other files |
-| .wit | 9 | WebAssembly Interface Type definitions |
-| .hbs | 1 | Other files |
-| .md | 123 | Markdown documentation |
-| .toml | 14 | Cargo and configuration files |
-| .dot | 1 | Other files |
-| .epub | 1 | EPUB documentation |
-| .backup | 1 | Other files |
-| .css | 1 | Stylesheet files |
-| .yaml | 4 | YAML configuration files |
-| .yml | 9 | YAML configuration files |
-| .lock | 2 | Other files |
 | .json | 10 | JSON schema and config files |
-| .rs | 120 | Rust source files |
-| .pdf | 1 | PDF documentation |
+| .md | 125 | Markdown documentation |
+| .lock | 2 | Other files |
+| .dot | 1 | Other files |
+| .toml | 14 | Cargo and configuration files |
 | .sed | 2 | Other files |
+| .css | 1 | Stylesheet files |
+| .hbs | 1 | Other files |
+| .pdf | 1 | PDF documentation |
+| .yml | 9 | YAML configuration files |
+| .epub | 1 | EPUB documentation |
+| .wit | 9 | WebAssembly Interface Type definitions |
+| .backup | 1 | Other files |
 | .html | 1 | HTML documentation |
+| .rs | 120 | Rust source files |
+| .yaml | 4 | YAML configuration files |
+| .bash | 1 | Other files |
 
 ## 🧩 Component Breakdown
 
@@ -703,9 +708,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 163
-- **Modified Files**: 58
+- **Total Commits**: 165
+- **Modified Files**: 3
 
 ---
 
-*Generated on Sun Aug  3 00:26:43 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 00:31:25 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

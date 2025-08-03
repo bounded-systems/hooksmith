@@ -8,30 +8,30 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **git2**: ^0.18
-- **regex**: ^1.0
-- **tracing-subscriber**: ^0.3
-- **serde_yaml**: ^0.9
-- **wasmtime**: ^18.0
-- **wit-bindgen**: ^0.20
-- **toml**: ^0.8
-- **cli-core**: *
-- **serde**: ^1.0
-- **sha2**: ^0.10
-- **tracing**: ^0.1
 - **git-filter**: *
-- **indicatif**: ^0.17
-- **wasmtime-wasi**: ^18.0
-- **clap**: ^4.0
-- **console**: ^0.15
-- **tokio**: ^1.0
-- **jsonschema**: ^0.17
-- **tempfile**: dev
-- **chrono**: ^0.4
-- **which**: ^5.0
 - **reqwest**: ^0.11
-- **anyhow**: ^1.0
+- **clap**: ^4.0
+- **regex**: ^1.0
+- **tracing**: ^0.1
+- **which**: ^5.0
 - **serde_json**: ^1.0
+- **indicatif**: ^0.17
+- **wasmtime**: ^18.0
+- **cli-core**: *
+- **wit-bindgen**: ^0.20
+- **git2**: ^0.18
+- **wasmtime-wasi**: ^18.0
+- **serde**: ^1.0
+- **anyhow**: ^1.0
+- **console**: ^0.15
+- **chrono**: ^0.4
+- **jsonschema**: ^0.17
+- **serde_yaml**: ^0.9
+- **sha2**: ^0.10
+- **toml**: ^0.8
+- **tracing-subscriber**: ^0.3
+- **tempfile**: dev
+- **tokio**: ^1.0
 
 ## Installation
 
@@ -104,6 +104,7 @@ hooksmith --help
 │   ├── Cargo.lock
 │   ├── build.rs
 │   ├── PHASE_4_FILE_TYPE_NORMALIZATION.md
+│   ├── CLIPPY_FIXES_SUMMARY.md
 │   ├── bootstrap.rs
 │   ├── bootstrap-simple.rs
 │   ├── test_codegen_markers.rs

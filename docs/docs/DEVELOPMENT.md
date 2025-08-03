@@ -79,6 +79,7 @@ cargo build
 │   ├── Cargo.lock
 │   ├── build.rs
 │   ├── PHASE_4_FILE_TYPE_NORMALIZATION.md
+│   ├── CLIPPY_FIXES_SUMMARY.md
 │   ├── bootstrap.rs
 │   ├── bootstrap-simple.rs
 │   ├── test_codegen_markers.rs
