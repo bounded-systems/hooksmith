@@ -17,12 +17,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::process::{Command, Stdio};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use tokio::process::Command as TokioCommand;
 use uuid::Uuid;
 
 use crate::event_bus::{emit_event, HooksmithEvent};
-use crate::structured_logging::StructuredEvent;
 
 /// Git workflow states for the state machine
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -276,7 +275,7 @@ impl GitLefthookIntegration {
                 "session_id": self.session_id,
             }),
         )
-        .with_state(format!("{:?}", to_state))
+        .with_state(format!("{to_state:?}"))
         .with_session_id(self.session_id.clone());
 
         emit_event(transition_event)?;
@@ -336,7 +335,7 @@ impl GitLefthookIntegration {
 
         // Execute git commit
         let mut cmd = TokioCommand::new("git");
-        cmd.args(&["commit", "-m", message]);
+        cmd.args(["commit", "-m", message]);
 
         if let Some(ref file_list) = files {
             for file in file_list {
@@ -412,14 +411,14 @@ impl GitLefthookIntegration {
 
         // Execute Lefthook hook
         let mut cmd = TokioCommand::new("lefthook");
-        cmd.args(&["run", hook_name]).envs(&env);
+        cmd.args(["run", hook_name]).envs(&env);
 
         let output = cmd
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .output()
             .await
-            .context(format!("Failed to execute lefthook run {}", hook_name))?;
+            .context(format!("Failed to execute lefthook run {hook_name}"))?;
 
         let duration_ms = start_time.elapsed().as_millis();
         let output_str = String::from_utf8_lossy(&output.stdout);
@@ -427,7 +426,7 @@ impl GitLefthookIntegration {
 
         let metadata = LefthookHookMetadata {
             name: hook_name.to_string(),
-            command: format!("lefthook run {}", hook_name),
+            command: format!("lefthook run {hook_name}"),
             exit_code: output.status.code().unwrap_or(-1),
             duration_ms: duration_ms as u64,
             output: if !output_str.is_empty() {
@@ -481,7 +480,7 @@ impl GitLefthookIntegration {
 
         // Execute git push
         let mut cmd = TokioCommand::new("git");
-        cmd.args(&["push", remote, branch]);
+        cmd.args(["push", remote, branch]);
 
         if force {
             cmd.arg("--force");
@@ -662,7 +661,7 @@ impl GitLefthookIntegration {
 
         // Fallback: try to get the latest commit hash
         let output = Command::new("git")
-            .args(&["rev-parse", "HEAD"])
+            .args(["rev-parse", "HEAD"])
             .output()
             .context("Failed to get commit hash")?;
 
@@ -680,7 +679,7 @@ impl GitLefthookIntegration {
     async fn get_commit_metadata(&self, commit_hash: &str) -> Result<GitCommitMetadata> {
         // Get commit details
         let output = TokioCommand::new("git")
-            .args(&["show", "--format=format:%H%n%s%n%b", "--stat", commit_hash])
+            .args(["show", "--format=format:%H%n%s%n%b", "--stat", commit_hash])
             .output()
             .await
             .context("Failed to get commit details")?;
@@ -701,7 +700,7 @@ impl GitLefthookIntegration {
 
         // Get current branch
         let branch_output = TokioCommand::new("git")
-            .args(&["branch", "--show-current"])
+            .args(["branch", "--show-current"])
             .output()
             .await
             .context("Failed to get current branch")?;
@@ -784,7 +783,7 @@ impl GitLefthookIntegration {
     pub fn add_blocking_dependency(&mut self, dependent: &str, blocking: &str) {
         self.blocking_dependencies
             .entry(dependent.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(blocking.to_string());
     }
 
@@ -825,12 +824,12 @@ pub async fn run_workflow_command(
     sarif_output: Option<String>,
 ) -> Result<()> {
     println!("🚀 Executing complete Git workflow");
-    println!("   Message: {}", message);
-    println!("   Hook: {}", hook);
-    println!("   Remote: {}", remote);
-    println!("   Branch: {:?}", branch);
-    println!("   Force: {}", force);
-    println!("   Quiet: {}", quiet);
+    println!("   Message: {message}");
+    println!("   Hook: {hook}");
+    println!("   Remote: {remote}");
+    println!("   Branch: {branch:?}");
+    println!("   Force: {force}");
+    println!("   Quiet: {quiet}");
 
     let mut integration = GitLefthookIntegration::new();
 
@@ -850,14 +849,14 @@ pub async fn run_workflow_command(
     integration
         .execute_git_push(&remote, &branch_name, force)
         .await?;
-    println!("✅ Push completed to {}/{}", remote, branch_name);
+    println!("✅ Push completed to {remote}/{branch_name}");
 
     // Generate SARIF output if requested
     if let Some(output_path) = sarif_output {
         let sarif_document = integration.generate_sarif_document()?;
         std::fs::write(&output_path, &sarif_document)
-            .context(format!("Failed to write SARIF file: {}", output_path))?;
-        println!("📄 SARIF results written to: {}", output_path);
+            .context(format!("Failed to write SARIF file: {output_path}"))?;
+        println!("📄 SARIF results written to: {output_path}");
     }
 
     println!("🎉 Complete workflow executed successfully!");
@@ -867,8 +866,8 @@ pub async fn run_workflow_command(
 /// Execute Git commit with structured events
 pub async fn run_commit_command(message: String, files: Option<Vec<String>>) -> Result<()> {
     println!("📝 Executing Git commit");
-    println!("   Message: {}", message);
-    println!("   Files: {:?}", files);
+    println!("   Message: {message}");
+    println!("   Files: {files:?}");
 
     let mut integration = GitLefthookIntegration::new();
     let commit_metadata = integration.execute_git_commit(&message, files).await?;
@@ -878,10 +877,10 @@ pub async fn run_commit_command(message: String, files: Option<Vec<String>>) -> 
     println!("   Branch: {}", commit_metadata.branch);
     println!("   Files: {:?}", commit_metadata.files);
     if let Some(insertions) = commit_metadata.insertions {
-        println!("   Insertions: {}", insertions);
+        println!("   Insertions: {insertions}");
     }
     if let Some(deletions) = commit_metadata.deletions {
-        println!("   Deletions: {}", deletions);
+        println!("   Deletions: {deletions}");
     }
 
     Ok(())
@@ -890,8 +889,8 @@ pub async fn run_commit_command(message: String, files: Option<Vec<String>>) -> 
 /// Execute Lefthook hooks with structured events
 pub async fn run_hooks_command(hook: String, quiet: bool) -> Result<()> {
     println!("🔧 Executing Lefthook hooks");
-    println!("   Hook: {}", hook);
-    println!("   Quiet: {}", quiet);
+    println!("   Hook: {hook}");
+    println!("   Quiet: {quiet}");
 
     let mut integration = GitLefthookIntegration::new();
     let hook_metadata = integration.execute_lefthook_hooks(&hook, quiet).await?;
@@ -902,7 +901,7 @@ pub async fn run_hooks_command(hook: String, quiet: bool) -> Result<()> {
     println!("   Exit code: {}", hook_metadata.exit_code);
     println!("   Duration: {}ms", hook_metadata.duration_ms);
     if let Some(files) = hook_metadata.files_processed {
-        println!("   Files processed: {:?}", files);
+        println!("   Files processed: {files:?}");
     }
 
     Ok(())
@@ -911,9 +910,9 @@ pub async fn run_hooks_command(hook: String, quiet: bool) -> Result<()> {
 /// Execute Git push with structured events
 pub async fn run_push_command(remote: String, branch: Option<String>, force: bool) -> Result<()> {
     println!("🚀 Executing Git push");
-    println!("   Remote: {}", remote);
-    println!("   Branch: {:?}", branch);
-    println!("   Force: {}", force);
+    println!("   Remote: {remote}");
+    println!("   Branch: {branch:?}");
+    println!("   Force: {force}");
 
     let mut integration = GitLefthookIntegration::new();
     let branch_name = branch.unwrap_or_else(|| "main".to_string());
@@ -922,7 +921,7 @@ pub async fn run_push_command(remote: String, branch: Option<String>, force: boo
         .await?;
 
     println!("✅ Push completed successfully!");
-    println!("   Remote: {}/{}", remote, branch_name);
+    println!("   Remote: {remote}/{branch_name}");
 
     Ok(())
 }
@@ -941,17 +940,17 @@ pub async fn run_validate_command(
     blocked_by: Option<String>,
 ) -> Result<()> {
     println!("🔍 Adding contract validation");
-    println!("   Contract ID: {}", contract_id);
-    println!("   File: {}", file);
-    println!("   Rule ID: {}", rule_id);
-    println!("   Message: {}", message);
-    println!("   Severity: {:?}", severity);
+    println!("   Contract ID: {contract_id}");
+    println!("   File: {file}");
+    println!("   Rule ID: {rule_id}");
+    println!("   Message: {message}");
+    println!("   Severity: {severity:?}");
 
     let mut integration = GitLefthookIntegration::new();
 
     // Create contract violation
     let violation = ContractViolation {
-        id: format!("{}-{}", contract_id, rule_id),
+        id: format!("{contract_id}-{rule_id}"),
         rule_id,
         message,
         severity,
@@ -989,16 +988,16 @@ pub async fn run_validate_command(
 /// Generate SARIF document from validation results
 pub async fn run_generate_sarif_command(output: String) -> Result<()> {
     println!("📄 Generating SARIF document");
-    println!("   Output: {}", output);
+    println!("   Output: {output}");
 
     let integration = GitLefthookIntegration::new();
     let sarif_document = integration.generate_sarif_document()?;
 
     std::fs::write(&output, &sarif_document)
-        .context(format!("Failed to write SARIF file: {}", output))?;
+        .context(format!("Failed to write SARIF file: {output}"))?;
 
     println!("✅ SARIF document generated successfully!");
-    println!("   File: {}", output);
+    println!("   File: {output}");
     println!("   Size: {} bytes", sarif_document.len());
 
     Ok(())
@@ -1029,7 +1028,7 @@ pub async fn run_status_command() -> Result<()> {
             println!("  Errors: {}", result.errors.len());
             println!("  Warnings: {}", result.warnings.len());
             if let Some(ref blocked_by) = result.blocked_by {
-                println!("  Blocked by: {:?}", blocked_by);
+                println!("  Blocked by: {blocked_by:?}");
             }
             println!();
         }

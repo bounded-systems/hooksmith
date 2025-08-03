@@ -77,11 +77,11 @@ impl CleanAutoPush {
 
         // Print clean summary
         println!("📦 Auto-push completed successfully!");
-        println!("   ⏱️  Duration: {:?}", duration);
-        println!("   📝 Commit: {}", commit_hash);
-        println!("   🚀 {}", push_result);
+        println!("   ⏱️  Duration: {duration:?}");
+        println!("   📝 Commit: {commit_hash}");
+        println!("   🚀 {push_result}");
 
-        self.log(&format!("✅ Auto-push completed in {:?}", duration));
+        self.log(&format!("✅ Auto-push completed in {duration:?}"));
         Ok(())
     }
 
@@ -113,16 +113,16 @@ impl CleanAutoPush {
         ];
 
         for (name, args) in checks {
-            self.log(&format!("   🔧 Running {}...", name));
+            self.log(&format!("   🔧 Running {name}..."));
 
             let output = Command::new("cargo")
                 .args(args)
                 .output()
-                .context(format!("Failed to run {}", name))?;
+                .context(format!("Failed to run {name}"))?;
 
             if !output.status.success() {
                 let error = String::from_utf8_lossy(&output.stderr);
-                self.log(&format!("❌ {} failed: {}", name, error));
+                self.log(&format!("❌ {name} failed: {error}"));
                 anyhow::bail!("{} failed", name);
             }
         }
@@ -144,7 +144,7 @@ impl CleanAutoPush {
             self.log("📝 Found changes to commit:");
             for line in status.lines() {
                 if !line.trim().is_empty() {
-                    self.log(&format!("   {}", line));
+                    self.log(&format!("   {line}"));
                 }
             }
         }
@@ -178,7 +178,7 @@ impl CleanAutoPush {
         } else {
             // Generate default message
             let timestamp = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-            format!("chore: auto-update at {}", timestamp)
+            format!("chore: auto-update at {timestamp}")
         };
 
         let mut commit_args = vec!["commit"];
@@ -271,7 +271,7 @@ impl CleanAutoPush {
                 "Push failed: no error details available".to_string()
             };
 
-            self.log(&format!("❌ Push failed: {}", error_message));
+            self.log(&format!("❌ Push failed: {error_message}"));
             anyhow::bail!("git push failed: {}", error_message);
         }
 
@@ -297,20 +297,20 @@ impl CleanAutoPush {
             "Push completed successfully".to_string()
         };
 
-        self.log(&format!("✅ {}", push_status));
+        self.log(&format!("✅ {push_status}"));
         Ok(push_status)
     }
 
     /// Log message with optional file output
     fn log(&self, message: &str) {
         if self.verbose {
-            println!("{}", message);
+            println!("{message}");
         }
 
         if self.log_to_file {
             if let Some(log_path) = &self.log_file {
                 let timestamp = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-                let log_entry = format!("[{}] {}\n", timestamp, message);
+                let log_entry = format!("[{timestamp}] {message}\n");
                 let _ = std::fs::OpenOptions::new()
                     .create(true)
                     .append(true)
@@ -332,8 +332,7 @@ impl CleanAutoPush {
         interval: u64,
     ) -> Result<()> {
         self.log(&format!(
-            "🔄 Starting watchdog mode with {}s interval...",
-            interval
+            "🔄 Starting watchdog mode with {interval}s interval..."
         ));
         self.log("   Press Ctrl+C to stop");
 
@@ -346,14 +345,13 @@ impl CleanAutoPush {
                     self.log("✅ Watchdog cycle completed successfully");
                 }
                 Err(e) => {
-                    self.log(&format!("❌ Watchdog cycle failed: {}", e));
+                    self.log(&format!("❌ Watchdog cycle failed: {e}"));
                     self.log("   Validation errors detected - skipping commit/push");
                 }
             }
 
             self.log(&format!(
-                "⏰ Waiting {} seconds before next cycle...",
-                interval
+                "⏰ Waiting {interval} seconds before next cycle..."
             ));
             sleep(Duration::from_secs(interval)).await;
         }

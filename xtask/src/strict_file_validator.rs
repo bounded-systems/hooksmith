@@ -2,7 +2,7 @@ use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use walkdir::WalkDir;
 
 #[derive(Debug, Deserialize)]
@@ -17,6 +17,25 @@ pub struct FilePolicy {
     pub generated_markers: HashMap<String, CommentSyntax>,
     #[serde(rename = "generationCommands")]
     pub generation_commands: HashMap<String, String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GeneratedFilesConfig {
+    pub files: Vec<GeneratedFile>,
+    pub ignore: IgnoreRules,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GeneratedFile {
+    pub slug: String,
+    pub path: String,
+    pub extension: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct IgnoreRules {
+    pub dirs: Vec<String>,
+    pub patterns: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -93,6 +112,43 @@ impl FilePolicy {
     }
 }
 
+impl GeneratedFilesConfig {
+    pub fn load() -> Result<Self> {
+        let config_path = Path::new("config/generated-files.jsonc");
+        let content =
+            fs::read_to_string(config_path).context("Failed to read generated-files.jsonc")?;
+
+        let stripped_content = strip_jsonc_comments(&content);
+        let config: GeneratedFilesConfig = serde_json::from_str(&stripped_content)
+            .context("Failed to parse generated-files.jsonc")?;
+
+        Ok(config)
+    }
+
+    pub fn should_ignore_path(&self, path: &str) -> bool {
+        // Check directory patterns
+        for dir_pattern in &self.ignore.dirs {
+            if path.contains(dir_pattern) {
+                return true;
+            }
+        }
+
+        // Check file patterns
+        for file_pattern in &self.ignore.patterns {
+            if let Some(suffix) = file_pattern.strip_prefix('*') {
+                // Remove leading *
+                if path.ends_with(suffix) {
+                    return true;
+                }
+            } else if path.ends_with(file_pattern) {
+                return true;
+            }
+        }
+
+        false
+    }
+}
+
 #[derive(Debug, Serialize)]
 pub struct StrictFileValidationResult {
     pub total_files: usize,
@@ -134,12 +190,11 @@ impl StrictFileValidationResult {
             for violation in &self.violations {
                 match violation {
                     FileViolation::DisallowedExtension { file, extension } => {
-                        println!("   ❌ Disallowed extension '{}' in: {}", extension, file);
+                        println!("   ❌ Disallowed extension '{extension}' in: {file}");
                     }
                     FileViolation::MissingGeneratedHeader { file, extension } => {
                         println!(
-                            "   ❌ Missing generated header in: {} (extension: {})",
-                            file, extension
+                            "   ❌ Missing generated header in: {file} (extension: {extension})"
                         );
                     }
                 }
@@ -148,7 +203,7 @@ impl StrictFileValidationResult {
             if !self.errors.is_empty() {
                 println!("   ❌ Errors:");
                 for error in &self.errors {
-                    println!("      - {}", error);
+                    println!("      - {error}");
                 }
             }
 
@@ -226,8 +281,7 @@ pub fn validate_files() -> Result<StrictFileValidationResult> {
                 }
                 Err(e) => {
                     result.errors.push(format!(
-                        "Failed to check generated header for {}: {}",
-                        path_str, e
+                        "Failed to check generated header for {path_str}: {e}"
                     ));
                 }
             }
@@ -268,7 +322,7 @@ fn check_generated_header(path: &Path, policy: &FilePolicy, extension: &str) -> 
 
 fn strip_jsonc_comments(content: &str) -> String {
     let mut result = String::new();
-    let mut lines = content.lines();
+    let lines = content.lines();
     let mut in_string = false;
     let mut escape_next = false;
 

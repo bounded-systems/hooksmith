@@ -45,7 +45,7 @@ pub fn record_error(err: &str) -> bool {
         println!("🔴 New error detected:");
         println!("{normalized}");
         println!("Hash: {hash}");
-        println!("");
+        println!();
         true
     } else {
         println!("⚠️ Duplicate error detected (hash={})", &hash[..8]);
@@ -87,7 +87,7 @@ pub fn process_command_output(output: &std::process::Output, command_name: &str)
     }
 
     if has_errors {
-        println!("❌ {} failed", command_name);
+        println!("❌ {command_name} failed");
     }
 
     has_errors

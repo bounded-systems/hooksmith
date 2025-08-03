@@ -1,5 +1,4 @@
 use anyhow::{Context, Result};
-use serde_json::Value;
 use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
 use uuid::Uuid;
@@ -75,7 +74,7 @@ impl StructuredAutoPush {
             }
             Err(e) => {
                 if self.verbose {
-                    println!("❌ Validation failed: {}", e);
+                    println!("❌ Validation failed: {e}");
                 }
                 return Err(e);
             }
@@ -160,7 +159,7 @@ impl StructuredAutoPush {
 
         for (name, args) in checks {
             if self.verbose {
-                println!("🔧 Running cargo {}", name);
+                println!("🔧 Running cargo {name}");
             }
 
             // Simplified validation - just run the command
@@ -169,7 +168,7 @@ impl StructuredAutoPush {
 
             if !success {
                 if self.verbose {
-                    println!("❌ cargo {} failed", name);
+                    println!("❌ cargo {name} failed");
                 }
                 anyhow::bail!("cargo {} failed", name);
             }
@@ -187,7 +186,7 @@ impl StructuredAutoPush {
 
         let output = cmd
             .output()
-            .context(format!("Failed to run cargo {}", name))?;
+            .context(format!("Failed to run cargo {name}"))?;
 
         Ok(output.status.success())
     }
@@ -197,10 +196,8 @@ impl StructuredAutoPush {
         // Simplified git status check
         let has_changes = self.check_git_status().await?;
 
-        if has_changes {
-            if self.verbose {
-                println!("📝 Found changes to commit");
-            }
+        if has_changes && self.verbose {
+            println!("📝 Found changes to commit");
         }
 
         Ok(has_changes)
@@ -233,7 +230,7 @@ impl StructuredAutoPush {
         } else {
             // Generate default message
             let timestamp = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-            format!("chore: auto-update at {}", timestamp)
+            format!("chore: auto-update at {timestamp}")
         };
 
         let mut commit_args = vec!["commit".to_string()];
@@ -271,7 +268,7 @@ impl StructuredAutoPush {
             .to_string();
 
         if self.verbose {
-            println!("💾 Committed changes: {}", commit_hash);
+            println!("💾 Committed changes: {commit_hash}");
         }
 
         Ok(commit_hash.trim().to_string())
@@ -322,7 +319,7 @@ impl StructuredAutoPush {
         interval: u64,
     ) -> Result<()> {
         if self.verbose {
-            println!("🔄 Starting watchdog mode with {}s interval", interval);
+            println!("🔄 Starting watchdog mode with {interval}s interval");
         }
 
         loop {
@@ -337,14 +334,14 @@ impl StructuredAutoPush {
                 }
                 Err(e) => {
                     if self.verbose {
-                        println!("❌ Watchdog cycle failed: {}", e);
+                        println!("❌ Watchdog cycle failed: {e}");
                         println!("ℹ️  Validation errors detected - skipping commit/push");
                     }
                 }
             }
 
             if self.verbose {
-                println!("⏳ Waiting {} seconds before next cycle", interval);
+                println!("⏳ Waiting {interval} seconds before next cycle");
             }
 
             sleep(Duration::from_secs(interval)).await;

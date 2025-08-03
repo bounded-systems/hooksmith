@@ -8,7 +8,6 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use tokio::sync::broadcast;
 
 use crate::event_bus::{EventBus, EventBusConfig, HooksmithEvent};
 
@@ -89,7 +88,7 @@ impl WasmEventBusHost {
             handlers.insert(handler_id, handler);
         }
 
-        println!("✅ Component registered with handler ID: {}", handler_id);
+        println!("✅ Component registered with handler ID: {handler_id}");
 
         Ok(handler_id)
     }
@@ -98,7 +97,7 @@ impl WasmEventBusHost {
     pub fn unregister_handler(&self, handler_id: u32) -> Result<()> {
         let mut handlers = self.handlers.lock().unwrap();
         if handlers.remove(&handler_id).is_some() {
-            println!("🗑️ Unregistered handler: {}", handler_id);
+            println!("🗑️ Unregistered handler: {handler_id}");
             Ok(())
         } else {
             anyhow::bail!("Handler not found: {}", handler_id)
@@ -359,7 +358,7 @@ pub mod example_component {
                 "validation_failed" => {
                     println!("❌ Validation failed for: {}", event.actor);
                     if let Some(error) = &event.error {
-                        println!("   Error: {}", error);
+                        println!("   Error: {error}");
                     }
                     Ok(false)
                 }

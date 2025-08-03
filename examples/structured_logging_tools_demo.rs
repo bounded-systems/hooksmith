@@ -1,4 +1,3 @@
-use std::io::{self, Write};
 use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -74,13 +73,13 @@ fn install_tools() -> Result<(), Box<dyn std::error::Error>> {
 
     let tools = ["jql", "jless", "fblog"];
     for tool in &tools {
-        println!("Installing {}...", tool);
+        println!("Installing {tool}...");
         let status = Command::new("cargo").args(["install", tool]).status()?;
 
         if status.success() {
-            println!("✅ {} installed", tool);
+            println!("✅ {tool} installed");
         } else {
-            println!("❌ Failed to install {}", tool);
+            println!("❌ Failed to install {tool}");
         }
     }
 
@@ -88,14 +87,12 @@ fn install_tools() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn generate_sample_events() -> String {
-    let events = vec![
-        r#"{"timestamp":"2025-08-03T18:30:00Z","level":"info","tool":"hooksmith","action":"start","message":"Starting structured auto-push workflow","session_id":"demo-session-123"}"#,
+    let events = [r#"{"timestamp":"2025-08-03T18:30:00Z","level":"info","tool":"hooksmith","action":"start","message":"Starting structured auto-push workflow","session_id":"demo-session-123"}"#,
         r#"{"timestamp":"2025-08-03T18:30:05Z","level":"info","tool":"cargo","action":"check","message":"Running cargo check","session_id":"demo-session-123"}"#,
         r#"{"timestamp":"2025-08-03T18:30:10Z","level":"warn","tool":"cargo","action":"clippy","message":"variables can be used directly in the `format!` string","code":"clippy::uninlined_format_args","file":"src/main.rs","line":42,"column":9,"session_id":"demo-session-123"}"#,
         r#"{"timestamp":"2025-08-03T18:30:15Z","level":"info","tool":"git","action":"status","message":"Checking git status","session_id":"demo-session-123"}"#,
         r#"{"timestamp":"2025-08-03T18:30:20Z","level":"error","tool":"cargo","action":"test","message":"test failed","code":"E0001","file":"tests/test.rs","line":15,"column":1,"session_id":"demo-session-123"}"#,
-        r#"{"timestamp":"2025-08-03T18:30:25Z","level":"info","tool":"hooksmith","action":"completion","message":"Workflow completed","details":{"duration_ms":25000,"success":false},"session_id":"demo-session-123"}"#,
-    ];
+        r#"{"timestamp":"2025-08-03T18:30:25Z","level":"info","tool":"hooksmith","action":"completion","message":"Workflow completed","details":{"duration_ms":25000,"success":false},"session_id":"demo-session-123"}"#];
 
     events.join("\n")
 }
@@ -121,7 +118,7 @@ fn demonstrate_jql(temp_file: &std::path::Path) -> Result<(), Box<dyn std::error
     ];
 
     for (description, query) in queries {
-        println!("   {}: jql '{}'", description, query);
+        println!("   {description}: jql '{query}'");
 
         let output = Command::new("jql").arg(query).arg(temp_file).output()?;
 
@@ -134,7 +131,7 @@ fn demonstrate_jql(temp_file: &std::path::Path) -> Result<(), Box<dyn std::error
             } else {
                 println!("      Result: {} lines (showing first 3)", lines.len());
                 for line in lines.iter().take(3) {
-                    println!("        {}", line);
+                    println!("        {line}");
                 }
             }
         } else {
@@ -195,12 +192,12 @@ fn demonstrate_fblog(temp_file: &std::path::Path) -> Result<(), Box<dyn std::err
             if lines.len() <= 3 {
                 println!("      Result: {} lines", lines.len());
                 for line in lines {
-                    println!("        {}", line);
+                    println!("        {line}");
                 }
             } else {
                 println!("      Result: {} lines (showing first 3)", lines.len());
                 for line in lines.iter().take(3) {
-                    println!("        {}", line);
+                    println!("        {line}");
                 }
             }
         } else {

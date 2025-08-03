@@ -1,24 +1,20 @@
 pub mod state;
 pub mod ui;
 
-pub use state::{DashboardState, ErrorStats, EventSeverity, RecentEvent, StateManager};
+pub use state::StateManager;
 pub use ui::render_dashboard;
 
 // Re-export the main Dashboard struct and configs
-use crate::event_bus::{EventBus, HooksmithEvent};
-use chrono::{DateTime, Utc};
+use crate::event_bus::HooksmithEvent;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType},
 };
-use once_cell::sync::Lazy;
 use ratatui::{backend::CrosstermBackend, Terminal};
-use serde_json::Value;
-use std::collections::HashMap;
 use std::io::stdout;
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio::time::sleep;
 
@@ -88,11 +84,8 @@ impl Dashboard {
         let running = Arc::new(Mutex::new(true));
 
         // Subscribe to the event bus
-        let event_receiver = if let Some(event_bus) = crate::event_bus::get_event_bus() {
-            Some(event_bus.subscribe())
-        } else {
-            None
-        };
+        let event_receiver =
+            crate::event_bus::get_event_bus().map(|event_bus| event_bus.subscribe());
 
         // Initialize terminal if dashboard is enabled
         let terminal = if config.show_dashboard {
@@ -206,7 +199,7 @@ impl Dashboard {
                                 break;
                             }
                             Err(broadcast::error::RecvError::Lagged(n)) => {
-                                println!("⚠️  Lagged {} events", n);
+                                println!("⚠️  Lagged {n} events");
                             }
                         }
                     }
@@ -225,7 +218,7 @@ impl Dashboard {
                         );
 
                         if let Err(e) = crate::event_bus::emit_event(heartbeat_event) {
-                            eprintln!("Failed to emit heartbeat event: {}", e);
+                            eprintln!("Failed to emit heartbeat event: {e}");
                         }
                     }
                 }
@@ -319,7 +312,7 @@ impl Dashboard {
             );
 
             if let Err(e) = crate::event_bus::emit_event(heartbeat_event) {
-                eprintln!("Failed to emit heartbeat event: {}", e);
+                eprintln!("Failed to emit heartbeat event: {e}");
             }
         }
     }
@@ -341,7 +334,7 @@ impl Dashboard {
             }
             "git_push_failed" => {
                 if let Some(error) = &event.error {
-                    println!("🚫 Git push failed: {}", error);
+                    println!("🚫 Git push failed: {error}");
                 }
             }
             "git_push_succeeded" => {
@@ -367,7 +360,7 @@ impl Dashboard {
         let status_output = std::process::Command::new("git")
             .args(["status", "--porcelain"])
             .output()
-            .map_err(|e| format!("Failed to check git status: {}", e))?;
+            .map_err(|e| format!("Failed to check git status: {e}"))?;
 
         let status = String::from_utf8_lossy(&status_output.stdout);
         if status.trim().is_empty() {
@@ -380,7 +373,7 @@ impl Dashboard {
         let add_status = std::process::Command::new("git")
             .args(["add", "."])
             .status()
-            .map_err(|e| format!("Failed to add changes: {}", e))?;
+            .map_err(|e| format!("Failed to add changes: {e}"))?;
         if !add_status.success() {
             return Err("Git add failed".into());
         }
@@ -390,15 +383,15 @@ impl Dashboard {
             template.clone()
         } else {
             let timestamp = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-            format!("chore: auto-update at {}", timestamp)
+            format!("chore: auto-update at {timestamp}")
         };
 
         // Commit changes
-        println!("📝 Committing changes with message: \"{}\"", commit_message);
+        println!("📝 Committing changes with message: \"{commit_message}\"");
         let commit_status = std::process::Command::new("git")
             .args(["commit", "-m", &commit_message])
             .status()
-            .map_err(|e| format!("Failed to commit changes: {}", e))?;
+            .map_err(|e| format!("Failed to commit changes: {e}"))?;
         if !commit_status.success() {
             return Err("Git commit failed".into());
         }
@@ -408,7 +401,7 @@ impl Dashboard {
         let push_output = std::process::Command::new("git")
             .args(["push", "--porcelain"])
             .output()
-            .map_err(|e| format!("Failed to push changes: {}", e))?;
+            .map_err(|e| format!("Failed to push changes: {e}"))?;
 
         if !push_output.status.success() {
             let stderr = String::from_utf8_lossy(&push_output.stderr);
@@ -442,7 +435,7 @@ impl Dashboard {
                 "Push failed: no error details available".to_string()
             };
 
-            return Err(format!("Git push failed: {}", error_message).into());
+            return Err(format!("Git push failed: {error_message}").into());
         }
 
         println!("✅ Auto-push cycle completed successfully!");

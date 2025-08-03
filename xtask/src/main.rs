@@ -10,12 +10,10 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::time::sleep;
 
 use hook_state_machine::{HookContext, HookManager, HookType};
-use git_lefthook_integration::ViolationSeverity;
 
 /// CLI argument enum for hook types
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -1414,12 +1412,12 @@ async fn main() -> Result<()> {
             log_dir,
         } => {
             println!("⚠️  RunHooks command not yet implemented");
-            println!("   Hook type: {}", hook_type);
-            println!("   Verbose: {}", verbose);
-            println!("   No logs: {}", no_logs);
-            println!("   No events: {}", no_events);
+            println!("   Hook type: {hook_type}");
+            println!("   Verbose: {verbose}");
+            println!("   No logs: {no_logs}");
+            println!("   No events: {no_events}");
             if let Some(dir) = log_dir {
-                println!("   Log dir: {}", dir);
+                println!("   Log dir: {dir}");
             }
         }
         Commands::DeadCodeCheck {
@@ -1840,7 +1838,7 @@ async fn main() -> Result<()> {
                 let file = manager.load_file(&input)?;
                 let output_path = Path::new(&output);
                 manager.write_output(&file, output_path, &format)?;
-                println!("✅ Converted {} to {}: {}", input, format, output);
+                println!("✅ Converted {input} to {format}: {output}");
             }
         },
     }
@@ -3759,15 +3757,14 @@ fn validate_files_strict(strict: bool, verbose: bool) -> Result<()> {
                                 file,
                                 extension,
                             } => {
-                                println!("   ❌ Disallowed extension '{}' in: {}", extension, file);
+                                println!("   ❌ Disallowed extension '{extension}' in: {file}");
                             }
                             strict_file_validator::FileViolation::MissingGeneratedHeader {
                                 file,
                                 extension,
                             } => {
                                 println!(
-                                    "   ❌ Missing generated header in: {} (extension: {})",
-                                    file, extension
+                                    "   ❌ Missing generated header in: {file} (extension: {extension})"
                                 );
                             }
                         }
@@ -3776,7 +3773,7 @@ fn validate_files_strict(strict: bool, verbose: bool) -> Result<()> {
                     if !result.errors.is_empty() {
                         println!("   ❌ Errors:");
                         for error in &result.errors {
-                            println!("      - {}", error);
+                            println!("      - {error}");
                         }
                     }
                     println!();
@@ -3889,13 +3886,13 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
             log_event!(
                 "error",
                 "generate_failed",
-                &format!("Failed to generate files: {}", e),
+                &format!("Failed to generate files: {e}"),
                 None::<String>
             );
             emit_sarif_error(
                 "xtask/src/main.rs",
                 3492,
-                &format!("File generation failed: {}", e),
+                &format!("File generation failed: {e}"),
             );
             return Err(e);
         }
@@ -3919,13 +3916,13 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
             log_event!(
                 "error",
                 "validation_failed",
-                &format!("Generated files validation failed: {}", e),
+                &format!("Generated files validation failed: {e}"),
                 None::<String>
             );
             emit_sarif_error(
                 "xtask/src/main.rs",
                 3500,
-                &format!("Generated files validation failed: {}", e),
+                &format!("Generated files validation failed: {e}"),
             );
             return Err(e);
         }
@@ -3962,13 +3959,13 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
             log_event!(
                 "error",
                 "file_check_error",
-                &format!("File type check error: {}", e),
+                &format!("File type check error: {e}"),
                 None::<String>
             );
             emit_sarif_error(
                 "xtask/src/main.rs",
                 3505,
-                &format!("File type check error: {}", e),
+                &format!("File type check error: {e}"),
             );
             return Err(e);
         }
@@ -4018,10 +4015,10 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                 log_event!(
                     "error",
                     "git_add_error",
-                    &format!("Git add error: {}", e),
+                    &format!("Git add error: {e}"),
                     None::<String>
                 );
-                emit_sarif_error("xtask/src/main.rs", 3520, &format!("Git add error: {}", e));
+                emit_sarif_error("xtask/src/main.rs", 3520, &format!("Git add error: {e}"));
                 return Err(e);
             }
         }
@@ -4055,13 +4052,13 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                 log_event!(
                     "error",
                     "git_commit_error",
-                    &format!("Git commit error: {}", e),
+                    &format!("Git commit error: {e}"),
                     None::<String>
                 );
                 emit_sarif_error(
                     "xtask/src/main.rs",
                     3530,
-                    &format!("Git commit error: {}", e),
+                    &format!("Git commit error: {e}"),
                 );
                 return Err(e);
             }
@@ -6104,8 +6101,7 @@ async fn run_single_auto_push(
         let (total_errors, unique_errors) = error_deduplication::get_error_stats();
         if total_errors > 0 {
             println!(
-                "📊 Error Summary: {} total errors, {} unique errors",
-                total_errors, unique_errors
+                "📊 Error Summary: {total_errors} total errors, {unique_errors} unique errors"
             );
         }
         println!("✅ All validation checks passed!");
@@ -6259,7 +6255,7 @@ async fn run_single_auto_push(
             &commit_message
         }
     );
-    println!("   🚀 {}", push_status);
+    println!("   🚀 {push_status}");
 
     Ok(())
 }
@@ -6459,7 +6455,7 @@ fn list_available_hooks() -> Result<()> {
                 println!("   - Supports watchdog mode");
             }
             _ => {
-                println!("❓ {:?} (not implemented)", hook_type);
+                println!("❓ {hook_type:?} (not implemented)");
             }
         }
         println!();
@@ -6500,10 +6496,10 @@ async fn init_event_stream_command(
     event_stream::init_event_stream(config)?;
 
     println!("✅ Event stream initialized successfully");
-    println!("   📁 Output file: {:?}", output_file);
-    println!("   🖥️ Console output: {}", console_output);
-    println!("   📡 Broadcasting: {}", enable_broadcast);
-    println!("   📊 Min severity: {:?}", min_severity);
+    println!("   📁 Output file: {output_file:?}");
+    println!("   🖥️ Console output: {console_output}");
+    println!("   📡 Broadcasting: {enable_broadcast}");
+    println!("   📊 Min severity: {min_severity:?}");
 
     Ok(())
 }
@@ -6527,14 +6523,12 @@ async fn monitor_events_command(
     )));
 
     println!("✅ Event monitor started with handlers:");
-    println!("   📺 Console handler (show_metadata: {})", show_metadata);
+    println!("   📺 Console handler (show_metadata: {show_metadata})");
     println!(
-        "   ⚡ Performance handler (threshold: {}ms)",
-        performance_threshold
+        "   ⚡ Performance handler (threshold: {performance_threshold}ms)"
     );
     println!(
-        "   🚨 Error aggregation handler (threshold: {})",
-        error_threshold
+        "   🚨 Error aggregation handler (threshold: {error_threshold})"
     );
     println!("   Press Ctrl+C to stop");
 
@@ -6545,10 +6539,10 @@ async fn monitor_events_command(
 }
 
 async fn analyze_events_command(input_file: String, format: String) -> Result<()> {
-    println!("📊 Analyzing event stream from: {}", input_file);
+    println!("📊 Analyzing event stream from: {input_file}");
 
     let content = fs::read_to_string(&input_file)
-        .context(format!("Failed to read event file: {}", input_file))?;
+        .context(format!("Failed to read event file: {input_file}"))?;
 
     let mut events = Vec::new();
     for line in content.lines() {
@@ -6601,11 +6595,11 @@ async fn init_event_bus_command(
     event_bus::init_event_bus(config)?;
 
     println!("✅ Event bus initialized successfully");
-    println!("   📁 JSONL file: {:?}", jsonl_file);
-    println!("   💾 Persistence: {}", enable_persistence);
-    println!("   📦 Batch size: {}", batch_size);
-    println!("   ⏱️ Flush interval: {}ms", flush_interval_ms);
-    println!("   🖥️ Console output: {}", console_output);
+    println!("   📁 JSONL file: {jsonl_file:?}");
+    println!("   💾 Persistence: {enable_persistence}");
+    println!("   📦 Batch size: {batch_size}");
+    println!("   ⏱️ Flush interval: {flush_interval_ms}ms");
+    println!("   🖥️ Console output: {console_output}");
 
     Ok(())
 }
@@ -6644,7 +6638,7 @@ async fn replay_events_command(
     auto_push: bool,
     notifications: bool,
 ) -> Result<()> {
-    println!("🔄 Replaying events from: {}", input_file);
+    println!("🔄 Replaying events from: {input_file}");
 
     let mut processor = event_bus::EventProcessor::new(true);
 
@@ -6667,7 +6661,7 @@ async fn replay_events_command(
 }
 
 async fn emit_test_events_command(count: usize) -> Result<()> {
-    println!("🧪 Emitting {} test events...", count);
+    println!("🧪 Emitting {count} test events...");
 
     for i in 0..count {
         let context = serde_json::json!({
@@ -6690,7 +6684,7 @@ async fn emit_test_events_command(count: usize) -> Result<()> {
             1 => {
                 event_bus::emit_commit_event(
                     "test-actor",
-                    &format!("test-commit-{}", i),
+                    &format!("test-commit-{i}"),
                     "Test commit message",
                     vec!["test-file.rs".to_string()],
                 )?;
@@ -6719,7 +6713,7 @@ async fn emit_test_events_command(count: usize) -> Result<()> {
 }
 
 async fn load_wasm_component_command(component_path: String, config: Option<String>) -> Result<()> {
-    println!("🔧 Loading WASM component: {}", component_path);
+    println!("🔧 Loading WASM component: {component_path}");
 
     let path = PathBuf::from(component_path);
     if !path.exists() {
@@ -6727,10 +6721,10 @@ async fn load_wasm_component_command(component_path: String, config: Option<Stri
     }
 
     let handler_id = wasm_event_bus::load_wasm_component(&path).await?;
-    println!("✅ Component loaded with handler ID: {}", handler_id);
+    println!("✅ Component loaded with handler ID: {handler_id}");
 
     if let Some(config_str) = config {
-        println!("📋 Component configuration: {}", config_str);
+        println!("📋 Component configuration: {config_str}");
     }
 
     Ok(())
@@ -6756,7 +6750,7 @@ fn list_wasm_components_command() -> Result<()> {
 }
 
 fn unload_wasm_component_command(handler_id: u32) -> Result<()> {
-    println!("🗑️ Unloading WASM component: {}", handler_id);
+    println!("🗑️ Unloading WASM component: {handler_id}");
 
     wasm_event_bus::unregister_wasm_handler(handler_id)?;
     println!("✅ Component unloaded successfully");
@@ -6781,7 +6775,7 @@ async fn build_validation_handler_command(output_dir: String) -> Result<()> {
 
     // Build the validation handler component
     let status = std::process::Command::new("cargo")
-        .args(&[
+        .args([
             "build",
             "--target",
             "wasm32-unknown-unknown",
@@ -6868,12 +6862,11 @@ categories:
 "#;
 
     fs::write(&output, config_content).context(format!(
-        "Failed to write event stream configuration to {}",
-        output
+        "Failed to write event stream configuration to {output}"
     ))?;
 
     println!("✅ Event stream configuration generated successfully");
-    println!("   📁 File: {}", output);
+    println!("   📁 File: {output}");
 
     Ok(())
 }
@@ -6900,17 +6893,17 @@ fn print_event_summary(events: &[event_stream::Event]) -> Result<()> {
 
     println!("\n📈 By Severity:");
     for (severity, count) in severity_counts {
-        println!("  {:?}: {}", severity, count);
+        println!("  {severity:?}: {count}");
     }
 
     println!("\n📂 By Category:");
     for (category, count) in category_counts {
-        println!("  {:?}: {}", category, count);
+        println!("  {category:?}: {count}");
     }
 
     println!("\n🔧 By Source:");
     for (source, count) in source_counts {
-        println!("  {}: {}", source, count);
+        println!("  {source}: {count}");
     }
 
     // Time range
@@ -6981,8 +6974,7 @@ pre-push:
 "#;
 
     fs::write(&output, config_content).context(format!(
-        "Failed to write Lefthook configuration to {}",
-        output
+        "Failed to write Lefthook configuration to {output}"
     ))?;
 
     if validate {
@@ -6996,7 +6988,7 @@ pre-push:
     }
 
     println!("✅ Lefthook configuration generated successfully");
-    println!("   📁 File: {}", output);
+    println!("   📁 File: {output}");
     println!("   💡 To use: lefthook install");
 
     Ok(())
@@ -7220,7 +7212,7 @@ async fn run_dashboard_command(
                 for step in steps {
                     let step_event = event_bus::HooksmithEvent::new(
                         "dashboard".to_string(),
-                        format!("{}_started", step),
+                        format!("{step}_started"),
                         serde_json::json!({
                             "step": step,
                             "timestamp": chrono::Utc::now()
@@ -7231,7 +7223,7 @@ async fn run_dashboard_command(
                     // Simulate step completion
                     let step_complete_event = event_bus::HooksmithEvent::new(
                         "dashboard".to_string(),
-                        format!("{}_completed", step),
+                        format!("{step}_completed"),
                         serde_json::json!({
                             "step": step,
                             "success": true,
@@ -7320,7 +7312,7 @@ fn generate_schema_command(output: Option<String>) -> Result<()> {
         std::fs::write(&output_path, schema)?;
         emit_info!("hooksmith", "schema", "Schema written to: {}", output_path);
     } else {
-        println!("{}", schema);
+        println!("{schema}");
     }
 
     Ok(())
@@ -7354,8 +7346,8 @@ fn validate_schema_command(input: Option<String>, strict: bool) -> Result<()> {
 /// Convert JSONL events to SARIF format
 async fn run_jsonl_to_sarif_command(input: String, output: String, validate: bool) -> Result<()> {
     println!("🔄 Converting JSONL to SARIF...");
-    println!("   Input: {}", input);
-    println!("   Output: {}", output);
+    println!("   Input: {input}");
+    println!("   Output: {output}");
 
     // Removed StructuredLogger - using basic integration
     let integration = sarif_integration::SarifIntegration::new();
@@ -7364,7 +7356,7 @@ async fn run_jsonl_to_sarif_command(input: String, output: String, validate: boo
 
     // Write SARIF output
     std::fs::write(&output, &sarif_content)
-        .context(format!("Failed to write SARIF file: {}", output))?;
+        .context(format!("Failed to write SARIF file: {output}"))?;
 
     println!("✅ Successfully converted JSONL to SARIF");
 
@@ -7384,8 +7376,8 @@ async fn run_jsonl_to_sarif_command(input: String, output: String, validate: boo
 /// Convert SARIF to JSONL events
 async fn run_sarif_to_jsonl_command(input: String, output: String, validate: bool) -> Result<()> {
     println!("🔄 Converting SARIF to JSONL...");
-    println!("   Input: {}", input);
-    println!("   Output: {}", output);
+    println!("   Input: {input}");
+    println!("   Output: {output}");
 
     // Removed StructuredLogger - using basic integration
     let integration = sarif_integration::SarifIntegration::new();
@@ -7403,18 +7395,17 @@ async fn run_sarif_to_jsonl_command(input: String, output: String, validate: boo
 
     // Write JSONL output
     let mut output_file = std::fs::File::create(&output)
-        .context(format!("Failed to create output file: {}", output))?;
+        .context(format!("Failed to create output file: {output}"))?;
 
     let events_count = events.len();
     for event in events {
         let jsonl = event.to_jsonl()?;
         use std::io::Write;
-        writeln!(output_file, "{}", jsonl)?;
+        writeln!(output_file, "{jsonl}")?;
     }
 
     println!(
-        "✅ Successfully converted SARIF to JSONL ({} events)",
-        events_count
+        "✅ Successfully converted SARIF to JSONL ({events_count} events)"
     );
 
     Ok(())
@@ -7431,10 +7422,10 @@ async fn run_codeql_analysis_command(
     to_jsonl: bool,
 ) -> Result<()> {
     println!("🔍 Running CodeQL analysis...");
-    println!("   Database: {}", db_dir);
-    println!("   Query suite: {}", query_suite);
-    println!("   Language: {}", language);
-    println!("   Build command: {}", build_command);
+    println!("   Database: {db_dir}");
+    println!("   Query suite: {query_suite}");
+    println!("   Language: {language}");
+    println!("   Build command: {build_command}");
 
     // Removed StructuredLogger - using basic integration
 
@@ -7457,24 +7448,24 @@ async fn run_codeql_analysis_command(
 
     // Save SARIF output if requested
     if let Some(output_path) = output {
-        println!("💾 Saving SARIF output to: {}", output_path);
+        println!("💾 Saving SARIF output to: {output_path}");
 
         // Convert events back to SARIF for output
-        let temp_jsonl = format!("{}.tmp.jsonl", output_path);
+        let temp_jsonl = format!("{output_path}.tmp.jsonl");
         let mut temp_file =
             std::fs::File::create(&temp_jsonl).context("Failed to create temporary JSONL file")?;
 
         use std::io::Write;
         for event in &events {
             let jsonl = event.to_jsonl()?;
-            writeln!(temp_file, "{}", jsonl)?;
+            writeln!(temp_file, "{jsonl}")?;
         }
         drop(temp_file);
 
         // Convert JSONL to SARIF
         let sarif_content = integration.jsonl_to_sarif(Path::new(&temp_jsonl))?;
         std::fs::write(output_path, &sarif_content)
-            .context(format!("Failed to write SARIF file: {}", output_path))?;
+            .context(format!("Failed to write SARIF file: {output_path}"))?;
 
         // Clean up temp file
         let _ = std::fs::remove_file(&temp_jsonl);
@@ -7483,17 +7474,17 @@ async fn run_codeql_analysis_command(
     // Convert to JSONL if requested
     if to_jsonl {
         let jsonl_output = output
-            .map(|s| format!("{}.jsonl", s))
+            .map(|s| format!("{s}.jsonl"))
             .unwrap_or_else(|| "codeql-results.jsonl".to_string());
-        println!("💾 Saving JSONL output to: {}", jsonl_output);
+        println!("💾 Saving JSONL output to: {jsonl_output}");
 
         let mut output_file = std::fs::File::create(&jsonl_output)
-            .context(format!("Failed to create JSONL file: {}", jsonl_output))?;
+            .context(format!("Failed to create JSONL file: {jsonl_output}"))?;
 
         use std::io::Write;
         for event in events {
             let jsonl = event.to_jsonl()?;
-            writeln!(output_file, "{}", jsonl)?;
+            writeln!(output_file, "{jsonl}")?;
         }
     }
 
@@ -7502,7 +7493,7 @@ async fn run_codeql_analysis_command(
 
 /// Validate SARIF file
 fn run_validate_sarif_command(file: String, strict: bool) -> Result<()> {
-    println!("🔍 Validating SARIF file: {}", file);
+    println!("🔍 Validating SARIF file: {file}");
 
     // Removed StructuredLogger - using basic integration
     let integration = sarif_integration::SarifIntegration::new();
@@ -7524,18 +7515,18 @@ fn run_validate_sarif_command(file: String, strict: bool) -> Result<()> {
 /// Merge multiple SARIF files
 fn run_merge_sarif_command(inputs: Vec<String>, output: String, validate: bool) -> Result<()> {
     println!("🔄 Merging SARIF files...");
-    println!("   Inputs: {:?}", inputs);
-    println!("   Output: {}", output);
+    println!("   Inputs: {inputs:?}");
+    println!("   Output: {output}");
 
     // Removed StructuredLogger - using basic integration
     let integration = sarif_integration::SarifIntegration::new();
 
-    let input_paths: Vec<PathBuf> = inputs.iter().map(|s| PathBuf::from(s)).collect();
+    let input_paths: Vec<PathBuf> = inputs.iter().map(PathBuf::from).collect();
     let merged_content = integration.merge_sarif_files(&input_paths)?;
 
     // Write merged SARIF
     std::fs::write(&output, &merged_content)
-        .context(format!("Failed to write merged SARIF file: {}", output))?;
+        .context(format!("Failed to write merged SARIF file: {output}"))?;
 
     println!("✅ Successfully merged {} SARIF files", inputs.len());
 
@@ -7560,13 +7551,13 @@ async fn run_integrate_codeql_command(
     output_dir: String,
 ) -> Result<()> {
     println!("🔧 Integrating CodeQL into validation pipeline...");
-    println!("   Output directory: {}", output_dir);
+    println!("   Output directory: {output_dir}");
 
     // Create output directory
     let output_path = Path::new(&output_dir);
     if !output_path.exists() {
         std::fs::create_dir_all(output_path)
-            .context(format!("Failed to create output directory: {}", output_dir))?;
+            .context(format!("Failed to create output directory: {output_dir}"))?;
     }
 
     // Removed StructuredLogger - using basic integration
@@ -7589,7 +7580,7 @@ async fn run_integrate_codeql_command(
         use std::io::Write;
         for event in &events {
             let jsonl = event.to_jsonl()?;
-            writeln!(temp_file, "{}", jsonl)?;
+            writeln!(temp_file, "{jsonl}")?;
         }
         drop(temp_file);
 
@@ -7604,7 +7595,7 @@ async fn run_integrate_codeql_command(
             use std::io::Write;
             for event in events {
                 let jsonl = event.to_jsonl()?;
-                writeln!(output_file, "{}", jsonl)?;
+                writeln!(output_file, "{jsonl}")?;
             }
         }
 
@@ -7658,9 +7649,9 @@ async fn run_check_all(strict: bool, staged_only: bool, verbose: bool) -> Result
     println!("🔍 Running comprehensive check (cargo check + contract validation)...");
 
     if verbose {
-        println!("   Strict mode: {}", strict);
-        println!("   Staged only: {}", staged_only);
-        println!("   Verbose: {}", verbose);
+        println!("   Strict mode: {strict}");
+        println!("   Staged only: {staged_only}");
+        println!("   Verbose: {verbose}");
     }
 
     // Step 1: Run cargo check --workspace
@@ -7675,7 +7666,7 @@ async fn run_check_all(strict: bool, staged_only: bool, verbose: bool) -> Result
         if strict {
             return Err(anyhow::anyhow!(error_msg));
         } else {
-            println!("{}", error_msg);
+            println!("{error_msg}");
         }
     } else {
         println!("✅ Cargo check passed");

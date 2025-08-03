@@ -1,15 +1,12 @@
 use anyhow::{Context, Result};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Command;
 use tokio::process::Command as TokioCommand;
-use uuid::Uuid;
 
-use crate::events::AutoPushEvent;
 use crate::structured_logging::StructuredEvent;
 
 /// SARIF result structure for conversion
@@ -155,7 +152,7 @@ impl SarifIntegration {
             let line = line.context("Failed to read line")?;
             if !line.trim().is_empty() {
                 let event: StructuredEvent = serde_json::from_str(&line)
-                    .context(format!("Failed to parse JSONL line: {}", line))?;
+                    .context(format!("Failed to parse JSONL line: {line}"))?;
                 events.push(event);
             }
         }
@@ -356,7 +353,7 @@ impl SarifIntegration {
         let codeql_cmd = self.get_codeql_command()?;
 
         let mut cmd = TokioCommand::new(&codeql_cmd);
-        cmd.args(&[
+        cmd.args([
             "database",
             "create",
             "--language",
@@ -384,7 +381,7 @@ impl SarifIntegration {
         let codeql_cmd = self.get_codeql_command()?;
 
         let mut cmd = TokioCommand::new(&codeql_cmd);
-        cmd.args(&[
+        cmd.args([
             "database",
             "analyze",
             &config.db_dir.to_string_lossy(),

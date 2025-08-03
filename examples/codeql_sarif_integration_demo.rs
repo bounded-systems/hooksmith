@@ -1,5 +1,4 @@
 use anyhow::Result;
-use std::path::Path;
 use std::process::Command;
 
 /// Example demonstrating SARIF and CodeQL integration with Hooksmith
@@ -191,10 +190,10 @@ fn create_sample_jsonl() -> Result<()> {
     let events_count = events.len();
     let mut file = File::create("sample-events.jsonl")?;
     for event in events {
-        writeln!(file, "{}", event)?;
+        writeln!(file, "{event}")?;
     }
 
-    println!("✅ Created sample JSONL file with {} events", events_count);
+    println!("✅ Created sample JSONL file with {events_count} events");
     Ok(())
 }
 
@@ -279,7 +278,7 @@ fn create_sample_sarif_files() -> Result<()> {
 /// Run an xtask command
 async fn run_xtask_command(args: &[&str]) -> Result<()> {
     let mut cmd = Command::new("cargo");
-    cmd.args(&["run", "--bin", "xtask"]);
+    cmd.args(["run", "--bin", "xtask"]);
     cmd.args(args);
 
     println!("   Running: cargo run --bin xtask {}", args.join(" "));

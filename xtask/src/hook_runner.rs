@@ -1,8 +1,7 @@
 use crate::event_bus::{emit_event, HooksmithEvent};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde_json::json;
-use std::collections::HashMap;
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
 use std::os::unix::process::ExitStatusExt;
 use std::path::{Path, PathBuf};
@@ -110,9 +109,9 @@ impl HookRunner {
         let log_file = self
             .config
             .log_dir
-            .join(format!("{}-{}.log", hook_name, timestamp));
+            .join(format!("{hook_name}-{timestamp}.log"));
 
-        println!("🔧 Running {}...", hook_name);
+        println!("🔧 Running {hook_name}...");
 
         // Run the hook command
         let result = self.execute_hook(hook_name, &log_file)?;
@@ -148,7 +147,7 @@ impl HookRunner {
             match self.run_hook(hook_name) {
                 Ok(result) => results.push(result),
                 Err(e) => {
-                    eprintln!("❌ Failed to run {}: {}", hook_name, e);
+                    eprintln!("❌ Failed to run {hook_name}: {e}");
                     // Create a failed result
                     let failed_result = HookResult {
                         name: hook_name.to_string(),
@@ -203,9 +202,9 @@ impl HookRunner {
                 .truncate(true)
                 .open(log_file)?;
 
-            writeln!(file, "=== {} Hook Execution ===", hook_name)?;
+            writeln!(file, "=== {hook_name} Hook Execution ===")?;
             writeln!(file, "Timestamp: {}", Utc::now())?;
-            writeln!(file, "Command: lefthook run {}", hook_name)?;
+            writeln!(file, "Command: lefthook run {hook_name}")?;
             writeln!(file, "Exit Code: {}", output.status)?;
             writeln!(file, "\n=== STDOUT ===")?;
             file.write_all(&output.stdout)?;
@@ -295,10 +294,7 @@ impl HookRunner {
             .count();
 
         let error_message = if error_count > 0 {
-            Some(format!(
-                "{} errors, {} warnings",
-                error_count, warning_count
-            ))
+            Some(format!("{error_count} errors, {warning_count} warnings"))
         } else {
             None
         };
@@ -350,19 +346,19 @@ impl HookRunner {
         // Print additional info
         if let Some(error_count) = result.error_count {
             if error_count > 0 {
-                print!(" – {} errors", error_count);
+                print!(" – {error_count} errors");
             }
         }
 
         if let Some(warning_count) = result.warning_count {
             if warning_count > 0 {
-                print!(", {} warnings", warning_count);
+                print!(", {warning_count} warnings");
             }
         }
 
         if let Some(files_changed) = result.files_changed {
             if files_changed > 0 {
-                print!(" – {} files", files_changed);
+                print!(" – {files_changed} files");
             }
         }
 
@@ -413,11 +409,11 @@ impl HookRunner {
 
             if let Some(error_count) = result.error_count {
                 if error_count > 0 {
-                    print!(" ({} errors)", error_count);
+                    print!(" ({error_count} errors)");
                 }
             }
 
-            println!(" {}", status_text);
+            println!(" {status_text}");
         }
 
         println!();

@@ -1,12 +1,10 @@
-use crate::event_stream::{
-    emit_error, emit_event, emit_info, emit_warn, Event, EventCategory, EventSeverity,
-};
+use crate::event_stream::{emit_error, emit_info, EventCategory};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Command;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
 
 /// Hook state enumeration
@@ -495,13 +493,13 @@ impl HooksmithHook for AutoPushHook {
             let _ = emit_error(
                 EventCategory::HookStateMachine,
                 "git_push_failed",
-                &format!("Git push failed: {}", error_message),
+                &format!("Git push failed: {error_message}"),
                 "auto_push_hook",
             );
 
             return Ok(HookResult::error(
                 HookState::Error,
-                format!("git push failed: {}", error_message),
+                format!("git push failed: {error_message}"),
                 vec![format!("git push failed: {}", error_message)],
             ));
         }
@@ -538,7 +536,7 @@ impl HooksmithHook for AutoPushHook {
                 &commit_message
             }
         );
-        println!("   🚀 {}", push_status);
+        println!("   🚀 {push_status}");
 
         Ok(HookResult::success(
             HookState::Success,
@@ -620,11 +618,11 @@ impl HookStateMachine {
         emit_info(
             EventCategory::HookStateMachine,
             "event_received",
-            &format!("Received event: {:?}", event),
+            &format!("Received event: {event:?}"),
             "hook_state_machine",
         )?;
 
-        println!("📡 Handling event: {:?}", event);
+        println!("📡 Handling event: {event:?}");
 
         let result = match event {
             HookEvent::RunValidation => {
@@ -675,14 +673,14 @@ impl HookStateMachine {
             emit_info(
                 EventCategory::HookStateMachine,
                 "event_completed",
-                &format!("Event {:?} completed successfully", event),
+                &format!("Event {event:?} completed successfully"),
                 "hook_state_machine",
             )?;
         } else {
             emit_error(
                 EventCategory::HookStateMachine,
                 "event_failed",
-                &format!("Event {:?} failed", event),
+                &format!("Event {event:?} failed"),
                 "hook_state_machine",
             )?;
         }
@@ -801,7 +799,7 @@ impl HookManager {
         } else {
             Ok(HookResult::error(
                 HookState::Error,
-                format!("No hook registered for type: {:?}", hook_type),
+                format!("No hook registered for type: {hook_type:?}"),
                 vec![format!("No hook registered for type: {:?}", hook_type)],
             ))
         }

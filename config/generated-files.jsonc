@@ -7,9 +7,9 @@
   // No redundant generated: true flags needed
   "files": [
     {
-      "slug": "-editorconfig",
+      "slug": "root-editorconfig",
       "path": ".editorconfig",
-      "extension": ""
+      "type": "editorconfig"
     }
 ,
     {
@@ -673,6 +673,12 @@
     }
 ,
     {
+      "slug": "generated_files_system_summary",
+      "path": "GENERATED_FILES_SYSTEM_SUMMARY.md",
+      "extension": "md"
+    }
+,
+    {
       "slug": "hook_state_machine_implementation_summary",
       "path": "HOOK_STATE_MACHINE_IMPLEMENTATION_SUMMARY.md",
       "extension": "md"
@@ -1247,5 +1253,34 @@
       "path": "xtask/wit/worktree-runner.wit",
       "extension": "wit"
     }
-  ]
+  ],
+
+  // Ignore rules, structured to support nested .gitignore-style matching
+  "ignore": {
+    "dirs": [
+      "target/"
+,
+      "dist/"
+,
+      "node_modules/"
+,
+      "logs/"
+,
+      "status-trends/"
+,
+      "generated_file_demo/"
+,
+      ".cargo/"
+,
+      ".trunk/"
+,
+      ".hooks/"
+,
+      ".git/"
+    ],
+    "patterns": [
+      "*.lock",
+      "*.jsonl"
+    ]
+  }
 }

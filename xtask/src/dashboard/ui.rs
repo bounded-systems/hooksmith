@@ -1,6 +1,5 @@
-use crate::dashboard::state::{DashboardState, ErrorStats, EventSeverity, RecentEvent};
+use crate::dashboard::state::{DashboardState, EventSeverity};
 use ratatui::{
-    backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
@@ -229,7 +228,7 @@ fn render_errors_tab(frame: &mut Frame, area: Rect, state: &DashboardState) {
         .take(20) // Limit to 20 errors for display
         .map(|error| {
             let location = if let (Some(file), Some(line)) = (error.file.as_ref(), error.line) {
-                format!("{}:{}", file, line)
+                format!("{file}:{line}")
             } else {
                 "Unknown".to_string()
             };
@@ -349,7 +348,7 @@ fn render_event_type_stats(frame: &mut Frame, area: Rect, state: &DashboardState
     }
 
     // Create table rows for event types
-    let mut event_type_rows: Vec<Row> = state
+    let event_type_rows: Vec<Row> = state
         .event_stats
         .events_by_type
         .iter()

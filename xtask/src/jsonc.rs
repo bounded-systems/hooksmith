@@ -129,7 +129,7 @@ impl JsoncManager {
 
         // Replace template variables
         for (key, value) in vars {
-            let placeholder = format!("${{{}}}", key);
+            let placeholder = format!("${{{key}}}");
             processed_content = processed_content.replace(&placeholder, value);
         }
 
@@ -168,7 +168,7 @@ impl JsoncManager {
             .validate(&jsonc_file.content)
             .map_err(|errors| {
                 let error_messages: Vec<String> = errors
-                    .map(|e| format!("{}: {}", e.instance_path, e.to_string()))
+                    .map(|e| format!("{}: {}", e.instance_path, e))
                     .collect();
                 anyhow::anyhow!("JSONC validation failed: {}", error_messages.join(", "))
             })?;

@@ -255,7 +255,7 @@ impl EventStream {
         if let Some(writer) = &self.file_writer {
             let jsonl = event.to_jsonl()?;
             let mut writer = writer.lock().unwrap();
-            writeln!(writer, "{}", jsonl)?;
+            writeln!(writer, "{jsonl}")?;
             writer.flush()?;
         }
 
@@ -356,7 +356,7 @@ impl EventStream {
         // Print metadata if present
         if !event.metadata.is_empty() {
             for (key, value) in &event.metadata {
-                println!("  {}: {}", key, value);
+                println!("  {key}: {value}");
             }
         }
 
@@ -505,7 +505,7 @@ impl EventMonitor {
                     break;
                 }
                 Err(broadcast::error::RecvError::Lagged(n)) => {
-                    eprintln!("⚠️ Event monitor lagged by {} events", n);
+                    eprintln!("⚠️ Event monitor lagged by {n} events");
                 }
             }
         }
@@ -550,7 +550,7 @@ impl EventHandler for ConsoleEventHandler {
 
         if self.show_metadata && !event.metadata.is_empty() {
             for (key, value) in &event.metadata {
-                println!("  {}: {}", key, value);
+                println!("  {key}: {value}");
             }
         }
 

@@ -270,7 +270,7 @@ impl EventBus {
                     // Flush if batch is full or interval has passed
                     if batch.len() >= batch_size || last_flush.elapsed() >= flush_interval {
                         if let Err(e) = Self::flush_batch(&writer, &mut batch).await {
-                            eprintln!("JSONL writer error: {}", e);
+                            eprintln!("JSONL writer error: {e}");
                         }
                         last_flush = Instant::now();
                     }
@@ -295,7 +295,7 @@ impl EventBus {
         let mut writer = writer.lock().unwrap();
         for event in batch.drain(..) {
             let jsonl = event.to_jsonl()?;
-            writeln!(writer, "{}", jsonl)?;
+            writeln!(writer, "{jsonl}")?;
         }
         writer.flush()?;
 
@@ -448,7 +448,7 @@ pub fn emit_push_event(
     } else {
         "push_error"
     };
-    let mut context = serde_json::json!({
+    let context = serde_json::json!({
         "branch": branch,
         "remote": remote
     });

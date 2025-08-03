@@ -119,10 +119,9 @@ pub struct SarifRegion {
 #[macro_export]
 macro_rules! log_event {
     ($level:expr, $action:expr, $msg:expr, $details:expr) => {{
-        use crate::structured_logging::BootstrapEvent;
         use chrono::Utc;
         use serde_json;
-        use std::collections::HashMap;
+        use $crate::structured_logging::BootstrapEvent;
 
         let event = BootstrapEvent {
             timestamp: Utc::now().to_rfc3339(),
@@ -141,10 +140,10 @@ macro_rules! log_event {
 #[macro_export]
 macro_rules! log_event_with_location {
     ($level:expr, $action:expr, $msg:expr, $details:expr, $file:expr, $line:expr) => {{
-        use crate::structured_logging::BootstrapEvent;
         use chrono::Utc;
         use serde_json;
         use std::collections::HashMap;
+        use $crate::structured_logging::BootstrapEvent;
 
         let event = BootstrapEvent {
             timestamp: Utc::now().to_rfc3339(),
@@ -163,10 +162,10 @@ macro_rules! log_event_with_location {
 #[macro_export]
 macro_rules! log_event_with_metadata {
     ($level:expr, $action:expr, $msg:expr, $details:expr, $metadata:expr) => {{
-        use crate::structured_logging::BootstrapEvent;
         use chrono::Utc;
         use serde_json;
         use std::collections::HashMap;
+        use $crate::structured_logging::BootstrapEvent;
 
         let event = BootstrapEvent {
             timestamp: Utc::now().to_rfc3339(),

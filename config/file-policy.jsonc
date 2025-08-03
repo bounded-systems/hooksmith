@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Hooksmith File Extension Policy",
-  "description": "Only .rs and .jsonc can be manual. All other allowed file types must be generated with headers.",
+  "description": "Strict policy: only .rs and .jsonc may be manual, all other files must be generated.",
 
   // Allowed extensions for manually maintained source files
   "allowedExtensions": ["rs", "jsonc"],
@@ -22,21 +22,43 @@
   // Use .gitignore for ignoring files instead of manual list
   "useGitignore": true,
 
-  // Define comment syntax for each file type
-  "generatedMarkers": {
-    "toml": { "prefix": "#", "suffix": "" },
-    "md": { "prefix": "<!--", "suffix": "-->" },
-    "yml": { "prefix": "#", "suffix": "" },
-    "gitignore": { "prefix": "#", "suffix": "" },
-    "gitattributes": { "prefix": "#", "suffix": "" },
-    "CODEOWNERS": { "prefix": "#", "suffix": "" },
-    "json": { "prefix": "", "suffix": "" },
-    "jsonl": { "prefix": "", "suffix": "" },
-    "jql": { "prefix": "//", "suffix": "" }
+  // Define comment syntax for each file type (simplified)
+  "commentStyles": {
+    "md": ["<!--", "-->"],
+    "toml": ["#", ""],
+    "yml": ["#", ""],
+    "gitignore": ["#", ""],
+    "gitattributes": ["#", ""],
+    "CODEOWNERS": ["#", ""],
+    "json": ["//", ""],
+    "jsonl": ["//", ""],
+    "jql": ["//", ""]
   },
 
   // Generic generation command per type
   "generationCommands": {
     "*": "cargo xtask gen-files --file-type={ext}"
+  },
+
+  // Files without extensions that should be treated as generated
+  "fileOverrides": [
+    { "slug": "root-gitattributes", "path": ".gitattributes", "type": "gitattributes" },
+    { "slug": "root-gitignore", "path": ".gitignore", "type": "gitignore" },
+    { "slug": "root-codeowners", "path": "CODEOWNERS", "type": "CODEOWNERS" },
+    { "slug": "root-editorconfig", "path": ".editorconfig", "type": "editorconfig" },
+    { "slug": "root-envrc", "path": ".envrc", "type": "envrc" },
+    { "slug": "root-makefile", "path": "Makefile", "type": "makefile" }
+  ],
+
+  // Nested .gitignore rules for different directories
+  "ignoreRules": {
+    "root": ["dist/", "*.lock", "*.log", "*.tmp", "*.bak"],
+    "target/": ["*", "!/.gitignore"],
+    "logs/": ["*", "!/.gitignore"],
+    "xtask/status-trends/": ["*", "!/.gitignore"],
+    "generated_file_demo/": ["*", "!/.gitignore"],
+    ".cargo/": ["*", "!/.gitignore"],
+    ".trunk/": ["*", "!/.gitignore"],
+    ".hooks/": ["*", "!/.gitignore"]
   }
 } 
