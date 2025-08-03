@@ -187,6 +187,8 @@ mod hierarchical_validation;
 mod hook_runner;
 mod hook_state_machine;
 mod status;
+mod structured_auto_push;
+mod structured_logging;
 mod wasm_event_bus;
 
 /// Xtask CLI for Hooksmith project tasks
@@ -648,6 +650,36 @@ enum Commands {
         #[arg(trailing_var_arg = true)]
         args: Vec<String>,
     },
+    /// Structured auto-push workflow with JSONL output and event bus integration
+    StructuredAutoPush {
+        /// Commit message (optional, will prompt if not provided)
+        #[arg(short, long)]
+        message: Option<String>,
+        /// Allow empty commit message (Trunk-style)
+        #[arg(long)]
+        allow_empty_message: bool,
+        /// Run in watchdog mode (continuous monitoring)
+        #[arg(long)]
+        watchdog: bool,
+        /// Watchdog interval in seconds
+        #[arg(long, default_value = "30")]
+        interval: u64,
+        /// Force push (use with caution)
+        #[arg(long)]
+        force: bool,
+        /// Enable verbose output
+        #[arg(long)]
+        verbose: bool,
+        /// Disable JSONL output (for TUI mode)
+        #[arg(long)]
+        no_jsonl: bool,
+        /// Disable event bus integration
+        #[arg(long)]
+        no_event_bus: bool,
+        /// Additional git commit arguments
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
+    },
     /// Run a specific hook using the state machine
     Hook {
         /// Hook type to run
@@ -1098,6 +1130,30 @@ async fn main() -> Result<()> {
                 verbose,
                 no_log,
                 log_file,
+                args,
+            )
+            .await?;
+        }
+        Commands::StructuredAutoPush {
+            message,
+            allow_empty_message,
+            watchdog,
+            interval,
+            force,
+            verbose,
+            no_jsonl,
+            no_event_bus,
+            args,
+        } => {
+            run_structured_auto_push(
+                message,
+                allow_empty_message,
+                watchdog,
+                interval,
+                force,
+                verbose,
+                no_jsonl,
+                no_event_bus,
                 args,
             )
             .await?;
@@ -5426,6 +5482,42 @@ async fn run_clean_auto_push(
     auto_push.log_to_file = !no_log;
     if let Some(log_path) = log_file {
         auto_push.log_file = Some(log_path);
+    }
+
+    if watchdog {
+        auto_push
+            .run_watchdog(message, allow_empty_message, force, args, interval)
+            .await?;
+    } else {
+        auto_push
+            .run(message, allow_empty_message, force, args)
+            .await?;
+    }
+
+    Ok(())
+}
+
+/// Run structured auto-push workflow with JSONL output and event bus integration
+async fn run_structured_auto_push(
+    message: Option<String>,
+    allow_empty_message: bool,
+    watchdog: bool,
+    interval: u64,
+    force: bool,
+    verbose: bool,
+    no_jsonl: bool,
+    no_event_bus: bool,
+    args: Vec<String>,
+) -> Result<()> {
+    let mut auto_push = structured_auto_push::StructuredAutoPush::new()
+        .with_verbose(verbose);
+
+    if no_jsonl {
+        auto_push = auto_push.without_jsonl();
+    }
+
+    if no_event_bus {
+        auto_push = auto_push.without_event_bus();
     }
 
     if watchdog {
