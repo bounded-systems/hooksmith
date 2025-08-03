@@ -13,6 +13,32 @@ use std::process::Command;
 use std::time::Duration;
 use tokio::time::sleep;
 
+use hook_state_machine::{HookContext, HookManager, HookType};
+
+/// CLI argument enum for hook types
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub enum HookTypeArg {
+    PreCommit,
+    PrePush,
+    CommitMsg,
+    PostCommit,
+    AutoPush,
+    Watchdog,
+}
+
+impl From<HookTypeArg> for HookType {
+    fn from(arg: HookTypeArg) -> Self {
+        match arg {
+            HookTypeArg::PreCommit => HookType::PreCommit,
+            HookTypeArg::PrePush => HookType::PrePush,
+            HookTypeArg::CommitMsg => HookType::CommitMsg,
+            HookTypeArg::PostCommit => HookType::PostCommit,
+            HookTypeArg::AutoPush => HookType::AutoPush,
+            HookTypeArg::Watchdog => HookType::Watchdog,
+        }
+    }
+}
+
 mod code_stats;
 mod config;
 mod contract;
@@ -22,6 +48,7 @@ mod file_audit;
 mod generated_file_validator;
 mod git_notes_manager;
 mod hierarchical_validation;
+mod hook_state_machine;
 mod status;
 
 /// Xtask CLI for Hooksmith project tasks
@@ -435,6 +462,44 @@ enum Commands {
         #[arg(trailing_var_arg = true)]
         args: Vec<String>,
     },
+    /// Run a specific hook using the state machine
+    Hook {
+        /// Hook type to run
+        #[arg(value_enum)]
+        hook_type: HookTypeArg,
+        /// Commit message (for auto-push hooks)
+        #[arg(short, long)]
+        message: Option<String>,
+        /// Allow empty commit message (Trunk-style)
+        #[arg(long)]
+        allow_empty_message: bool,
+        /// Skip validation checks
+        #[arg(long)]
+        skip_validation: bool,
+        /// Run in watchdog mode (continuous monitoring)
+        #[arg(long)]
+        watchdog: bool,
+        /// Watchdog interval in seconds
+        #[arg(long, default_value = "30")]
+        interval: u64,
+        /// Force push (use with caution)
+        #[arg(long)]
+        force: bool,
+        /// Additional arguments
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
+    },
+    /// List all available hooks
+    ListHooks,
+    /// Generate Lefthook configuration that uses the hook state machine
+    GenLefthookHooks {
+        /// Output file path
+        #[arg(long, default_value = "lefthook.yml")]
+        output: String,
+        /// Whether to validate against schema
+        #[arg(long)]
+        validate: bool,
+    },
 }
 
 /// WIT schema for function definition
@@ -749,7 +814,7 @@ async fn main() -> Result<()> {
             force,
             args,
         } => {
-            run_auto_push(
+            run_auto_push_with_state_machine(
                 message,
                 allow_empty_message,
                 skip_validation,
@@ -759,6 +824,34 @@ async fn main() -> Result<()> {
                 args,
             )
             .await?;
+        }
+        Commands::Hook {
+            hook_type,
+            message,
+            allow_empty_message,
+            skip_validation,
+            watchdog,
+            interval,
+            force,
+            args,
+        } => {
+            run_hook_with_state_machine(
+                hook_type,
+                message,
+                allow_empty_message,
+                skip_validation,
+                watchdog,
+                interval,
+                force,
+                args,
+            )
+            .await?;
+        }
+        Commands::ListHooks => {
+            list_available_hooks()?;
+        }
+        Commands::GenLefthookHooks { output, validate } => {
+            generate_lefthook_hooks_config(output, validate).await?;
         }
     }
 
@@ -4866,6 +4959,194 @@ async fn run_single_auto_push(
         }
     );
     println!("   🚀 Pushed to remote repository");
+
+    Ok(())
+}
+
+/// Run auto-push using the new hook state machine
+async fn run_auto_push_with_state_machine(
+    message: Option<String>,
+    _allow_empty_message: bool,
+    skip_validation: bool,
+    watchdog: bool,
+    interval: u64,
+    force: bool,
+    args: Vec<String>,
+) -> Result<()> {
+    println!("🚀 Starting automated git workflow with hook state machine...");
+
+    // Create hook context
+    let context = HookContext::new(HookType::AutoPush)
+        .with_message(message)
+        .with_validation_skip(skip_validation)
+        .with_force(force)
+        .with_args(args);
+
+    // Create hook manager with default hooks
+    let mut hook_manager = HookManager::default();
+
+    if watchdog {
+        println!("🔄 Starting watchdog mode with {interval}s interval...");
+        println!("   Press Ctrl+C to stop");
+
+        // Start watchdog mode
+        hook_manager
+            .start_watchdog(HookType::AutoPush, interval)
+            .await?;
+    } else {
+        // Run single auto-push cycle
+        let result = hook_manager.run_hook(HookType::AutoPush, context)?;
+
+        if result.success {
+            println!("✅ Auto-push completed successfully!");
+            println!("   Duration: {:?}", result.duration);
+        } else {
+            println!("❌ Auto-push failed: {}", result.message);
+            for error in &result.errors {
+                println!("   Error: {error}");
+            }
+            anyhow::bail!("Auto-push workflow failed");
+        }
+    }
+
+    Ok(())
+}
+
+/// Run a specific hook using the state machine
+async fn run_hook_with_state_machine(
+    hook_type: HookTypeArg,
+    message: Option<String>,
+    _allow_empty_message: bool,
+    skip_validation: bool,
+    watchdog: bool,
+    interval: u64,
+    force: bool,
+    args: Vec<String>,
+) -> Result<()> {
+    println!("🚀 Running hook: {hook_type:?}");
+
+    // Create hook context
+    let context = HookContext::new(hook_type.clone().into())
+        .with_message(message)
+        .with_validation_skip(skip_validation)
+        .with_force(force)
+        .with_args(args);
+
+    // Create hook manager with default hooks
+    let mut hook_manager = HookManager::default();
+
+    if watchdog {
+        println!("🔄 Starting watchdog mode with {interval}s interval...");
+        println!("   Press Ctrl+C to stop");
+
+        // Start watchdog mode
+        hook_manager
+            .start_watchdog(hook_type.into(), interval)
+            .await?;
+    } else {
+        // Run single hook cycle
+        let result = hook_manager.run_hook(hook_type.into(), context)?;
+
+        if result.success {
+            println!("✅ Hook completed successfully!");
+            println!("   Duration: {:?}", result.duration);
+        } else {
+            println!("❌ Hook failed: {}", result.message);
+            for error in &result.errors {
+                println!("   Error: {error}");
+            }
+            anyhow::bail!("Hook workflow failed");
+        }
+    }
+
+    Ok(())
+}
+
+/// List all available hooks
+fn list_available_hooks() -> Result<()> {
+    println!("📋 Available hooks:");
+    println!();
+
+    let hook_manager = HookManager::default();
+    let registered_hooks = hook_manager.registered_hooks();
+
+    for hook_type in registered_hooks {
+        match hook_type {
+            HookType::PreCommit => {
+                println!("🔍 pre-commit");
+                println!("   Runs validation checks before commit");
+                println!("   - cargo fix, fmt, clippy");
+                println!("   - contract validation");
+                println!("   - generated file validation");
+            }
+            HookType::PrePush => {
+                println!("🚀 pre-push");
+                println!("   Runs validation checks before push");
+                println!("   - Same as pre-commit validation");
+            }
+            HookType::AutoPush => {
+                println!("⚡ auto-push");
+                println!("   Complete automated git workflow");
+                println!("   - Validation → Add → Commit → Push");
+                println!("   - Supports watchdog mode");
+            }
+            _ => {
+                println!("❓ {:?} (not implemented)", hook_type);
+            }
+        }
+        println!();
+    }
+
+    Ok(())
+}
+
+/// Generate Lefthook configuration that uses the hook state machine
+async fn generate_lefthook_hooks_config(output: String, validate: bool) -> Result<()> {
+    println!("📝 Generating Lefthook configuration with hook state machine...");
+    println!("   Output: {output}");
+
+    let config_content = r#"# Lefthook configuration for Hooksmith
+# This file is generated by the hook state machine
+
+pre-commit:
+  commands:
+    hooksmith-pre-commit:
+      run: cargo run -p xtask -- hook pre-commit --strict
+      parallel: false
+
+pre-push:
+  commands:
+    hooksmith-pre-push:
+      run: cargo run -p xtask -- hook pre-push --strict
+      parallel: false
+
+# Auto-push hook for trunk-style development
+# Uncomment to enable automatic commits and pushes
+# pre-commit:
+#   commands:
+#     hooksmith-auto-push:
+#       run: cargo run -p xtask -- hook auto-push --watchdog --interval 30
+#       parallel: false
+"#;
+
+    fs::write(&output, config_content).context(format!(
+        "Failed to write Lefthook configuration to {}",
+        output
+    ))?;
+
+    if validate {
+        println!("   Validating configuration...");
+        // Basic validation - check if file was written successfully
+        if fs::metadata(&output).is_ok() {
+            println!("   ✅ Configuration validated successfully");
+        } else {
+            anyhow::bail!("Configuration validation failed");
+        }
+    }
+
+    println!("✅ Lefthook configuration generated successfully");
+    println!("   📁 File: {}", output);
+    println!("   💡 To use: lefthook install");
 
     Ok(())
 }

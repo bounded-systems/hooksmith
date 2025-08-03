@@ -148,7 +148,7 @@ pub async fn install_lefthook_if_needed() -> Result<()> {
             let status = Command::new(package_manager)
                 .args(args)
                 .status()
-                .context(format!("Failed to execute {} install", package_manager))?;
+                .context(format!("Failed to execute {package_manager} install"))?;
 
             if status.success() {
                 tracing::info!("Successfully installed lefthook using {}", package_manager);
@@ -198,11 +198,9 @@ pub async fn download_lefthook_binary(version: &str, target_dir: &PathBuf) -> Re
         }
     };
 
-    let filename = format!("lefthook_{}_{}_{}.tar.gz", version, platform, arch);
-    let download_url = format!(
-        "https://github.com/evilmartians/lefthook/releases/download/v{}/{}",
-        version, filename
-    );
+    let filename = format!("lefthook_{version}_{platform}_{arch}.tar.gz");
+    let download_url =
+        format!("https://github.com/evilmartians/lefthook/releases/download/v{version}/{filename}");
 
     tracing::info!("Downloading lefthook from: {}", download_url);
 
