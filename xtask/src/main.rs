@@ -4909,11 +4909,18 @@ async fn convert_json_to_jsonc(
         let jsonc_path = json_path.with_extension("jsonc");
 
         if jsonc_path.exists() && !overwrite {
-            println!("   ⏭️  Skipping {} (JSONC file already exists)", json_path.display());
+            println!(
+                "   ⏭️  Skipping {} (JSONC file already exists)",
+                json_path.display()
+            );
             continue;
         }
 
-        println!("   🔄 Converting {} -> {}", json_path.display(), jsonc_path.display());
+        println!(
+            "   🔄 Converting {} -> {}",
+            json_path.display(),
+            jsonc_path.display()
+        );
 
         // Read the JSON file
         let json_content = fs::read_to_string(&json_path)
@@ -4923,22 +4930,27 @@ async fn convert_json_to_jsonc(
         let json_content_clean = strip_json_header(&json_content);
 
         // Parse JSON to validate it
-        let json_value: serde_json::Value = serde_json::from_str(&json_content_clean)
-            .context(format!("Failed to parse JSON file: {}", json_path.display()))?;
+        let json_value: serde_json::Value = serde_json::from_str(&json_content_clean).context(
+            format!("Failed to parse JSON file: {}", json_path.display()),
+        )?;
 
         // Generate JSONC content with comments
         let jsonc_content = generate_jsonc_content(&json_path, &json_value)?;
 
         // Write the JSONC file
-        fs::write(&jsonc_path, jsonc_content)
-            .context(format!("Failed to write JSONC file: {}", jsonc_path.display()))?;
+        fs::write(&jsonc_path, jsonc_content).context(format!(
+            "Failed to write JSONC file: {}",
+            jsonc_path.display()
+        ))?;
 
         println!("   ✅ Converted {}", json_path.display());
 
         // Remove original JSON file if requested
         if remove_original {
-            fs::remove_file(&json_path)
-                .context(format!("Failed to remove original JSON file: {}", json_path.display()))?;
+            fs::remove_file(&json_path).context(format!(
+                "Failed to remove original JSON file: {}",
+                json_path.display()
+            ))?;
             println!("   🗑️  Removed original {}", json_path.display());
         }
     }
@@ -4949,8 +4961,15 @@ async fn convert_json_to_jsonc(
 
 /// Generate JSONC content with appropriate comments based on file type
 fn generate_jsonc_content(json_path: &Path, json_value: &serde_json::Value) -> Result<String> {
-    let filename = json_path.file_name().and_then(|f| f.to_str()).unwrap_or("unknown");
-    let parent_dir = json_path.parent().and_then(|p| p.file_name()).and_then(|f| f.to_str()).unwrap_or("");
+    let filename = json_path
+        .file_name()
+        .and_then(|f| f.to_str())
+        .unwrap_or("unknown");
+    let parent_dir = json_path
+        .parent()
+        .and_then(|p| p.file_name())
+        .and_then(|f| f.to_str())
+        .unwrap_or("");
 
     let header_comment = match (parent_dir, filename) {
         ("docs", "checksums.json") => {
@@ -4971,18 +4990,18 @@ fn generate_jsonc_content(json_path: &Path, json_value: &serde_json::Value) -> R
     };
 
     // Pretty print the JSON with 2-space indentation
-    let pretty_json = serde_json::to_string_pretty(json_value)
-        .context("Failed to pretty print JSON")?;
+    let pretty_json =
+        serde_json::to_string_pretty(json_value).context("Failed to pretty print JSON")?;
 
     // Combine header comment with pretty JSON
-    Ok(format!("{}{}", header_comment, pretty_json))
+    Ok(format!("{header_comment}{pretty_json}"))
 }
 
 /// Strip header comments from JSON content
 fn strip_json_header(content: &str) -> String {
     let lines: Vec<&str> = content.lines().collect();
     let mut json_start = 0;
-    
+
     // Find the first line that starts with '{' or '['
     for (i, line) in lines.iter().enumerate() {
         let trimmed = line.trim();
@@ -4991,7 +5010,7 @@ fn strip_json_header(content: &str) -> String {
             break;
         }
     }
-    
+
     // Return everything from the JSON start onwards
     lines[json_start..].join("\n")
 }

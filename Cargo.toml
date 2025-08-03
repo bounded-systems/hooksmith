@@ -48,7 +48,7 @@ toml = "0.8"
 
 # Git operations
 git2 = "0.18"
-gix-filter = "0.8"
+gix-filter = "0.20"
 
 # Process and command execution
 which = "5.0"
@@ -61,9 +61,9 @@ tracing-subscriber = "0.3"
 rustdoc-stripper = "0.1"
 
 # WASM and WIT support
-wasmtime = "18.0"
+wasmtime = "34.0"
 wit-bindgen = "0.20"
-wasmtime-wasi = "18.0"
+wasmtime-wasi = "34.0"
 wit-parser = "0.12"
 wit-component = "0.12"
 wat = "1.0"

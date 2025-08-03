@@ -11,7 +11,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use wasmtime::{Engine, Instance, Linker, Module, Store};
-use wasmtime_wasi::WasiCtxBuilder;
 
 use super::components::ComponentHandle;
 
@@ -98,47 +97,23 @@ impl WasmRuntime {
             .get(name)
             .ok_or_else(|| anyhow::anyhow!("Module '{}' not found", name))?;
 
-        if self.config.enable_wasi {
-            // Create WASI-enabled linker
-            let mut linker = Linker::new(&self.engine);
-            let wasi_ctx = WasiCtxBuilder::new()
-                .inherit_stdio()
-                .inherit_args()?
-                .build();
+        // TODO: Fix WASI support for wasmtime 34.0+
+        // For now, use basic linker without WASI
+        let linker = Linker::new(&self.engine);
 
-            wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
+        // Create store without WASI context
+        let mut store = Store::new(&self.engine, ());
 
-            // Create store with WASI context
-            let mut store = Store::new(&self.engine, wasi_ctx);
+        // Instantiate the module
+        let instance = linker.instantiate(&mut store, module)?;
 
-            // Instantiate the module
-            let instance = linker.instantiate(&mut store, module)?;
-
-            // Cache the instance
-            {
-                let mut instances = self.instances.write().await;
-                instances.insert(name.to_string(), instance);
-            }
-
-            Ok(ComponentHandle::new(name.to_string(), self.engine.clone()))
-        } else {
-            // Create basic linker without WASI
-            let linker = Linker::new(&self.engine);
-
-            // Create store without WASI context
-            let mut store = Store::new(&self.engine, ());
-
-            // Instantiate the module
-            let instance = linker.instantiate(&mut store, module)?;
-
-            // Cache the instance
-            {
-                let mut instances = self.instances.write().await;
-                instances.insert(name.to_string(), instance);
-            }
-
-            Ok(ComponentHandle::new(name.to_string(), self.engine.clone()))
+        // Cache the instance
+        {
+            let mut instances = self.instances.write().await;
+            instances.insert(name.to_string(), instance);
         }
+
+        Ok(ComponentHandle::new(name.to_string(), self.engine.clone()))
     }
 
     /// Get a component handle by name

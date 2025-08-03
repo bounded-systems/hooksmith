@@ -4,7 +4,6 @@
 //! with schema-driven validation and Git notes storage.
 
 use chrono::Utc;
-use hex;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::Path;
@@ -64,6 +63,12 @@ pub struct ValidationResult {
     pub successes: Vec<String>,
 }
 
+impl Default for ValidationResult {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ValidationResult {
     pub fn new() -> Self {
         ValidationResult {
@@ -90,6 +95,12 @@ impl ValidationResult {
 
 /// Simplified state machine
 pub struct StateMachine;
+
+impl Default for StateMachine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl StateMachine {
     pub fn new() -> Self {
@@ -223,7 +234,7 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
         "// This is a sample Rust file\nfn main() {\n    println!(\"Hello, world!\");\n}",
     )?;
 
-    println!("📄 Created demo file: {:?}", file_path);
+    println!("📄 Created demo file: {file_path:?}");
 
     // Initialize components
     let state_machine = StateMachine::new();
@@ -245,12 +256,12 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
         if validation_result.is_valid {
             println!("✅ State validation passed");
             for success in &validation_result.successes {
-                println!("   ✓ {}", success);
+                println!("   ✓ {success}");
             }
         } else {
             println!("❌ State validation failed");
             for error in &validation_result.errors {
-                println!("   ✗ {}", error);
+                println!("   ✗ {error}");
             }
         }
     } else {
@@ -273,7 +284,7 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
         if validation_result.is_valid {
             println!("✅ State validation passed");
             for success in &validation_result.successes {
-                println!("   ✓ {}", success);
+                println!("   ✓ {success}");
             }
 
             // Store state in Git notes
@@ -301,7 +312,7 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
         } else {
             println!("❌ State validation failed");
             for error in &validation_result.errors {
-                println!("   ✗ {}", error);
+                println!("   ✗ {error}");
             }
         }
     } else {
@@ -324,7 +335,7 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
         if validation_result.is_valid {
             println!("✅ State validation passed");
             for success in &validation_result.successes {
-                println!("   ✓ {}", success);
+                println!("   ✓ {success}");
             }
 
             // Update state in Git notes
@@ -353,7 +364,7 @@ pub fn demo_contract_validation() -> Result<(), Box<dyn std::error::Error>> {
         } else {
             println!("❌ State validation failed");
             for error in &validation_result.errors {
-                println!("   ✗ {}", error);
+                println!("   ✗ {error}");
             }
         }
     } else {
