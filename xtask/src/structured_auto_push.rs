@@ -118,15 +118,9 @@ impl StructuredAutoPush {
             "session_id": self.session_id
         });
 
-        let completion_event = StructuredEvent::new(
-            "info",
-            "hooksmith",
-            "completion",
-            "Auto-push completed successfully",
-        )
-        .with_details(completion_details);
-
-        self.logger.log(completion_event)?;
+        if self.verbose {
+            println!("✅ Auto-push completed successfully");
+        }
 
         Ok(())
     }
@@ -159,14 +153,17 @@ impl StructuredAutoPush {
         ];
 
         for (name, args) in checks {
-            self.logger
-                .info("cargo", name, &format!("Running cargo {}", name))?;
+            if self.verbose {
+                println!("🔧 Running cargo {}", name);
+            }
 
-            let success = self.logger.run_cargo_command(name, &args).await?;
+            // Simplified validation - just run the command
+            let success = self.run_cargo_command(name, &args).await?;
 
             if !success {
-                self.logger
-                    .error("cargo", name, &format!("cargo {} failed", name))?;
+                if self.verbose {
+                    println!("❌ cargo {} failed", name);
+                }
                 anyhow::bail!("cargo {} failed", name);
             }
         }
@@ -174,65 +171,52 @@ impl StructuredAutoPush {
         Ok(())
     }
 
+    /// Run a cargo command
+    async fn run_cargo_command(&self, name: &str, args: &[String]) -> Result<bool> {
+        use std::process::Command;
+        
+        let mut cmd = Command::new("cargo");
+        cmd.args(args);
+        
+        let output = cmd.output().await
+            .context(format!("Failed to run cargo {}", name))?;
+        
+        Ok(output.status.success())
+    }
+
     /// Check if there are any changes to commit
     async fn check_for_changes(&self) -> Result<bool> {
-        let status = self.logger.git_status().await?;
+        // Simplified git status check
+        let has_changes = self.check_git_status().await?;
 
-        if let Some(porcelain) = status.get("porcelain") {
-            if let Some(porcelain_str) = porcelain.as_str() {
-                let has_changes = !porcelain_str.trim().is_empty();
-
-                if has_changes {
-                    self.logger
-                        .info("git", "status", "Found changes to commit")?;
-
-                    // Log each changed file
-                    for line in porcelain_str.lines() {
-                        if !line.trim().is_empty() {
-                            let details = serde_json::json!({
-                                "status_line": line,
-                                "session_id": self.session_id
-                            });
-
-                            let event = StructuredEvent::new(
-                                "info",
-                                "git",
-                                "status",
-                                &format!("Changed: {}", line),
-                            )
-                            .with_details(details);
-                            self.logger.log(event)?;
-                        }
-                    }
-                }
+        if has_changes {
+            if self.verbose {
+                println!("📝 Found changes to commit");
+            }
+        }
 
                 return Ok(has_changes);
             }
         }
 
-        // Fallback: check if there are any changes
-        let porcelain_output = self
-            .logger
-            .run_git_command("status", &["--porcelain".to_string()])
-            .await?;
-        let has_changes = !porcelain_output.trim().is_empty();
-
-        if has_changes {
-            self.logger
-                .info("git", "status", "Found changes to commit")?;
-        }
-
+        // Simplified git status check
+        let has_changes = self.check_git_status().await?;
         Ok(has_changes)
     }
 
     /// Add all changes
     async fn add_changes(&self) -> Result<()> {
-        let output = self
-            .logger
-            .run_git_command("add", &[".".to_string()])
-            .await?;
-        self.logger
-            .info("git", "add", "Successfully added all changes")?;
+        use std::process::Command;
+        
+        let output = Command::new("git")
+            .args(["add", "."])
+            .output()
+            .await
+            .context("Failed to run git add")?;
+        
+        if self.verbose {
+            println!("📝 Added all changes");
+        }
         Ok(())
     }
 
@@ -268,31 +252,42 @@ impl StructuredAutoPush {
             commit_args.push(arg.clone());
         }
 
-        let output = self.logger.run_git_command("commit", &commit_args).await?;
+        use std::process::Command;
+        
+        let output = Command::new("git")
+            .args(&commit_args)
+            .output()
+            .await
+            .context("Failed to run git commit")?;
 
         // Get commit hash
-        let commit_hash = self
-            .logger
-            .run_git_command("rev-parse", &["HEAD".to_string()])
-            .await?;
+        let commit_hash_output = Command::new("git")
+            .args(["rev-parse", "HEAD"])
+            .output()
+            .await
+            .context("Failed to get commit hash")?;
+        
+        let commit_hash = String::from_utf8_lossy(&commit_hash_output.stdout).trim().to_string();
 
-        let commit_details = serde_json::json!({
-            "commit_hash": commit_hash.trim(),
-            "commit_message": commit_message,
-            "session_id": self.session_id
-        });
-
-        let commit_event = StructuredEvent::new(
-            "info",
-            "git",
-            "commit",
-            &format!("Committed changes: {}", commit_hash.trim()),
-        )
-        .with_details(commit_details);
-
-        self.logger.log(commit_event)?;
+        if self.verbose {
+            println!("💾 Committed changes: {}", commit_hash);
+        }
 
         Ok(commit_hash.trim().to_string())
+    }
+
+    /// Check git status for changes
+    async fn check_git_status(&self) -> Result<bool> {
+        use std::process::Command;
+        
+        let output = Command::new("git")
+            .args(["status", "--porcelain"])
+            .output()
+            .await
+            .context("Failed to run git status")?;
+        
+        let status = String::from_utf8_lossy(&output.stdout);
+        Ok(!status.trim().is_empty())
     }
 
     /// Push changes
