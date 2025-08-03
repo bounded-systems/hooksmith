@@ -112,6 +112,8 @@ quality = "run -p xtask -- code-stats"
 quality-strict = "run -p xtask -- code-stats --strict"
 validate = "run -p xtask -- contract-validate --validate-generated"
 validate-strict = "run -p xtask -- contract-validate --validate-generated --comprehensive"
+check-all = "run -p xtask -- check-all"
+check-all-strict = "run -p xtask -- check-all --strict"
 
 # Documentation
 docs = "doc --all-features --no-deps --open"

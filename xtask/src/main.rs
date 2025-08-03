@@ -1263,6 +1263,13 @@ async fn main() -> Result<()> {
         Commands::Check { strict } => {
             check_generated_files(strict)?;
         }
+        Commands::CheckAll {
+            strict,
+            staged_only,
+            verbose,
+        } => {
+            run_check_all(strict, staged_only, verbose).await?;
+        }
         Commands::Validate {
             trunk,
             cargo,
@@ -7643,5 +7650,43 @@ async fn run_integrate_codeql_command(
 
     println!("✅ CodeQL integration completed");
 
+    Ok(())
+}
+
+/// Run comprehensive check: cargo check + contract validation
+async fn run_check_all(strict: bool, staged_only: bool, verbose: bool) -> Result<()> {
+    println!("🔍 Running comprehensive check (cargo check + contract validation)...");
+
+    if verbose {
+        println!("   Strict mode: {}", strict);
+        println!("   Staged only: {}", staged_only);
+        println!("   Verbose: {}", verbose);
+    }
+
+    // Step 1: Run cargo check --workspace
+    println!("📋 Step 1: Running cargo check --workspace...");
+    let check_status = Command::new("cargo")
+        .args(["check", "--workspace"])
+        .status()
+        .context("Failed to run cargo check")?;
+
+    if !check_status.success() {
+        let error_msg = "❌ Cargo check failed";
+        if strict {
+            return Err(anyhow::anyhow!(error_msg));
+        } else {
+            println!("{}", error_msg);
+        }
+    } else {
+        println!("✅ Cargo check passed");
+    }
+
+    // Step 2: Run contract validation
+    println!("📋 Step 2: Running contract validation...");
+
+    // Use the existing contract check functionality
+    run_contract_check(staged_only, strict, false, "status-trends", verbose).await?;
+
+    println!("✅ Comprehensive check completed");
     Ok(())
 }

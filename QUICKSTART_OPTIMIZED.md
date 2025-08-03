@@ -34,6 +34,10 @@ make build    # Fast development build
 make test     # Parallel test execution
 make check    # Fast checking
 make dev      # Complete development cycle
+
+# Comprehensive check (cargo check + contract validation)
+cargo check-all
+```
 ```
 
 ### 3. Available Optimized Commands

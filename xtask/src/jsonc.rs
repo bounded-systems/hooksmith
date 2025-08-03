@@ -161,8 +161,8 @@ impl JsoncManager {
 
         // Leak the schema to get a 'static reference for JSONSchema::compile
         let static_schema: &'static serde_json::Value = Box::leak(Box::new(schema.clone()));
-        let compiled_schema = JSONSchema::compile(static_schema)
-            .context("Failed to compile JSON schema")?;
+        let compiled_schema =
+            JSONSchema::compile(static_schema).context("Failed to compile JSON schema")?;
 
         compiled_schema
             .validate(&jsonc_file.content)

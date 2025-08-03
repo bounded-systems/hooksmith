@@ -162,6 +162,10 @@ cargo test-parallel
 
 # Fast checking
 cargo check-fast
+
+# Comprehensive check (cargo check + contract validation)
+cargo check-all
+```
 ```
 
 #### 🛠️ Xtask Commands
@@ -192,6 +196,9 @@ cargo run -p xtask -- gen-all --overwrite
 
 # Check if generated files are up to date
 cargo run -p xtask -- check --strict
+
+# Comprehensive check (cargo check + contract validation)
+cargo run -p xtask -- check-all --strict
 
 # Validate project configuration
 cargo run -p xtask -- validate --all
