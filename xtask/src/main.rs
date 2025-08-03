@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -670,6 +671,12 @@ enum Commands {
         /// Commit message template
         #[arg(short, long)]
         message: Option<String>,
+        /// Run in file-watch mode (wait for manual triggers)
+        #[arg(long)]
+        file_watch: bool,
+        /// Trigger validation manually (for file-watch mode)
+        #[arg(long)]
+        trigger: bool,
     },
 }
 
@@ -1127,6 +1134,8 @@ async fn main() -> Result<()> {
             skip_validation,
             force,
             message,
+            file_watch,
+            trigger,
         } => {
             run_dashboard_command(
                 interval,
@@ -1135,6 +1144,8 @@ async fn main() -> Result<()> {
                 skip_validation,
                 force,
                 message,
+                file_watch,
+                trigger,
             )
             .await?;
         }
@@ -6083,9 +6094,11 @@ async fn run_dashboard_command(
     skip_validation: bool,
     force: bool,
     message: Option<String>,
+    file_watch: bool,
+    trigger: bool,
 ) -> Result<()> {
     let config = dashboard::DashboardConfig {
-        update_interval: interval,
+        update_interval: if file_watch { 0 } else { interval },
         show_dashboard,
         log_to_jsonl: true,
         jsonl_path: Some("hooksmith-events.jsonl".to_string()),
@@ -6095,7 +6108,26 @@ async fn run_dashboard_command(
             skip_validation,
             force,
         },
+        file_watch_mode: file_watch,
     };
+
+    if trigger {
+        // Just run a single validation cycle and exit
+        println!("🔍 Running single validation cycle...");
+        let errors = Arc::new(Mutex::new(HashMap::new()));
+        dashboard::Dashboard::run_validation_cycle(&errors, &config)
+            .await
+            .map_err(|e| anyhow::anyhow!("Validation error: {}", e))?;
+
+        if auto_push {
+            dashboard::Dashboard::run_auto_push_cycle(&config.auto_push_config)
+                .await
+                .map_err(|e| anyhow::anyhow!("Auto-push error: {}", e))?;
+        }
+
+        println!("✅ Validation cycle completed!");
+        return Ok(());
+    }
 
     let dashboard = dashboard::Dashboard::new(config);
     dashboard

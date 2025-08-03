@@ -49,7 +49,7 @@ pub struct Dashboard {
 /// Dashboard configuration
 #[derive(Debug, Clone)]
 pub struct DashboardConfig {
-    /// Update interval in seconds
+    /// Update interval in seconds (0 = file-watch mode)
     pub update_interval: u64,
     /// Whether to show TUI dashboard
     pub show_dashboard: bool,
@@ -59,6 +59,8 @@ pub struct DashboardConfig {
     pub jsonl_path: Option<String>,
     /// Auto-push configuration
     pub auto_push_config: AutoPushConfig,
+    /// Whether to run in file-watch mode
+    pub file_watch_mode: bool,
 }
 
 /// Auto-push configuration
@@ -87,6 +89,7 @@ impl Default for DashboardConfig {
                 skip_validation: false,
                 force: false,
             },
+            file_watch_mode: false,
         }
     }
 }
@@ -282,28 +285,46 @@ impl Dashboard {
         config: DashboardConfig,
         running: Arc<Mutex<bool>>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        loop {
-            if !*running.lock().unwrap() {
-                break;
-            }
+        if config.file_watch_mode {
+            println!("📁 File-watch mode: Waiting for file changes...");
+            println!("   Run 'cargo watch -x \"run -p xtask -- dashboard --trigger\"' to trigger validation");
 
-            // Run validation and collect errors (unless skipped)
-            if !config.auto_push_config.skip_validation {
-                Self::run_validation_cycle(&errors, &config).await?;
+            // In file-watch mode, just wait indefinitely
+            loop {
+                if !*running.lock().unwrap() {
+                    break;
+                }
+                sleep(Duration::from_secs(1)).await;
             }
+        } else {
+            println!(
+                "⏰ Timer mode: Running validation every {} seconds",
+                config.update_interval
+            );
 
-            // Run auto-push if enabled
-            if config.auto_push_config.enabled {
-                Self::run_auto_push_cycle(&config.auto_push_config).await?;
+            loop {
+                if !*running.lock().unwrap() {
+                    break;
+                }
+
+                // Run validation and collect errors (unless skipped)
+                if !config.auto_push_config.skip_validation {
+                    Self::run_validation_cycle(&errors, &config).await?;
+                }
+
+                // Run auto-push if enabled
+                if config.auto_push_config.enabled {
+                    Self::run_auto_push_cycle(&config.auto_push_config).await?;
+                }
+
+                sleep(Duration::from_secs(config.update_interval)).await;
             }
-
-            sleep(Duration::from_secs(config.update_interval)).await;
         }
         Ok(())
     }
 
     /// Run a single validation cycle
-    async fn run_validation_cycle(
+    pub async fn run_validation_cycle(
         errors: &Arc<Mutex<HashMap<String, ErrorStats>>>,
         config: &DashboardConfig,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -398,7 +419,7 @@ impl Dashboard {
     }
 
     /// Run auto-push cycle
-    async fn run_auto_push_cycle(
+    pub async fn run_auto_push_cycle(
         config: &AutoPushConfig,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if !config.enabled {
