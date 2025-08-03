@@ -5,6 +5,8 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::process::{Command, Stdio};
 use std::io::{BufRead, BufReader};
+use std::sync::{Arc, Mutex};
+use once_cell::sync::Lazy;
 use tokio::process::Command as TokioCommand;
 
 /// Standard event structure for structured logging
@@ -387,19 +389,97 @@ impl StructuredLogger {
     }
 }
 
-/// Convenience macro for structured logging
+/// Global structured logger instance
+static GLOBAL_LOGGER: Lazy<Arc<Mutex<StructuredLogger>>> = Lazy::new(|| {
+    Arc::new(Mutex::new(StructuredLogger::new()))
+});
+
+/// Initialize the global structured logger
+pub fn init_global_logger(jsonl_output: bool, event_bus_integration: bool, session_id: Option<String>) {
+    let mut logger = GLOBAL_LOGGER.lock().unwrap();
+    logger.jsonl_output = jsonl_output;
+    logger.event_bus_integration = event_bus_integration;
+    logger.session_id = session_id;
+}
+
+/// Get the global structured logger
+pub fn get_global_logger() -> Arc<Mutex<StructuredLogger>> {
+    GLOBAL_LOGGER.clone()
+}
+
+/// Log an info message using the global logger
+pub fn log_info(tool: &str, action: &str, message: &str) -> Result<()> {
+    let logger = get_global_logger();
+    let logger = logger.lock().unwrap();
+    logger.info(tool, action, message)
+}
+
+/// Log a warning message using the global logger
+pub fn log_warn(tool: &str, action: &str, message: &str) -> Result<()> {
+    let logger = get_global_logger();
+    let logger = logger.lock().unwrap();
+    logger.warn(tool, action, message)
+}
+
+/// Log an error message using the global logger
+pub fn log_error(tool: &str, action: &str, message: &str) -> Result<()> {
+    let logger = get_global_logger();
+    let logger = logger.lock().unwrap();
+    logger.error(tool, action, message)
+}
+
+/// Log a diagnostic message using the global logger
+pub fn log_diagnostic(diagnostic: &serde_json::Value) -> Result<()> {
+    let logger = get_global_logger();
+    let logger = logger.lock().unwrap();
+    logger.diagnostic(diagnostic)
+}
+
+/// Macro for structured logging - replaces println!
 #[macro_export]
-macro_rules! log_event {
-    ($logger:expr, $level:expr, $tool:expr, $action:expr, $message:expr) => {
-        $logger.$level($tool, $action, $message)
+macro_rules! log_info {
+    ($tool:expr, $action:expr, $($arg:tt)*) => {
+        $crate::structured_logging::log_info($tool, $action, &format!($($arg)*))
     };
-    
-    ($logger:expr, $level:expr, $tool:expr, $action:expr, $message:expr, $details:expr) => {
-        {
-            let mut event = $crate::structured_logging::StructuredEvent::new($level, $tool, $action, $message);
-            event.details = Some($details);
-            $logger.log(event)
-        }
+}
+
+/// Macro for structured logging - replaces eprintln! for warnings
+#[macro_export]
+macro_rules! log_warn {
+    ($tool:expr, $action:expr, $($arg:tt)*) => {
+        $crate::structured_logging::log_warn($tool, $action, &format!($($arg)*))
+    };
+}
+
+/// Macro for structured logging - replaces eprintln! for errors
+#[macro_export]
+macro_rules! log_error {
+    ($tool:expr, $action:expr, $($arg:tt)*) => {
+        $crate::structured_logging::log_error($tool, $action, &format!($($arg)*))
+    };
+}
+
+/// Macro for structured logging - replaces println! with success styling
+#[macro_export]
+macro_rules! log_success {
+    ($tool:expr, $action:expr, $($arg:tt)*) => {
+        $crate::structured_logging::log_info($tool, $action, &format!("✅ {}", format!($($arg)*)))
+    };
+}
+
+/// Macro for structured logging - replaces println! with failure styling
+#[macro_export]
+macro_rules! log_failure {
+    ($tool:expr, $action:expr, $($arg:tt)*) => {
+        $crate::structured_logging::log_error($tool, $action, &format!("❌ {}", format!($($arg)*)))
+    };
+}
+
+/// Macro for structured logging - replaces println! with warning styling
+#[macro_export]
+macro_rules! log_warning {
+    ($tool:expr, $action:expr, $($arg:tt)*) => {
+        $crate::structured_logging::log_warn($tool, $action, &format!("⚠️ {}", format!($($arg)*)))
     };
 }
 

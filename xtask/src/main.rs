@@ -874,6 +874,14 @@ async fn main() -> Result<()> {
     let event_stream_config = event_stream::EventStreamConfig::default();
     event_stream::init_event_stream(event_stream_config)?;
 
+    // Initialize global structured logger
+    // Default to JSONL output unless explicitly disabled
+    let jsonl_output = true; // We want structured output by default
+    let event_bus_integration = true; // Enable event bus integration
+    let session_id = Some(uuid::Uuid::new_v4().to_string());
+    
+    structured_logging::init_global_logger(jsonl_output, event_bus_integration, session_id);
+
     let cli = Cli::parse();
 
     match cli.command {
@@ -887,9 +895,9 @@ async fn main() -> Result<()> {
             generate_wit_interfaces(&output_dir, overwrite)?;
         }
         Commands::GenLefthook { output, validate } => {
-            println!("⚠️  Lefthook generation disabled - lefthook_rs dependency missing");
-            println!("   Output: {output}");
-            println!("   Validate: {validate}");
+            log_warning!("hooksmith", "lefthook", "Lefthook generation disabled - lefthook_rs dependency missing");
+            log_info!("hooksmith", "lefthook", "Output: {output}");
+            log_info!("hooksmith", "lefthook", "Validate: {validate}");
         }
         Commands::GenDocs { output_dir, open } => {
             generate_documentation(&output_dir, open)?;

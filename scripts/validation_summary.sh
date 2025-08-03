@@ -28,10 +28,10 @@ echo ""
 
 # Basic statistics
 TOTAL_EVENTS=$(jql '.' "$EVENTS_FILE" | wc -l)
-ERROR_EVENTS=$(jql '.level=="error"' "$EVENTS_FILE" | wc -l)
-WARN_EVENTS=$(jql '.level=="warn"' "$EVENTS_FILE" | wc -l)
-INFO_EVENTS=$(jql '.level=="info"' "$EVENTS_FILE" | wc -l)
-SUCCESS_EVENTS=$(jql '.level=="info" and .action=="completion"' "$EVENTS_FILE" | wc -l)
+ERROR_EVENTS=$(jql '"level"' "$EVENTS_FILE" | grep '"error"' | wc -l)
+WARN_EVENTS=$(jql '"level"' "$EVENTS_FILE" | grep '"warn"' | wc -l)
+INFO_EVENTS=$(jql '"level"' "$EVENTS_FILE" | grep '"info"' | wc -l)
+SUCCESS_EVENTS=$(jql '"action"' "$EVENTS_FILE" | grep '"completion"' | wc -l)
 
 echo "=== 📊 Event Statistics ==="
 echo "Total events:     $TOTAL_EVENTS"
@@ -43,23 +43,23 @@ echo ""
 
 # Tool breakdown
 echo "=== 🛠️  Tool Breakdown ==="
-jql '.tool' "$EVENTS_FILE" | sort | uniq -c | while read count tool; do
+jql '"tool"' "$EVENTS_FILE" | sort | uniq -c | while read count tool; do
     echo "$tool: $count events"
 done
 echo ""
 
 # Action breakdown
 echo "=== ⚡ Action Breakdown ==="
-jql '.action' "$EVENTS_FILE" | sort | uniq -c | while read count action; do
+jql '"action"' "$EVENTS_FILE" | sort | uniq -c | while read count action; do
     echo "$action: $count events"
 done
 echo ""
 
 # Performance metrics
 echo "=== ⏱️  Performance Metrics ==="
-DURATION=$(jql '.action=="completion" | .details.duration_ms' "$EVENTS_FILE" | head -1)
+DURATION=$(jql '"action"' "$EVENTS_FILE" | grep '"completion"' | head -1)
 if [ -n "$DURATION" ]; then
-    echo "Total duration: ${DURATION}ms"
+    echo "Total duration: completion event found"
 else
     echo "Duration: Not available (no completion event found)"
 fi
@@ -67,9 +67,10 @@ echo ""
 
 # Recent errors
 echo "=== ❌ Recent Errors ==="
-ERROR_COUNT=$(jql '.level=="error"' "$EVENTS_FILE" | wc -l)
+ERROR_COUNT=$(jql '"level"' "$EVENTS_FILE" | grep '"error"' | wc -l)
 if [ "$ERROR_COUNT" -gt 0 ]; then
-    jql '.level=="error" | {timestamp, tool, action, message}' "$EVENTS_FILE" | tail -5
+    echo "Found $ERROR_COUNT error events"
+    jql '"message"' "$EVENTS_FILE" | grep -A 1 -B 1 '"error"' | tail -5
 else
     echo "No errors found! 🎉"
 fi
@@ -77,9 +78,10 @@ echo ""
 
 # Recent warnings
 echo "=== ⚠️  Recent Warnings ==="
-WARN_COUNT=$(jql '.level=="warn"' "$EVENTS_FILE" | wc -l)
+WARN_COUNT=$(jql '"level"' "$EVENTS_FILE" | grep '"warn"' | wc -l)
 if [ "$WARN_COUNT" -gt 0 ]; then
-    jql '.level=="warn" | {timestamp, tool, action, message}' "$EVENTS_FILE" | tail -5
+    echo "Found $WARN_COUNT warning events"
+    jql '"message"' "$EVENTS_FILE" | grep -A 1 -B 1 '"warn"' | tail -5
 else
     echo "No warnings found! 🎉"
 fi
@@ -87,10 +89,10 @@ echo ""
 
 # Diagnostic information
 echo "=== 🔍 Diagnostic Information ==="
-DIAGNOSTIC_COUNT=$(jql 'select(.code)' "$EVENTS_FILE" | wc -l)
+DIAGNOSTIC_COUNT=$(jql '"code"' "$EVENTS_FILE" | wc -l)
 if [ "$DIAGNOSTIC_COUNT" -gt 0 ]; then
     echo "Found $DIAGNOSTIC_COUNT diagnostic events:"
-    jql 'select(.code) | {file, line, code, message}' "$EVENTS_FILE" | head -3
+    jql '"code"' "$EVENTS_FILE" | head -3
 else
     echo "No diagnostic events found"
 fi
@@ -98,11 +100,11 @@ echo ""
 
 # Session information
 echo "=== 🆔 Session Information ==="
-SESSION_COUNT=$(jql '.session_id' "$EVENTS_FILE" | sort | uniq | wc -l)
+SESSION_COUNT=$(jql '"session_id"' "$EVENTS_FILE" | sort | uniq | wc -l)
 echo "Total sessions: $SESSION_COUNT"
 if [ "$SESSION_COUNT" -gt 0 ]; then
     echo "Recent session IDs:"
-    jql '.session_id' "$EVENTS_FILE" | sort | uniq | tail -3
+    jql '"session_id"' "$EVENTS_FILE" | sort | uniq | tail -3
 fi
 echo ""
 
@@ -123,4 +125,4 @@ fi
 echo ""
 echo "📁 Events saved to: $EVENTS_FILE"
 echo "💡 Use 'jless $EVENTS_FILE' to browse events interactively"
-echo "💡 Use 'jql \".level==\\\"error\\\"\" $EVENTS_FILE' to see all errors" 
+echo "💡 Use 'jql \"\\\"level\\\"\" $EVENTS_FILE | grep \\\"error\\\"' to see all errors" 

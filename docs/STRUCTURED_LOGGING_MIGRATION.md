@@ -1,0 +1,440 @@
+# Structured Logging Migration Guide
+
+## Overview
+
+This guide helps you migrate from direct console output (`println!`, `eprintln!`) to structured logging that ensures all output is schema-validated and machine-readable.
+
+## Why Structured Logging?
+
+### Problems with Direct Console Output
+
+1. **No Schema Validation**: Plain text output can't be validated
+2. **Fragile Parsing**: Dashboards and CI systems must parse unstructured text
+3. **Inconsistent Format**: Different functions use different output formats
+4. **No Machine Readability**: Tools can't easily process plain text
+5. **No Correlation**: Hard to group related events together
+
+### Benefits of Structured Logging
+
+1. **Schema Validation**: All output follows a defined structure
+2. **Machine Readable**: JSONL format is easy to parse and process
+3. **Consistent Format**: All events follow the same structure
+4. **Rich Metadata**: Includes timestamps, session IDs, and diagnostic info
+5. **Tool Integration**: Works seamlessly with Rust-based JSON tools
+
+## Migration Strategy
+
+### 1. Replace Direct Console Output
+
+**Before:**
+```rust
+println!("✅ Build completed successfully");
+eprintln!("❌ Validation failed: {}", error);
+println!("📊 Found {} errors", error_count);
+```
+
+**After:**
+```rust
+log_success!("hooksmith", "build", "Build completed successfully");
+log_failure!("hooksmith", "validation", "Validation failed: {}", error);
+log_info!("hooksmith", "analysis", "Found {} errors", error_count);
+```
+
+### 2. Use Appropriate Log Levels
+
+- **`log_info!`** - General information and status updates
+- **`log_warn!`** - Warnings and non-critical issues
+- **`log_error!`** - Errors and failures
+- **`log_success!`** - Success messages with ✅ styling
+- **`log_failure!`** - Failure messages with ❌ styling
+- **`log_warning!`** - Warning messages with ⚠️ styling
+
+### 3. Structured Event Format
+
+All events follow this schema:
+```json
+{
+  "timestamp": "2025-08-03T18:30:00Z",
+  "level": "info|warn|error",
+  "tool": "hooksmith|cargo|git",
+  "action": "build|validation|commit|push",
+  "message": "Human-readable message",
+  "details": null,
+  "code": null,
+  "file": null,
+  "line": null,
+  "column": null,
+  "session_id": "uuid-string"
+}
+```
+
+## Migration Examples
+
+### Example 1: Build Function
+
+**Before:**
+```rust
+fn build_project(target: &str, release: bool) -> Result<()> {
+    println!("🔨 Building project...");
+    println!("   Target: {}", target);
+    println!("   Release: {}", release);
+    
+    // ... build logic ...
+    
+    if success {
+        println!("✅ Build completed successfully");
+    } else {
+        eprintln!("❌ Build failed: {}", error);
+    }
+    
+    Ok(())
+}
+```
+
+**After:**
+```rust
+fn build_project(target: &str, release: bool) -> Result<()> {
+    log_info!("hooksmith", "build", "Building project");
+    log_info!("hooksmith", "build", "Target: {}", target);
+    log_info!("hooksmith", "build", "Release: {}", release);
+    
+    // ... build logic ...
+    
+    if success {
+        log_success!("hooksmith", "build", "Build completed successfully");
+    } else {
+        log_failure!("hooksmith", "build", "Build failed: {}", error);
+    }
+    
+    Ok(())
+}
+```
+
+### Example 2: Validation Function
+
+**Before:**
+```rust
+fn validate_files(strict: bool) -> Result<()> {
+    println!("🔍 Validating files...");
+    
+    let errors = find_validation_errors();
+    
+    if errors.is_empty() {
+        println!("✅ All files are valid");
+    } else {
+        println!("❌ Found {} validation errors:", errors.len());
+        for error in &errors {
+            println!("   - {}", error);
+        }
+        
+        if strict {
+            eprintln!("💥 Validation failed in strict mode");
+            return Err(anyhow::anyhow!("Validation failed"));
+        }
+    }
+    
+    Ok(())
+}
+```
+
+**After:**
+```rust
+fn validate_files(strict: bool) -> Result<()> {
+    log_info!("hooksmith", "validation", "Validating files");
+    
+    let errors = find_validation_errors();
+    
+    if errors.is_empty() {
+        log_success!("hooksmith", "validation", "All files are valid");
+    } else {
+        log_failure!("hooksmith", "validation", "Found {} validation errors", errors.len());
+        for error in &errors {
+            log_error!("hooksmith", "validation", "Error: {}", error);
+        }
+        
+        if strict {
+            log_failure!("hooksmith", "validation", "Validation failed in strict mode");
+            return Err(anyhow::anyhow!("Validation failed"));
+        }
+    }
+    
+    Ok(())
+}
+```
+
+### Example 3: Command Processing
+
+**Before:**
+```rust
+async fn process_command(command: &str, args: &[String]) -> Result<()> {
+    println!("🚀 Processing command: {}", command);
+    println!("   Args: {:?}", args);
+    
+    match command {
+        "build" => {
+            println!("📦 Building...");
+            // ... build logic ...
+            println!("✅ Build successful");
+        }
+        "test" => {
+            println!("🧪 Testing...");
+            // ... test logic ...
+            if test_passed {
+                println!("✅ Tests passed");
+            } else {
+                eprintln!("❌ Tests failed");
+            }
+        }
+        _ => {
+            eprintln!("❌ Unknown command: {}", command);
+        }
+    }
+    
+    Ok(())
+}
+```
+
+**After:**
+```rust
+async fn process_command(command: &str, args: &[String]) -> Result<()> {
+    log_info!("hooksmith", "command", "Processing command: {}", command);
+    log_info!("hooksmith", "command", "Args: {:?}", args);
+    
+    match command {
+        "build" => {
+            log_info!("hooksmith", "build", "Building");
+            // ... build logic ...
+            log_success!("hooksmith", "build", "Build successful");
+        }
+        "test" => {
+            log_info!("hooksmith", "test", "Testing");
+            // ... test logic ...
+            if test_passed {
+                log_success!("hooksmith", "test", "Tests passed");
+            } else {
+                log_failure!("hooksmith", "test", "Tests failed");
+            }
+        }
+        _ => {
+            log_failure!("hooksmith", "command", "Unknown command: {}", command);
+        }
+    }
+    
+    Ok(())
+}
+```
+
+## Migration Checklist
+
+### 1. Import Structured Logging
+
+Add to your module:
+```rust
+use crate::structured_logging::{log_info, log_warn, log_error, log_success, log_failure, log_warning};
+```
+
+### 2. Replace Console Output
+
+- `println!("✅ ...")` → `log_success!("tool", "action", "...")`
+- `println!("❌ ...")` → `log_failure!("tool", "action", "...")`
+- `println!("⚠️ ...")` → `log_warning!("tool", "action", "...")`
+- `println!("...")` → `log_info!("tool", "action", "...")`
+- `eprintln!("...")` → `log_error!("tool", "action", "...")`
+
+### 3. Choose Appropriate Tool and Action
+
+**Tool Examples:**
+- `"hooksmith"` - Main application logic
+- `"cargo"` - Cargo operations
+- `"git"` - Git operations
+- `"validation"` - Validation processes
+- `"build"` - Build processes
+
+**Action Examples:**
+- `"start"` - Starting a process
+- `"completion"` - Process completed
+- `"validation"` - Running validation
+- `"build"` - Building
+- `"test"` - Testing
+- `"commit"` - Git commit
+- `"push"` - Git push
+
+### 4. Add Context and Details
+
+For complex operations, include additional context:
+```rust
+log_info!("hooksmith", "validation", "Starting validation of {} files", file_count);
+log_info!("hooksmith", "validation", "Validation mode: {}", mode);
+log_success!("hooksmith", "validation", "Validation completed in {}ms", duration);
+```
+
+### 5. Handle Errors Properly
+
+```rust
+match result {
+    Ok(_) => {
+        log_success!("hooksmith", "operation", "Operation completed successfully");
+    }
+    Err(e) => {
+        log_failure!("hooksmith", "operation", "Operation failed: {}", e);
+        return Err(e);
+    }
+}
+```
+
+## Advanced Usage
+
+### 1. Custom Event Details
+
+For events that need additional metadata:
+```rust
+use crate::structured_logging::{StructuredEvent, log_diagnostic};
+
+let event = StructuredEvent::new("info", "hooksmith", "validation", "Validation completed")
+    .with_details(serde_json::json!({
+        "files_checked": 42,
+        "errors_found": 0,
+        "duration_ms": 1500
+    }));
+
+log_diagnostic(&serde_json::to_value(event)?)?;
+```
+
+### 2. Diagnostic Information
+
+For compiler or tool diagnostics:
+```rust
+let diagnostic = serde_json::json!({
+    "code": "E0001",
+    "file": "src/main.rs",
+    "line": 42,
+    "column": 10,
+    "message": "expected type, found `{`"
+});
+
+log_diagnostic(&diagnostic)?;
+```
+
+### 3. Session Correlation
+
+All events automatically include session IDs for correlation:
+```rust
+// Events in the same session will have the same session_id
+log_info!("hooksmith", "start", "Starting workflow");
+log_info!("cargo", "check", "Running cargo check");
+log_info!("git", "commit", "Committing changes");
+log_info!("hooksmith", "completion", "Workflow completed");
+```
+
+## Testing Structured Logging
+
+### 1. Verify JSONL Output
+
+```bash
+# Run a command and verify JSONL output
+cargo run -p xtask -- build | head -5
+
+# Expected output:
+# {"timestamp":"2025-08-03T18:30:00Z","level":"info","tool":"hooksmith","action":"start","message":"Starting build process"}
+# {"timestamp":"2025-08-03T18:30:01Z","level":"info","tool":"cargo","action":"build","message":"Building project"}
+# {"timestamp":"2025-08-03T18:30:05Z","level":"info","tool":"hooksmith","action":"completion","message":"✅ Build completed successfully"}
+```
+
+### 2. Validate Schema
+
+```bash
+# Validate JSONL output against schema
+cargo run -p xtask -- build | jql '"level"' | sort | uniq -c
+```
+
+### 3. Test Tool Integration
+
+```bash
+# Test with fblog for real-time filtering
+cargo run -p xtask -- build | fblog -f 'level == "error"'
+
+# Test with jql for querying
+cargo run -p xtask -- build | jql '"tool"' | sort | uniq -c
+```
+
+## Best Practices
+
+### 1. Be Consistent
+
+- Use the same tool and action names across similar operations
+- Follow the established naming conventions
+- Use consistent message formatting
+
+### 2. Include Context
+
+- Always include relevant context in messages
+- Use structured details for complex information
+- Include timing information for performance-sensitive operations
+
+### 3. Handle Errors Gracefully
+
+- Log errors before returning them
+- Include error context and details
+- Use appropriate log levels for different error types
+
+### 4. Test Your Changes
+
+- Verify JSONL output is valid
+- Test with structured logging tools
+- Ensure backward compatibility
+
+### 5. Document Changes
+
+- Update documentation to reflect new output format
+- Document any new tool or action names
+- Provide examples of expected output
+
+## Migration Timeline
+
+### Phase 1: Core Functions (Week 1)
+- [ ] Main CLI functions
+- [ ] Build and validation functions
+- [ ] Error handling functions
+
+### Phase 2: Utility Functions (Week 2)
+- [ ] File processing functions
+- [ ] Configuration functions
+- [ ] Documentation generation
+
+### Phase 3: Advanced Features (Week 3)
+- [ ] Event bus integration
+- [ ] Dashboard functions
+- [ ] Hook processing
+
+### Phase 4: Testing and Validation (Week 4)
+- [ ] Comprehensive testing
+- [ ] Tool integration testing
+- [ ] Performance validation
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Missing Imports**: Ensure structured logging is imported
+2. **Invalid JSON**: Check that messages don't contain unescaped quotes
+3. **Tool/Action Mismatch**: Use consistent naming conventions
+4. **Performance Impact**: Structured logging has minimal overhead
+
+### Debug Commands
+
+```bash
+# Check if structured logging is working
+cargo run -p xtask -- --help | head -5
+
+# Validate JSONL output
+cargo run -p xtask -- build | jql '.' | head -1
+
+# Test specific tool/action combinations
+cargo run -p xtask -- build | jql '"tool"' | grep "hooksmith"
+```
+
+## Conclusion
+
+Migrating to structured logging ensures that all console output is schema-validated, machine-readable, and consistent. This enables better tool integration, automated analysis, and improved debugging capabilities.
+
+The migration process is straightforward and can be done incrementally, ensuring that the system remains functional throughout the transition. 
