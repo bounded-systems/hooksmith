@@ -7,11 +7,17 @@ use walkdir::WalkDir;
 
 #[derive(Debug, Deserialize)]
 pub struct FilePolicy {
+    #[serde(rename = "allowedExtensions")]
     pub allowed_extensions: Vec<String>,
+    #[serde(rename = "generatedExtensions")]
     pub generated_extensions: Vec<String>,
+    #[serde(rename = "ignorePaths")]
     pub ignore_paths: Vec<String>,
+    #[serde(rename = "exemptFiles")]
     pub exempt_files: Vec<String>,
+    #[serde(rename = "generatedMarkers")]
     pub generated_markers: HashMap<String, String>,
+    #[serde(rename = "generationCommands")]
     pub generation_commands: HashMap<String, String>,
 }
 
@@ -25,8 +31,10 @@ impl FilePolicy {
         let content =
             fs::read_to_string(config_path).context("Failed to read file policy configuration")?;
 
-        // Parse JSONC (JSON with comments) by stripping comments
+        // Use the main JSONC module's parsing
         let json_content = strip_jsonc_comments(&content);
+
+
 
         let policy: FilePolicy = serde_json::from_str(&json_content)
             .context("Failed to parse file policy configuration")?;

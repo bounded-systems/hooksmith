@@ -1,21 +1,20 @@
 #!/usr/bin/env rust-script
 //! Pre-commit hook to validate file extensions against whitelist
 //! This script ensures only allowed file extensions are committed
+//! Only .rs and .jsonc files are allowed as source files
 
 use std::collections::HashSet;
 use std::env;
 use std::path::Path;
 
-/// Whitelist of allowed file extensions for contract validation
+/// Whitelist of allowed file extensions for source files
+/// Only .rs and .jsonc files are allowed as manually maintained source files
+/// All other file types must be code-generated
 const ALLOWED_EXTENSIONS: &[&str] = &[
-    // Rust files
+    // Rust source files (manually maintained)
     "rs",
-    // Configuration files
-    "toml", "yaml", "yml", "json",
-    // Documentation files
-    "md", "txt", "rst",
-    // Web files
-    "html", "css", "js", "ts",
+    // JSON with comments configuration files (manually maintained)
+    "jsonc",
 ];
 
 /// Directories to exclude from validation
@@ -57,7 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(ext_str) = extension.to_str() {
                 if !allowed_extensions.contains(ext_str) {
                     errors.push(format!(
-                        "File '{}' has disallowed extension '{}'",
+                        "File '{}' has disallowed extension '{}'. Only .rs and .jsonc files are allowed as source files. Other file types must be code-generated.",
                         file_path, ext_str
                     ));
                 }
@@ -79,7 +78,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for error in &errors {
             eprintln!("   {}", error);
         }
-        eprintln!("\nAllowed extensions: {}", ALLOWED_EXTENSIONS.join(", "));
+        eprintln!("\nAllowed source file extensions: {}", ALLOWED_EXTENSIONS.join(", "));
+        eprintln!("All other file types must be code-generated using xtask commands.");
         std::process::exit(1);
     }
 
