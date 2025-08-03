@@ -13,8 +13,6 @@ pub struct FilePolicy {
     pub generated_extensions: Vec<String>,
     #[serde(rename = "ignorePaths")]
     pub ignore_paths: Vec<String>,
-    #[serde(rename = "exemptFiles")]
-    pub exempt_files: Vec<String>,
     #[serde(rename = "generatedMarkers")]
     pub generated_markers: HashMap<String, String>,
     #[serde(rename = "generationCommands")]
@@ -57,12 +55,8 @@ impl FilePolicy {
         false
     }
 
-    pub fn is_exempt_file(&self, path: &str) -> bool {
-        for pattern in &self.exempt_files {
-            if path == pattern || path.ends_with(pattern) {
-                return true;
-            }
-        }
+    pub fn is_exempt_file(&self, _path: &str) -> bool {
+        // No exemptions allowed - strict policy only
         false
     }
 

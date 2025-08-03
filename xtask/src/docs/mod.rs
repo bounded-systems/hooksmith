@@ -146,7 +146,7 @@ pub async fn generate_all_docs(output_dir: &str, validate: bool) -> anyhow::Resu
     // Generate checksum report
     let checksum_report = generate_checksum_report(output_path)?;
     write_markdown_file_safely(
-        &output_path.join("CHECKSUM_REPORT.md"),
+        &Path::new("docs/CHECKSUM_REPORT.md"),
         &checksum_report,
         "checksum_report",
     )?;

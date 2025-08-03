@@ -9,7 +9,7 @@
 incremental = true
 
 # Use sccache by default if available
-rustc-wrapper = "sccache"
+# rustc-wrapper = "sccache"
 
 # Set default parallel jobs
 jobs = 12
