@@ -42,4 +42,21 @@ src/modules/mod.rs
 
 # Release artifacts
 *.tar.gz
-*.zip
+*.zip# Environment files
+.envrc
+
+# Test artifacts and demos
+test-enhanced-gen-files/
+scripts/test-*.sh
+
+# Build artifacts (if any are found later)
+*.pdf
+*.epub
+*.html
+
+# Backup files
+*.backup.*
+
+# Temporary files
+*.tmp
+*.temp

@@ -9,19 +9,13 @@
       "type": "editorconfig"
     },
     {
-      "checksum": "990a91d0",
-      "path": ".envrc",
-      "slug": "root-envrc",
-      "type": "envrc"
-    },
-    {
       "checksum": "70479580",
       "path": ".gitattributes",
       "slug": "root-gitattributes",
       "type": "gitattributes"
     },
     {
-      "checksum": "b0389685",
+      "checksum": "8e45f2a8",
       "path": ".gitignore",
       "slug": "root-gitignore",
       "type": "gitignore"
@@ -1419,66 +1413,6 @@
       "type": "sh"
     },
     {
-      "path": "scripts/test-add-checksums.sh",
-      "checksum": "0663c3f9",
-      "slug": "scripts_test_add_checksums_sh",
-      "type": "sh"
-    },
-    {
-      "path": "scripts/test-checksum-system.sh",
-      "checksum": "fc3fd4c9",
-      "slug": "scripts_test_checksum_system_sh",
-      "type": "sh"
-    },
-    {
-      "path": "scripts/test-checksum-with-real-files.sh",
-      "checksum": "6b7bc3bd",
-      "slug": "scripts_test_checksum_with_real_files_sh",
-      "type": "sh"
-    },
-    {
-      "path": "scripts/test-envrc-editorconfig.sh",
-      "checksum": "edcc7a08",
-      "slug": "scripts_test_envrc_editorconfig_sh",
-      "type": "sh"
-    },
-    {
-      "path": "scripts/test-pre-commit-checksums.sh",
-      "checksum": "85d53969",
-      "slug": "scripts_test_pre_commit_checksums_sh",
-      "type": "sh"
-    },
-    {
-      "path": "test-enhanced-gen-files/.gitignore",
-      "checksum": "6a58ffbd",
-      "slug": "test_enhanced_gen_files_gitignore",
-      "type": "gitignore"
-    },
-    {
-      "path": "test-enhanced-gen-files/Cargo.toml",
-      "checksum": "dbca1655",
-      "slug": "test_enhanced_gen_files_Cargo_toml",
-      "type": "toml"
-    },
-    {
-      "path": "test-enhanced-gen-files/config.json",
-      "checksum": "7b8541c6",
-      "slug": "test_enhanced_gen_files_config_json",
-      "type": "json"
-    },
-    {
-      "path": "test-enhanced-gen-files/hooksmith.wit",
-      "checksum": "4358a8b0",
-      "slug": "test_enhanced_gen_files_hooksmith_wit",
-      "type": "wit"
-    },
-    {
-      "path": "test-enhanced-gen-files/README.md",
-      "checksum": "90caa61c",
-      "slug": "test_enhanced_gen_files_README_md",
-      "type": "md"
-    },
-    {
       "path": "scripts/compare-generated-files.sh",
       "checksum": "02f3b54d",
       "slug": "scripts_compare_generated_files_sh",
@@ -1492,20 +1426,38 @@
     },
     {
       "path": "scripts/cleanup-registry.sh",
-      "checksum": "065524c4",
+      "checksum": "f1e5a184",
       "slug": "scripts_cleanup_registry",
       "type": "sh"
     },
     {
       "path": "scripts/update-all-checksums.sh",
-      "checksum": "d2974afa",
+      "checksum": "360e2312",
       "slug": "scripts_update_all_checksums",
       "type": "sh"
     },
     {
       "path": "scripts/validate-registry.sh",
-      "checksum": "a56807f8",
+      "checksum": "cfc7f364",
       "slug": "scripts_validate_registry",
+      "type": "sh"
+    },
+    {
+      "path": "scripts/registry-cleanup-plan.sh",
+      "checksum": "6d87a7b4",
+      "slug": "scripts_registry_cleanup_plan_sh",
+      "type": "sh"
+    },
+    {
+      "path": "scripts/execute-registry-cleanup.sh",
+      "checksum": "96efa2d5",
+      "slug": "scripts_execute_registry_cleanup_sh",
+      "type": "sh"
+    },
+    {
+      "path": "scripts/registry-status.sh",
+      "checksum": "b570cb35",
+      "slug": "scripts_registry_status_sh",
       "type": "sh"
     }
   ],

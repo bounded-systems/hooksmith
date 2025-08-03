@@ -73,29 +73,49 @@ echo -e "${BLUE}║                    CLEANUP SUMMARY                          
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
 
 echo -e "\n${RED}🗑️  BUILD ARTIFACTS (${#BUILD_ARTIFACTS[@]} files):${NC}"
-printf '%s\n' "${BUILD_ARTIFACTS[@]}" | while read -r file; do
-    echo -e "${RED}  • $file${NC}"
-done
+if [ ${#BUILD_ARTIFACTS[@]} -gt 0 ]; then
+    printf '%s\n' "${BUILD_ARTIFACTS[@]}" | while read -r file; do
+        echo -e "${RED}  • $file${NC}"
+    done
+else
+    echo -e "${GREEN}  (none found)${NC}"
+fi
 
 echo -e "\n${YELLOW}🌍 ENVIRONMENT FILES (${#ENVIRONMENT_FILES[@]} files):${NC}"
-printf '%s\n' "${ENVIRONMENT_FILES[@]}" | while read -r file; do
-    echo -e "${YELLOW}  • $file${NC}"
-done
+if [ ${#ENVIRONMENT_FILES[@]} -gt 0 ]; then
+    printf '%s\n' "${ENVIRONMENT_FILES[@]}" | while read -r file; do
+        echo -e "${YELLOW}  • $file${NC}"
+    done
+else
+    echo -e "${GREEN}  (none found)${NC}"
+fi
 
 echo -e "\n${YELLOW}🧪 TEST ARTIFACTS (${#TEST_ARTIFACTS[@]} files):${NC}"
-printf '%s\n' "${TEST_ARTIFACTS[@]}" | while read -r file; do
-    echo -e "${YELLOW}  • $file${NC}"
-done
+if [ ${#TEST_ARTIFACTS[@]} -gt 0 ]; then
+    printf '%s\n' "${TEST_ARTIFACTS[@]}" | while read -r file; do
+        echo -e "${YELLOW}  • $file${NC}"
+    done
+else
+    echo -e "${GREEN}  (none found)${NC}"
+fi
 
 echo -e "\n${YELLOW}📦 DEPRECATED FILES (${#DEPRECATED_FILES[@]} files):${NC}"
-printf '%s\n' "${DEPRECATED_FILES[@]}" | while read -r file; do
-    echo -e "${YELLOW}  • $file${NC}"
-done
+if [ ${#DEPRECATED_FILES[@]} -gt 0 ]; then
+    printf '%s\n' "${DEPRECATED_FILES[@]}" | while read -r file; do
+        echo -e "${YELLOW}  • $file${NC}"
+    done
+else
+    echo -e "${GREEN}  (none found)${NC}"
+fi
 
 echo -e "\n${CYAN}🔄 MIGRATION CANDIDATES (${#MIGRATION_CANDIDATES[@]} files):${NC}"
-printf '%s\n' "${MIGRATION_CANDIDATES[@]}" | while read -r file; do
-    echo -e "${CYAN}  • $file${NC}"
-done
+if [ ${#MIGRATION_CANDIDATES[@]} -gt 0 ]; then
+    printf '%s\n' "${MIGRATION_CANDIDATES[@]}" | while read -r file; do
+        echo -e "${CYAN}  • $file${NC}"
+    done
+else
+    echo -e "${GREEN}  (none found)${NC}"
+fi
 
 # Calculate totals
 TOTAL_CLEANUP=$(( ${#BUILD_ARTIFACTS[@]} + ${#ENVIRONMENT_FILES[@]} + ${#TEST_ARTIFACTS[@]} + ${#DEPRECATED_FILES[@]} ))
