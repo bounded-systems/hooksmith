@@ -34,8 +34,6 @@ impl FilePolicy {
         // Use the main JSONC module's parsing
         let json_content = strip_jsonc_comments(&content);
 
-
-
         let policy: FilePolicy = serde_json::from_str(&json_content)
             .context("Failed to parse file policy configuration")?;
 
