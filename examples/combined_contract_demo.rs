@@ -108,7 +108,7 @@ fn demo_git_object_contract_attributes() -> Result<(), Box<dyn std::error::Error
     println!("==================================================\n");
 
     let tree_validator = TreeValidator::new(true, true, true);
-    let validator = GitObjectValidator::new(true, true, tree_validator);
+    let validator = GitObjectValidator::new(true, true, true, true, tree_validator);
 
     // Validate a blob object with attributes
     let contract = validator.validate_object(

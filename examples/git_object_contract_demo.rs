@@ -164,7 +164,8 @@ fn demo_chunk_contracts() -> Result<(), Box<dyn std::error::Error>> {
 fn demo_complete_git_object_validation() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔍 Example 5: Complete Git Object Validation");
 
-    let validator = GitObjectValidator::new(true, true); // Enable both line and chunk validation
+    let tree_validator = TreeValidator::new(true, true, true);
+    let validator = GitObjectValidator::new(true, true, true, true, tree_validator); // Enable both line and chunk validation
     let content = b"Line 1: Valid content\nLine 2: Has\x01control char\nLine 3: CRLF\r\nLine 4: Valid again\n";
 
     // Validate as a complete Git object
