@@ -192,11 +192,15 @@ impl GitObjectContract {
     /// Get a summary of the Git object contract
     pub fn summary(&self) -> String {
         if self.valid {
+            let oid_display = if self.oid.len() >= 8 {
+                &self.oid[..8]
+            } else {
+                &self.oid
+            };
+
             let mut summary = format!(
                 "✅ Git object {} ({:?}) valid ({} bytes)",
-                &self.oid[..8],
-                self.object_type,
-                self.size
+                oid_display, self.object_type, self.size
             );
 
             if let Some(ref attrs) = self.attributes {
@@ -207,9 +211,15 @@ impl GitObjectContract {
 
             summary
         } else {
+            let oid_display = if self.oid.len() >= 8 {
+                &self.oid[..8]
+            } else {
+                &self.oid
+            };
+
             format!(
                 "❌ Git object {} ({:?}) invalid: {}",
-                &self.oid[..8],
+                oid_display,
                 self.object_type,
                 self.errors.join(", ")
             )

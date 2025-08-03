@@ -40,7 +40,7 @@ fn demo_tree_mode_validation() -> Result<(), Box<dyn std::error::Error>> {
         match TreeMode::parse_from_str(mode_str) {
             Some(mode) => {
                 println!("  ✅ Mode {}: {}", mode_str, mode.description());
-                println!("    String: {}", mode.to_string());
+                println!("    Mode string: {}", mode.to_mode_string());
                 println!("    Is blob: {}", mode.is_blob());
                 println!("    Is tree: {}", mode.is_tree());
                 println!("    Object type: {:?}", mode.object_type());
@@ -295,24 +295,21 @@ fn demo_tree_in_git_object_contract() -> Result<(), Box<dyn std::error::Error>> 
         ),
     ];
 
+    // Create a tree object from the entries
+    let tree = TreeObjectContract::new(entries);
+
     // Validate as a Git object
-    let git_object = validator.validate_tree_entry(&entries[0]);
+    let git_object = validator.validate_tree_entry(&tree.entries[0]);
 
-    match git_object {
-        _ => {
-            println!("  Git Object Type: Tree");
-            println!("  {}", tree.summary());
-            println!("    Entries: {}", tree.entries.len());
-            println!("    Valid: {}", tree.is_valid());
+    println!("  Git Object Type: {:?}", git_object.object_type);
+    println!("  {}", git_object.summary());
+    println!("  Tree: {}", tree.summary());
+    println!("    Entries: {}", tree.entries.len());
+    println!("    Valid: {}", tree.is_valid());
 
-            // Show entries
-            for entry in &tree.entries {
-                println!("    {}", entry.summary());
-            }
-        }
-        _ => {
-            println!("  Unexpected object type");
-        }
+    // Show entries
+    for entry in &tree.entries {
+        println!("    {}", entry.summary());
     }
 
     println!();

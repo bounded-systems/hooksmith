@@ -4,7 +4,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize tracing
     tracing_subscriber::fmt::init();
 
-    println!("🔗 Tree Contract Explicit Type Demo - Type Validation\n");
+    println!("🌳 Tree Contract Explicit Type Demo\n");
 
     // Example 1: Valid type matches
     demo_valid_type_matches()?;
@@ -26,25 +26,28 @@ fn demo_valid_type_matches() -> Result<(), Box<dyn std::error::Error>> {
 
     let valid_entries = vec![
         // Mode 100644 (Regular file) -> type "blob"
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "100644",
             "README.md".to_string(),
             "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
             TreeObjectType::Blob,
+            None,
         ),
         // Mode 100755 (Executable file) -> type "blob"
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "100755",
             "script.sh".to_string(),
             "b2c3d4e5f6789012345678901234567890abcde".to_string(),
             TreeObjectType::Blob,
+            None,
         ),
         // Mode 040000 (Tree) -> type "tree"
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "040000",
             "src".to_string(),
             "c3d4e5f6789012345678901234567890abcdef".to_string(),
             TreeObjectType::Tree,
+            None,
         ),
     ];
 
@@ -75,25 +78,28 @@ fn demo_invalid_type_mismatches() -> Result<(), Box<dyn std::error::Error>> {
 
     let invalid_entries = vec![
         // Mode 100644 (Regular file) but type "tree" -> INVALID
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "100644",
             "README.md".to_string(),
             "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
             TreeObjectType::Tree, // Should be Blob
+            None,
         ),
         // Mode 040000 (Tree) but type "blob" -> INVALID
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "040000",
             "src".to_string(),
             "b2c3d4e5f6789012345678901234567890abcde".to_string(),
             TreeObjectType::Blob, // Should be Tree
+            None,
         ),
         // Mode 100755 (Executable file) but type "tree" -> INVALID
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "100755",
             "script.sh".to_string(),
             "c3d4e5f6789012345678901234567890abcdef".to_string(),
             TreeObjectType::Tree, // Should be Blob
+            None,
         ),
     ];
 
@@ -122,98 +128,95 @@ fn demo_invalid_type_mismatches() -> Result<(), Box<dyn std::error::Error>> {
 fn demo_restricted_tree_modes() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚫 Example 3: Restricted Tree Modes");
 
-    let restricted_modes = vec![
-        "100644", // ✅ Allowed - Regular file
-        "100755", // ✅ Allowed - Executable file
-        "040000", // ✅ Allowed - Tree
-        "120000", // ❌ Not allowed - Symlink
-        "160000", // ❌ Not allowed - Gitlink
-        "999999", // ❌ Not allowed - Invalid
+    let restricted_entries = vec![
+        // Mode 120000 (Symlink) -> not supported in this demo
+        TreeEntryContract::new(
+            "120000",
+            "link.txt".to_string(),
+            "d4e5f6789012345678901234567890abcdef1".to_string(),
+        ),
+        // Mode 160000 (Gitlink) -> not supported in this demo
+        TreeEntryContract::new(
+            "160000",
+            "submodule".to_string(),
+            "e5f6789012345678901234567890abcdef12".to_string(),
+        ),
     ];
 
-    for mode in restricted_modes {
-        match TreeMode::from_str(mode) {
-            Some(tree_mode) => {
-                println!(
-                    "  ✅ Mode {}: {} ({:?})",
-                    mode,
-                    tree_mode.description(),
-                    tree_mode.object_type()
-                );
-            }
-            None => {
-                println!("  ❌ Mode {}: Not allowed in restricted contract", mode);
-            }
+    for entry in &restricted_entries {
+        println!("  {}", entry.summary());
+        println!(
+            "    Mode: {} -> Type: {:?}",
+            entry.mode_string(),
+            entry.object_type
+        );
+        println!("    Valid: {}", entry.is_valid());
+        if !entry.errors.is_empty() {
+            println!("    Errors: {:?}", entry.errors);
         }
+        println!();
     }
 
-    println!();
-    println!("  Restricted TreeModeContract only allows:");
-    println!("    - 100644 (Regular file) -> type: Blob");
-    println!("    - 100755 (Executable file) -> type: Blob");
-    println!("    - 040000 (Tree) -> type: Tree");
+    // Create tree with restricted entries
+    let tree = TreeObjectContract::new(restricted_entries);
+    println!("  Tree: {}", tree.summary());
     println!();
 
     Ok(())
 }
 
 fn demo_flat_contract_structure() -> Result<(), Box<dyn std::error::Error>> {
-    println!("📋 Example 4: Flat Contract Structure");
+    println!("📁 Example 4: Flat Contract Structure");
 
-    // Create entries with explicit type validation
-    let entries = vec![
-        TreeEntryContract::new_with_type(
+    // Create a flat structure with mixed valid/invalid entries
+    let flat_entries = vec![
+        // Valid entries
+        TreeEntryContract::new_with_type_and_attributes(
             "100644",
-            "Cargo.toml".to_string(),
+            "README.md".to_string(),
             "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
             TreeObjectType::Blob,
+            None,
         ),
-        TreeEntryContract::new_with_type(
-            "100755",
-            "scripts/build.sh".to_string(),
-            "b2c3d4e5f6789012345678901234567890abcde".to_string(),
-            TreeObjectType::Blob,
-        ),
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "040000",
             "src".to_string(),
-            "c3d4e5f6789012345678901234567890abcdef".to_string(),
+            "b2c3d4e5f6789012345678901234567890abcde".to_string(),
             TreeObjectType::Tree,
+            None,
+        ),
+        // Invalid entry (type mismatch)
+        TreeEntryContract::new_with_type_and_attributes(
+            "100644",
+            "config.json".to_string(),
+            "c3d4e5f6789012345678901234567890abcdef".to_string(),
+            TreeObjectType::Tree, // Should be Blob
+            None,
+        ),
+        // Invalid entry (restricted mode)
+        TreeEntryContract::new(
+            "120000",
+            "link.txt".to_string(),
+            "d4e5f6789012345678901234567890abcdef1".to_string(),
         ),
     ];
 
-    // Create flat tree object contract
-    let tree = TreeObjectContract::new(entries);
+    // Create tree with mixed entries
+    let tree = TreeObjectContract::new(flat_entries);
+    println!("  Tree: {}", tree.summary());
+    println!("    Total entries: {}", tree.entries.len());
+    println!(
+        "    Valid entries: {}",
+        tree.entries.iter().filter(|e| e.is_valid()).count()
+    );
+    println!(
+        "    Invalid entries: {}",
+        tree.entries.iter().filter(|e| !e.is_valid()).count()
+    );
 
-    println!("  TreeObjectContract = {{");
-    println!("    entries: [TreeEntryContract, TreeEntryContract, ...]");
-    println!("  }}");
-    println!();
-
-    println!("  Each TreeEntryContract = {{");
-    println!("    mode: TreeMode,           // 100644 | 100755 | 040000");
-    println!("    filename: String,         // Must not be empty");
-    println!("    object_id: String,        // SHA-1 format (40 hex chars)");
-    println!("    object_type: TreeObjectType, // Must match mode");
-    println!("    valid: bool,              // Overall validation result");
-    println!("    errors: Vec<String>,      // Validation errors");
-    println!("  }}");
-    println!();
-
-    println!("  Validation Results:");
-    println!("    {}", tree.summary());
-
-    let blob_entries = tree.get_blob_entries();
-    let tree_entries = tree.get_tree_entries();
-
-    println!("    Blob entries: {}", blob_entries.len());
-    for entry in blob_entries {
-        println!("      - {} ({})", entry.filename, entry.mode.description());
-    }
-
-    println!("    Tree entries: {}", tree_entries.len());
-    for entry in tree_entries {
-        println!("      - {} ({})", entry.filename, entry.mode.description());
+    // Show individual entry details
+    for (i, entry) in tree.entries.iter().enumerate() {
+        println!("    Entry {}: {}", i + 1, entry.summary());
     }
 
     println!();
