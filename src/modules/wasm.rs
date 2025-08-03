@@ -129,7 +129,7 @@ impl WasmManager {
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("component");
-        let wasm_path = config.output_dir.join(format!("{}.wasm", wasm_filename));
+        let wasm_path = config.output_dir.join(format!("{wasm_filename}.wasm"));
         fs::write(&wasm_path, &wasm_bytes)
             .await
             .context("Failed to write WASM file")?;
@@ -137,7 +137,7 @@ impl WasmManager {
         // Generate bindings if requested
         let bindings_path = if config.generate_bindings {
             let bindings = self.generate_placeholder_bindings(wasm_filename)?;
-            let bindings_filename = format!("{}_bindings.rs", wasm_filename);
+            let bindings_filename = format!("{wasm_filename}_bindings.rs");
             let bindings_path = config.output_dir.join(bindings_filename);
             fs::write(&bindings_path, bindings)
                 .await
@@ -153,7 +153,7 @@ impl WasmManager {
             success: true,
             wasm_file: Some(wasm_path),
             bindings_file: bindings_path,
-            output: format!("Built WASM component in {:?}", execution_time),
+            output: format!("Built WASM component in {execution_time:?}"),
             error: None,
             metadata: HashMap::from([
                 ("size_bytes".to_string(), wasm_bytes.len().to_string()),
@@ -224,7 +224,7 @@ impl WasmManager {
         // Write bindings file
         let bindings_path = config
             .output_dir
-            .join(format!("{}_bindings.rs", bindings_filename));
+            .join(format!("{bindings_filename}_bindings.rs"));
         fs::write(&bindings_path, bindings)
             .await
             .context("Failed to write bindings file")?;
@@ -235,7 +235,7 @@ impl WasmManager {
             success: true,
             wasm_file: None,
             bindings_file: Some(bindings_path),
-            output: format!("Generated bindings in {:?}", execution_time),
+            output: format!("Generated bindings in {execution_time:?}"),
             error: None,
             metadata: HashMap::from([(
                 "execution_time_ms".to_string(),
@@ -304,18 +304,18 @@ impl WasmManager {
 
         let bindings = format!(
             r#"
-// Generated bindings for {} component
+// Generated bindings for {component_name} component
 // This is a placeholder - in a real implementation, these would be generated from WIT
 
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-pub struct {0}Component {{
+pub struct {component_name}Component {{
     // Component state would go here
 }}
 
 #[wasm_bindgen]
-impl {0}Component {{
+impl {component_name}Component {{
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {{
         Self {{
@@ -333,8 +333,7 @@ impl {0}Component {{
 pub fn init_panic_hook() {{
     console_error_panic_hook::set_once();
 }}
-"#,
-            component_name
+"#
         );
 
         Ok(bindings)

@@ -236,7 +236,7 @@ impl HookBuilder {
             3 => "release",
             _ => "release",
         };
-        cargo_cmd.arg(format!("--{}", profile));
+        cargo_cmd.arg(format!("--{profile}"));
 
         // Set features
         if config.all_features {
@@ -296,7 +296,7 @@ impl HookBuilder {
         // This is a simplified implementation
         // In a real implementation, you'd parse Cargo.toml and find the actual binary path
         let target_dir = if let Some(ref target) = config.target_triple {
-            format!("target/{}/release", target)
+            format!("target/{target}/release")
         } else {
             "target/release".to_string()
         };

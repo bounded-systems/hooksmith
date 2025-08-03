@@ -129,7 +129,7 @@ impl CodeGenerator {
         let component_docs = self.generate_component_docs()?;
         for (name, content) in component_docs {
             let file = GeneratedFile {
-                path: PathBuf::from("docs").join(format!("{}.md", name)),
+                path: PathBuf::from("docs").join(format!("{name}.md")),
                 content,
                 file_type: "markdown".to_string(),
                 overwritten: true,

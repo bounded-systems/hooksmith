@@ -147,7 +147,7 @@ impl ReadmeTemplate {
                     RoadmapStatus::InProgress => "🔄",
                     RoadmapStatus::Planned => "📋",
                 };
-                roadmap.push_str(&format!("- [{}] {}\n", status, task));
+                roadmap.push_str(&format!("- [{status}] {task}\n"));
             }
             roadmap.push('\n');
         }
@@ -451,7 +451,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
                 ));
                 examples.push_str(&format!("```rust\n{}\n```\n\n", example.code));
                 if let Some(output) = &example.output {
-                    examples.push_str(&format!("Output:\n\n```\n{}\n```\n\n", output));
+                    examples.push_str(&format!("Output:\n\n```\n{output}\n```\n\n"));
                 }
             }
             examples

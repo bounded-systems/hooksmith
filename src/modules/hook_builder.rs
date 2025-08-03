@@ -398,7 +398,7 @@ impl HookBuilder {
         // - Compress the binary
         // - Apply additional optimizations
 
-        println!("Optimizing binary: {:?}", binary_path);
+        println!("Optimizing binary: {binary_path:?}");
         Ok(())
     }
 }
@@ -421,7 +421,7 @@ pub async fn install_hooks(hooks_dir: &Path, hook_binaries: &[PathBuf]) -> Resul
         // Copy binary to hooks directory
         fs::copy(binary, &hook_path)
             .await
-            .context(format!("Failed to copy hook binary: {:?}", binary))?;
+            .context(format!("Failed to copy hook binary: {binary:?}"))?;
 
         // Make executable on Unix systems
         #[cfg(unix)]
@@ -432,7 +432,7 @@ pub async fn install_hooks(hooks_dir: &Path, hook_binaries: &[PathBuf]) -> Resul
             fs::set_permissions(&hook_path, perms).await?;
         }
 
-        println!("Installed hook: {}", hook_name);
+        println!("Installed hook: {hook_name}");
     }
 
     Ok(())

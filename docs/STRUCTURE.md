@@ -80,6 +80,7 @@ This document shows the complete file structure of the repository.
 ├── bootstrap-test.rs
 ├── bootstrap.rs
 ├── build.rs
+├── clippy.toml
 ├── components/
   ├── cli-core/
     ├── Cargo.toml
@@ -645,7 +646,7 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       318
+- **Total Files**:       321
 - **Rust Files**:        120 (.rs)
 - **Configuration Files**:        37 (.toml, .yaml, .rc)
 - **Documentation**:        123 (.md)
@@ -655,21 +656,23 @@ This document shows the complete file structure of the repository.
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .yml | 9 | YAML configuration files |
-| .html | 1 | HTML documentation |
 | .bash | 1 | Other files |
 | .wit | 9 | WebAssembly Interface Type definitions |
-| .css | 1 | Stylesheet files |
-| .dot | 1 | Other files |
 | .hbs | 1 | Other files |
-| .yaml | 4 | YAML configuration files |
-| .lock | 2 | Other files |
-| .toml | 14 | Cargo and configuration files |
 | .md | 123 | Markdown documentation |
-| .json | 10 | JSON schema and config files |
+| .toml | 14 | Cargo and configuration files |
+| .dot | 1 | Other files |
 | .epub | 1 | EPUB documentation |
-| .pdf | 1 | PDF documentation |
+| .backup | 1 | Other files |
+| .css | 1 | Stylesheet files |
+| .yaml | 4 | YAML configuration files |
+| .yml | 9 | YAML configuration files |
+| .lock | 2 | Other files |
+| .json | 10 | JSON schema and config files |
 | .rs | 120 | Rust source files |
+| .pdf | 1 | PDF documentation |
+| .sed | 2 | Other files |
+| .html | 1 | HTML documentation |
 
 ## 🧩 Component Breakdown
 
@@ -700,9 +703,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 162
-- **Modified Files**: 12
+- **Total Commits**: 163
+- **Modified Files**: 58
 
 ---
 
-*Generated on Sun Aug  3 00:10:17 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 00:26:43 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

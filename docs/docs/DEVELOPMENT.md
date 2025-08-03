@@ -171,6 +171,7 @@ cargo build
 │   │   │   ├── Cargo.toml
 │   │   │   ├── README.md
 │   │       └── src/
+│   │       │   ├── tree_contract.rs.backup
 │   │       │   ├── actions.rs
 │   │       │   ├── bin/
 │   │       │   │   ├── blob-contract-filter.rs
@@ -286,6 +287,7 @@ cargo build
 │           └── cli.rs
 │   ├── status-badge.json
 │   ├── test_comprehensive_docs.rs
+│   ├── fix_format.sed
 │   ├── SHELL_SCRIPT_MIGRATION_SUMMARY.md
 │   ├── TEMPLATE_SYSTEM_SUMMARY.md
 │   ├── SHELL_SCRIPT_MIGRATION_COMPLETE.md

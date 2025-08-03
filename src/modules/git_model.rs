@@ -1373,14 +1373,13 @@ pub mod diagrams {
                     .collect();
 
                 let edge_label = if hook_labels.is_empty() {
-                    format!("{:?}", action)
+                    format!("{action:?}")
                 } else {
                     format!("{:?}\\n[{}]", action, hook_labels.join(", "))
                 };
 
                 dot.push_str(&format!(
-                    "  \"{:?}\" -> \"{:?}\" [label=\"{}\"];\n",
-                    state, state, edge_label
+                    "  \"{state:?}\" -> \"{state:?}\" [label=\"{edge_label}\"];\n"
                 ));
             }
         }
@@ -1415,14 +1414,13 @@ pub mod diagrams {
                         .collect();
 
                     let transition_label = if hook_labels.is_empty() {
-                        format!("{:?}", action)
+                        format!("{action:?}")
                     } else {
                         format!("{:?} [{}]", action, hook_labels.join(", "))
                     };
 
                     mermaid.push_str(&format!(
-                        "    {:?} --> {:?} : {}\n",
-                        state, state, transition_label
+                        "    {state:?} --> {state:?} : {transition_label}\n"
                     ));
                 }
             }
@@ -1448,10 +1446,7 @@ pub mod diagrams {
             FileStateKind::Untracked,
             FileStateKind::Ignored,
         ] {
-            mermaid.push_str(&format!(
-                "        FS_{:?}[{:?}]:::fileState\n",
-                state, state
-            ));
+            mermaid.push_str(&format!("        FS_{state:?}[{state:?}]:::fileState\n"));
         }
 
         mermaid.push_str("    end\n\n");
@@ -1472,10 +1467,7 @@ pub mod diagrams {
             GitRepoState::Amend,
             GitRepoState::DetachedHead,
         ] {
-            mermaid.push_str(&format!(
-                "        RS_{:?}[{:?}]:::repoState\n",
-                state, state
-            ));
+            mermaid.push_str(&format!("        RS_{state:?}[{state:?}]:::repoState\n"));
         }
 
         mermaid.push_str("    end\n\n");
@@ -1498,7 +1490,7 @@ pub mod diagrams {
             ActionKind::P4Operations,
             ActionKind::IndexChange,
         ] {
-            mermaid.push_str(&format!("        A_{:?}[{:?}]:::action\n", action, action));
+            mermaid.push_str(&format!("        A_{action:?}[{action:?}]:::action\n"));
         }
 
         mermaid.push_str("    end\n\n");
@@ -1545,7 +1537,7 @@ pub mod diagrams {
             } else {
                 ":::nonBlockingHook"
             };
-            mermaid.push_str(&format!("        H_{:?}[{:?}]{}\n", hook, hook, style));
+            mermaid.push_str(&format!("        H_{hook:?}[{hook:?}]{style}\n"));
         }
 
         mermaid.push_str("    end\n\n");
@@ -1565,7 +1557,7 @@ pub mod diagrams {
             FileStateKind::Ignored,
         ] {
             for action in allowed_actions(state) {
-                mermaid.push_str(&format!("        FS_{:?} -.-> A_{:?}\n", state, action));
+                mermaid.push_str(&format!("        FS_{state:?} -.-> A_{action:?}\n"));
             }
         }
 

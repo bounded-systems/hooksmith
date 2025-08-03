@@ -515,8 +515,7 @@ impl MultiFilter {
                             driver.process(&processed_content, file_state, operation)?;
                     } else {
                         return Err(FilterError::DriverError(format!(
-                            "Filter driver '{}' not found",
-                            driver_name
+                            "Filter driver '{driver_name}' not found"
                         )));
                     }
                 }
@@ -591,7 +590,7 @@ impl MultiFilter {
         if encoding.to_lowercase() == "utf-8" {
             std::str::from_utf8(content)
                 .map(|_| content.to_vec())
-                .map_err(|e| FilterError::InvalidEncoding(format!("Invalid UTF-8: {}", e)))
+                .map_err(|e| FilterError::InvalidEncoding(format!("Invalid UTF-8: {e}")))
         } else {
             // For other encodings, we'd need additional libraries
             // For now, just return the content as-is

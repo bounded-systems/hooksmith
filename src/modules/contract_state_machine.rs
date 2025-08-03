@@ -353,10 +353,10 @@ impl ContractStateMachine {
         hash: &str,
     ) -> ValidationNote {
         ValidationNote {
-            scope: format!("{:?}", scope),
+            scope: format!("{scope:?}"),
             file: file.to_string(),
             range: None,
-            hash: format!("sha256:{}", hash),
+            hash: format!("sha256:{hash}"),
             parent_scope: None,
             parent_hash: None,
             child_scopes: vec![],

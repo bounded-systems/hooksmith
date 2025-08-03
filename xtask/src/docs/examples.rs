@@ -60,7 +60,7 @@ pub fn generate_examples_docs() -> Result<String> {
             if !example.dependencies.is_empty() {
                 content.push_str("### Dependencies\n\n");
                 for dep in &example.dependencies {
-                    content.push_str(&format!("- {}\n", dep));
+                    content.push_str(&format!("- {dep}\n"));
                 }
                 content.push('\n');
             }
@@ -128,7 +128,7 @@ fn find_examples() -> Result<Vec<ExampleInfo>> {
 /// Parse an example file to extract information
 fn parse_example_file(path: &Path) -> Result<ExampleInfo> {
     let content =
-        fs::read_to_string(path).context(format!("Failed to read example file: {:?}", path))?;
+        fs::read_to_string(path).context(format!("Failed to read example file: {path:?}"))?;
 
     let filename = path
         .file_stem()

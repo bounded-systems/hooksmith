@@ -61,25 +61,25 @@ impl HookAction {
                 driver_name,
                 operation,
             } => {
-                format!("Run {} filter driver '{}'", operation, driver_name)
+                format!("Run {operation} filter driver '{driver_name}'")
             }
             HookAction::NormalizeEol { target_eol } => {
-                format!("Normalize EOL to {}", target_eol)
+                format!("Normalize EOL to {target_eol}")
             }
             HookAction::RunDiffDriver { driver_name } => {
-                format!("Run diff driver '{}'", driver_name)
+                format!("Run diff driver '{driver_name}'")
             }
             HookAction::RunMergeDriver { driver_name } => {
-                format!("Run merge driver '{}'", driver_name)
+                format!("Run merge driver '{driver_name}'")
             }
             HookAction::EnforceEncoding { encoding } => {
-                format!("Enforce encoding '{}'", encoding)
+                format!("Enforce encoding '{encoding}'")
             }
             HookAction::SkipInArchive => "Skip file in archive".to_string(),
             HookAction::ExpandPlaceholders => "Expand placeholders in archive".to_string(),
             HookAction::ValidateSafeAscii => "Validate safe ASCII characters".to_string(),
             HookAction::Custom { name, .. } => {
-                format!("Custom action '{}'", name)
+                format!("Custom action '{name}'")
             }
         }
     }

@@ -86,6 +86,9 @@ once_cell = "1.0"
 regex = "1.0"
 futures-io = "0.3"
 
+# Testing and temporary files
+tempfile = "3.0"
+
 [[bin]]
 name = "hooksmith"
 path = "src/main.rs"

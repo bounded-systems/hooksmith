@@ -78,7 +78,7 @@ pub fn generate_structure_docs() -> Result<String> {
             "epub" => "EPUB documentation",
             _ => "Other files",
         };
-        content.push_str(&format!("| .{} | {} | {} |\n", ext, count, description));
+        content.push_str(&format!("| .{ext} | {count} | {description} |\n"));
     }
 
     content.push('\n');
@@ -152,7 +152,7 @@ fn analyze_repository_structure() -> Result<StructureInfo> {
 
 /// Count files recursively in directories
 fn count_files_recursive(dir: &str, info: &mut StructureInfo) -> Result<()> {
-    let entries = fs::read_dir(dir).context(format!("Failed to read directory: {}", dir))?;
+    let entries = fs::read_dir(dir).context(format!("Failed to read directory: {dir}"))?;
 
     for entry in entries {
         let entry = entry.context("Failed to read directory entry")?;
@@ -204,9 +204,9 @@ fn generate_tree_structure() -> Result<String> {
             for (i, part) in parts.iter().enumerate() {
                 let indent = "  ".repeat(i);
                 if i == parts.len() - 1 {
-                    tree_structure.push_str(&format!("{}├── {}\n", indent, part));
+                    tree_structure.push_str(&format!("{indent}├── {part}\n"));
                 } else {
-                    tree_structure.push_str(&format!("{}├── {}/\n", indent, part));
+                    tree_structure.push_str(&format!("{indent}├── {part}/\n"));
                 }
             }
         }
@@ -233,7 +233,7 @@ fn generate_component_breakdown() -> Result<String> {
         ];
 
         for (name, description, status) in components {
-            content.push_str(&format!("| {} | {} | {} |\n", name, description, status));
+            content.push_str(&format!("| {name} | {description} | {status} |\n"));
         }
         content.push('\n');
     }
@@ -288,9 +288,9 @@ fn generate_git_info() -> Result<String> {
     let commit_output = String::from_utf8_lossy(&commit_count.stdout);
     let commits = commit_output.trim();
 
-    content.push_str(&format!("- **Current Branch**: {}\n", current_branch));
-    content.push_str(&format!("- **Total Commits**: {}\n", commits));
-    content.push_str(&format!("- **Modified Files**: {}\n", modified_files));
+    content.push_str(&format!("- **Current Branch**: {current_branch}\n"));
+    content.push_str(&format!("- **Total Commits**: {commits}\n"));
+    content.push_str(&format!("- **Modified Files**: {modified_files}\n"));
 
     Ok(content)
 }

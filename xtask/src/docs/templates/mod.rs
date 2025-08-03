@@ -193,7 +193,7 @@ impl ApiDocumentation {
             for item in &module.public_items {
                 output.push_str(&format!("### {}\n\n{}\n\n", item.name, item.description));
                 if let Some(sig) = &item.signature {
-                    output.push_str(&format!("```rust\n{}\n```\n\n", sig));
+                    output.push_str(&format!("```rust\n{sig}\n```\n\n"));
                 }
             }
         }
@@ -208,7 +208,7 @@ impl ApiDocumentation {
                 ));
                 output.push_str(&format!("```rust\n{}\n```\n\n", example.code));
                 if let Some(output_text) = &example.output {
-                    output.push_str(&format!("Output:\n\n```\n{}\n```\n\n", output_text));
+                    output.push_str(&format!("Output:\n\n```\n{output_text}\n```\n\n"));
                 }
             }
         }

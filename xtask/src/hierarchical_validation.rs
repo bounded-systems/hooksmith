@@ -149,7 +149,7 @@ async fn clean_operation(file: Option<&PathBuf>) -> Result<()> {
 
     // For clean operation, we just output the content as-is
     // In a real implementation, you might want to validate the content
-    print!("{}", content);
+    print!("{content}");
 
     Ok(())
 }
@@ -171,7 +171,7 @@ async fn smudge_operation(file: Option<&PathBuf>) -> Result<()> {
 
     // For smudge operation, we just output the content as-is
     // In a real implementation, you might want to validate the content
-    print!("{}", content);
+    print!("{content}");
 
     Ok(())
 }
@@ -192,14 +192,14 @@ async fn diff_operation(file: Option<&PathBuf>) -> Result<()> {
     };
 
     // For diff operation, we output the content for text conversion
-    print!("{}", content);
+    print!("{content}");
 
     Ok(())
 }
 
 /// Validate changes in a commit range
 async fn validate_changes(range: &str, repo: &Path) -> Result<()> {
-    println!("🔍 Detecting changes in range: {}", range);
+    println!("🔍 Detecting changes in range: {range}");
 
     let validator = HierarchicalValidator::new(repo.to_path_buf());
 
@@ -210,7 +210,7 @@ async fn validate_changes(range: &str, repo: &Path) -> Result<()> {
         .context("Failed to detect changes")?;
 
     if changes.is_empty() {
-        println!("✅ No changes detected in range: {}", range);
+        println!("✅ No changes detected in range: {range}");
         return Ok(());
     }
 
@@ -251,8 +251,8 @@ async fn validate_changes(range: &str, repo: &Path) -> Result<()> {
 
     println!("\n📊 Validation Summary:");
     println!("  - Total scopes: {}", results.len());
-    println!("  - Validated: {}", total_validated);
-    println!("  - Failed: {}", total_failed);
+    println!("  - Validated: {total_validated}");
+    println!("  - Failed: {total_failed}");
 
     if total_failed > 0 {
         anyhow::bail!("Validation failed for {} scopes", total_failed);
@@ -264,7 +264,7 @@ async fn validate_changes(range: &str, repo: &Path) -> Result<()> {
 
 /// Verify validation chain integrity
 async fn verify_validation_chain(commit: &str, repo: &Path) -> Result<()> {
-    println!("🔍 Verifying validation chain for commit: {}", commit);
+    println!("🔍 Verifying validation chain for commit: {commit}");
 
     let validator = HierarchicalValidator::new(repo.to_path_buf());
 
@@ -285,7 +285,7 @@ async fn verify_validation_chain(commit: &str, repo: &Path) -> Result<()> {
 
 /// Show validation notes for a commit
 async fn show_validation_notes(commit: &str, repo: &Path) -> Result<()> {
-    println!("📝 Validation notes for commit: {}", commit);
+    println!("📝 Validation notes for commit: {commit}");
 
     let validator = HierarchicalValidator::new(repo.to_path_buf());
 
@@ -296,7 +296,7 @@ async fn show_validation_notes(commit: &str, repo: &Path) -> Result<()> {
         .context("Failed to get validation notes")?;
 
     if notes.is_empty() {
-        println!("ℹ️  No validation notes found for commit: {}", commit);
+        println!("ℹ️  No validation notes found for commit: {commit}");
         return Ok(());
     }
 
@@ -363,7 +363,7 @@ async fn pre_commit_hook(repo: &PathBuf, validate_generated: bool) -> Result<()>
 
     println!("📝 Found {} staged files:", staged_files.len());
     for file in &staged_files {
-        println!("  - {}", file);
+        println!("  - {file}");
     }
 
     // Validate generated files if requested
@@ -387,7 +387,7 @@ async fn pre_commit_hook(repo: &PathBuf, validate_generated: bool) -> Result<()>
                 println!("✅ Generated file validation passed");
             }
             Err(e) => {
-                eprintln!("❌ Generated file validation failed: {}", e);
+                eprintln!("❌ Generated file validation failed: {e}");
                 std::process::exit(1);
             }
         }
@@ -402,7 +402,7 @@ async fn pre_commit_hook(repo: &PathBuf, validate_generated: bool) -> Result<()>
 
     // Validate the changes
     let changes = validator
-        .detect_changes(Some(&format!("{}~1..{}", temp_commit, temp_commit)))
+        .detect_changes(Some(&format!("{temp_commit}~1..{temp_commit}")))
         .await
         .context("Failed to detect changes")?;
 
@@ -446,13 +446,13 @@ async fn post_commit_hook(repo: &PathBuf) -> Result<()> {
     }
 
     let commit_hash = String::from_utf8(output.stdout)?.trim().to_string();
-    println!("📝 Validating commit: {}", commit_hash);
+    println!("📝 Validating commit: {commit_hash}");
 
     // Validate the changes in this commit
     let validator = HierarchicalValidator::new(repo.to_path_buf());
 
     let changes = validator
-        .detect_changes(Some(&format!("{}~1..{}", commit_hash, commit_hash)))
+        .detect_changes(Some(&format!("{commit_hash}~1..{commit_hash}")))
         .await
         .context("Failed to detect changes")?;
 
@@ -468,15 +468,9 @@ async fn post_commit_hook(repo: &PathBuf) -> Result<()> {
 
     let failed_count = results.iter().filter(|r| !r.validated).count();
     if failed_count > 0 {
-        println!(
-            "⚠️  Post-commit validation failed for {} scopes",
-            failed_count
-        );
+        println!("⚠️  Post-commit validation failed for {failed_count} scopes");
         println!("   Validation notes have been stored in Git notes");
-        println!(
-            "   Use 'xtask-contract-validate show {}' to view details",
-            commit_hash
-        );
+        println!("   Use 'xtask-contract-validate show {commit_hash}' to view details");
     } else {
         println!("✅ Post-commit validation passed successfully!");
     }
@@ -537,8 +531,8 @@ async fn validate_extensions(repo: &Path, _staged_only: bool) -> Result<()> {
 
     println!("\n📊 Extension Validation Summary:");
     println!("  - Total scopes: {}", results.len());
-    println!("  - Validated: {}", total_validated);
-    println!("  - Failed: {}", total_failed);
+    println!("  - Validated: {total_validated}");
+    println!("  - Failed: {total_failed}");
 
     if total_failed > 0 {
         anyhow::bail!("Extension validation failed for {} scopes", total_failed);
@@ -585,7 +579,7 @@ async fn create_temp_commit(repo: &PathBuf) -> Result<String> {
 async fn cleanup_temp_commit(repo: &PathBuf, commit_hash: &str) -> Result<()> {
     // Reset to the previous commit
     let output = Command::new("git")
-        .args(["reset", "--soft", &format!("{}~1", commit_hash)])
+        .args(["reset", "--soft", &format!("{commit_hash}~1")])
         .current_dir(repo)
         .output()
         .context("Failed to reset temp commit")?;

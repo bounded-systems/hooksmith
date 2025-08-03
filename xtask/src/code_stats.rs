@@ -726,7 +726,7 @@ fn print_analysis_table(report: &CodeAnalysisReport, config: &CodeStatsConfig) -
 /// Print analysis JSON
 fn print_analysis_json(report: &CodeAnalysisReport) -> Result<()> {
     let json = serde_json::to_string_pretty(report)?;
-    println!("{}", json);
+    println!("{json}");
     Ok(())
 }
 
@@ -831,7 +831,7 @@ fn print_clippy_table(analysis: &ClippyAnalysis) -> Result<()> {
     if !analysis.warning_details.is_empty() {
         println!("\n📋 Warning Details:");
         for detail in &analysis.warning_details {
-            println!("  {}", detail);
+            println!("  {detail}");
         }
     }
 
@@ -841,7 +841,7 @@ fn print_clippy_table(analysis: &ClippyAnalysis) -> Result<()> {
 /// Print clippy JSON
 fn print_clippy_json(analysis: &ClippyAnalysis) -> Result<()> {
     let json = serde_json::to_string_pretty(analysis)?;
-    println!("{}", json);
+    println!("{json}");
     Ok(())
 }
 
@@ -868,7 +868,7 @@ fn print_clippy_markdown(analysis: &ClippyAnalysis) -> Result<()> {
     if !analysis.warning_details.is_empty() {
         println!("\n## Warning Details\n");
         for detail in &analysis.warning_details {
-            println!("- {}", detail);
+            println!("- {detail}");
         }
     }
 
@@ -899,7 +899,7 @@ fn print_stats_table(stats: &CodeStats, detailed: bool) -> Result<()> {
 /// Print stats JSON
 fn print_stats_json(stats: &CodeStats) -> Result<()> {
     let json = serde_json::to_string_pretty(stats)?;
-    println!("{}", json);
+    println!("{json}");
     Ok(())
 }
 
@@ -938,7 +938,7 @@ fn print_timing_table(timing: &BuildTiming) -> Result<()> {
 /// Print timing JSON
 fn print_timing_json(timing: &BuildTiming) -> Result<()> {
     let json = serde_json::to_string_pretty(timing)?;
-    println!("{}", json);
+    println!("{json}");
     Ok(())
 }
 

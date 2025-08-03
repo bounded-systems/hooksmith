@@ -109,7 +109,7 @@ impl FileAuditResult {
         if !self.forbidden_files.is_empty() {
             println!("❌ Forbidden file types:");
             for file in &self.forbidden_files {
-                println!("   - {}", file);
+                println!("   - {file}");
             }
             println!();
         }
@@ -117,7 +117,7 @@ impl FileAuditResult {
         if !self.missing_markers.is_empty() {
             println!("❌ Generated files missing markers:");
             for file in &self.missing_markers {
-                println!("   - {}", file);
+                println!("   - {file}");
             }
             println!();
         }
@@ -125,7 +125,7 @@ impl FileAuditResult {
         if !self.errors.is_empty() {
             println!("❌ Errors:");
             for error in &self.errors {
-                println!("   - {}", error);
+                println!("   - {error}");
             }
             println!();
         }
@@ -200,20 +200,20 @@ pub fn check_files() -> Result<FileAuditResult> {
             // Check for generation marker
             match check_generation_marker(file_path, &config, &extension) {
                 Ok(true) => {
-                    println!("   ✅ Generated file with marker: {}", file_path);
+                    println!("   ✅ Generated file with marker: {file_path}");
                 }
                 Ok(false) => {
-                    println!("   ❌ Generated file missing marker: {}", file_path);
+                    println!("   ❌ Generated file missing marker: {file_path}");
                     result.missing_markers.push(file_path.to_string());
                 }
                 Err(e) => {
-                    let error_msg = format!("Error checking {}: {}", file_path, e);
-                    println!("   ⚠️  {}", error_msg);
+                    let error_msg = format!("Error checking {file_path}: {e}");
+                    println!("   ⚠️  {error_msg}");
                     result.errors.push(error_msg);
                 }
             }
         } else {
-            println!("   ✅ Manual file: {}", file_path);
+            println!("   ✅ Manual file: {file_path}");
         }
     }
 
@@ -226,7 +226,7 @@ fn check_generation_marker(
     extension: &str,
 ) -> Result<bool> {
     let content =
-        fs::read_to_string(file_path).context(format!("Failed to read file: {}", file_path))?;
+        fs::read_to_string(file_path).context(format!("Failed to read file: {file_path}"))?;
 
     if let Some(expected_marker) = config.get_marker(extension) {
         // Check if the marker is present in the file
@@ -292,16 +292,16 @@ pub fn validate_generated_files() -> Result<()> {
         if config.is_generated_type(&extension) {
             match check_generation_marker(file_path, &config, &extension) {
                 Ok(true) => {
-                    println!("   ✅ Valid: {}", file_path);
+                    println!("   ✅ Valid: {file_path}");
                 }
                 Ok(false) => {
-                    let error = format!("Generated file missing marker: {}", file_path);
-                    println!("   ❌ {}", error);
+                    let error = format!("Generated file missing marker: {file_path}");
+                    println!("   ❌ {error}");
                     errors.push(error);
                 }
                 Err(e) => {
-                    let error = format!("Error checking {}: {}", file_path, e);
-                    println!("   ⚠️  {}", error);
+                    let error = format!("Error checking {file_path}: {e}");
+                    println!("   ⚠️  {error}");
                     errors.push(error);
                 }
             }

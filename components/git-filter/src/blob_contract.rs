@@ -103,7 +103,7 @@ impl BlobContract {
     pub fn get_attribute_value(&self, key: &str) -> Option<&str> {
         if let Some(ref attrs) = self.attributes {
             for attr in attrs {
-                if let Some(value) = attr.strip_prefix(&format!("{}=", key)) {
+                if let Some(value) = attr.strip_prefix(&format!("{key}=")) {
                     return Some(value);
                 }
             }

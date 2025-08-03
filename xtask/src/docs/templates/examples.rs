@@ -38,7 +38,7 @@ impl ExamplesTemplate {
             output.push_str(&format!("```rust\n{}\n```\n\n", example.code));
 
             if let Some(output_text) = &example.output {
-                output.push_str(&format!("Output:\n\n```\n{}\n```\n\n", output_text));
+                output.push_str(&format!("Output:\n\n```\n{output_text}\n```\n\n"));
             }
         }
 

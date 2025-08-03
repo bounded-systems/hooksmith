@@ -35,7 +35,7 @@ pub fn generate_cli_help() -> Result<String> {
 
         match cmd_help {
             Ok(output) => {
-                content.push_str(&format!("### {} Command\n", cmd));
+                content.push_str(&format!("### {cmd} Command\n"));
                 content.push_str("```\n");
                 content.push_str(&String::from_utf8_lossy(&output.stdout));
                 content.push_str("```\n\n");
@@ -87,7 +87,7 @@ pub fn generate_cli_help() -> Result<String> {
 
         match cmd_help {
             Ok(output) => {
-                content.push_str(&format!("#### {} Command\n", cmd));
+                content.push_str(&format!("#### {cmd} Command\n"));
                 content.push_str("```\n");
                 content.push_str(&String::from_utf8_lossy(&output.stdout));
                 content.push_str("```\n\n");

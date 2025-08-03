@@ -14,7 +14,7 @@ hooksmith is a modular system with the following components:
 
 
 
-**Dependencies:** anyhow, serde, serde_json, tokio, tracing, wasmparser, wasmtime, wat, wit-bindgen, wit-component, wit-parser
+**Dependencies:** anyhow, chrono, serde, serde_json, tokio, tracing, wasmparser, wasmtime, wat, which, wit-bindgen, wit-component, wit-parser
 
 ### cli-core
 
@@ -26,7 +26,7 @@ hooksmith is a modular system with the following components:
 
 
 
-**Dependencies:** anyhow, chrono, futures-io, git2, gix-filter, jsonschema, once_cell, regex, serde, serde_json, serde_yaml, sha2, thiserror, tracing
+**Dependencies:** anyhow, chrono, futures-io, git2, gix-filter, jsonschema, once_cell, regex, serde, serde_json, serde_yaml, sha2, thiserror, tracing, tracing-subscriber
 
 ### worktree-runner
 

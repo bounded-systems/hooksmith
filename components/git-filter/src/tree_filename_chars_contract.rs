@@ -32,7 +32,7 @@ impl CharContract {
         } else {
             (
                 false,
-                Some(format!("Invalid character: {:?} (code: 0x{:x})", ch, code)),
+                Some(format!("Invalid character: {ch:?} (code: 0x{code:x})")),
             )
         }
     }
@@ -123,7 +123,7 @@ impl TreeFilenameContractChars {
             if !char_contract.is_valid() {
                 invalid_chars += 1;
                 if let Some(error) = &char_contract.error {
-                    errors.push(format!("Position {}: {}", i, error));
+                    errors.push(format!("Position {i}: {error}"));
                 }
             }
         }
@@ -232,8 +232,7 @@ impl TreeFilenameCharsValidator {
         let invalid_chars: usize = contracts.iter().map(|c| c.get_invalid_chars().len()).sum();
 
         format!(
-            "Filenames: {} total ({} valid, {} invalid) | Characters: {} total ({} invalid)",
-            total_filenames, valid_filenames, invalid_filenames, total_chars, invalid_chars
+            "Filenames: {total_filenames} total ({valid_filenames} valid, {invalid_filenames} invalid) | Characters: {total_chars} total ({invalid_chars} invalid)"
         )
     }
 
@@ -281,9 +280,7 @@ mod tests {
             let contract = CharContract::new(ch);
             assert!(
                 contract.is_valid(),
-                "Character {:?} (0x{:x}) should be valid",
-                ch,
-                code
+                "Character {ch:?} (0x{code:x}) should be valid"
             );
         }
     }
@@ -296,9 +293,7 @@ mod tests {
                 let contract = CharContract::new(ch);
                 assert!(
                     !contract.is_valid(),
-                    "Control character {:?} (0x{:x}) should be invalid",
-                    ch,
-                    code
+                    "Control character {ch:?} (0x{code:x}) should be invalid"
                 );
             }
         }

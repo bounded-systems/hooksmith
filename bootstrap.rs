@@ -318,6 +318,8 @@ wit-component.workspace = true
 wat.workspace = true
 wasmparser.workspace = true
 tracing.workspace = true
+which.workspace = true
+chrono.workspace = true
 "#.to_string();
     add_toml_codegen_marker(&mut hook_builder_toml, "components/hook-builder/Cargo.toml");
     fs::write("components/hook-builder/Cargo.toml", hook_builder_toml)?;
@@ -340,6 +342,7 @@ serde_yaml.workspace = true
 tokio.workspace = true
 which.workspace = true
 tracing.workspace = true
+tracing-subscriber.workspace = true
 clap.workspace = true
 thiserror.workspace = true
 "#.to_string();

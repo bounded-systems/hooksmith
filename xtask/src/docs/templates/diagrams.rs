@@ -229,12 +229,12 @@ impl GitWorkflowDiagram {
         output.push_str("flowchart TD\n");
 
         for (i, step) in self.steps.iter().enumerate() {
-            let node_id = format!("step{}", i);
+            let node_id = format!("step{i}");
             output.push_str(&format!("    {}[{}]\n", node_id, step.name));
 
             if i > 0 {
                 let prev_id = format!("step{}", i - 1);
-                output.push_str(&format!("    {} --> {}\n", prev_id, node_id));
+                output.push_str(&format!("    {prev_id} --> {node_id}\n"));
             }
         }
 

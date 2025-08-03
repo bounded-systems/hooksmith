@@ -13,6 +13,7 @@ API documentation for hooksmith 0.1.0
 ### Dependencies
 
 - anyhow
+- chrono
 - serde
 - serde_json
 - tokio
@@ -20,6 +21,7 @@ API documentation for hooksmith 0.1.0
 - wasmparser
 - wasmtime
 - wat
+- which
 - wit-bindgen
 - wit-component
 - wit-parser
@@ -72,6 +74,7 @@ use hooksmith::cli_core;
 - sha2
 - thiserror
 - tracing
+- tracing-subscriber
 
 ### Usage
 

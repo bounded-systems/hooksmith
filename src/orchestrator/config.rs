@@ -237,10 +237,7 @@ impl ConfigManager {
             // Check dependencies
             for dep in &component.dependencies {
                 if !self.config.components.contains_key(dep) {
-                    errors.push(format!(
-                        "Component '{}': Missing dependency '{}'",
-                        name, dep
-                    ));
+                    errors.push(format!("Component '{name}': Missing dependency '{dep}'"));
                 }
             }
         }

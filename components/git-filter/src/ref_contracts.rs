@@ -155,12 +155,12 @@ impl RefNameContract {
         // Determine ref type
         let ref_type = RefType::from_name(name);
         if ref_type.is_none() {
-            errors.push(format!("Invalid ref name format: {}", name));
+            errors.push(format!("Invalid ref name format: {name}"));
         }
 
         // Check against valid ref name pattern
         if !VALID_REF_NAME_RE.is_match(name) {
-            errors.push(format!("Ref name '{}' does not match valid pattern", name));
+            errors.push(format!("Ref name '{name}' does not match valid pattern"));
         }
 
         // Additional validation based on ref type
@@ -169,19 +169,19 @@ impl RefNameContract {
                 RefType::Branch => {
                     let branch_name = name.strip_prefix("refs/heads/").unwrap_or(name);
                     if !VALID_BRANCH_NAME_RE.is_match(branch_name) {
-                        errors.push(format!("Invalid branch name: {}", branch_name));
+                        errors.push(format!("Invalid branch name: {branch_name}"));
                     }
                 }
                 RefType::Tag => {
                     let tag_name = name.strip_prefix("refs/tags/").unwrap_or(name);
                     if !VALID_TAG_NAME_RE.is_match(tag_name) {
-                        errors.push(format!("Invalid tag name: {}", tag_name));
+                        errors.push(format!("Invalid tag name: {tag_name}"));
                     }
                 }
                 RefType::Remote => {
                     let remote_name = name.strip_prefix("refs/remotes/").unwrap_or(name);
                     if !VALID_REMOTE_NAME_RE.is_match(remote_name) {
-                        errors.push(format!("Invalid remote name: {}", remote_name));
+                        errors.push(format!("Invalid remote name: {remote_name}"));
                     }
                 }
                 _ => {}
@@ -289,7 +289,7 @@ impl RefTargetContract {
 
         // Check if target OID is valid SHA-1
         if !crate::unified_contracts::SHA1_RE.is_match(target_oid) {
-            errors.push(format!("Invalid target OID: {}", target_oid));
+            errors.push(format!("Invalid target OID: {target_oid}"));
         }
 
         // Determine expected object type based on ref type
@@ -310,7 +310,7 @@ impl RefTargetContract {
 
         // Check if symbolic target is a valid ref name
         if !crate::unified_contracts::VALID_FILENAME_RE.is_match(symbolic_target) {
-            errors.push(format!("Invalid symbolic target: {}", symbolic_target));
+            errors.push(format!("Invalid symbolic target: {symbolic_target}"));
         }
 
         // Determine expected object type based on ref type
@@ -493,8 +493,7 @@ impl RefMetaContract {
                         | "AUTO_MERGE"
                 ) {
                     errors.push(format!(
-                        "Pseudoref storage type inconsistent with ref name: {}",
-                        ref_name
+                        "Pseudoref storage type inconsistent with ref name: {ref_name}"
                     ));
                 }
             }
@@ -510,8 +509,7 @@ impl RefMetaContract {
                         | "AUTO_MERGE"
                 ) {
                     errors.push(format!(
-                        "Regular storage type inconsistent with pseudoref name: {}",
-                        ref_name
+                        "Regular storage type inconsistent with pseudoref name: {ref_name}"
                     ));
                 }
             }
@@ -775,20 +773,17 @@ impl RefValidator {
         let mut type_counts = std::collections::HashMap::new();
         for ref_contract in ref_contracts {
             if let Some(ref_type) = ref_contract.get_ref_type() {
-                *type_counts.entry(format!("{:?}", ref_type)).or_insert(0) += 1;
+                *type_counts.entry(format!("{ref_type:?}")).or_insert(0) += 1;
             }
         }
 
         let type_summary: Vec<String> = type_counts
             .iter()
-            .map(|(ref_type, count)| format!("{} {}", count, ref_type))
+            .map(|(ref_type, count)| format!("{count} {ref_type}"))
             .collect();
 
         format!(
-            "Refs: {} total ({} valid, {} invalid) - {}",
-            total,
-            valid,
-            invalid,
+            "Refs: {total} total ({valid} valid, {invalid} invalid) - {}",
             type_summary.join(", ")
         )
     }

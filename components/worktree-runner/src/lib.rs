@@ -279,7 +279,7 @@ impl WorktreeRunner {
         let output = Command::new("git")
             .arg("worktree")
             .arg("add")
-            .arg(format!("../{}", branch_name))
+            .arg(format!("../{branch_name}"))
             .arg(branch_name)
             .output()?;
 
@@ -291,7 +291,7 @@ impl WorktreeRunner {
             } else {
                 Some(String::from_utf8_lossy(&output.stderr).to_string())
             },
-            worktree_path: Some(format!("../{}", branch_name)),
+            worktree_path: Some(format!("../{branch_name}")),
             branch_name: Some(branch_name.to_string()),
         })
     }

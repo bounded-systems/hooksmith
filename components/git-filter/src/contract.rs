@@ -232,7 +232,7 @@ impl CharValidator {
             Ok(_) => result.utf8_valid = true,
             Err(e) => {
                 result.utf8_valid = false;
-                result.add_error(format!("Invalid UTF-8: {}", e));
+                result.add_error(format!("Invalid UTF-8: {e}"));
                 return (result, processed_content);
             }
         }
@@ -247,7 +247,7 @@ impl CharValidator {
             if !contract.is_allowed() {
                 result.add_forbidden(contract);
                 if result.first_forbidden.is_none() {
-                    result.add_error(format!("Forbidden character found: 0x{:02X}", byte));
+                    result.add_error(format!("Forbidden character found: 0x{byte:02X}"));
                 }
             }
 

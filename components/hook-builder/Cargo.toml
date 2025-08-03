@@ -21,3 +21,5 @@ wit-component.workspace = true
 wat.workspace = true
 wasmparser.workspace = true
 tracing.workspace = true
+which.workspace = true
+chrono.workspace = true

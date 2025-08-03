@@ -331,8 +331,7 @@ impl LineValidator {
         let fixed_lines = contracts.iter().filter(|c| c.needs_fixing()).count();
 
         format!(
-            "Lines: {} total, {} accepted, {} rejected, {} need fixing",
-            total_lines, accepted_lines, rejected_lines, fixed_lines
+            "Lines: {total_lines} total, {accepted_lines} accepted, {rejected_lines} rejected, {fixed_lines} need fixing"
         )
     }
 }

@@ -73,20 +73,18 @@ pub fn validate_generated_files(output_dir: &Path) -> Result<()> {
 
         if let Some(expected_checksum) = checksums.files.get(&relative_path) {
             let content = fs::read_to_string(&file_path)
-                .context(format!("Failed to read file: {:?}", file_path))?;
+                .context(format!("Failed to read file: {file_path:?}"))?;
 
             let actual_checksum = generate_checksum(&content);
 
             if &actual_checksum != expected_checksum {
                 errors.push(format!(
-                    "Checksum mismatch for {}: expected {}, got {}",
-                    relative_path, expected_checksum, actual_checksum
+                    "Checksum mismatch for {relative_path}: expected {expected_checksum}, got {actual_checksum}"
                 ));
             }
         } else {
             errors.push(format!(
-                "No checksum found for generated file: {}",
-                relative_path
+                "No checksum found for generated file: {relative_path}"
             ));
         }
     }
@@ -107,7 +105,7 @@ fn find_markdown_files(dir: &Path) -> Result<Vec<PathBuf>> {
         return Ok(files);
     }
 
-    let entries = fs::read_dir(dir).context(format!("Failed to read directory: {:?}", dir))?;
+    let entries = fs::read_dir(dir).context(format!("Failed to read directory: {dir:?}"))?;
 
     for entry in entries {
         let entry = entry.context("Failed to read directory entry")?;
@@ -178,7 +176,7 @@ pub fn generate_checksum_report(output_dir: &Path) -> Result<String> {
 
         if let Some(checksum) = checksums.files.get(&relative_path) {
             let content = fs::read_to_string(&file_path)
-                .context(format!("Failed to read file: {:?}", file_path))?;
+                .context(format!("Failed to read file: {file_path:?}"))?;
 
             let actual_checksum = generate_checksum(&content);
             let status = if checksum == &actual_checksum {
@@ -187,12 +185,9 @@ pub fn generate_checksum_report(output_dir: &Path) -> Result<String> {
                 "❌ Mismatch"
             };
 
-            report.push_str(&format!(
-                "| {} | {} | {} |\n",
-                relative_path, checksum, status
-            ));
+            report.push_str(&format!("| {relative_path} | {checksum} | {status} |\n"));
         } else {
-            report.push_str(&format!("| {} | N/A | ⚠️ No checksum |\n", relative_path));
+            report.push_str(&format!("| {relative_path} | N/A | ⚠️ No checksum |\n"));
         }
     }
 

@@ -137,7 +137,7 @@ fn extract_project_structure() -> Result<String> {
         if path.is_dir() {
             result.push_str("/\n");
             let entries = fs::read_dir(path)
-                .context(format!("Failed to read directory: {:?}", path))?
+                .context(format!("Failed to read directory: {path:?}"))?
                 .filter_map(|e| e.ok())
                 .filter(|e| {
                     let binding = e.file_name();
@@ -149,9 +149,9 @@ fn extract_project_structure() -> Result<String> {
             for (i, entry) in entries.iter().enumerate() {
                 let is_last = i == entries.len() - 1;
                 let new_prefix = if is_last {
-                    format!("{}    ", prefix)
+                    format!("{prefix}    ")
                 } else {
-                    format!("{}│   ", prefix)
+                    format!("{prefix}│   ")
                 };
                 result.push_str(&build_tree(&entry.path(), &new_prefix, is_last)?);
             }
@@ -235,7 +235,7 @@ fn extract_component_description(component_path: &Path) -> Result<String> {
     let readme_path = component_path.join("README.md");
     if readme_path.exists() {
         let content = fs::read_to_string(&readme_path)
-            .context(format!("Failed to read README: {:?}", readme_path))?;
+            .context(format!("Failed to read README: {readme_path:?}"))?;
 
         // Extract first paragraph as description
         if let Some(first_line) = content.lines().next() {
@@ -249,7 +249,7 @@ fn extract_component_description(component_path: &Path) -> Result<String> {
     let cargo_path = component_path.join("Cargo.toml");
     if cargo_path.exists() {
         let content = fs::read_to_string(&cargo_path)
-            .context(format!("Failed to read Cargo.toml: {:?}", cargo_path))?;
+            .context(format!("Failed to read Cargo.toml: {cargo_path:?}"))?;
 
         // Simple extraction of description
         for line in content.lines() {
@@ -275,7 +275,7 @@ fn extract_component_dependencies(component_path: &Path) -> Result<Vec<String>> 
     }
 
     let content = fs::read_to_string(&cargo_path)
-        .context(format!("Failed to read Cargo.toml: {:?}", cargo_path))?;
+        .context(format!("Failed to read Cargo.toml: {cargo_path:?}"))?;
 
     let mut dependencies = Vec::new();
     let mut in_dependencies = false;
@@ -355,7 +355,7 @@ fn extract_license() -> Result<Option<String>> {
         let path = Path::new(license_file);
         if path.exists() {
             let content = fs::read_to_string(path)
-                .context(format!("Failed to read license file: {:?}", path))?;
+                .context(format!("Failed to read license file: {path:?}"))?;
 
             // Extract first line as license type
             if let Some(first_line) = content.lines().next() {

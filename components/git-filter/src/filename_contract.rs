@@ -121,8 +121,7 @@ impl FilenameValidator {
         let invalid_filenames = total_filenames - valid_filenames;
 
         format!(
-            "Filenames: {} total ({} valid, {} invalid)",
-            total_filenames, valid_filenames, invalid_filenames
+            "Filenames: {total_filenames} total ({valid_filenames} valid, {invalid_filenames} invalid)"
         )
     }
 

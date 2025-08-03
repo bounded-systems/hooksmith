@@ -592,7 +592,7 @@ impl UnifiedValidator {
 
         let type_summary: Vec<String> = type_counts
             .iter()
-            .map(|(kind, count)| format!("{} {}", count, kind))
+            .map(|(kind, count)| format!("{count} {kind}"))
             .collect();
 
         format!(

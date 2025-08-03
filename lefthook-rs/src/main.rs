@@ -11,7 +11,7 @@ async fn main() {
 
     // Run the CLI
     if let Err(e) = cli::run().await {
-        eprintln!("Error: {}", e);
+        eprintln!("Error: {e}");
         std::process::exit(1);
     }
 }

@@ -84,7 +84,7 @@ impl GitObjectContract {
     pub fn get_attribute_value(&self, key: &str) -> Option<&str> {
         if let Some(ref attrs) = self.attributes {
             for attr in attrs {
-                if let Some(value) = attr.strip_prefix(&format!("{}=", key)) {
+                if let Some(value) = attr.strip_prefix(&format!("{key}=")) {
                     return Some(value);
                 }
             }
@@ -101,7 +101,7 @@ impl GitObjectContract {
             for attr in attrs {
                 if !Self::is_valid_attribute_format(attr) {
                     self.errors
-                        .push(format!("Invalid attribute format: {}", attr));
+                        .push(format!("Invalid attribute format: {attr}"));
                     valid = false;
                 }
             }
@@ -113,16 +113,14 @@ impl GitObjectContract {
 
                 if is_generated && !has_linguist_generated {
                     self.errors.push(format!(
-                        "Generated file '{}' must have 'linguist-generated=true' attribute",
-                        path
+                        "Generated file '{path}' must have 'linguist-generated=true' attribute"
                     ));
                     valid = false;
                 }
 
                 if !is_generated && has_linguist_generated {
                     self.errors.push(format!(
-                        "Non-generated file '{}' should not have 'linguist-generated=true' attribute",
-                        path
+                        "Non-generated file '{path}' should not have 'linguist-generated=true' attribute"
                     ));
                     // This is a warning, not necessarily an error
                 }
@@ -132,8 +130,7 @@ impl GitObjectContract {
             if let Some(path) = filepath {
                 if Self::is_generated_file(path) {
                     self.errors.push(format!(
-                        "Generated file '{}' must have 'linguist-generated=true' attribute",
-                        path
+                        "Generated file '{path}' must have 'linguist-generated=true' attribute"
                     ));
                     valid = false;
                 }
@@ -366,8 +363,7 @@ impl GitObjectValidator {
         let invalid_count = total_count - valid_count;
 
         let mut summary = format!(
-            "Git Object Validation Summary: {} valid, {} invalid (total: {})",
-            valid_count, invalid_count, total_count
+            "Git Object Validation Summary: {valid_count} valid, {invalid_count} invalid (total: {total_count})"
         );
 
         if invalid_count > 0 {

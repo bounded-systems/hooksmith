@@ -510,8 +510,8 @@ async fn main() -> Result<()> {
         }
         Commands::GenLefthook { output, validate } => {
             println!("⚠️  Lefthook generation disabled - lefthook_rs dependency missing");
-            println!("   Output: {}", output);
-            println!("   Validate: {}", validate);
+            println!("   Output: {output}");
+            println!("   Validate: {validate}");
         }
         Commands::GenDocs { output_dir, open } => {
             generate_documentation(&output_dir, open)?;
@@ -693,8 +693,8 @@ async fn main() -> Result<()> {
 /// Build the project and all components
 fn build_project(target: &str, release: bool) -> Result<()> {
     println!("🔨 Building Hooksmith project...");
-    println!("   Target: {}", target);
-    println!("   Release: {}", release);
+    println!("   Target: {target}");
+    println!("   Release: {release}");
 
     let _profile = if release { "release" } else { "debug" };
 
@@ -714,13 +714,13 @@ fn build_project(target: &str, release: bool) -> Result<()> {
             // Build WASM components
             let components = ["worktree-runner"];
             for component in components {
-                println!("   Building WASM component: {}", component);
+                println!("   Building WASM component: {component}");
                 let status = Command::new("cargo")
                     .args(["build", "--target", "wasm32-unknown-unknown"])
                     .args(if release { vec!["--release"] } else { vec![] })
-                    .current_dir(format!("components/{}", component))
+                    .current_dir(format!("components/{component}"))
                     .status()
-                    .context(format!("Failed to build WASM component: {}", component))?;
+                    .context(format!("Failed to build WASM component: {component}"))?;
 
                 if !status.success() {
                     anyhow::bail!("WASM build failed for component: {}", component);
@@ -745,7 +745,7 @@ fn build_project(target: &str, release: bool) -> Result<()> {
 /// Generate WIT interface definitions from structured Rust definitions
 fn generate_wit_interfaces(output_dir: &str, overwrite: bool) -> Result<()> {
     println!("🔧 Generating WIT interface definitions...");
-    println!("   Output directory: {}", output_dir);
+    println!("   Output directory: {output_dir}");
 
     let output_path = Path::new(output_dir);
     if !output_path.exists() {
@@ -916,13 +916,13 @@ fn generate_wit_interfaces(output_dir: &str, overwrite: bool) -> Result<()> {
         let file_path = output_path.join(filename);
 
         if file_path.exists() && !overwrite {
-            println!("   Skipping {} (already exists)", filename);
+            println!("   Skipping {filename} (already exists)");
             continue;
         }
 
         let wit_content = generate_wit_content(&interface)?;
-        fs::write(&file_path, wit_content).context(format!("Failed to write {}", filename))?;
-        println!("   Generated {}", filename);
+        fs::write(&file_path, wit_content).context(format!("Failed to write {filename}"))?;
+        println!("   Generated {filename}");
     }
 
     println!("✅ WIT interfaces generated successfully");
@@ -939,12 +939,12 @@ fn generate_wit_content(interface: &WitInterface) -> Result<String> {
     // Records
     for record in &interface.records {
         if let Some(docs) = &record.docs {
-            content.push_str(&format!("/// {}\n", docs));
+            content.push_str(&format!("/// {docs}\n"));
         }
         content.push_str(&format!("record {} {{\n", record.name));
         for field in &record.fields {
             if let Some(docs) = &field.docs {
-                content.push_str(&format!("  /// {}\n", docs));
+                content.push_str(&format!("  /// {docs}\n"));
             }
             content.push_str(&format!("  {}: {};\n", field.name, field.field_type));
         }
@@ -954,24 +954,24 @@ fn generate_wit_content(interface: &WitInterface) -> Result<String> {
     // Enums
     for enum_def in &interface.enums {
         if let Some(docs) = &enum_def.docs {
-            content.push_str(&format!("/// {}\n", docs));
+            content.push_str(&format!("/// {docs}\n"));
         }
         content.push_str(&format!("enum {} {{\n", enum_def.name));
         for variant in &enum_def.variants {
-            content.push_str(&format!("  {},\n", variant));
+            content.push_str(&format!("  {variant},\n"));
         }
         content.push_str("}\n\n");
     }
 
     // Interface
     if let Some(docs) = &interface.docs {
-        content.push_str(&format!("/// {}\n", docs));
+        content.push_str(&format!("/// {docs}\n"));
     }
     content.push_str(&format!("interface {} {{\n", interface.name));
 
     for function in &interface.functions {
         if let Some(docs) = &function.docs {
-            content.push_str(&format!("  /// {}\n", docs));
+            content.push_str(&format!("  /// {docs}\n"));
         }
         let params = function
             .params
@@ -996,7 +996,7 @@ fn generate_wit_content(interface: &WitInterface) -> Result<String> {
 /// Generate Lefthook configuration from structured definitions
 fn generate_lefthook_config(output: &str, validate: bool) -> Result<()> {
     println!("📝 Generating Lefthook configuration...");
-    println!("   Output: {}", output);
+    println!("   Output: {output}");
 
     // Lefthook configuration generation disabled due to missing dependency
     println!("⚠️  Lefthook configuration generation disabled");
@@ -1014,7 +1014,7 @@ fn generate_lefthook_config(output: &str, validate: bool) -> Result<()> {
 /// Generate documentation
 fn generate_documentation(output_dir: &str, open: bool) -> Result<()> {
     println!("📚 Generating documentation...");
-    println!("   Output directory: {}", output_dir);
+    println!("   Output directory: {output_dir}");
 
     let output_path = Path::new(output_dir);
     if !output_path.exists() {
@@ -1064,8 +1064,8 @@ async fn generate_comprehensive_documentation(
     validate: bool,
 ) -> Result<()> {
     println!("📚 Generating comprehensive documentation...");
-    println!("   Output directory: {}", output_dir);
-    println!("   All: {}, File: {:?}, Validate: {}", all, file, validate);
+    println!("   Output directory: {output_dir}");
+    println!("   All: {all}, File: {file:?}, Validate: {validate}");
 
     // Use the new docs module system
     docs::generate_all_docs(output_dir, validate).await?;
@@ -1124,7 +1124,7 @@ async fn generate_comprehensive_documentation(
                 generate_pandoc_outputs(output_path, false, false, true)?; // EPUB only
             }
             _ => {
-                println!("   ⚠️  Unknown file type: {}", f);
+                println!("   ⚠️  Unknown file type: {f}");
             }
         }
     }
@@ -1149,8 +1149,8 @@ async fn generate_schema_documentation(
     open: bool,
 ) -> Result<()> {
     println!("📚 Generating schema and WIT documentation...");
-    println!("   Output directory: {}", output_dir);
-    println!("   PDF: {}, HTML: {}, EPUB: {}", pdf, html, epub);
+    println!("   Output directory: {output_dir}");
+    println!("   PDF: {pdf}, HTML: {html}, EPUB: {epub}");
 
     let output_path = Path::new(output_dir);
     if !output_path.exists() {
@@ -1191,7 +1191,7 @@ async fn generate_schema_documentation(
 /// Generate README with CLI help and module docs
 fn generate_readme(output: &str, overwrite: bool) -> Result<()> {
     println!("📖 Generating README...");
-    println!("   Output: {}", output);
+    println!("   Output: {output}");
 
     let output_path = Path::new(output);
     if output_path.exists() && !overwrite {
@@ -1248,7 +1248,7 @@ cargo xtask gen-all
 ## CLI Commands
 
 ```bash
-{}
+{cli_help_text}
 ```
 
 ## Development
@@ -1413,8 +1413,7 @@ MIT License - see LICENSE file for details.
 ---
 
 *This README is auto-generated using `cargo xtask gen-readme`. The CLI help section is automatically updated from the actual CLI output.*
-"#,
-        cli_help_text
+"#
     );
 
     fs::write(output_path, readme_content).context("Failed to write README")?;
@@ -1461,15 +1460,14 @@ fn generate_mod_files(overwrite: bool) -> Result<()> {
 /// Generate mod.rs content for a directory
 fn generate_mod_content(dir: &Path, dir_name: &str) -> Result<String> {
     let mut content = String::new();
-    content.push_str(&format!("//! {} module\n", dir_name));
+    content.push_str(&format!("//! {dir_name} module\n"));
     content.push_str("//! \n");
     content.push_str(&format!(
-        "//! This module contains {} functionality.\n",
-        dir_name
+        "//! This module contains {dir_name} functionality.\n"
     ));
     content.push_str("//! Auto-generated by xtask gen-mods\n\n");
 
-    let entries = fs::read_dir(dir).context(format!("Failed to read directory: {:?}", dir))?;
+    let entries = fs::read_dir(dir).context(format!("Failed to read directory: {dir:?}"))?;
 
     for entry in entries {
         let entry = entry.context("Failed to read directory entry")?;
@@ -1478,7 +1476,7 @@ fn generate_mod_content(dir: &Path, dir_name: &str) -> Result<String> {
         if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("rs") {
             let filename = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
             if filename != "mod" {
-                content.push_str(&format!("pub mod {};\n", filename));
+                content.push_str(&format!("pub mod {filename};\n"));
             }
         }
     }
@@ -1489,7 +1487,7 @@ fn generate_mod_content(dir: &Path, dir_name: &str) -> Result<String> {
 /// Generate hooks README
 fn generate_hooks_readme(output: &str, overwrite: bool) -> Result<()> {
     println!("📝 Generating hooks README...");
-    println!("   Output: {}", output);
+    println!("   Output: {output}");
 
     let output_path = Path::new(output);
     if output_path.exists() && !overwrite {
@@ -1591,7 +1589,7 @@ fn check_generated_files(strict: bool) -> Result<()> {
     let wit_files = ["wit/hooksmith.wit", "wit/worktree-runner.wit"];
     for file in wit_files {
         if !Path::new(file).exists() {
-            println!("   ❌ Missing: {}", file);
+            println!("   ❌ Missing: {file}");
             outdated = true;
         }
     }
@@ -1612,7 +1610,7 @@ fn check_generated_files(strict: bool) -> Result<()> {
     let mod_files = ["src/commands/mod.rs", "src/modules/mod.rs"];
     for file in mod_files {
         if !Path::new(file).exists() {
-            println!("   ❌ Missing: {}", file);
+            println!("   ❌ Missing: {file}");
             outdated = true;
         }
     }
@@ -1628,7 +1626,7 @@ fn check_generated_files(strict: bool) -> Result<()> {
         if strict {
             anyhow::bail!(message);
         } else {
-            println!("   ⚠️  {}", message);
+            println!("   ⚠️  {message}");
         }
     } else {
         println!("   ✅ All generated files are up to date");
@@ -1645,7 +1643,7 @@ fn validate_project_config(trunk: bool, cargo: bool, modules: bool, all: bool) -
 
     if trunk || all {
         if let Err(e) = validate_trunk_config() {
-            errors.push(format!("Trunk validation failed: {}", e));
+            errors.push(format!("Trunk validation failed: {e}"));
         } else {
             println!("   ✅ Trunk configuration is valid");
         }
@@ -1653,7 +1651,7 @@ fn validate_project_config(trunk: bool, cargo: bool, modules: bool, all: bool) -
 
     if cargo || all {
         if let Err(e) = validate_cargo_workspace() {
-            errors.push(format!("Cargo validation failed: {}", e));
+            errors.push(format!("Cargo validation failed: {e}"));
         } else {
             println!("   ✅ Cargo workspace is valid");
         }
@@ -1661,7 +1659,7 @@ fn validate_project_config(trunk: bool, cargo: bool, modules: bool, all: bool) -
 
     if modules || all {
         if let Err(e) = validate_module_consistency() {
-            errors.push(format!("Module validation failed: {}", e));
+            errors.push(format!("Module validation failed: {e}"));
         } else {
             println!("   ✅ Module consistency is valid");
         }
@@ -1672,7 +1670,7 @@ fn validate_project_config(trunk: bool, cargo: bool, modules: bool, all: bool) -
         Ok(())
     } else {
         for error in errors {
-            eprintln!("   ❌ {}", error);
+            eprintln!("   ❌ {error}");
         }
         anyhow::bail!("Validation failed");
     }
@@ -1717,9 +1715,9 @@ fn validate_module_consistency() -> Result<()> {
             if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("rs") {
                 let filename = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
                 if filename != "mod" {
-                    let test_file = Path::new("tests").join(format!("{}_test.rs", filename));
+                    let test_file = Path::new("tests").join(format!("{filename}_test.rs"));
                     if !test_file.exists() {
-                        println!("   ⚠️  No test file found for command: {}", filename);
+                        println!("   ⚠️  No test file found for command: {filename}");
                     }
                 }
             }
@@ -1772,8 +1770,7 @@ fn generate_json_schema_documentation() -> Result<String> {
                 };
 
                 docs.push_str(&format!(
-                    "| {} | {} | {} | {} |\n",
-                    name, prop_type, required, description
+                    "| {name} | {prop_type} | {required} | {description} |\n"
                 ));
             }
         }
@@ -1809,8 +1806,7 @@ fn generate_json_schema_documentation() -> Result<String> {
                 };
 
                 docs.push_str(&format!(
-                    "| {} | {} | {} | {} |\n",
-                    name, prop_type, required, description
+                    "| {name} | {prop_type} | {required} | {description} |\n"
                 ));
             }
         }
@@ -1846,8 +1842,7 @@ fn generate_json_schema_documentation() -> Result<String> {
                 };
 
                 docs.push_str(&format!(
-                    "| {} | {} | {} | {} |\n",
-                    name, prop_type, required, description
+                    "| {name} | {prop_type} | {required} | {description} |\n"
                 ));
             }
         }
@@ -2079,8 +2074,8 @@ fn generate_pandoc_outputs(output_path: &Path, pdf: bool, html: bool, epub: bool
 /// Check if current changes are compatible with the last release
 async fn check_stable_compatibility(version: &str, comprehensive: bool) -> Result<()> {
     println!("🛡️ Checking stable version compatibility...");
-    println!("   Version: {}", version);
-    println!("   Comprehensive: {}", comprehensive);
+    println!("   Version: {version}");
+    println!("   Comprehensive: {comprehensive}");
 
     // Check if stable version is installed
     let stable_installed = Command::new("hooksmith").arg("--version").output().is_ok();
@@ -2114,34 +2109,28 @@ async fn check_stable_compatibility(version: &str, comprehensive: bool) -> Resul
     // Test basic commands
     let commands = vec!["test", "list", "--help", "--version"];
     for cmd in commands {
-        println!("     Testing command: {}", cmd);
+        println!("     Testing command: {cmd}");
 
         // Run stable version
         let stable_output = Command::new("hooksmith")
             .arg(cmd)
             .output()
-            .context(format!(
-                "Failed to run stable version with command: {}",
-                cmd
-            ))?;
+            .context(format!("Failed to run stable version with command: {cmd}"))?;
 
         // Run current version
         let current_output = Command::new("cargo")
             .args(["run", "--bin", "hooksmith", "--", cmd])
             .output()
-            .context(format!(
-                "Failed to run current version with command: {}",
-                cmd
-            ))?;
+            .context(format!("Failed to run current version with command: {cmd}"))?;
 
         // Compare exit codes
         if stable_output.status.success() != current_output.status.success() {
-            println!("     ❌ Exit code mismatch for command: {}", cmd);
+            println!("     ❌ Exit code mismatch for command: {cmd}");
             if comprehensive {
                 anyhow::bail!("Compatibility test failed for command: {}", cmd);
             }
         } else {
-            println!("     ✅ Command {} passed", cmd);
+            println!("     ✅ Command {cmd} passed");
         }
     }
 
@@ -2160,33 +2149,33 @@ async fn check_stable_compatibility(version: &str, comprehensive: bool) -> Resul
         ];
 
         for (args, description) in test_cases {
-            println!("     Testing: {}", description);
+            println!("     Testing: {description}");
 
             // Run stable version
             let stable_output = Command::new("hooksmith")
                 .args(&args)
                 .output()
-                .context(format!("Failed to run stable version: {}", description))?;
+                .context(format!("Failed to run stable version: {description}"))?;
 
             // Run current version
             let current_output = Command::new("cargo")
                 .args(["run", "--bin", "hooksmith", "--"])
                 .args(&args)
                 .output()
-                .context(format!("Failed to run current version: {}", description))?;
+                .context(format!("Failed to run current version: {description}"))?;
 
             // Compare outputs (basic comparison)
             let stable_stdout = String::from_utf8_lossy(&stable_output.stdout);
             let current_stdout = String::from_utf8_lossy(&current_output.stdout);
 
             if stable_stdout.trim() != current_stdout.trim() {
-                println!("     ⚠️  Output differs for: {}", description);
+                println!("     ⚠️  Output differs for: {description}");
                 if comprehensive {
                     println!("     Stable output: {}", stable_stdout.trim());
                     println!("     Current output: {}", current_stdout.trim());
                 }
             } else {
-                println!("     ✅ Output matches for: {}", description);
+                println!("     ✅ Output matches for: {description}");
             }
         }
     }
@@ -2197,7 +2186,7 @@ async fn check_stable_compatibility(version: &str, comprehensive: bool) -> Resul
 
 /// Test current version against released version
 async fn test_with_release(version: &str) -> Result<()> {
-    println!("🧪 Testing current version against release {}...", version);
+    println!("🧪 Testing current version against release {version}...");
 
     // Ensure stable version is installed
     let status = Command::new("cargo")
@@ -2228,12 +2217,12 @@ async fn test_with_release(version: &str) -> Result<()> {
         let output = Command::new("hooksmith")
             .arg(cmd)
             .output()
-            .context(format!("Failed to run stable version command: {}", cmd))?;
+            .context(format!("Failed to run stable version command: {cmd}"))?;
 
         if !output.status.success() {
-            println!("   ⚠️  Stable version command '{}' failed", cmd);
+            println!("   ⚠️  Stable version command '{cmd}' failed");
         } else {
-            println!("   ✅ Stable version command '{}' passed", cmd);
+            println!("   ✅ Stable version command '{cmd}' passed");
         }
     }
 
@@ -2243,10 +2232,7 @@ async fn test_with_release(version: &str) -> Result<()> {
 
 /// Compare outputs between current and released version
 async fn compare_with_release(version: &str) -> Result<()> {
-    println!(
-        "🔍 Comparing outputs between current and release {}...",
-        version
-    );
+    println!("🔍 Comparing outputs between current and release {version}...");
 
     // Ensure stable version is installed
     let status = Command::new("cargo")
@@ -2280,19 +2266,19 @@ async fn compare_with_release(version: &str) -> Result<()> {
     let mut differences_found = false;
 
     for (cmd, description) in comparison_commands {
-        println!("   🔍 Comparing: {}", description);
+        println!("   🔍 Comparing: {description}");
 
         // Get stable version output
         let stable_output = Command::new("hooksmith")
             .arg(cmd)
             .output()
-            .context(format!("Failed to get stable version output for: {}", cmd))?;
+            .context(format!("Failed to get stable version output for: {cmd}"))?;
 
         // Get current version output
         let current_output = Command::new("cargo")
             .args(["run", "--bin", "hooksmith", "--", cmd])
             .output()
-            .context(format!("Failed to get current version output for: {}", cmd))?;
+            .context(format!("Failed to get current version output for: {cmd}"))?;
 
         // Compare outputs
         let stable_stdout = String::from_utf8_lossy(&stable_output.stdout);
@@ -2305,9 +2291,9 @@ async fn compare_with_release(version: &str) -> Result<()> {
         let exit_code_match = stable_output.status.success() == current_output.status.success();
 
         if stdout_match && stderr_match && exit_code_match {
-            println!("     ✅ Outputs match for: {}", description);
+            println!("     ✅ Outputs match for: {description}");
         } else {
-            println!("     ❌ Outputs differ for: {}", description);
+            println!("     ❌ Outputs differ for: {description}");
             differences_found = true;
 
             if !stdout_match {
@@ -2378,7 +2364,7 @@ async fn setup_git_filters(force: bool) -> Result<()> {
         .args([
             "config",
             "filter.contract_validate.clean",
-            &format!("{}/target/debug/xtask contract-validate clean", repo_root),
+            &format!("{repo_root}/target/debug/xtask contract-validate clean"),
         ])
         .status()
         .context("Failed to set up clean filter")?;
@@ -2387,7 +2373,7 @@ async fn setup_git_filters(force: bool) -> Result<()> {
         .args([
             "config",
             "filter.contract_validate.smudge",
-            &format!("{}/target/debug/xtask contract-validate smudge", repo_root),
+            &format!("{repo_root}/target/debug/xtask contract-validate smudge"),
         ])
         .status()
         .context("Failed to set up smudge filter")?;
@@ -2403,7 +2389,7 @@ async fn setup_git_filters(force: bool) -> Result<()> {
         .args([
             "config",
             "diff.contract_diff.textconv",
-            &format!("{}/target/debug/xtask contract-validate diff", repo_root),
+            &format!("{repo_root}/target/debug/xtask contract-validate diff"),
         ])
         .status()
         .context("Failed to set up diff textconv")?;
@@ -2455,7 +2441,7 @@ fn validate_generated_files(
             }
         }
         Err(e) => {
-            eprintln!("❌ Generated file validation failed: {}", e);
+            eprintln!("❌ Generated file validation failed: {e}");
             if strict {
                 std::process::exit(1);
             }
@@ -2509,7 +2495,7 @@ fn validate_generated_headers(strict: bool) -> Result<()> {
             }
         }
         Err(e) => {
-            eprintln!("❌ Header validation failed: {}", e);
+            eprintln!("❌ Header validation failed: {e}");
             if strict {
                 std::process::exit(1);
             }
@@ -2566,7 +2552,7 @@ fn check_files(strict: bool, verbose: bool) -> Result<()> {
             Ok(())
         }
         Err(e) => {
-            eprintln!("❌ File audit failed: {}", e);
+            eprintln!("❌ File audit failed: {e}");
             if strict {
                 std::process::exit(1);
             }
@@ -2619,7 +2605,7 @@ async fn generate_all_files(validate: bool, force: bool) -> Result<()> {
     generate_readme("README.md", force)?;
     generated_count += 1;
 
-    println!("✅ Generated {} types of files", generated_count);
+    println!("✅ Generated {generated_count} types of files");
 
     if validate {
         println!("🔍 Validating generated files...");
@@ -2730,7 +2716,7 @@ fn generate_templates(template: Option<String>, output_dir: &str, overwrite: boo
     if let Some(template_name) = template {
         if engine.has_template(&template_name) {
             let content = engine.render(&template_name)?;
-            let file_path = output_path.join(format!("{}.md", template_name));
+            let file_path = output_path.join(format!("{template_name}.md"));
 
             if file_path.exists() && !overwrite {
                 println!(
@@ -2743,7 +2729,7 @@ fn generate_templates(template: Option<String>, output_dir: &str, overwrite: boo
             std::fs::write(&file_path, content)?;
             println!("✅ Generated {}", file_path.display());
         } else {
-            println!("❌ Template '{}' not found", template_name);
+            println!("❌ Template '{template_name}' not found");
             println!(
                 "Available templates: {}",
                 engine
@@ -2759,7 +2745,7 @@ fn generate_templates(template: Option<String>, output_dir: &str, overwrite: boo
         // Generate all templates
         for template_name in engine.template_names() {
             let content = engine.render(template_name)?;
-            let file_path = output_path.join(format!("{}.md", template_name));
+            let file_path = output_path.join(format!("{template_name}.md"));
 
             if file_path.exists() && !overwrite {
                 println!("⚠️  File {} already exists, skipping", file_path.display());
@@ -2778,8 +2764,8 @@ fn generate_templates(template: Option<String>, output_dir: &str, overwrite: boo
 /// Generate all configuration files from Rust structs
 fn generate_config(overwrite: bool, validate: bool) -> Result<()> {
     println!("🔧 Generating configuration files...");
-    println!("   Overwrite: {}", overwrite);
-    println!("   Validate: {}", validate);
+    println!("   Overwrite: {overwrite}");
+    println!("   Validate: {validate}");
 
     // Use the ConfigGenerator to generate all config files
     config::ConfigGenerator::generate_all()?;
@@ -2796,9 +2782,9 @@ fn generate_config(overwrite: bool, validate: bool) -> Result<()> {
 /// Generate Git attributes files
 fn generate_git_attributes(output_dir: &str, overwrite: bool, validate: bool) -> Result<()> {
     println!("🔧 Generating Git attributes files...");
-    println!("   Output directory: {}", output_dir);
-    println!("   Overwrite: {}", overwrite);
-    println!("   Validate: {}", validate);
+    println!("   Output directory: {output_dir}");
+    println!("   Overwrite: {overwrite}");
+    println!("   Validate: {validate}");
 
     let output_path = Path::new(output_dir);
     if !output_path.exists() {
@@ -3268,11 +3254,11 @@ fn validate_config(strict: bool) -> Result<()> {
             Ok(())
         }
         Err(e) => {
-            let error_msg = format!("❌ Configuration validation failed: {}", e);
+            let error_msg = format!("❌ Configuration validation failed: {e}");
             if strict {
                 Err(anyhow::anyhow!(error_msg))
             } else {
-                println!("{}", error_msg);
+                println!("{error_msg}");
                 Ok(())
             }
         }
@@ -3300,13 +3286,13 @@ async fn run_contract_check(
             println!("   ✅ Generated files validation passed");
         }
         Err(e) => {
-            let error_msg = format!("   ❌ Generated files validation failed: {}", e);
+            let error_msg = format!("   ❌ Generated files validation failed: {e}");
             errors.push(error_msg.clone());
             if strict {
                 all_passed = false;
             }
             if verbose {
-                println!("{}", error_msg);
+                println!("{error_msg}");
             }
         }
     }
@@ -3318,13 +3304,13 @@ async fn run_contract_check(
             println!("   ✅ Migration progress check passed");
         }
         Err(e) => {
-            let error_msg = format!("   ❌ Migration progress check failed: {}", e);
+            let error_msg = format!("   ❌ Migration progress check failed: {e}");
             errors.push(error_msg.clone());
             if strict {
                 all_passed = false;
             }
             if verbose {
-                println!("{}", error_msg);
+                println!("{error_msg}");
             }
         }
     }
@@ -3337,10 +3323,10 @@ async fn run_contract_check(
                 println!("   ✅ Trend data generated successfully");
             }
             Err(e) => {
-                let error_msg = format!("   ⚠️  Trend generation failed: {}", e);
+                let error_msg = format!("   ⚠️  Trend generation failed: {e}");
                 errors.push(error_msg.clone());
                 if verbose {
-                    println!("{}", error_msg);
+                    println!("{error_msg}");
                 }
                 // Trend generation failure is not critical
             }
@@ -3354,10 +3340,10 @@ async fn run_contract_check(
             println!("   ✅ File type analysis completed");
         }
         Err(e) => {
-            let error_msg = format!("   ⚠️  File type analysis failed: {}", e);
+            let error_msg = format!("   ⚠️  File type analysis failed: {e}");
             errors.push(error_msg.clone());
             if verbose {
-                println!("{}", error_msg);
+                println!("{error_msg}");
             }
             // File type analysis failure is not critical
         }
@@ -3372,7 +3358,7 @@ async fn run_contract_check(
         if !errors.is_empty() {
             println!("\n⚠️  Non-critical warnings:");
             for error in &errors {
-                println!("   {}", error);
+                println!("   {error}");
             }
         }
     } else {
@@ -3380,7 +3366,7 @@ async fn run_contract_check(
         println!("\n❌ Critical errors:");
         for error in &errors {
             if error.contains("❌") {
-                println!("   {}", error);
+                println!("   {error}");
             }
         }
         if strict {
@@ -3394,7 +3380,7 @@ async fn run_contract_check(
     );
     println!("   • Run 'cargo xtask status file-types --format json' for file type breakdown");
     if trend {
-        println!("   • Check '{}' directory for trend data", trend_output);
+        println!("   • Check '{trend_output}' directory for trend data");
     }
 
     Ok(())
@@ -3419,7 +3405,7 @@ fn validate_commit_message(
 
     // Read the commit message
     let commit_msg = fs::read_to_string(&file_path)
-        .with_context(|| format!("Failed to read commit message file: {}", file_path))?;
+        .with_context(|| format!("Failed to read commit message file: {file_path}"))?;
 
     // Trim whitespace and check if empty
     let trimmed_msg = commit_msg.trim();
@@ -3497,27 +3483,24 @@ fn setup_git_aliases(force: bool) -> Result<()> {
     for (alias, command) in aliases {
         // Check if alias already exists
         let existing = Command::new("git")
-            .args(["config", "--get", &format!("alias.{}", alias)])
+            .args(["config", "--get", &format!("alias.{alias}")])
             .output()
             .context("Failed to check existing alias")?;
 
         if existing.status.success() && !force {
-            println!(
-                "   ⚠️  Alias '{}' already exists. Use --force to overwrite.",
-                alias
-            );
+            println!("   ⚠️  Alias '{alias}' already exists. Use --force to overwrite.");
             continue;
         }
 
         // Set the alias using shell command to avoid argument parsing issues
-        let shell_command = format!("git config --local alias.{} '{}'", alias, command);
+        let shell_command = format!("git config --local alias.{alias} '{command}'");
         let status = Command::new("sh")
             .args(["-c", &shell_command])
             .status()
-            .with_context(|| format!("Failed to set alias '{}'", alias))?;
+            .with_context(|| format!("Failed to set alias '{alias}'"))?;
 
         if status.success() {
-            println!("   ✅ Set alias 'git {}' -> '{}'", alias, command);
+            println!("   ✅ Set alias 'git {alias}' -> '{command}'");
         } else {
             anyhow::bail!("Failed to set alias '{}'", alias);
         }
@@ -3592,20 +3575,20 @@ async fn validate_documentation(
             .iter()
             .any(|excluded| file_str.contains(excluded))
         {
-            println!("   ⏭️  Skipping manually maintained file: {}", file_str);
+            println!("   ⏭️  Skipping manually maintained file: {file_str}");
             continue;
         }
 
         // Check if file contains auto-generated marker
-        let content = fs::read_to_string(file)
-            .with_context(|| format!("Failed to read file: {}", file_str))?;
+        let content =
+            fs::read_to_string(file).with_context(|| format!("Failed to read file: {file_str}"))?;
 
         if !content.contains("auto-generated") {
-            let error_msg = format!("Invalid file (no auto-generated marker): {}", file_str);
+            let error_msg = format!("Invalid file (no auto-generated marker): {file_str}");
             errors.push(error_msg.clone());
-            println!("   ❌ {}", error_msg);
+            println!("   ❌ {error_msg}");
         } else {
-            println!("   ✅ Valid generated file: {}", file_str);
+            println!("   ✅ Valid generated file: {file_str}");
         }
     }
 
@@ -3618,13 +3601,13 @@ async fn validate_documentation(
         match docs::validate_generated_files(Path::new("docs")) {
             Ok(_) => println!("✅ Checksum validation passed"),
             Err(e) => {
-                let error_msg = format!("Checksum validation failed: {}", e);
+                let error_msg = format!("Checksum validation failed: {e}");
                 if strict {
                     errors.push(error_msg.clone());
                 } else {
                     warnings.push(error_msg.clone());
                 }
-                println!("❌ {}", error_msg);
+                println!("❌ {error_msg}");
             }
         }
     } else {
@@ -3645,12 +3628,12 @@ async fn validate_documentation(
         } else {
             let warning_msg = "Git attributes may not be properly configured".to_string();
             warnings.push(warning_msg.clone());
-            println!("⚠️  {}", warning_msg);
+            println!("⚠️  {warning_msg}");
         }
     } else {
         let warning_msg = "No .gitattributes file found".to_string();
         warnings.push(warning_msg.clone());
-        println!("⚠️  {}", warning_msg);
+        println!("⚠️  {warning_msg}");
     }
 
     // Generate fresh documentation if requested
@@ -3661,13 +3644,13 @@ async fn validate_documentation(
         match generate_comprehensive_documentation(true, &None, "docs", true).await {
             Ok(_) => println!("✅ Documentation generation successful"),
             Err(e) => {
-                let error_msg = format!("Documentation generation failed: {}", e);
+                let error_msg = format!("Documentation generation failed: {e}");
                 if strict {
                     errors.push(error_msg.clone());
                 } else {
                     warnings.push(error_msg.clone());
                 }
-                println!("❌ {}", error_msg);
+                println!("❌ {error_msg}");
             }
         }
     }
@@ -3684,9 +3667,9 @@ async fn validate_documentation(
 
         if !status.stdout.is_empty() {
             let output = String::from_utf8_lossy(&status.stdout);
-            let warning_msg = format!("Uncommitted changes detected:\n{}", output);
+            let warning_msg = format!("Uncommitted changes detected:\n{output}");
             warnings.push(warning_msg.clone());
-            println!("⚠️  {}", warning_msg);
+            println!("⚠️  {warning_msg}");
 
             if strict {
                 println!();
@@ -3715,14 +3698,14 @@ async fn validate_documentation(
         if !warnings.is_empty() {
             println!("⚠️  Warnings:");
             for warning in &warnings {
-                println!("   {}", warning);
+                println!("   {warning}");
             }
         }
 
         if !errors.is_empty() {
             println!("❌ Errors:");
             for error in &errors {
-                println!("   {}", error);
+                println!("   {error}");
             }
 
             if strict {
@@ -4491,7 +4474,7 @@ async fn run_dead_code_check(
             println!("📋 Dead code errors:");
             for line in error_str.lines() {
                 if line.contains("dead_code") {
-                    println!("  {}", line);
+                    println!("  {line}");
                 }
             }
         }

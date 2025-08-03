@@ -61,7 +61,7 @@ pub trait ConfigFile: Serialize + for<'de> Deserialize<'de> {
     fn save_to_file(&self, path: &str) -> Result<()> {
         let yaml = serde_yaml::to_string(self)?;
         std::fs::write(path, yaml)?;
-        println!("📝 Generated: {}", path);
+        println!("📝 Generated: {path}");
         Ok(())
     }
 

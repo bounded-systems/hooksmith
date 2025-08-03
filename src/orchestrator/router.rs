@@ -105,8 +105,8 @@ impl CommandRouter {
 
         // Create build configuration
         let _config = BuildConfig {
-            source_path: format!("hooks/{}.rs", hook_name),
-            output_path: format!("{}/{}", output_dir, hook_name),
+            source_path: format!("hooks/{hook_name}.rs"),
+            output_path: format!("{output_dir}/{hook_name}"),
             target_triple: None,
             optimization_level: 2,
             debug_symbols: false,
@@ -116,7 +116,7 @@ impl CommandRouter {
         // For now, return a mock result
         Ok(CommandResult {
             success: true,
-            output: format!("Built hook '{}' to '{}'", hook_name, output_dir),
+            output: format!("Built hook '{hook_name}' to '{output_dir}'"),
             error: None,
             duration_ms: 0,
         })
@@ -153,7 +153,7 @@ impl CommandRouter {
         // For now, return a mock result
         Ok(CommandResult {
             success: true,
-            output: format!("Generated Lefthook configuration: {}", output_file),
+            output: format!("Generated Lefthook configuration: {output_file}"),
             error: None,
             duration_ms: 0,
         })
@@ -197,7 +197,7 @@ impl CommandRouter {
                 // TODO: Actually call the worktree-manager component
                 Ok(CommandResult {
                     success: true,
-                    output: format!("Created worktree for branch: {}", branch_name),
+                    output: format!("Created worktree for branch: {branch_name}"),
                     error: None,
                     duration_ms: 0,
                 })
@@ -230,7 +230,7 @@ impl CommandRouter {
                 // TODO: Actually call the worktree-manager component
                 Ok(CommandResult {
                     success: true,
-                    output: format!("Switched to worktree: {}", worktree_name),
+                    output: format!("Switched to worktree: {worktree_name}"),
                     error: None,
                     duration_ms: 0,
                 })
@@ -261,8 +261,7 @@ impl CommandRouter {
                 Ok(CommandResult {
                     success: true,
                     output: format!(
-                        "Removed worktree: {} (with_branch: {})",
-                        worktree_name, with_branch
+                        "Removed worktree: {worktree_name} (with_branch: {with_branch})"
                     ),
                     error: None,
                     duration_ms: 0,
@@ -271,7 +270,7 @@ impl CommandRouter {
             _ => Ok(CommandResult {
                 success: false,
                 output: "".to_string(),
-                error: Some(format!("Unknown worktree operation: {}", operation)),
+                error: Some(format!("Unknown worktree operation: {operation}")),
                 duration_ms: 0,
             }),
         }
@@ -286,14 +285,14 @@ impl CommandRouter {
 
         let _config = ValidationConfig {
             validation_type: super::ValidationType::LefthookConfig,
-            data: format!("Validating configuration: {}", config_path),
+            data: format!("Validating configuration: {config_path}"),
             schema: None,
         };
 
         // TODO: Actually call the validation component
         Ok(CommandResult {
             success: true,
-            output: format!("Configuration validated successfully: {}", config_path),
+            output: format!("Configuration validated successfully: {config_path}"),
             error: None,
             duration_ms: 0,
         })
@@ -344,7 +343,7 @@ impl CommandRouter {
         let mut output = String::new();
         output.push_str("Installing hooks:\n");
         for hook in &hooks {
-            output.push_str(&format!("- {}\n", hook));
+            output.push_str(&format!("- {hook}\n"));
         }
 
         // TODO: Actually install the hooks
@@ -368,7 +367,7 @@ impl CommandRouter {
 
         Ok(CommandResult {
             success: true,
-            output: format!("Test successful: {}", message),
+            output: format!("Test successful: {message}"),
             error: None,
             duration_ms: 0,
         })

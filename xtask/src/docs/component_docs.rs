@@ -34,7 +34,7 @@ pub fn generate_component_docs(component_path: &str, project_data: &ProjectData)
         if !component.dependencies.is_empty() {
             content.push_str("## Dependencies\n\n");
             for dep in &component.dependencies {
-                content.push_str(&format!("- {}\n", dep));
+                content.push_str(&format!("- {dep}\n"));
             }
             content.push('\n');
         }
@@ -43,7 +43,7 @@ pub fn generate_component_docs(component_path: &str, project_data: &ProjectData)
         if !component.features.is_empty() {
             content.push_str("## Features\n\n");
             for feature in &component.features {
-                content.push_str(&format!("- {}\n", feature));
+                content.push_str(&format!("- {feature}\n"));
             }
             content.push('\n');
         }
@@ -94,7 +94,7 @@ pub fn generate_component_docs(component_path: &str, project_data: &ProjectData)
         content.push_str("```\n\n");
     } else {
         // Fallback for components not found in extracted data
-        content.push_str(&format!("# {}\n\n", component_name));
+        content.push_str(&format!("# {component_name}\n\n"));
         content.push_str("Component documentation.\n\n");
         content.push_str("## Dependencies\n\n");
         content.push_str("See Cargo.toml for dependencies.\n\n");
@@ -128,7 +128,7 @@ fn extract_api_documentation(component_path: &Path) -> Result<Option<String>> {
 
     if let Some(file_path) = source_file {
         let content = fs::read_to_string(&file_path)
-            .context(format!("Failed to read source file: {:?}", file_path))?;
+            .context(format!("Failed to read source file: {file_path:?}"))?;
 
         let mut api_docs = String::new();
         let lines: Vec<&str> = content.lines().collect();
@@ -159,13 +159,13 @@ fn extract_api_documentation(component_path: &Path) -> Result<Option<String>> {
                 // Add documentation
                 if !docs.is_empty() {
                     for doc in &docs {
-                        api_docs.push_str(&format!("{}\n", doc));
+                        api_docs.push_str(&format!("{doc}\n"));
                     }
                     api_docs.push('\n');
                 }
 
                 // Add the item signature
-                api_docs.push_str(&format!("```rust\n{}\n```\n\n", trimmed));
+                api_docs.push_str(&format!("```rust\n{trimmed}\n```\n\n"));
             }
         }
 

@@ -153,7 +153,7 @@ async fn contract_build(config: ContractConfig, force: bool) -> Result<()> {
                 }
             }
             Err(e) => {
-                let error = format!("❌ Bootstrap failed: {}", e);
+                let error = format!("❌ Bootstrap failed: {e}");
                 errors.push(error);
                 return Err(anyhow::anyhow!("Bootstrap step failed: {}", e));
             }
@@ -168,7 +168,7 @@ async fn contract_build(config: ContractConfig, force: bool) -> Result<()> {
                 steps_completed.push("✅ Codegen files regenerated");
             }
             Err(e) => {
-                let error = format!("❌ Codegen regeneration failed: {}", e);
+                let error = format!("❌ Codegen regeneration failed: {e}");
                 errors.push(error);
                 return Err(anyhow::anyhow!("Codegen step failed: {}", e));
             }
@@ -183,7 +183,7 @@ async fn contract_build(config: ContractConfig, force: bool) -> Result<()> {
                 steps_completed.push("✅ Generated files validated");
             }
             Err(e) => {
-                let error = format!("❌ Generated file validation failed: {}", e);
+                let error = format!("❌ Generated file validation failed: {e}");
                 errors.push(error);
                 return Err(anyhow::anyhow!("Validation step failed: {}", e));
             }
@@ -198,7 +198,7 @@ async fn contract_build(config: ContractConfig, force: bool) -> Result<()> {
                 steps_completed.push("✅ Components built");
             }
             Err(e) => {
-                let error = format!("❌ Component build failed: {}", e);
+                let error = format!("❌ Component build failed: {e}");
                 errors.push(error);
                 return Err(anyhow::anyhow!("Build step failed: {}", e));
             }
@@ -213,7 +213,7 @@ async fn contract_build(config: ContractConfig, force: bool) -> Result<()> {
                 steps_completed.push("✅ Tests passed");
             }
             Err(e) => {
-                let error = format!("❌ Tests failed: {}", e);
+                let error = format!("❌ Tests failed: {e}");
                 errors.push(error);
                 return Err(anyhow::anyhow!("Test step failed: {}", e));
             }
@@ -228,7 +228,7 @@ async fn contract_build(config: ContractConfig, force: bool) -> Result<()> {
                 steps_completed.push("✅ Git hooks verified");
             }
             Err(e) => {
-                let error = format!("❌ Hook verification failed: {}", e);
+                let error = format!("❌ Hook verification failed: {e}");
                 errors.push(error);
                 return Err(anyhow::anyhow!("Hook verification failed: {}", e));
             }
@@ -243,7 +243,7 @@ async fn contract_build(config: ContractConfig, force: bool) -> Result<()> {
                 steps_completed.push("✅ Git attributes validated");
             }
             Err(e) => {
-                let error = format!("❌ Git attributes validation failed: {}", e);
+                let error = format!("❌ Git attributes validation failed: {e}");
                 errors.push(error);
                 return Err(anyhow::anyhow!("Git attributes validation failed: {}", e));
             }
@@ -258,7 +258,7 @@ async fn contract_build(config: ContractConfig, force: bool) -> Result<()> {
                 steps_completed.push("✅ Generated files committed");
             }
             Err(e) => {
-                let error = format!("❌ Commit failed: {}", e);
+                let error = format!("❌ Commit failed: {e}");
                 errors.push(error);
                 return Err(anyhow::anyhow!("Commit step failed: {}", e));
             }
@@ -269,13 +269,13 @@ async fn contract_build(config: ContractConfig, force: bool) -> Result<()> {
     println!("\n🎉 Contract Build Completed Successfully!");
     println!("Steps completed:");
     for step in steps_completed {
-        println!("  {}", step);
+        println!("  {step}");
     }
 
     if !errors.is_empty() {
         println!("\n❌ Errors encountered:");
         for error in errors {
-            println!("  {}", error);
+            println!("  {error}");
         }
     }
 
@@ -310,7 +310,7 @@ async fn contract_check(
             checks_passed.push("✅ Generated files are up to date");
         }
         Err(e) => {
-            let error = format!("❌ Generated files validation failed: {}", e);
+            let error = format!("❌ Generated files validation failed: {e}");
             checks_failed.push(error);
         }
     }
@@ -322,7 +322,7 @@ async fn contract_check(
             checks_passed.push("✅ Project builds successfully");
         }
         Err(e) => {
-            let error = format!("❌ Project build validation failed: {}", e);
+            let error = format!("❌ Project build validation failed: {e}");
             checks_failed.push(error);
         }
     }
@@ -334,7 +334,7 @@ async fn contract_check(
             checks_passed.push("✅ Tests pass");
         }
         Err(e) => {
-            let error = format!("❌ Test validation failed: {}", e);
+            let error = format!("❌ Test validation failed: {e}");
             checks_failed.push(error);
         }
     }
@@ -346,7 +346,7 @@ async fn contract_check(
             checks_passed.push("✅ Git hooks are installed");
         }
         Err(e) => {
-            let error = format!("❌ Git hooks validation failed: {}", e);
+            let error = format!("❌ Git hooks validation failed: {e}");
             checks_failed.push(error);
         }
     }
@@ -358,7 +358,7 @@ async fn contract_check(
             checks_passed.push("✅ Git attributes are configured");
         }
         Err(e) => {
-            let error = format!("❌ Git attributes validation failed: {}", e);
+            let error = format!("❌ Git attributes validation failed: {e}");
             checks_failed.push(error);
         }
     }
@@ -370,7 +370,7 @@ async fn contract_check(
             checks_passed.push("✅ No linter warnings");
         }
         Err(e) => {
-            let error = format!("❌ Linter validation failed: {}", e);
+            let error = format!("❌ Linter validation failed: {e}");
             checks_failed.push(error);
         }
     }
@@ -379,21 +379,21 @@ async fn contract_check(
     println!("\n📊 Contract Check Results:");
     println!("Checks passed: {}", checks_passed.len());
     for check in checks_passed {
-        println!("  {}", check);
+        println!("  {check}");
     }
 
     if !checks_failed.is_empty() {
         let failed_count = checks_failed.len();
-        println!("\nChecks failed: {}", failed_count);
+        println!("\nChecks failed: {failed_count}");
         for check in &checks_failed {
-            println!("  {}", check);
+            println!("  {check}");
         }
 
         // Show actionable error message
         let message = custom_message.unwrap_or_else(|| {
             "❌ Hooksmith contract check failed!\nRun `cargo xtask contract --build` to regenerate configs/docs/hooks.".to_string()
         });
-        println!("\n{}", message);
+        println!("\n{message}");
 
         if strict {
             return Err(anyhow::anyhow!(
@@ -753,9 +753,9 @@ mod tests {
         use clap::Parser;
 
         // This should not panic
-        let _cli = ContractCli::parse_from(&["xtask", "contract", "build"]);
-        let _cli = ContractCli::parse_from(&["xtask", "contract", "check"]);
-        let _cli = ContractCli::parse_from(&["xtask", "contract", "build", "--commit"]);
-        let _cli = ContractCli::parse_from(&["xtask", "contract", "check", "--strict"]);
+        let _cli = ContractCli::parse_from(["xtask", "contract", "build"]);
+        let _cli = ContractCli::parse_from(["xtask", "contract", "check"]);
+        let _cli = ContractCli::parse_from(["xtask", "contract", "build", "--commit"]);
+        let _cli = ContractCli::parse_from(["xtask", "contract", "check", "--strict"]);
     }
 }

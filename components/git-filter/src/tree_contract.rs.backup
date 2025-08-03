@@ -131,7 +131,8 @@ impl TreeEntryContract {
             // Check if this is a generated file that needs linguist-generated=true
             if Self::is_generated_file(&filename) {
                 errors.push(format!(
-                    "Generated file '{filename}' must have 'linguist-generated=true' attribute"
+                    "Generated file '{}' must have 'linguist-generated=true' attribute",
+                    filename
                 ));
                 valid = false;
             }
@@ -178,7 +179,8 @@ impl TreeEntryContract {
             // Check if this is a generated file that needs linguist-generated=true
             if Self::is_generated_file(&filename) {
                 errors.push(format!(
-                    "Generated file '{filename}' must have 'linguist-generated=true' attribute"
+                    "Generated file '{}' must have 'linguist-generated=true' attribute",
+                    filename
                 ));
                 valid = false;
             }
@@ -263,14 +265,16 @@ impl TreeEntryContract {
         // Check if generated files have the required linguist-generated=true attribute
         if Self::is_generated_file(filename) && !has_linguist_generated {
             errors.push(format!(
-                "Generated file '{filename}' must have 'linguist-generated=true' attribute"
+                "Generated file '{}' must have 'linguist-generated=true' attribute",
+                filename
             ));
         }
 
         // Check if non-generated files incorrectly have linguist-generated=true
         if !Self::is_generated_file(filename) && has_linguist_generated {
             errors.push(format!(
-                "Non-generated file '{filename}' should not have 'linguist-generated=true' attribute"
+                "Non-generated file '{}' should not have 'linguist-generated=true' attribute",
+                filename
             ));
         }
 
@@ -409,7 +413,9 @@ impl TreeObjectContract {
         if valid_entries == total_entries {
             format!("✅ Tree valid ({total_entries} entries)")
         } else {
-            format!("❌ Tree invalid ({valid_entries} valid / {total_entries} total entries)")
+            format!(
+                "❌ Tree invalid ({valid_entries} valid / {total_entries} total entries)"
+            )
         }
     }
 

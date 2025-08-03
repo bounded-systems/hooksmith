@@ -246,7 +246,7 @@ pub fn list_documentation_configs() -> Result<()> {
         println!("   Generator: {}", doc.generator);
         println!("   Partial Edit: {}", doc.partial_edit);
         if let Some(template) = &doc.template {
-            println!("   Template: {}", template);
+            println!("   Template: {template}");
         }
         if !doc.config.is_empty() {
             println!("   Config: {:?}", doc.config);

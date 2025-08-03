@@ -433,11 +433,11 @@ impl HierarchicalValidator {
         let commit_hash = self.get_current_commit_hash().await?;
 
         Ok(ValidationNote {
-            scope: format!("{:?}", scope).to_lowercase(),
+            scope: format!("{scope:?}").to_lowercase(),
             file: file.to_string_lossy().to_string(),
             range: range.clone(),
             hash,
-            parent_scope: scope.parent().map(|s| format!("{:?}", s).to_lowercase()),
+            parent_scope: scope.parent().map(|s| format!("{s:?}").to_lowercase()),
             parent_hash: None,        // Will be set by caller
             child_scopes: Vec::new(), // Will be set by caller
             validated,
@@ -673,8 +673,7 @@ impl HierarchicalValidator {
                     }
                 } else {
                     eprintln!(
-                        "Validation chain integrity error: parent note {} not found",
-                        parent_hash
+                        "Validation chain integrity error: parent note {parent_hash} not found"
                     );
                     return Ok(false);
                 }
