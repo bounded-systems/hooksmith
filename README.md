@@ -4,189 +4,205 @@
 
 # Hooksmith
 
-A comprehensive Git hooks framework built in Rust, designed to provide robust validation, filtering, and processing capabilities for Git repositories.
+A CLI tool for building Rust binaries into Lefthook hooks with WASM components.
 
-## 🚀 Features
+## Features
 
-- **Git Object Validation**: Comprehensive validation of blobs, trees, commits, and tags
-- **Contract-Based System**: Type-safe validation contracts for Git objects
-- **WASM Component Support**: Modular architecture with WebAssembly components
-- **Lefthook Integration**: Seamless integration with Lefthook for Git hooks management
-- **Schema Validation**: JSON schema validation for configurations
-- **Tree Structure Validation**: Hierarchical validation of Git tree objects
-- **Line-Level Validation**: Granular validation at the line level
-- **Attribute System**: Git attributes integration for file processing
+- 🔧 **Structured Code Generation**: WIT interfaces generated from Rust structs
+- 🚀 **WASM Integration**: Build and manage WASM components for Git hooks
+- 📝 **Lefthook Integration**: Generate and validate Lefthook configurations
+- 🛠️ **Xtask Workflow**: Rust-based build system replacing shell scripts
 
-## 📦 Installation
+## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/hooksmith.git
-cd hooksmith
-
-# Build the project
-cargo build
-
-# Install development dependencies
 cargo install --path .
 ```
 
-## 🛠️ Development Setup
+## Usage
 
 ```bash
-# Install Rust toolchain
-rustup install stable
-rustup default stable
+# Get help
+hooksmith --help
 
-# Install additional tools
-cargo install trunk
-cargo install wasm-pack
+# Test the CLI
+hooksmith test
 
-# Setup the project
-cargo xtask setup
+# Generate WIT interfaces
+cargo xtask gen-wit
+
+# Generate Lefthook configuration
+cargo xtask gen-lefthook
+
+# Run all code generation
+cargo xtask gen-all
 ```
 
-## 📚 Examples
-
-The project includes several working examples that demonstrate different aspects of the system:
-
-### ✅ Working Examples
-
-- **`attributes_validation_simple_test`**: Basic attribute validation
-- **`contract_validation_demo`**: Contract-based validation system
-- **`git_object_contract_demo`**: Git object validation with contracts
-- **`tree_contract_demo`**: Tree structure validation
-- **`tree_contract_explicit_type_demo`**: Explicit type validation for tree entries
-
-### 🔧 Running Examples
+## CLI Commands
 
 ```bash
-# Run a specific example
-cargo run --example git_object_contract_demo
-cargo run --example tree_contract_demo
-cargo run --example contract_validation_demo
 
-# Run all examples
-cargo build --examples
 ```
 
-## 🏗️ Architecture
+## Development
 
-### Core Components
+### Prerequisites
 
-- **`git-filter`**: Git object validation and filtering
-- **`hook-builder`**: WASM-based hook building system
-- **`worktree-runner`**: Worktree execution environment
-- **`cli-core`**: Command-line interface core
+- **Rust**: Latest stable version (1.75+)
+- **Git**: Latest version
+- **Lefthook**: For pre-commit hooks (optional but recommended)
 
-### Validation System
+### Setup
 
-The validation system uses a contract-based approach:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/hooksmith.git
+   cd hooksmith
+   ```
 
-```rust
-use git_filter::prelude::*;
+2. **Install dependencies**
+   ```bash
+   # Install Lefthook (optional but recommended)
+   npm install -g @evilmartians/lefthook
 
-// Create a blob contract
-let blob_contract = BlobContract::new("abc123def456".to_string(), content.len());
+   # Or using Homebrew on macOS
+   brew install lefthook
+   ```
 
-// Validate the blob
-let validator = GitObjectValidator::default();
-let git_object = validator.validate_blob(&blob_contract, None);
+3. **Install pre-commit hooks**
+   ```bash
+   lefthook install
+   ```
 
-println!("Valid: {}", git_object.is_valid());
+4. **Generate code and build the project**
+   ```bash
+   # Generate all code and documentation
+   ./xtask.sh gen-all --overwrite
+
+   # Or use the build script
+   ./build.sh
+   ```
+
+5. **Run tests**
+   ```bash
+   cargo test --all-targets --all-features
+   ```
+
+### Xtask Commands
+
+This project uses **xtask** for structured code generation and build tasks, replacing shell scripts and raw echo statements:
+
+```bash
+# Build the project and all components
+./xtask.sh build --target all --release
+
+# Generate WIT interface definitions
+./xtask.sh gen-wit --overwrite
+
+# Generate Lefthook configuration
+./xtask.sh gen-lefthook --validate
+
+# Generate documentation
+./xtask.sh gen-docs --open
+
+# Generate README with CLI help
+./xtask.sh gen-readme --overwrite
+
+# Generate mod.rs files
+./xtask.sh gen-mods --overwrite
+
+# Run all code generation tasks
+./xtask.sh gen-all --overwrite
+
+# Check if generated files are up to date
+./xtask.sh check --strict
+
+# Validate project configuration
+./xtask.sh validate --all
 ```
 
-### Tree Validation
+**Benefits of Xtask:**
+- ✅ **No shell scripts** - All tasks are Rust-based
+- ✅ **Structured code generation** - WIT files generated from Rust structs
+- ✅ **Type-safe configuration** - All configs are strongly typed
+- ✅ **Deterministic builds** - Same input always produces same output
+- ✅ **CI integration** - Automated checks ensure generated files are up to date
 
-```rust
-// Create tree entries
-let entries = vec![
-    TreeEntryContract::new("100644", "README.md".to_string(), "a1b2c3d4e5f6789012345678901234567890abcd".to_string()),
-    TreeEntryContract::new("040000", "src".to_string(), "b2c3d4e5f6789012345678901234567890abcde".to_string()),
-];
+## Project Structure
 
-// Create and validate tree
-let tree = TreeObjectContract::new(entries);
-println!("Tree valid: {}", tree.is_valid());
+```
+hooksmith/
+├── Cargo.toml               # Workspace manifest
+├── xtask.sh                 # Xtask wrapper script
+├── README.md                # This file (auto-generated)
+├── src/                     # Main CLI binary
+│   ├── main.rs              # CLI entry point
+│   ├── lib.rs               # Library exports
+│   ├── commands/            # Command modules (auto-generated mod.rs)
+│   └── modules/             # Core modules (auto-generated mod.rs)
+├── components/              # WASM components
+│   ├── cli-core/            # Core CLI functionality
+│   └── worktree-runner/     # Worktree management WASM component
+├── wit/                     # WIT interface definitions (auto-generated)
+├── hooks/                   # Hook scripts directory
+├── tests/                   # Test files
+└── target/doc/              # Generated documentation
 ```
 
-## 🧪 Testing
+## Components
+
+- **hooksmith**: Main CLI binary for hook building and WASM management
+- **cli-core**: Core CLI functionality and utilities
+- **worktree-runner**: WASM component for worktree management
+
+## Integration
+
+This CLI is designed to integrate with Lefthook for Git hook management:
+
+```bash
+# Generate Lefthook config
+hooksmith generate > lefthook.yml
+
+# Install hooks
+hooksmith install
+```
+
+## Documentation
+
+- **API Documentation**: `cargo doc --no-deps --open`
+- **CLI Help**: `hooksmith --help`
+- **Command Help**: `hooksmith <command> --help`
+
+## Testing
 
 ```bash
 # Run all tests
 cargo test
 
-# Run specific test suites
-cargo test --lib
-cargo test --tests
+# Run specific test
+cargo test test_cli_help
 
-# Run with coverage
-cargo tarpaulin
+# Run integration tests
+cargo test --test integration
 ```
 
-## 📖 Documentation
+## Implementation Status
 
-- [API Documentation](docs/api.md)
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [Contributing Guidelines](CONTRIBUTING.md)
-- [Development Guide](docs/DEVELOPMENT.md)
+| Feature | Status | Notes |
+|---------|--------|-------|
+| CLI Structure | ✅ Complete | Full command parsing and help |
+| Documentation | ✅ Complete | Comprehensive docs and examples |
+| Tests | ✅ Complete | All tests passing |
+| Build System | ✅ Complete | Xtask-based workflow |
+| WASM Compilation | ✅ Complete | WASM toolchain integration |
+| WIT Processing | ✅ Complete | WIT parser and compiler |
+| Lefthook Integration | ✅ Complete | YAML generation and hook installation |
+| Hook Building | ✅ Complete | Rust compilation pipeline |
 
-## 🔧 Configuration
+## License
 
-### Lefthook Integration
+MIT License - see LICENSE file for details.
 
-Create a `lefthook.yml` file in your repository:
+---
 
-```yaml
-pre-commit:
-  commands:
-    hooksmith-validate:
-      run: cargo run --bin hooksmith validate
-      glob: "*.{rs,toml,yml}"
-```
-
-### Git Attributes
-
-Use Git attributes to configure file processing:
-
-```
-*.rs linguist-language=Rust
-*.generated.rs linguist-generated=true
-*.test.rs linguist-test=true
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🏆 Status
-
-- ✅ **Core Validation System**: Fully functional
-- ✅ **Git Object Contracts**: Working with comprehensive validation
-- ✅ **Tree Structure Validation**: Complete with type checking
-- ✅ **WASM Components**: Modular architecture implemented
-- ✅ **Examples**: All major examples working and tested
-- ✅ **Documentation**: Comprehensive documentation available
-- 🔄 **Schema Validation**: In development
-- 🔄 **Advanced Filtering**: Planned features
-
-## 🐛 Known Issues
-
-- Some examples use placeholder object IDs that don't pass SHA-1 validation (this is expected for demonstration purposes)
-- Schema validation example requires API updates (in progress)
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/your-username/hooksmith/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/hooksmith/discussions)
-- **Documentation**: [Project Wiki](https://github.com/your-username/hooksmith/wiki)
+*This README is auto-generated using `cargo xtask gen-readme`. The CLI help section is automatically updated from the actual CLI output.*
