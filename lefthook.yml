@@ -9,9 +9,7 @@ pre-commit:
       glob: "*.rs"
       run: cargo clippy --workspace --fix --allow-dirty --allow-staged
       stage_fixed: true
-    git-add:
-      run: git add .
-      stage_fixed: true
+
     validate-extensions:
       run: cargo run -p xtask -- contract-validate validate-extensions
     contract-validate:
