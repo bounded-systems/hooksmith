@@ -258,6 +258,20 @@ impl GeneratedFileValidator {
 
     /// Check if a file has a generated header
     fn has_generated_header(file_path: &Path) -> Result<bool> {
+        // Skip binary files
+        let extension = file_path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .unwrap_or("");
+        let binary_extensions = [
+            "epub", "pdf", "png", "jpg", "jpeg", "gif", "ico", "svg", "zip", "tar", "gz",
+        ];
+
+        if binary_extensions.contains(&extension) {
+            // Binary files are considered to have headers (they can't have text headers)
+            return Ok(true);
+        }
+
         let content = std::fs::read_to_string(file_path)
             .context(format!("Failed to read file: {}", file_path.display()))?;
 

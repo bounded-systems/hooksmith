@@ -633,6 +633,7 @@ impl HierarchicalValidator {
                 "notes",
                 "--ref=contract-validation",
                 "add",
+                "-f", // Force overwrite existing notes
                 "-m",
                 &note_json,
             ])
