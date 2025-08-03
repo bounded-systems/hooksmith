@@ -408,4 +408,8 @@ mod tests {
         assert!(toml_content.contains("[package]"));
         assert!(toml_content.contains("name = \"test\""));
     }
+<<<<<<< HEAD
 } 
+=======
+} 
+>>>>>>> 309e0e7c ()
