@@ -297,6 +297,7 @@ cargo build
 │   ├── test_comprehensive_docs.rs
 │   ├── fix_format.sed
 │   ├── SHELL_SCRIPT_MIGRATION_SUMMARY.md
+│   ├── EXAMPLES_FIXES_SUMMARY.md
 │   ├── TEMPLATE_SYSTEM_SUMMARY.md
 │   ├── SHELL_SCRIPT_MIGRATION_COMPLETE.md
 │   ├── test_safeguards.rs

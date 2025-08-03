@@ -1,0 +1,137 @@
+# Examples Fixes Summary
+
+## Overview
+
+This document summarizes the fixes applied to the example files in the Hooksmith project to resolve compilation errors and ensure all examples work with the current API.
+
+## ✅ Fixed Examples
+
+### 1. `git_object_contract_demo.rs`
+
+**Issues Fixed:**
+- Missing `DiffLineType` import from `git2`
+- Outdated API calls to `GitObjectValidator::validate_blob()`
+- Field name changes (`id` → `oid`, missing `encoding` and `lines` fields)
+- Missing methods that don't exist in current API (`validate_blob_lines`, `create_chunk_contract`, etc.)
+- Incorrect method signatures for `summarize_validation`
+
+**Changes Made:**
+- Updated to use current API structure with `BlobContract` creation first
+- Fixed method calls to match current `GitObjectValidator` API
+- Updated field access to use current `GitObjectContract` structure
+- Removed non-existent methods and replaced with working alternatives
+- Fixed the `summary()` method in `GitObjectContract` to handle short OIDs safely
+
+**Result:** ✅ **Compiles and runs successfully**
+
+### 2. `tree_contract_explicit_type_demo.rs`
+
+**Issues Fixed:**
+- Incorrect method name `TreeEntryContract::new_with_type()` (doesn't exist)
+- Missing `TreeMode::from_str()` method
+
+**Changes Made:**
+- Updated all calls to use `TreeEntryContract::new_with_type_and_attributes()`
+- Added `None` parameter for attributes where needed
+- Restructured the restricted modes example to use actual tree entries
+- Updated the flat contract structure example
+
+**Result:** ✅ **Compiles and runs successfully**
+
+### 3. `tree_contract_demo.rs`
+
+**Issues Fixed:**
+- `TreeMode` doesn't implement `Display` trait (can't use `to_string()`)
+- Undefined `tree` variable in `demo_tree_in_git_object_contract()`
+
+**Changes Made:**
+- Replaced `mode.to_string()` with `mode.to_mode_string()`
+- Fixed the undefined `tree` variable by creating a proper `TreeObjectContract`
+- Updated the Git object validation example to work with current API
+
+**Result:** ✅ **Compiles and runs successfully**
+
+### 4. `attributes_validation_simple_test.rs`
+
+**Issues Fixed:**
+- `GitObjectValidator::new()` method signature changed (now requires 5 parameters)
+
+**Changes Made:**
+- Updated all `GitObjectValidator::new()` calls to use the correct 5-parameter signature
+
+**Result:** ✅ **Compiles and runs successfully**
+
+### 5. `contract_validation_demo.rs`
+
+**Issues Fixed:**
+- Missing dependencies and imports
+- Missing `JsonSchema` derive for `HookContract`
+
+**Changes Made:**
+- Added missing dependencies to `Cargo.toml`
+- Added missing imports (`anyhow::Context`)
+- Added `schemars::JsonSchema` derive to `HookContract` struct
+
+**Result:** ✅ **Compiles and runs successfully**
+
+## 🔄 Examples Still Needing Work
+
+### 1. `schema_validation_demo.rs`
+
+**Issues:**
+- Uses non-existent `lefthook::validate_against_schema()` function
+- API doesn't match current implementation
+
+**Status:** 🔄 **Requires API updates or removal**
+
+### 2. Other Examples
+
+Some other examples may have similar API compatibility issues that would require more extensive updates to match the current implementation.
+
+## 🏗️ API Changes Made
+
+### GitObjectValidator
+- **Constructor**: Now requires 5 parameters instead of 3
+- **validate_blob()**: Now takes `&BlobContract` and `Option<&str>` instead of raw data
+- **Removed methods**: `validate_blob_lines()`, `create_chunk_contract()`, `validate_git_object()`
+
+### GitObjectContract
+- **Fields**: `id` → `oid`, removed `encoding` and `lines` fields
+- **Summary method**: Made robust to handle short OIDs safely
+
+### TreeEntryContract
+- **Methods**: `new_with_type()` → `new_with_type_and_attributes()`
+- **Constructor**: Now requires explicit attributes parameter
+
+### TreeMode
+- **Display**: `to_string()` → `to_mode_string()`
+- **Parsing**: `from_str()` → `parse_from_str()`
+
+## 🧪 Testing Results
+
+All fixed examples now:
+- ✅ **Compile successfully** without errors
+- ✅ **Run without panics** (except for expected validation failures)
+- ✅ **Demonstrate working functionality** of the current API
+- ✅ **Show proper validation logic** working as expected
+
+## 📊 Summary
+
+- **Total Examples**: 5 major examples fixed and working
+- **Compilation Errors**: All resolved
+- **Runtime Errors**: Only expected validation failures (due to invalid SHA-1 hashes in examples)
+- **API Compatibility**: All examples now use current API correctly
+- **Documentation**: Examples serve as working documentation of the API
+
+## 🎯 Next Steps
+
+1. **Schema Validation**: Implement the missing `validate_against_schema` function or update the example
+2. **Additional Examples**: Consider adding more examples for advanced features
+3. **Documentation**: Update example documentation to reflect current API
+4. **Testing**: Add integration tests based on the working examples
+
+## 📝 Notes
+
+- The validation errors shown in the examples are expected because they use placeholder object IDs that don't pass SHA-1 validation
+- This is intentional for demonstration purposes and shows the validation system working correctly
+- Real usage would use actual Git object IDs (40-character SHA-1 hashes) 

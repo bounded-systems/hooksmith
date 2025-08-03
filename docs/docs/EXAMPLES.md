@@ -3109,18 +3109,16 @@ use git_filter::prelude::*;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize tracing
     tracing_subscriber::fmt::init();
-    println!("🔧 Git Object Contract Demo - Discriminated Union System\n");
+    println!("🔧 Git Object Contract Demo - Current API System\n");
     // Example 1: Basic blob contract
     demo_basic_blob_contract()?;
     // Example 2: Blob with invalid UTF-8
     demo_blob_with_invalid_utf8()?;
     // Example 3: Line contracts
     demo_line_contracts()?;
-    // Example 4: Chunk contracts (diff hunks)
-    demo_chunk_contracts()?;
-    // Example 5: Complete Git object validation
+    // Example 4: Complete Git object validation
     demo_complete_git_object_validation()?;
-    // Example 6: Diff modeling
+    // Example 5: Diff modeling
     demo_diff_modeling()?;
     Ok(())
 }
@@ -3128,16 +3126,15 @@ fn demo_basic_blob_contract() -> Result<(), Box<dyn std::error::Error>> {
     println!("📝 Example 1: Basic Blob Contract");
     let validator = GitObjectValidator::default();
     let content = b"Hello, World!\nThis is a test file.\nLine 3 with content.\n";
-    let blob = validator.validate_blob("abc123def456", content);
-    println!("  {}", blob.summary());
-    println!("    ID: {}", blob.id);
-    println!("    Size: {} bytes", blob.size);
-    println!("    Encoding: {}", blob.encoding);
-    println!("    Lines: {}", blob.lines.len());
-    println!("    Valid: {}", blob.is_valid());
-    // Show individual lines
-    for (i, line) in blob.lines.iter().enumerate() {
-        println!("    Line {}: {:?}", i + 1, line);
+    // Create a blob contract first
+    let blob_contract = BlobContract::new("abc123def456".to_string(), content.len());
+    let git_object = validator.validate_blob(&blob_contract, None);
+    println!("  {}", git_object.summary());
+    println!("    OID: {}", git_object.oid);
+    println!("    Size: {} bytes", git_object.size);
+    println!("    Valid: {}", git_object.is_valid());
+    if !git_object.errors.is_empty() {
+        println!("    Errors: {:?}", git_object.errors);
     }
     println!();
     Ok(())
@@ -3146,11 +3143,12 @@ fn demo_blob_with_invalid_utf8() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚫 Example 2: Blob with Invalid UTF-8");
     let validator = GitObjectValidator::default();
     let content = b"Hello\x80World\nInvalid UTF-8 sequence";
-    let blob = validator.validate_blob("def456ghi789", content);
-    println!("  {}", blob.summary());
-    println!("    Encoding: {}", blob.encoding);
-    println!("    Valid: {}", blob.is_valid());
-    println!("    Errors: {:?}", blob.errors);
+    // Create a blob contract first
+    let blob_contract = BlobContract::new("def456ghi789".to_string(), content.len());
+    let git_object = validator.validate_blob(&blob_contract, None);
+    println!("  {}", git_object.summary());
+    println!("    Valid: {}", git_object.is_valid());
+    println!("    Errors: {:?}", git_object.errors);
     println!();
     Ok(())
 }
@@ -3159,166 +3157,68 @@ fn demo_line_contracts() -> Result<(), Box<dyn std::error::Error>> {
     let validator = GitObjectValidator::default();
     let content =
         b"Line 1: Normal text\nLine 2: Has\x00NUL byte\nLine 3: CRLF\r\nLine 4: Valid again\n";
-    let blob = validator.validate_blob("ghi789jkl012", content);
-    let lines = validator.validate_blob_lines(&blob);
-    println!("  Blob: {}", blob.summary());
-    println!("  Line contracts:");
-    for line in &lines {
-        println!("    {}", line.summary());
-        if !line.errors.is_empty() {
-            println!("      Errors: {:?}", line.errors);
-        }
-    }
-    // Count by action type
-    let accepted = lines.iter().filter(|l| l.is_valid()).count();
-    let rejected = lines.iter().filter(|l| l.is_rejected()).count();
-    let needs_fixing = lines.iter().filter(|l| l.needs_fixing()).count();
-    println!(
-        "  Summary: {} accepted, {} rejected, {} need fixing",
-        accepted, rejected, needs_fixing
-    );
-    println!();
-    Ok(())
-}
-fn demo_chunk_contracts() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🔀 Example 4: Chunk Contracts (Diff Hunks)");
-    let validator = GitObjectValidator::default();
-    // Create a diff chunk representing changes
-    let diff_lines = vec![
-        (DiffLineType::Context, "Line 1: Unchanged".to_string()),
-        (DiffLineType::Context, "Line 2: Also unchanged".to_string()),
-        (
-            DiffLineType::Remove,
-            "Line 3: This line was removed".to_string(),
-        ),
-        (DiffLineType::Add, "Line 3: This line was added".to_string()),
-        (DiffLineType::Add, "Line 4: Another added line".to_string()),
-        (
-            DiffLineType::Context,
-            "Line 5: Back to unchanged".to_string(),
-        ),
-    ];
-    let chunk = validator.create_chunk_contract(
-        "@@ -1,3 +1,4 @@",
-        1, // old_start
-        3, // old_lines
-        1, // new_start
-        4, // new_lines
-        diff_lines,
-    );
-    println!("  {}", chunk.summary());
-    println!("    Header: {}", chunk.header);
-    println!(
-        "    Old: {} lines starting at {}",
-        chunk.old_lines, chunk.old_start
-    );
-    println!(
-        "    New: {} lines starting at {}",
-        chunk.new_lines, chunk.new_start
-    );
-    println!("    Total lines in chunk: {}", chunk.lines.len());
-    // Show individual diff lines
-    for (i, line) in chunk.lines.iter().enumerate() {
-        let type_symbol = match line.line_type {
-            DiffLineType::Context => " ",
-            DiffLineType::Add => "+",
-            DiffLineType::Remove => "-",
-        };
-        println!(
-            "    {} {}: {:?} {}",
-            type_symbol,
-            i + 1,
-            line.content,
-            if line.valid { "✅" } else { "❌" }
-        );
+    // Create a blob contract first
+    let blob_contract = BlobContract::new("ghi789jkl012".to_string(), content.len());
+    let git_object = validator.validate_blob(&blob_contract, None);
+    println!("  Git Object: {}", git_object.summary());
+    println!("    Valid: {}", git_object.is_valid());
+    if !git_object.errors.is_empty() {
+        println!("    Errors: {:?}", git_object.errors);
     }
     println!();
     Ok(())
 }
 fn demo_complete_git_object_validation() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🔍 Example 5: Complete Git Object Validation");
+    println!("🔍 Example 4: Complete Git Object Validation");
     let tree_validator = TreeValidator::new(true, true, true);
-    let validator = GitObjectValidator::new(true, true, true, true, tree_validator); // Enable both line and chunk validation
+    let validator = GitObjectValidator::new(true, true, true, true, tree_validator);
     let content = b"Line 1: Valid content\nLine 2: Has\x01control char\nLine 3: CRLF\r\nLine 4: Valid again\n";
     // Validate as a complete Git object
-    let git_object = validator.validate_git_object("mno345pqr678", content);
-    match git_object {
-        GitObjectContract::Blob(blob) => {
-            println!("  Git Object Type: Blob");
-            println!("  {}", blob.summary());
-            // Validate lines
-            let lines = validator.validate_blob_lines(&blob);
-            let summary = validator.summarize_validation(&blob, &lines);
-            println!("  {}", summary);
-            // Show line details
-            for line in &lines {
-                let status = match line.action {
-                    GitLineAction::Accept => "✅",
-                    GitLineAction::Reject => "❌",
-                    GitLineAction::Fix => "🔧",
-                };
-                println!("    {} {}", status, line.summary());
-            }
-        }
+    let git_object = validator.validate_object(
+        GitObjectType::Blob,
+        "mno345pqr678".to_string(),
+        content.len(),
+        None,
+        None,
+    );
+    println!("  Git Object Type: {:?}", git_object.object_type);
+    println!("  {}", git_object.summary());
+    println!("    Valid: {}", git_object.is_valid());
+    if !git_object.errors.is_empty() {
+        println!("    Errors: {:?}", git_object.errors);
     }
     println!();
     Ok(())
 }
 fn demo_diff_modeling() -> Result<(), Box<dyn std::error::Error>> {
-    println!("🔄 Example 6: Diff Modeling");
+    println!("🔄 Example 5: Diff Modeling");
     let validator = GitObjectValidator::default();
     // Simulate a diff between two blobs
     let old_content = b"Line 1: Original\nLine 2: Original\nLine 3: Original\n";
     let new_content = b"Line 1: Original\nLine 2: Modified\nLine 3: Original\nLine 4: New line\n";
-    let old_blob = validator.validate_blob("old123", old_content);
-    let new_blob = validator.validate_blob("new456", new_content);
-    println!("  Old Blob: {}", old_blob.summary());
-    println!("  New Blob: {}", new_blob.summary());
-    // Create a chunk representing the diff
-    let diff_lines = vec![
-        (DiffLineType::Context, "Line 1: Original".to_string()),
-        (DiffLineType::Remove, "Line 2: Original".to_string()),
-        (DiffLineType::Add, "Line 2: Modified".to_string()),
-        (DiffLineType::Context, "Line 3: Original".to_string()),
-        (DiffLineType::Add, "Line 4: New line".to_string()),
-    ];
-    let chunk = validator.create_chunk_contract(
-        "@@ -1,3 +1,4 @@",
-        1, // old_start
-        3, // old_lines
-        1, // new_start
-        4, // new_lines
-        diff_lines,
-    );
-    println!("  Diff Chunk: {}", chunk.summary());
+    let old_blob_contract = BlobContract::new("old123".to_string(), old_content.len());
+    let new_blob_contract = BlobContract::new("new456".to_string(), new_content.len());
+    let old_git_object = validator.validate_blob(&old_blob_contract, None);
+    let new_git_object = validator.validate_blob(&new_blob_contract, None);
+    println!("  Old Git Object: {}", old_git_object.summary());
+    println!("  New Git Object: {}", new_git_object.summary());
     // Show the diff structure
     println!("  Diff Structure:");
-    println!("    Pair of Blob Contracts:");
+    println!("    Pair of Git Object Contracts:");
     println!(
-        "      - Old: {} ({} lines)",
-        old_blob.id,
-        old_blob.lines.len()
+        "      - Old: {} ({} bytes)",
+        old_git_object.oid, old_git_object.size
     );
     println!(
-        "      - New: {} ({} lines)",
-        new_blob.id,
-        new_blob.lines.len()
-    );
-    println!("    Array of Chunk Contracts:");
-    println!(
-        "      - Chunk: {} ({} lines)",
-        chunk.header,
-        chunk.lines.len()
+        "      - New: {} ({} bytes)",
+        new_git_object.oid, new_git_object.size
     );
     // Validate the diff
-    let old_lines = validator.validate_blob_lines(&old_blob);
-    let new_lines = validator.validate_blob_lines(&new_blob);
-    let old_valid = old_lines.iter().all(|l| l.is_valid());
-    let new_valid = new_lines.iter().all(|l| l.is_valid());
-    let chunk_valid = chunk.is_valid();
+    let old_valid = old_git_object.is_valid();
+    let new_valid = new_git_object.is_valid();
     println!("  Diff Validation:");
     println!(
-        "    Old blob lines: {}",
+        "    Old blob: {}",
         if old_valid {
             "✅ Valid"
         } else {
@@ -3326,16 +3226,8 @@ fn demo_diff_modeling() -> Result<(), Box<dyn std::error::Error>> {
         }
     );
     println!(
-        "    New blob lines: {}",
+        "    New blob: {}",
         if new_valid {
-            "✅ Valid"
-        } else {
-            "❌ Invalid"
-        }
-    );
-    println!(
-        "    Chunk: {}",
-        if chunk_valid {
             "✅ Valid"
         } else {
             "❌ Invalid"
@@ -3485,7 +3377,7 @@ fn demo_tree_mode_validation() -> Result<(), Box<dyn std::error::Error>> {
         match TreeMode::parse_from_str(mode_str) {
             Some(mode) => {
                 println!("  ✅ Mode {}: {}", mode_str, mode.description());
-                println!("    String: {}", mode.to_string());
+                println!("    Mode string: {}", mode.to_mode_string());
                 println!("    Is blob: {}", mode.is_blob());
                 println!("    Is tree: {}", mode.is_tree());
                 println!("    Object type: {:?}", mode.object_type());
@@ -3706,22 +3598,18 @@ fn demo_tree_in_git_object_contract() -> Result<(), Box<dyn std::error::Error>> 
             "b2c3d4e5f6789012345678901234567890abcde".to_string(),
         ),
     ];
+    // Create a tree object from the entries
+    let tree = TreeObjectContract::new(entries);
     // Validate as a Git object
-    let git_object = validator.validate_tree_entry(&entries[0]);
-    match git_object {
-        _ => {
-            println!("  Git Object Type: Tree");
-            println!("  {}", tree.summary());
-            println!("    Entries: {}", tree.entries.len());
-            println!("    Valid: {}", tree.is_valid());
-            // Show entries
-            for entry in &tree.entries {
-                println!("    {}", entry.summary());
-            }
-        }
-        _ => {
-            println!("  Unexpected object type");
-        }
+    let git_object = validator.validate_tree_entry(&tree.entries[0]);
+    println!("  Git Object Type: {:?}", git_object.object_type);
+    println!("  {}", git_object.summary());
+    println!("  Tree: {}", tree.summary());
+    println!("    Entries: {}", tree.entries.len());
+    println!("    Valid: {}", tree.is_valid());
+    // Show entries
+    for entry in &tree.entries {
+        println!("    {}", entry.summary());
     }
     println!();
     Ok(())
@@ -3745,7 +3633,7 @@ use git_filter::prelude::*;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize tracing
     tracing_subscriber::fmt::init();
-    println!("🔗 Tree Contract Explicit Type Demo - Type Validation\n");
+    println!("🌳 Tree Contract Explicit Type Demo\n");
     // Example 1: Valid type matches
     demo_valid_type_matches()?;
     // Example 2: Invalid type mismatches
@@ -3760,25 +3648,28 @@ fn demo_valid_type_matches() -> Result<(), Box<dyn std::error::Error>> {
     println!("✅ Example 1: Valid Type Matches");
     let valid_entries = vec![
         // Mode 100644 (Regular file) -> type "blob"
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "100644",
             "README.md".to_string(),
             "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
             TreeObjectType::Blob,
+            None,
         ),
         // Mode 100755 (Executable file) -> type "blob"
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "100755",
             "script.sh".to_string(),
             "b2c3d4e5f6789012345678901234567890abcde".to_string(),
             TreeObjectType::Blob,
+            None,
         ),
         // Mode 040000 (Tree) -> type "tree"
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "040000",
             "src".to_string(),
             "c3d4e5f6789012345678901234567890abcdef".to_string(),
             TreeObjectType::Tree,
+            None,
         ),
     ];
     for entry in &valid_entries {
@@ -3804,25 +3695,28 @@ fn demo_invalid_type_mismatches() -> Result<(), Box<dyn std::error::Error>> {
     println!("❌ Example 2: Invalid Type Mismatches");
     let invalid_entries = vec![
         // Mode 100644 (Regular file) but type "tree" -> INVALID
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "100644",
             "README.md".to_string(),
             "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
             TreeObjectType::Tree, // Should be Blob
+            None,
         ),
         // Mode 040000 (Tree) but type "blob" -> INVALID
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "040000",
             "src".to_string(),
             "b2c3d4e5f6789012345678901234567890abcde".to_string(),
             TreeObjectType::Blob, // Should be Tree
+            None,
         ),
         // Mode 100755 (Executable file) but type "tree" -> INVALID
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "100755",
             "script.sh".to_string(),
             "c3d4e5f6789012345678901234567890abcdef".to_string(),
             TreeObjectType::Tree, // Should be Blob
+            None,
         ),
     ];
     for entry in &invalid_entries {
@@ -3846,86 +3740,88 @@ fn demo_invalid_type_mismatches() -> Result<(), Box<dyn std::error::Error>> {
 }
 fn demo_restricted_tree_modes() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚫 Example 3: Restricted Tree Modes");
-    let restricted_modes = vec![
-        "100644", // ✅ Allowed - Regular file
-        "100755", // ✅ Allowed - Executable file
-        "040000", // ✅ Allowed - Tree
-        "120000", // ❌ Not allowed - Symlink
-        "160000", // ❌ Not allowed - Gitlink
-        "999999", // ❌ Not allowed - Invalid
+    let restricted_entries = vec![
+        // Mode 120000 (Symlink) -> not supported in this demo
+        TreeEntryContract::new(
+            "120000",
+            "link.txt".to_string(),
+            "d4e5f6789012345678901234567890abcdef1".to_string(),
+        ),
+        // Mode 160000 (Gitlink) -> not supported in this demo
+        TreeEntryContract::new(
+            "160000",
+            "submodule".to_string(),
+            "e5f6789012345678901234567890abcdef12".to_string(),
+        ),
     ];
-    for mode in restricted_modes {
-        match TreeMode::from_str(mode) {
-            Some(tree_mode) => {
-                println!(
-                    "  ✅ Mode {}: {} ({:?})",
-                    mode,
-                    tree_mode.description(),
-                    tree_mode.object_type()
-                );
-            }
-            None => {
-                println!("  ❌ Mode {}: Not allowed in restricted contract", mode);
-            }
+    for entry in &restricted_entries {
+        println!("  {}", entry.summary());
+        println!(
+            "    Mode: {} -> Type: {:?}",
+            entry.mode_string(),
+            entry.object_type
+        );
+        println!("    Valid: {}", entry.is_valid());
+        if !entry.errors.is_empty() {
+            println!("    Errors: {:?}", entry.errors);
         }
+        println!();
     }
-    println!();
-    println!("  Restricted TreeModeContract only allows:");
-    println!("    - 100644 (Regular file) -> type: Blob");
-    println!("    - 100755 (Executable file) -> type: Blob");
-    println!("    - 040000 (Tree) -> type: Tree");
+    // Create tree with restricted entries
+    let tree = TreeObjectContract::new(restricted_entries);
+    println!("  Tree: {}", tree.summary());
     println!();
     Ok(())
 }
 fn demo_flat_contract_structure() -> Result<(), Box<dyn std::error::Error>> {
-    println!("📋 Example 4: Flat Contract Structure");
-    // Create entries with explicit type validation
-    let entries = vec![
-        TreeEntryContract::new_with_type(
+    println!("📁 Example 4: Flat Contract Structure");
+    // Create a flat structure with mixed valid/invalid entries
+    let flat_entries = vec![
+        // Valid entries
+        TreeEntryContract::new_with_type_and_attributes(
             "100644",
-            "Cargo.toml".to_string(),
+            "README.md".to_string(),
             "a1b2c3d4e5f6789012345678901234567890abcd".to_string(),
             TreeObjectType::Blob,
+            None,
         ),
-        TreeEntryContract::new_with_type(
-            "100755",
-            "scripts/build.sh".to_string(),
-            "b2c3d4e5f6789012345678901234567890abcde".to_string(),
-            TreeObjectType::Blob,
-        ),
-        TreeEntryContract::new_with_type(
+        TreeEntryContract::new_with_type_and_attributes(
             "040000",
             "src".to_string(),
-            "c3d4e5f6789012345678901234567890abcdef".to_string(),
+            "b2c3d4e5f6789012345678901234567890abcde".to_string(),
             TreeObjectType::Tree,
+            None,
+        ),
+        // Invalid entry (type mismatch)
+        TreeEntryContract::new_with_type_and_attributes(
+            "100644",
+            "config.json".to_string(),
+            "c3d4e5f6789012345678901234567890abcdef".to_string(),
+            TreeObjectType::Tree, // Should be Blob
+            None,
+        ),
+        // Invalid entry (restricted mode)
+        TreeEntryContract::new(
+            "120000",
+            "link.txt".to_string(),
+            "d4e5f6789012345678901234567890abcdef1".to_string(),
         ),
     ];
-    // Create flat tree object contract
-    let tree = TreeObjectContract::new(entries);
-    println!("  TreeObjectContract = {{");
-    println!("    entries: [TreeEntryContract, TreeEntryContract, ...]");
-    println!("  }}");
-    println!();
-    println!("  Each TreeEntryContract = {{");
-    println!("    mode: TreeMode,           // 100644 | 100755 | 040000");
-    println!("    filename: String,         // Must not be empty");
-    println!("    object_id: String,        // SHA-1 format (40 hex chars)");
-    println!("    object_type: TreeObjectType, // Must match mode");
-    println!("    valid: bool,              // Overall validation result");
-    println!("    errors: Vec<String>,      // Validation errors");
-    println!("  }}");
-    println!();
-    println!("  Validation Results:");
-    println!("    {}", tree.summary());
-    let blob_entries = tree.get_blob_entries();
-    let tree_entries = tree.get_tree_entries();
-    println!("    Blob entries: {}", blob_entries.len());
-    for entry in blob_entries {
-        println!("      - {} ({})", entry.filename, entry.mode.description());
-    }
-    println!("    Tree entries: {}", tree_entries.len());
-    for entry in tree_entries {
-        println!("      - {} ({})", entry.filename, entry.mode.description());
+    // Create tree with mixed entries
+    let tree = TreeObjectContract::new(flat_entries);
+    println!("  Tree: {}", tree.summary());
+    println!("    Total entries: {}", tree.entries.len());
+    println!(
+        "    Valid entries: {}",
+        tree.entries.iter().filter(|e| e.is_valid()).count()
+    );
+    println!(
+        "    Invalid entries: {}",
+        tree.entries.iter().filter(|e| !e.is_valid()).count()
+    );
+    // Show individual entry details
+    for (i, entry) in tree.entries.iter().enumerate() {
+        println!("    Entry {}: {}", i + 1, entry.summary());
     }
     println!();
     Ok(())

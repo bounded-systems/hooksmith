@@ -8,32 +8,32 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **git-filter**: *
 - **tokio**: ^1.0
 - **jsonschema**: ^0.17
-- **reqwest**: ^0.11
-- **tracing**: ^0.1
-- **git2**: ^0.18
-- **anyhow**: ^1.0
-- **indicatif**: ^0.17
-- **chrono**: ^0.4
-- **hex**: ^0.4
-- **schemars**: ^0.8
-- **console**: ^0.15
-- **cli-core**: *
-- **clap**: ^4.0
-- **serde_json**: ^1.0
-- **serde_yaml**: ^0.9
-- **tracing-subscriber**: ^0.3
-- **regex**: ^1.0
-- **wasmtime**: ^18.0
-- **wasmtime-wasi**: ^18.0
-- **which**: ^5.0
-- **wit-bindgen**: ^0.20
 - **serde**: ^1.0
+- **serde_yaml**: ^0.9
+- **sha2**: ^0.10
+- **schemars**: ^0.8
+- **tracing**: ^0.1
+- **which**: ^5.0
 - **tempfile**: dev
 - **toml**: ^0.8
-- **sha2**: ^0.10
+- **wasmtime**: ^18.0
+- **clap**: ^4.0
+- **anyhow**: ^1.0
+- **serde_json**: ^1.0
+- **chrono**: ^0.4
+- **wasmtime-wasi**: ^18.0
+- **wit-bindgen**: ^0.20
+- **cli-core**: *
+- **tracing-subscriber**: ^0.3
+- **regex**: ^1.0
+- **console**: ^0.15
+- **git-filter**: *
+- **git2**: ^0.18
+- **reqwest**: ^0.11
+- **indicatif**: ^0.17
+- **hex**: ^0.4
 
 ## Installation
 
@@ -324,6 +324,7 @@ hooksmith --help
 │   ├── test_comprehensive_docs.rs
 │   ├── fix_format.sed
 │   ├── SHELL_SCRIPT_MIGRATION_SUMMARY.md
+│   ├── EXAMPLES_FIXES_SUMMARY.md
 │   ├── TEMPLATE_SYSTEM_SUMMARY.md
 │   ├── SHELL_SCRIPT_MIGRATION_COMPLETE.md
 │   ├── test_safeguards.rs

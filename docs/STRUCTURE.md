@@ -670,33 +670,33 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       335
+- **Total Files**:       337
 - **Rust Files**:        124 (.rs)
 - **Configuration Files**:        39 (.toml, .yaml, .rc)
-- **Documentation**:        131 (.md)
+- **Documentation**:        133 (.md)
 - **Scripts**:        0 (.sh)
 
 ## 📋 File Type Breakdown
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .bash | 1 | Other files |
-| .backup | 1 | Other files |
-| .md | 131 | Markdown documentation |
-| .json | 10 | JSON schema and config files |
-| .pdf | 1 | PDF documentation |
 | .dot | 1 | Other files |
-| .epub | 1 | EPUB documentation |
-| .toml | 16 | Cargo and configuration files |
+| .yaml | 4 | YAML configuration files |
 | .wit | 9 | WebAssembly Interface Type definitions |
-| .hbs | 1 | Other files |
+| .toml | 16 | Cargo and configuration files |
+| .epub | 1 | EPUB documentation |
+| .sed | 2 | Other files |
+| .css | 1 | Stylesheet files |
+| .backup | 1 | Other files |
 | .lock | 2 | Other files |
 | .rs | 124 | Rust source files |
-| .yaml | 4 | YAML configuration files |
-| .css | 1 | Stylesheet files |
+| .pdf | 1 | PDF documentation |
+| .hbs | 1 | Other files |
+| .json | 10 | JSON schema and config files |
+| .bash | 1 | Other files |
 | .html | 1 | HTML documentation |
+| .md | 133 | Markdown documentation |
 | .yml | 9 | YAML configuration files |
-| .sed | 2 | Other files |
 
 ## 🧩 Component Breakdown
 
@@ -727,9 +727,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 173
-- **Modified Files**: 6
+- **Total Commits**: 175
+- **Modified Files**: 4
 
 ---
 
-*Generated on Sun Aug  3 01:15:34 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 01:20:24 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
