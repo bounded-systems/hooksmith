@@ -47,6 +47,8 @@ ratatui = { version = "0.26.0", features = ["crossterm"] }
 termcolor = "1.4"
 # File system traversal
 walkdir = "2.4"
+# System information
+num_cpus = "1.0"
 
 [dev-dependencies]
 tempfile = "3.0"

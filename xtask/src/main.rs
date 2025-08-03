@@ -14,6 +14,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use hook_state_machine::{HookContext, HookManager, HookType};
+use workflow::{run_dev_workflow, run_optimize, run_macos_optimize, run_security_check};
 
 /// CLI argument enum for hook types
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -463,6 +464,7 @@ mod git_lefthook_integration;
 mod checksum;
 mod checksum_registry;
 mod registry;
+mod workflow;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -1089,6 +1091,69 @@ enum Commands {
         /// Registry command to execute
         #[arg(trailing_var_arg = true)]
         args: Vec<String>,
+    },
+    /// Development workflow automation
+    DevWorkflow {
+        /// Whether to run tests
+        #[arg(long, default_value = "true")]
+        run_tests: bool,
+        /// Whether to run checks
+        #[arg(long, default_value = "true")]
+        run_checks: bool,
+        /// Whether to use parallel compilation
+        #[arg(long, default_value = "true")]
+        parallel: bool,
+        /// Whether to use optimization tools
+        #[arg(long, default_value = "true")]
+        optimize: bool,
+    },
+    /// Build optimization and tool installation
+    Optimize {
+        /// Install optimization tools
+        #[arg(long)]
+        install_tools: bool,
+        /// Configure build optimizations
+        #[arg(long)]
+        configure: bool,
+        /// Run performance benchmarks
+        #[arg(long)]
+        benchmark: bool,
+        /// Show optimization status
+        #[arg(long)]
+        status: bool,
+    },
+    /// macOS-specific optimizations
+    MacosOptimize {
+        /// Enable developer mode
+        #[arg(long)]
+        developer_mode: bool,
+        /// Configure Gatekeeper
+        #[arg(long)]
+        gatekeeper: bool,
+        /// Install development tools
+        #[arg(long)]
+        install_tools: bool,
+        /// Show optimization status
+        #[arg(long)]
+        status: bool,
+    },
+    /// Security validation and checks
+    SecurityCheck {
+        /// Check Gatekeeper status
+        #[arg(long)]
+        gatekeeper: bool,
+        /// Check SIP status
+        #[arg(long)]
+        sip: bool,
+        /// Check user permissions
+        #[arg(long)]
+        permissions: bool,
+        /// Check tool installation sources
+        #[arg(long)]
+        tools: bool,
+        /// Show security score
+        #[arg(long)]
+        score: bool,
     },
 }
 
@@ -1768,7 +1833,40 @@ async fn main() -> Result<()> {
         },
         Commands::Registry { args } => {
             registry::run_registry_command(&args)?;
-        },
+        }
+        Commands::DevWorkflow {
+            run_tests,
+            run_checks,
+            parallel,
+            optimize,
+        } => {
+            run_dev_workflow(run_tests, run_checks, parallel, optimize).await?;
+        }
+        Commands::Optimize {
+            install_tools,
+            configure,
+            benchmark,
+            status,
+        } => {
+            run_optimize(install_tools, configure, benchmark, status).await?;
+        }
+        Commands::MacosOptimize {
+            developer_mode,
+            gatekeeper,
+            install_tools,
+            status,
+        } => {
+            run_macos_optimize(developer_mode, gatekeeper, install_tools, status).await?;
+        }
+        Commands::SecurityCheck {
+            gatekeeper,
+            sip,
+            permissions,
+            tools,
+            score,
+        } => {
+            run_security_check(gatekeeper, sip, permissions, tools, score).await?;
+        }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
                 config_dir,
