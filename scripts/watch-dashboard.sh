@@ -1,0 +1,39 @@
+#!/bin/bash
+# Script to demonstrate file-watch mode with cargo watch
+
+echo "🚀 Starting Hooksmith Dashboard in file-watch mode..."
+echo "📁 This will watch for file changes and trigger validation automatically"
+echo ""
+
+# Start the dashboard in file-watch mode (background)
+echo "🔄 Starting dashboard in file-watch mode..."
+cargo run -p xtask -- dashboard --file-watch &
+DASHBOARD_PID=$!
+
+# Wait a moment for dashboard to start
+sleep 2
+
+echo "📊 Dashboard is running in file-watch mode"
+echo "🔍 Now using cargo watch to trigger validation on file changes..."
+echo ""
+
+# Use cargo watch to trigger validation when files change
+cargo watch -x "run -p xtask -- dashboard --trigger --auto-push" \
+    --watch src/ \
+    --watch xtask/src/ \
+    --watch components/ \
+    --watch examples/ \
+    --watch config/ \
+    --watch schemas/ \
+    --watch docs/ \
+    --watch templates/ \
+    --watch hooks/ \
+    --watch scripts/ \
+    --watch wit/ \
+    --watch . --ignore target/ --ignore .git/
+
+# Cleanup
+echo ""
+echo "🛑 Stopping dashboard..."
+kill $DASHBOARD_PID 2>/dev/null
+echo "✅ Dashboard stopped" 

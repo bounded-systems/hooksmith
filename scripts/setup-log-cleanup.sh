@@ -1,0 +1,71 @@
+#!/bin/bash
+# Script to set up automatic log cleanup
+
+echo "🔧 Setting up automatic log cleanup for Hooksmith..."
+
+# Check if we're on macOS
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "🍎 Detected macOS - setting up launchd service"
+    
+    # Create the plist file
+    PLIST_FILE="$HOME/Library/LaunchAgents/com.hooksmith.logcleanup.plist"
+    
+    cat > "$PLIST_FILE" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.hooksmith.logcleanup</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$(pwd)/scripts/cleanup-logs.sh</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>86400</integer>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>$(pwd)/logs/cleanup.log</string>
+    <key>StandardErrorPath</key>
+    <string>$(pwd)/logs/cleanup-error.log</string>
+</dict>
+</plist>
+EOF
+
+    echo "📝 Created launchd service at $PLIST_FILE"
+    echo "🔄 Loading service..."
+    launchctl load "$PLIST_FILE"
+    echo "✅ Service loaded! Logs will be cleaned up daily."
+    
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    echo "🐧 Detected Linux - setting up cron job"
+    
+    # Create cron job
+    CRON_JOB="0 2 * * * cd $(pwd) && ./scripts/cleanup-logs.sh >> logs/cleanup.log 2>&1"
+    
+    # Check if cron job already exists
+    if crontab -l 2>/dev/null | grep -q "cleanup-logs.sh"; then
+        echo "⚠️  Cron job already exists"
+    else
+        # Add to crontab
+        (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
+        echo "✅ Cron job added! Logs will be cleaned up daily at 2 AM."
+    fi
+    
+else
+    echo "❓ Unsupported OS: $OSTYPE"
+    echo "💡 Please set up manual cleanup by running './scripts/cleanup-logs.sh' periodically"
+fi
+
+echo ""
+echo "📋 Manual cleanup commands:"
+echo "  • View log stats: ./scripts/log-stats.sh"
+echo "  • Clean up logs: ./scripts/cleanup-logs.sh"
+echo "  • Check errors: ./scripts/check-errors.sh"
+echo "  • Monitor errors: ./scripts/monitor-errors.sh"
+echo ""
+echo "📁 Log files are stored in:"
+echo "  • Current: hooksmith-events.jsonl"
+echo "  • Backups: logs/backup/"
+echo "  • Cleanup logs: logs/cleanup.log" 
