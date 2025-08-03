@@ -3490,7 +3490,7 @@ async fn generate_all_files(validate: bool, force: bool) -> Result<()> {
 
 /// Bootstrap the project with all generated files
 async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
-    use crate::structured_logging::{log_event, emit_sarif_error};
+    use crate::{log_event, structured_logging::emit_sarif_error};
     
     log_event!("info", "bootstrap_start", "🚀 Bootstrapping project with all generated files", None);
 
@@ -6869,8 +6869,8 @@ async fn run_jsonl_to_sarif_command(input: String, output: String, validate: boo
     println!("   Input: {}", input);
     println!("   Output: {}", output);
 
-    let logger = structured_logging::StructuredLogger::new();
-    let integration = sarif_integration::SarifIntegration::new(logger);
+    // Removed StructuredLogger - using basic integration
+    let integration = sarif_integration::SarifIntegration::new();
 
     let sarif_content = integration.jsonl_to_sarif(Path::new(&input))?;
 
@@ -6899,8 +6899,8 @@ async fn run_sarif_to_jsonl_command(input: String, output: String, validate: boo
     println!("   Input: {}", input);
     println!("   Output: {}", output);
 
-    let logger = structured_logging::StructuredLogger::new();
-    let integration = sarif_integration::SarifIntegration::new(logger);
+    // Removed StructuredLogger - using basic integration
+    let integration = sarif_integration::SarifIntegration::new();
 
     if validate {
         println!("🔍 Validating SARIF input...");
@@ -6948,7 +6948,7 @@ async fn run_codeql_analysis_command(
     println!("   Language: {}", language);
     println!("   Build command: {}", build_command);
 
-    let logger = structured_logging::StructuredLogger::new();
+    // Removed StructuredLogger - using basic integration
 
     let mut config = sarif_integration::CodeQLConfig::default();
     config.cli_path = cli_path.map(|s| s.to_string());
@@ -6960,7 +6960,7 @@ async fn run_codeql_analysis_command(
         .map(|s| s.to_string())
         .collect();
 
-    let integration = sarif_integration::SarifIntegration::new(logger).with_config(config);
+    let integration = sarif_integration::SarifIntegration::new().with_config(config);
 
     // Run CodeQL analysis
     let events = integration.run_codeql_analysis().await?;
@@ -7016,8 +7016,8 @@ async fn run_codeql_analysis_command(
 fn run_validate_sarif_command(file: String, strict: bool) -> Result<()> {
     println!("🔍 Validating SARIF file: {}", file);
 
-    let logger = structured_logging::StructuredLogger::new();
-    let integration = sarif_integration::SarifIntegration::new(logger);
+    // Removed StructuredLogger - using basic integration
+    let integration = sarif_integration::SarifIntegration::new();
 
     let is_valid = integration.validate_sarif(Path::new(&file))?;
 
@@ -7039,8 +7039,8 @@ fn run_merge_sarif_command(inputs: Vec<String>, output: String, validate: bool) 
     println!("   Inputs: {:?}", inputs);
     println!("   Output: {}", output);
 
-    let logger = structured_logging::StructuredLogger::new();
-    let integration = sarif_integration::SarifIntegration::new(logger);
+    // Removed StructuredLogger - using basic integration
+    let integration = sarif_integration::SarifIntegration::new();
 
     let input_paths: Vec<PathBuf> = inputs.iter().map(|s| PathBuf::from(s)).collect();
     let merged_content = integration.merge_sarif_files(&input_paths)?;
@@ -7081,8 +7081,8 @@ async fn run_integrate_codeql_command(
             .context(format!("Failed to create output directory: {}", output_dir))?;
     }
 
-    let logger = structured_logging::StructuredLogger::new();
-    let integration = sarif_integration::SarifIntegration::new(logger);
+    // Removed StructuredLogger - using basic integration
+    let integration = sarif_integration::SarifIntegration::new();
 
     if run_analysis {
         println!("🔍 Running CodeQL analysis...");

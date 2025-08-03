@@ -128,15 +128,13 @@ impl Default for CodeQLConfig {
 
 /// SARIF integration for Hooksmith validation pipeline
 pub struct SarifIntegration {
-    logger: StructuredLogger,
     config: Option<CodeQLConfig>,
 }
 
 impl SarifIntegration {
     /// Create a new SARIF integration instance
-    pub fn new(logger: StructuredLogger) -> Self {
+    pub fn new() -> Self {
         Self {
-            logger,
             config: None,
         }
     }
@@ -510,8 +508,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_sarif_integration_creation() {
-        let logger = StructuredLogger::new();
-        let integration = SarifIntegration::new(logger);
+        // Removed StructuredLogger - not implemented
+        let integration = SarifIntegration::new();
 
         assert!(integration.config.is_none());
     }

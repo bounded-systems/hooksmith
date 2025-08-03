@@ -8,8 +8,6 @@ use uuid::Uuid;
 
 /// Structured auto-push workflow with JSONL output and event bus integration
 pub struct StructuredAutoPush {
-    /// Structured logger instance
-    logger: StructuredLogger,
     /// Session ID for grouping related events
     session_id: String,
     /// Whether to enable detailed logging
@@ -20,7 +18,6 @@ impl Default for StructuredAutoPush {
     fn default() -> Self {
         let session_id = Uuid::new_v4().to_string();
         Self {
-            logger: StructuredLogger::new().with_session_id(&session_id),
             session_id,
             verbose: false,
         }
@@ -40,14 +37,12 @@ impl StructuredAutoPush {
     }
 
     /// Disable JSONL output (for TUI mode)
-    pub fn without_jsonl(mut self) -> Self {
-        self.logger = self.logger.without_jsonl();
+    pub fn without_jsonl(self) -> Self {
         self
     }
 
     /// Disable event bus integration
-    pub fn without_event_bus(mut self) -> Self {
-        self.logger = self.logger.without_event_bus();
+    pub fn without_event_bus(self) -> Self {
         self
     }
 
@@ -62,40 +57,40 @@ impl StructuredAutoPush {
         let start_time = SystemTime::now();
 
         // Emit start event
-        self.logger.info(
-            "hooksmith",
-            "start",
-            "Starting structured auto-push workflow",
-        )?;
+        if self.verbose {
+            println!("🚀 Starting structured auto-push workflow");
+        }
 
         // Step 1: Run validation checks
-        self.logger
-            .info("hooksmith", "validation", "Running validation checks")?;
+        if self.verbose {
+            println!("🔍 Running validation checks");
+        }
         let validation_result = self.run_validation().await;
 
         match validation_result {
             Ok(_) => {
-                self.logger
-                    .info("hooksmith", "validation", "All validation checks passed")?;
+                if self.verbose {
+                    println!("✅ All validation checks passed");
+                }
             }
             Err(e) => {
-                self.logger.error(
-                    "hooksmith",
-                    "validation",
-                    &format!("Validation failed: {}", e),
-                )?;
+                if self.verbose {
+                    println!("❌ Validation failed: {}", e);
+                }
                 return Err(e);
             }
         }
 
         // Step 2: Check for changes
-        self.logger
-            .info("hooksmith", "git", "Checking for changes")?;
+        if self.verbose {
+            println!("🔍 Checking for changes");
+        }
         let has_changes = self.check_for_changes().await?;
 
         if !has_changes {
-            self.logger
-                .info("hooksmith", "git", "No changes to commit")?;
+            if self.verbose {
+                println!("ℹ️  No changes to commit");
+            }
             return Ok(());
         }
 
@@ -381,8 +376,8 @@ impl StructuredAutoPush {
     }
 
     /// Get logger reference
-    pub fn logger(&self) -> &StructuredLogger {
-        &self.logger
+    pub fn logger(&self) -> &str {
+        "structured_auto_push"
     }
 }
 

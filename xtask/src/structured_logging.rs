@@ -1,6 +1,40 @@
 use chrono::Utc;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+#[derive(Serialize, Deserialize)]
+pub struct StructuredEvent {
+    pub timestamp: String,
+    pub level: String,
+    pub action: String,
+    pub message: String,
+    pub details: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<HashMap<String, String>>,
+}
+
+impl StructuredEvent {
+    pub fn new(level: &str, action: &str, message: &str) -> Self {
+        Self {
+            timestamp: Utc::now().to_rfc3339(),
+            level: level.to_string(),
+            action: action.to_string(),
+            message: message.to_string(),
+            details: None,
+            file: None,
+            line: None,
+            metadata: None,
+        }
+    }
+
+    pub fn to_jsonl(&self) -> Result<String, serde_json::Error> {
+        serde_json::to_string(self)
+    }
+}
 
 #[derive(Serialize)]
 pub struct BootstrapEvent {
