@@ -478,13 +478,22 @@ impl Dashboard {
             vec!["push"]
         };
 
-        let push_status = std::process::Command::new("git")
+        let push_output = std::process::Command::new("git")
             .args(&push_args)
-            .status()
-            .map_err(|e| format!("Failed to push: {}", e))?;
+            .output()
+            .map_err(|e| format!("Failed to execute git push: {}", e))?;
 
-        if !push_status.success() {
-            return Err("git push failed".into());
+        if !push_output.status.success() {
+            let stderr = String::from_utf8_lossy(&push_output.stderr);
+            let stdout = String::from_utf8_lossy(&push_output.stdout);
+            let error_msg = if !stderr.is_empty() {
+                format!("Git push failed: {}", stderr.trim())
+            } else if !stdout.is_empty() {
+                format!("Git push failed: {}", stdout.trim())
+            } else {
+                "Git push failed with no output".to_string()
+            };
+            return Err(error_msg.into());
         }
 
         println!("   ✅ Auto-push completed successfully!");

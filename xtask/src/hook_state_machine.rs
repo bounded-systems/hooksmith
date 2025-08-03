@@ -460,24 +460,35 @@ impl HooksmithHook for AutoPushHook {
             println!("⚠️  Force pushing (use with caution!)");
         }
 
-        let push_status = Command::new("git")
+        let push_output = Command::new("git")
             .args(&push_args)
-            .status()
-            .context("Failed to push changes")?;
+            .output()
+            .context("Failed to execute git push")?;
 
-        if !push_status.success() {
-            // Emit error event for git push failure
+        if !push_output.status.success() {
+            let stderr = String::from_utf8_lossy(&push_output.stderr);
+            let stdout = String::from_utf8_lossy(&push_output.stdout);
+
+            let error_details = if !stderr.is_empty() {
+                stderr.trim().to_string()
+            } else if !stdout.is_empty() {
+                stdout.trim().to_string()
+            } else {
+                "No error output available".to_string()
+            };
+
+            // Emit error event for git push failure with specific details
             let _ = emit_error(
                 EventCategory::HookStateMachine,
                 "git_push_failed",
-                "Git push failed - check remote repository configuration",
+                &format!("Git push failed: {}", error_details),
                 "auto_push_hook",
             );
 
             return Ok(HookResult::error(
                 HookState::Error,
-                "git push failed".to_string(),
-                vec!["git push failed".to_string()],
+                format!("git push failed: {}", error_details),
+                vec![format!("git push failed: {}", error_details)],
             ));
         }
 
