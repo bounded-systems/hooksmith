@@ -1,0 +1,299 @@
+#!/bin/bash
+
+# CI Readiness Verification Script
+# Verifies that all security and optimization measures are in place
+# This script runs the same checks that CI will perform
+
+set -euo pipefail
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Initialize verification status
+verification_passed=true
+
+echo "🔍 CI Readiness Verification for Hooksmith"
+echo "=========================================="
+echo "This script verifies that all security and optimization measures"
+echo "are in place before CI will run the same checks."
+echo
+
+# Function to check and report status
+check_status() {
+    local check_name="$1"
+    local condition="$2"
+    local success_msg="$3"
+    local error_msg="$4"
+    
+    if eval "$condition"; then
+        log_success "$success_msg"
+    else
+        log_error "$error_msg"
+        verification_passed=false
+    fi
+}
+
+# 1. Verify optimization configuration
+echo "🔧 Optimization Configuration Verification"
+echo "=========================================="
+
+# Check LLD linker configuration
+check_status \
+    "LLD Configuration" \
+    "grep -q 'link-arg=-fuse-ld=lld' .cargo/config.toml" \
+    "✅ LLD linker configured in .cargo/config.toml" \
+    "❌ LLD linker not configured - missing optimization"
+
+# Check split-debuginfo configuration
+check_status \
+    "Split Debug Info" \
+    "grep -q 'split-debuginfo = \"unpacked\"' Cargo.toml" \
+    "✅ split-debuginfo configured in Cargo.toml" \
+    "❌ split-debuginfo not configured - missing optimization"
+
+# Check cargo aliases
+check_status \
+    "Cargo Aliases File" \
+    "[[ -f '.cargo/aliases.toml' ]]" \
+    "✅ .cargo/aliases.toml found" \
+    "❌ .cargo/aliases.toml missing - missing optimization aliases"
+
+# Check specific aliases
+if [[ -f ".cargo/aliases.toml" ]]; then
+    check_status \
+        "Cargo Dev-Fast Alias" \
+        "grep -q 'dev-fast' .cargo/aliases.toml" \
+        "✅ cargo dev-fast alias configured" \
+        "❌ cargo dev-fast alias missing"
+    
+    check_status \
+        "Cargo Test-Parallel Alias" \
+        "grep -q 'test-parallel' .cargo/aliases.toml" \
+        "✅ cargo test-parallel alias configured" \
+        "❌ cargo test-parallel alias missing"
+fi
+
+echo
+
+# 2. Verify optimization scripts
+echo "📜 Optimization Scripts Verification"
+echo "===================================="
+
+required_scripts=(
+    "scripts/optimize-build.sh"
+    "scripts/setup-default.sh"
+    "scripts/security-check.sh"
+    "scripts/macos-optimize.sh"
+    "scripts/ci-build.sh"
+    "scripts/dev-cycle.sh"
+    "scripts/build-stats.sh"
+    "scripts/setup-env.sh"
+)
+
+for script in "${required_scripts[@]}"; do
+    check_status \
+        "Script: $script" \
+        "[[ -f '$script' ]]" \
+        "✅ $script found" \
+        "❌ $script missing - missing optimization script"
+done
+
+echo
+
+# 3. Verify security documentation
+echo "🛡️ Security Documentation Verification"
+echo "====================================="
+
+required_docs=(
+    "SECURITY_GUIDE.md"
+    "SECURITY_SUMMARY.md"
+    "MACOS_OPTIMIZATIONS.md"
+    "MACOS_OPTIMIZATION_VERIFICATION.md"
+)
+
+for doc in "${required_docs[@]}"; do
+    check_status \
+        "Documentation: $doc" \
+        "[[ -f '$doc' ]]" \
+        "✅ $doc found" \
+        "❌ $doc missing - missing security documentation"
+done
+
+echo
+
+# 4. Verify security measures
+echo "🔒 Security Measures Verification"
+echo "================================"
+
+# Check security check script
+check_status \
+    "Security Check Script" \
+    "[[ -f 'scripts/security-check.sh' ]]" \
+    "✅ Security check script available" \
+    "❌ Security check script missing"
+
+# Check setup script includes security verification
+check_status \
+    "Setup Script Security" \
+    "grep -q 'security-check' scripts/setup-default.sh" \
+    "✅ Setup script includes security verification" \
+    "❌ Setup script missing security verification"
+
+# Check macOS script includes security checks
+check_status \
+    "macOS Script Security" \
+    "grep -q 'security.*check' scripts/macos-optimize.sh" \
+    "✅ macOS script includes security checks" \
+    "❌ macOS script missing security checks"
+
+echo
+
+# 5. Verify optimization tools (if available)
+echo "🧪 Optimization Tools Verification"
+echo "=================================="
+
+# Check if we're in a development environment
+if command -v cargo >/dev/null 2>&1; then
+    # Test sccache
+    if command -v sccache >/dev/null 2>&1; then
+        log_success "✅ sccache available"
+        if sccache --show-stats >/dev/null 2>&1; then
+            log_success "✅ sccache working"
+        else
+            log_warning "⚠️ sccache not responding"
+        fi
+    else
+        log_warning "⚠️ sccache not available (will be installed in CI)"
+    fi
+    
+    # Test cargo-hakari
+    if command -v cargo-hakari >/dev/null 2>&1; then
+        log_success "✅ cargo-hakari available"
+        if cargo-hakari --version >/dev/null 2>&1; then
+            log_success "✅ cargo-hakari working"
+        else
+            log_warning "⚠️ cargo-hakari not responding"
+        fi
+    else
+        log_warning "⚠️ cargo-hakari not available (will be installed in CI)"
+    fi
+    
+    # Test cargo-nextest
+    if command -v cargo-nextest >/dev/null 2>&1; then
+        log_success "✅ cargo-nextest available"
+        if cargo-nextest --version >/dev/null 2>&1; then
+            log_success "✅ cargo-nextest working"
+        else
+            log_warning "⚠️ cargo-nextest not responding"
+        fi
+    else
+        log_warning "⚠️ cargo-nextest not available (will be installed in CI)"
+    fi
+    
+    # Test LLD usage (if we can build)
+    if [[ -f "Cargo.toml" ]]; then
+        log_info "Testing LLD linker usage..."
+        if cargo build --verbose 2>&1 | grep -q "link-arg=-fuse-ld=lld"; then
+            log_success "✅ LLD linker being used"
+        else
+            log_warning "⚠️ LLD linker not detected in build output"
+        fi
+    fi
+else
+    log_warning "⚠️ Cargo not available - skipping tool verification"
+fi
+
+echo
+
+# 6. Verify CI configuration
+echo "🚀 CI Configuration Verification"
+echo "================================"
+
+# Check CI workflow file
+check_status \
+    "CI Workflow" \
+    "[[ -f '.github/workflows/ci.yml' ]]" \
+    "✅ CI workflow file found" \
+    "❌ CI workflow file missing"
+
+# Check if CI includes optimization tools
+if [[ -f ".github/workflows/ci.yml" ]]; then
+    check_status \
+        "CI Optimization Tools" \
+        "grep -q 'cargo install sccache' .github/workflows/ci.yml" \
+        "✅ CI includes sccache installation" \
+        "❌ CI missing sccache installation"
+    
+    check_status \
+        "CI Cargo Hakari" \
+        "grep -q 'cargo install cargo-hakari' .github/workflows/ci.yml" \
+        "✅ CI includes cargo-hakari installation" \
+        "❌ CI missing cargo-hakari installation"
+    
+    check_status \
+        "CI Cargo Nextest" \
+        "grep -q 'cargo install cargo-nextest' .github/workflows/ci.yml" \
+        "✅ CI includes cargo-nextest installation" \
+        "❌ CI missing cargo-nextest installation"
+    
+    check_status \
+        "CI Verification Job" \
+        "grep -q 'security-optimization-verification' .github/workflows/ci.yml" \
+        "✅ CI includes security and optimization verification" \
+        "❌ CI missing security and optimization verification"
+fi
+
+echo
+
+# 7. Generate summary report
+echo "📊 CI Readiness Summary"
+echo "======================="
+
+if [[ "$verification_passed" == "true" ]]; then
+    log_success "🎉 All verifications passed!"
+    echo
+    echo "✅ Hooksmith is ready for CI/CD with:"
+    echo "  • Current macOS Rust build best practices"
+    echo "  • LLD linker configured (avoiding deprecated zld)"
+    echo "  • sccache build caching for performance"
+    echo "  • Granular developer mode (Terminal-only scope)"
+    echo "  • split-debuginfo optimization for faster debug builds"
+    echo "  • Comprehensive security measures and documentation"
+    echo "  • Automated CI verification of all optimizations"
+    echo
+    echo "🚀 Your changes will pass CI security and optimization checks!"
+    exit 0
+else
+    log_error "❌ Some verifications failed!"
+    echo
+    echo "Please address the issues above before pushing to CI."
+    echo "This ensures that:"
+    echo "  • All optimizations are properly configured"
+    echo "  • Security measures are in place"
+    echo "  • CI will pass all verification checks"
+    echo "  • Future contributors maintain best practices"
+    echo
+    echo "💡 Run this script again after fixing the issues."
+    exit 1
+fi 

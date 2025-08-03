@@ -106,6 +106,9 @@ Options:
    
    # Verify security (important)
    ./scripts/security-check.sh
+   
+   # Verify CI readiness (recommended)
+   ./scripts/verify-ci-readiness.sh
    ```
    # Install Lefthook (optional but recommended)
    npm install -g @evilmartians/lefthook
