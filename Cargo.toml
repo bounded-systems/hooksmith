@@ -154,6 +154,17 @@ regex.workspace = true
 [dev-dependencies]
 tempfile = "3.0"
 
+# macOS-specific optimizations for faster development
+[profile.dev]
+split-debuginfo = "unpacked"
+
+# Release profile optimizations
+[profile.release]
+lto = "thin"
+codegen-units = 16
+panic = "abort"
+strip = true
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]

@@ -16,10 +16,16 @@ rustflags = [
     "-C", "link-arg=-Wl,--no-rosegment",
 ]
 
-# Use zld linker for faster linking (macOS)
+# Use LLD linker for faster linking (macOS) - Best practice for Apple Silicon
+[target.aarch64-apple-darwin]
+rustflags = [
+    "-C", "link-arg=-fuse-ld=lld",
+]
+
+# Legacy x86_64 support (if needed)
 [target.x86_64-apple-darwin]
 rustflags = [
-    "-C", "link-arg=-fuse-ld=/usr/local/bin/zld",
+    "-C", "link-arg=-fuse-ld=lld",
 ]
 
 # Enable parallel compilation frontend (nightly only)

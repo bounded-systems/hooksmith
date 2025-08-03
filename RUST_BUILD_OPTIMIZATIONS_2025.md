@@ -88,9 +88,12 @@ cargo nextest run --all-targets --all-features
 linker = "clang"
 rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 
-# macOS: zld
+# macOS: LLD (best practice for Apple Silicon)
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
 [target.x86_64-apple-darwin]
-rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 
 # Linux: mold (fastest)
 [target.x86_64-unknown-linux-gnu]
@@ -101,6 +104,30 @@ rustflags = ["-C", "link-arg=-fuse-ld=mold"]
 - 20-30% faster linking
 - Better memory usage
 - Reduced I/O operations
+
+### 4.1 macOS-Specific Optimizations
+
+**What it does**: Optimizations specifically for Apple Silicon and macOS.
+
+**Implementation**:
+```toml
+# In Cargo.toml
+[profile.dev]
+split-debuginfo = "unpacked"
+```
+
+**System Setup**:
+```bash
+# Enable developer mode for faster binary execution
+sudo spctl developer-mode enable-terminal
+
+# Add terminal to System Settings → Privacy → Developer Tools
+```
+
+**Benefits**:
+- 70% reduction in debug build compile time
+- Faster iterative binary execution
+- Reduced Gatekeeper overhead
 
 ### 5. Parallel Compilation Frontend (Nightly)
 
@@ -153,8 +180,11 @@ incremental = true
 linker = "clang"
 rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
 [target.x86_64-apple-darwin]
-rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 
 # Parallel compilation
 [env]

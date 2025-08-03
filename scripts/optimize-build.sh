@@ -100,10 +100,10 @@ install_build_tools() {
         fi
     fi
     
-    # Install zld linker (macOS only)
-    if [[ "$OSTYPE" == "darwin"* ]] && ! command_exists zld; then
-        log_info "Installing zld linker..."
-        brew install michaeleisel/zld/zld
+    # Note: zld is deprecated, using LLD instead (already configured in .cargo/config.toml)
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        log_info "macOS detected - LLD linker configured for optimal performance"
+        log_info "Note: zld is deprecated, using LLD instead (best practice for Apple Silicon)"
     fi
     
     log_success "Build optimization tools installed"

@@ -9,6 +9,19 @@ A CLI tool for building Rust binaries into Lefthook hooks with WASM components.
 - 📝 **Lefthook Integration**: Generate and validate Lefthook configurations
 - 🛠️ **Xtask Workflow**: Rust-based build system replacing shell scripts
 
+## Quick Start
+
+For the fastest development experience with optimized builds:
+
+```bash
+git clone https://github.com/your-username/hooksmith.git
+cd hooksmith
+./scripts/setup-default.sh
+make dev
+```
+
+See [QUICKSTART_OPTIMIZED.md](QUICKSTART_OPTIMIZED.md) for detailed instructions.
+
 ## Installation
 
 ```bash
@@ -97,12 +110,16 @@ Options:
    lefthook install
    ```
 
-4. **Setup optimized build environment**
+4. **Setup optimized build environment (recommended)**
    ```bash
-   # Install and configure all optimization tools
-   ./scripts/optimize-build.sh
+   # Complete setup with all optimizations (recommended)
+   ./scripts/setup-default.sh
    
-   # Set up environment variables for optimized builds
+   # macOS-specific optimizations (Apple Silicon)
+   ./scripts/macos-optimize.sh
+   
+   # Or manual setup
+   ./scripts/optimize-build.sh
    source scripts/setup-env.sh
    ```
 
