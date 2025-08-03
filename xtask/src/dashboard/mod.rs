@@ -422,9 +422,11 @@ impl Dashboard {
                     let parts: Vec<&str> = first_line.split_whitespace().collect();
                     if parts.len() >= 2 {
                         match parts[1] {
-                            "rejected" => "Push rejected (non-fast-forward, requires pull/rebase)",
-                            "up to date" => "Already up to date",
-                            "forced update" => "Force update required",
+                            "rejected" => {
+                                "Push rejected (non-fast-forward, requires pull/rebase)".to_string()
+                            }
+                            "up to date" => "Already up to date".to_string(),
+                            "forced update" => "Force update required".to_string(),
                             _ => format!("Push failed: {}", parts[1]),
                         }
                     } else {

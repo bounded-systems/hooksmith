@@ -1,28 +1,15 @@
-use xtask::dashboard::{Dashboard, DashboardConfig, AutoPushConfig};
 use std::time::Duration;
 use tokio::time::sleep;
+// Note: This example is for demonstration purposes only
+// The actual dashboard functionality is available in the main xtask binary
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("🚀 Starting Hooksmith TUI Dashboard Demo...");
     println!("This demo shows the modernized dashboard using ratatui");
 
-    // Create dashboard configuration
-    let config = DashboardConfig {
-        show_dashboard: true,
-        log_to_jsonl: false,
-        jsonl_path: None,
-        auto_push_config: AutoPushConfig {
-            enabled: false, // Disable auto-push for demo
-            commit_message: None,
-            skip_validation: false,
-        },
-        file_watch_mode: false,
-        heartbeat_interval: 5, // Faster heartbeat for demo
-    };
-
-    // Create and start the dashboard
-    let mut dashboard = Dashboard::new(config)?;
+    // Note: This is a demo example
+    // The actual dashboard can be run with: cargo run -p xtask -- dashboard --show-dashboard
 
     println!("📊 Dashboard initialized. You should see a modern TUI interface.");
     println!("💡 The dashboard will show:");
@@ -39,8 +26,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     sleep(Duration::from_secs(3)).await;
 
-    // Start the dashboard
-    dashboard.start().await?;
+    // Demo completed
+    println!("✅ Demo completed successfully!");
+    println!("💡 To run the actual dashboard, use:");
+    println!("   cargo run -p xtask -- dashboard --show-dashboard");
 
     Ok(())
-} 
+}

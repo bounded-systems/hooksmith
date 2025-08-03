@@ -333,7 +333,7 @@ mod tests {
 
         // Valid file
         let content = b"Hello, World!\nThis is valid text.";
-        let (result, processed) = validator.validate_file(content);
+        let (result, _processed) = validator.validate_file(content);
         assert!(result.is_valid);
         assert_eq!(result.total_bytes, content.len());
         assert_eq!(result.forbidden_count, 0);

@@ -170,6 +170,7 @@ enum WasmComponentCommands {
     },
 }
 
+mod auto_push;
 mod code_stats;
 mod config;
 mod contract;
@@ -187,7 +188,6 @@ mod hook_runner;
 mod hook_state_machine;
 mod status;
 mod wasm_event_bus;
-mod auto_push;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -618,6 +618,39 @@ enum Commands {
         #[arg(trailing_var_arg = true)]
         args: Vec<String>,
     },
+    /// Clean auto-push workflow with porcelain output and comprehensive logging
+    CleanAutoPush {
+        /// Commit message (optional, will prompt if not provided)
+        #[arg(short, long)]
+        message: Option<String>,
+        /// Allow empty commit message (Trunk-style)
+        #[arg(long)]
+        allow_empty_message: bool,
+        /// Skip validation checks
+        #[arg(long)]
+        skip_validation: bool,
+        /// Run in watchdog mode (continuous monitoring)
+        #[arg(long)]
+        watchdog: bool,
+        /// Watchdog interval in seconds
+        #[arg(long, default_value = "30")]
+        interval: u64,
+        /// Force push (use with caution)
+        #[arg(long)]
+        force: bool,
+        /// Enable verbose output
+        #[arg(long)]
+        verbose: bool,
+        /// Disable file logging
+        #[arg(long)]
+        no_log: bool,
+        /// Custom log file path
+        #[arg(long)]
+        log_file: Option<String>,
+        /// Additional git commit arguments
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
+    },
     /// Run a specific hook using the state machine
     Hook {
         /// Hook type to run
@@ -997,6 +1030,22 @@ async fn main() -> Result<()> {
         } => {
             run_pre_commit(enhanced, staged_only, strict, auto_fix).await?;
         }
+        Commands::RunHooks {
+            hook_type,
+            verbose,
+            no_logs,
+            no_events,
+            log_dir,
+        } => {
+            println!("⚠️  RunHooks command not yet implemented");
+            println!("   Hook type: {}", hook_type);
+            println!("   Verbose: {}", verbose);
+            println!("   No logs: {}", no_logs);
+            println!("   No events: {}", no_events);
+            if let Some(dir) = log_dir {
+                println!("   Log dir: {}", dir);
+            }
+        }
         Commands::DeadCodeCheck {
             strict,
             include_generated,
@@ -1028,6 +1077,32 @@ async fn main() -> Result<()> {
                 watchdog,
                 interval,
                 force,
+                args,
+            )
+            .await?;
+        }
+        Commands::CleanAutoPush {
+            message,
+            allow_empty_message,
+            skip_validation,
+            watchdog,
+            interval,
+            force,
+            verbose,
+            no_log,
+            log_file,
+            args,
+        } => {
+            run_clean_auto_push(
+                message,
+                allow_empty_message,
+                skip_validation,
+                watchdog,
+                interval,
+                force,
+                verbose,
+                no_log,
+                log_file,
                 args,
             )
             .await?;
@@ -5280,9 +5355,11 @@ async fn run_single_auto_push(
                 let parts: Vec<&str> = first_line.split_whitespace().collect();
                 if parts.len() >= 2 {
                     match parts[1] {
-                        "rejected" => "Push rejected (non-fast-forward, requires pull/rebase)",
-                        "up to date" => "Already up to date",
-                        "forced update" => "Force update required",
+                        "rejected" => {
+                            "Push rejected (non-fast-forward, requires pull/rebase)".to_string()
+                        }
+                        "up to date" => "Already up to date".to_string(),
+                        "forced update" => "Force update required".to_string(),
                         _ => format!("Push failed: {}", parts[1]),
                     }
                 } else {
@@ -5309,8 +5386,8 @@ async fn run_single_auto_push(
             let parts: Vec<&str> = first_line.split_whitespace().collect();
             if parts.len() >= 2 {
                 match parts[1] {
-                    "ok" => "Successfully pushed",
-                    "up to date" => "Already up to date",
+                    "ok" => "Successfully pushed".to_string(),
+                    "up to date" => "Already up to date".to_string(),
                     _ => format!("Push completed: {}", parts[1]),
                 }
             } else {
@@ -5333,6 +5410,46 @@ async fn run_single_auto_push(
         }
     );
     println!("   🚀 {}", push_status);
+
+    Ok(())
+}
+
+/// Run clean auto-push workflow
+async fn run_clean_auto_push(
+    message: Option<String>,
+    allow_empty_message: bool,
+    skip_validation: bool,
+    watchdog: bool,
+    interval: u64,
+    force: bool,
+    verbose: bool,
+    no_log: bool,
+    log_file: Option<String>,
+    args: Vec<String>,
+) -> Result<()> {
+    let mut auto_push = auto_push::CleanAutoPush::default();
+    auto_push.verbose = verbose;
+    auto_push.log_to_file = !no_log;
+    if let Some(log_path) = log_file {
+        auto_push.log_file = Some(log_path);
+    }
+
+    if watchdog {
+        auto_push
+            .run_watchdog(
+                message,
+                allow_empty_message,
+                skip_validation,
+                force,
+                args,
+                interval,
+            )
+            .await?;
+    } else {
+        auto_push
+            .run(message, allow_empty_message, skip_validation, force, args)
+            .await?;
+    }
 
     Ok(())
 }

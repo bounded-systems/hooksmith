@@ -4,6 +4,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Write};
+use std::os::unix::process::ExitStatusExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use std::time::{Duration, Instant};
