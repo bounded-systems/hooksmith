@@ -12,6 +12,10 @@ A CLI tool for building Rust binaries into Lefthook hooks with WASM components.
 ## Installation
 
 ```bash
+# Build from source
+cargo build --release
+
+# Install globally (optional)
 cargo install --path .
 ```
 
@@ -19,32 +23,44 @@ cargo install --path .
 
 ```bash
 # Get help
-hooksmith --help
+./target/release/hooksmith --help
 
 # Test the CLI
-hooksmith test
+./target/release/hooksmith test
 
 # Generate WIT interfaces
-cargo xtask gen-wit
+cd xtask && cargo run -- gen-wit
 
 # Generate Lefthook configuration
-cargo xtask gen-lefthook
+cd xtask && cargo run -- gen-lefthook
 
 # Run all code generation
-cargo xtask gen-all
+cd xtask && cargo run -- gen-all
 ```
 
 ## CLI Commands
 
 ```bash
-
+# Main commands
+hooksmith test                    # Test command to verify CLI functionality
+hooksmith build                   # Build Rust binaries for Git hooks
+hooksmith generate                # Generate Lefthook configuration
+hooksmith generate-comprehensive  # Generate comprehensive Lefthook configuration
+hooksmith generate-code           # Generate structured code and documentation
+hooksmith install                 # Install hooks into Git repository
+hooksmith list                    # List available hooks
+hooksmith validate                # Validate Lefthook configuration
+hooksmith verify-hooks            # Verify Hooksmith hooks registration
+hooksmith wasm                    # WASM component management
+hooksmith worktree                # Worktree management
+hooksmith contract                # Contract validation with JSON Schema and Git notes
 ```
 
 ## Development
 
 ### Prerequisites
 
-- **Rust**: Latest stable version (1.75+)
+- **Rust**: Latest stable version (1.70+)
 - **Git**: Latest version
 - **Lefthook**: For pre-commit hooks (optional but recommended)
 
@@ -52,7 +68,7 @@ cargo xtask gen-all
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/hooksmith.git
+   git clone https://github.com/bdelanghe/hooksmith.git
    cd hooksmith
    ```
 
@@ -72,16 +88,17 @@ cargo xtask gen-all
 
 4. **Generate code and build the project**
    ```bash
-   # Generate all code and documentation
-   ./xtask.sh gen-all --overwrite
+   # Build the project
+   cargo build
 
-   # Or use the build script
-   ./build.sh
+   # Generate all code and documentation
+   cd xtask && cargo run -- gen-all
    ```
 
 5. **Run tests**
    ```bash
-   cargo test --all-targets --all-features
+   # Run library tests (some examples may have compilation issues)
+   cargo test --lib
    ```
 
 ### Xtask Commands
@@ -89,32 +106,35 @@ cargo xtask gen-all
 This project uses **xtask** for structured code generation and build tasks, replacing shell scripts and raw echo statements:
 
 ```bash
+# Navigate to xtask directory first
+cd xtask
+
 # Build the project and all components
-./xtask.sh build --target all --release
+cargo run -- build --target all --release
 
 # Generate WIT interface definitions
-./xtask.sh gen-wit --overwrite
+cargo run -- gen-wit --overwrite
 
 # Generate Lefthook configuration
-./xtask.sh gen-lefthook --validate
+cargo run -- gen-lefthook --validate
 
 # Generate documentation
-./xtask.sh gen-docs --open
+cargo run -- gen-docs --open
 
 # Generate README with CLI help
-./xtask.sh gen-readme --overwrite
+cargo run -- gen-readme --overwrite
 
 # Generate mod.rs files
-./xtask.sh gen-mods --overwrite
+cargo run -- gen-mods --overwrite
 
 # Run all code generation tasks
-./xtask.sh gen-all --overwrite
+cargo run -- gen-all --overwrite
 
 # Check if generated files are up to date
-./xtask.sh check --strict
+cargo run -- check --strict
 
 # Validate project configuration
-./xtask.sh validate --all
+cargo run -- validate --all
 ```
 
 **Benefits of Xtask:**
@@ -129,26 +149,47 @@ This project uses **xtask** for structured code generation and build tasks, repl
 ```
 hooksmith/
 ├── Cargo.toml               # Workspace manifest
-├── xtask.sh                 # Xtask wrapper script
-├── README.md                # This file (auto-generated)
+├── README.md                # This file
 ├── src/                     # Main CLI binary
 │   ├── main.rs              # CLI entry point
 │   ├── lib.rs               # Library exports
-│   ├── commands/            # Command modules (auto-generated mod.rs)
-│   └── modules/             # Core modules (auto-generated mod.rs)
+│   ├── commands/            # Command modules
+│   │   ├── mod.rs           # Auto-generated mod.rs
+│   │   └── contract_validation.rs
+│   ├── modules/             # Core modules
+│   │   ├── mod.rs           # Auto-generated mod.rs
+│   │   ├── contract_validation.rs
+│   │   ├── git_model.rs
+│   │   ├── wasm.rs
+│   │   ├── contract_state_machine.rs
+│   │   ├── hierarchical_validation.rs
+│   │   ├── generator.rs
+│   │   ├── hook_builder.rs
+│   │   └── lefthook.rs
+│   └── orchestrator/        # Orchestration layer
 ├── components/              # WASM components
 │   ├── cli-core/            # Core CLI functionality
+│   ├── git-filter/          # Git filtering components
+│   ├── hook-builder/        # Hook building components
 │   └── worktree-runner/     # Worktree management WASM component
-├── wit/                     # WIT interface definitions (auto-generated)
+├── xtask/                   # Build system and code generation
+│   ├── Cargo.toml
+│   ├── src/
+│   └── README.md
+├── wit/                     # WIT interface definitions
 ├── hooks/                   # Hook scripts directory
 ├── tests/                   # Test files
-└── target/doc/              # Generated documentation
+├── examples/                # Example code
+├── docs/                    # Documentation
+└── target/                  # Build artifacts
 ```
 
 ## Components
 
 - **hooksmith**: Main CLI binary for hook building and WASM management
 - **cli-core**: Core CLI functionality and utilities
+- **git-filter**: Git filtering and validation components
+- **hook-builder**: Hook building and compilation components
 - **worktree-runner**: WASM component for worktree management
 
 ## Integration
@@ -157,23 +198,23 @@ This CLI is designed to integrate with Lefthook for Git hook management:
 
 ```bash
 # Generate Lefthook config
-hooksmith generate > lefthook.yml
+./target/release/hooksmith generate > lefthook.yml
 
 # Install hooks
-hooksmith install
+./target/release/hooksmith install
 ```
 
 ## Documentation
 
 - **API Documentation**: `cargo doc --no-deps --open`
-- **CLI Help**: `hooksmith --help`
-- **Command Help**: `hooksmith <command> --help`
+- **CLI Help**: `./target/release/hooksmith --help`
+- **Command Help**: `./target/release/hooksmith <command> --help`
 
 ## Testing
 
 ```bash
-# Run all tests
-cargo test
+# Run library tests
+cargo test --lib
 
 # Run specific test
 cargo test test_cli_help
@@ -188,12 +229,18 @@ cargo test --test integration
 |---------|--------|-------|
 | CLI Structure | ✅ Complete | Full command parsing and help |
 | Documentation | ✅ Complete | Comprehensive docs and examples |
-| Tests | ✅ Complete | All tests passing |
+| Tests | ⚠️ Partial | Library tests pass, some examples need fixes |
 | Build System | ✅ Complete | Xtask-based workflow |
 | WASM Compilation | ✅ Complete | WASM toolchain integration |
 | WIT Processing | ✅ Complete | WIT parser and compiler |
 | Lefthook Integration | ✅ Complete | YAML generation and hook installation |
 | Hook Building | ✅ Complete | Rust compilation pipeline |
+
+## Known Issues
+
+- Some example files have compilation errors due to API changes
+- Tests need to be updated to match current API signatures
+- Xtask commands must be run from the `xtask/` directory
 
 ## License
 
@@ -202,4 +249,3 @@ MIT License - see LICENSE file for details.
 ---
 
 *This README is auto-generated using `cargo xtask gen-readme`. The CLI help section is automatically updated from the actual CLI output.*
-# test
