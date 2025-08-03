@@ -10,7 +10,7 @@ use tokio::process::Command as TokioCommand;
 use uuid::Uuid;
 
 use crate::events::AutoPushEvent;
-// Removed unused imports - structured_logging module doesn't have these types
+use crate::structured_logging::StructuredEvent;
 
 /// SARIF result structure for conversion
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -289,15 +289,12 @@ impl SarifIntegration {
                 let event = StructuredEvent {
                     timestamp: timestamp.to_rfc3339(),
                     level: result.level,
-                    tool: tool_name.clone(),
                     action: "validation".to_string(),
                     message: result.message.text,
                     details: Some(Value::Object(details)),
-                    code: None,
                     file: None,
                     line: None,
-                    column: None,
-                    session_id: None,
+                    metadata: None,
                 };
 
                 events.push(event);

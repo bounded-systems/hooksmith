@@ -95,17 +95,23 @@ impl StructuredAutoPush {
         }
 
         // Step 3: Add changes
-        self.logger.info("hooksmith", "git", "Adding changes")?;
+        if self.verbose {
+            println!("📝 Adding changes");
+        }
         self.add_changes().await?;
 
         // Step 4: Commit changes
-        self.logger.info("hooksmith", "git", "Committing changes")?;
+        if self.verbose {
+            println!("💾 Committing changes");
+        }
         let commit_hash = self
             .commit_changes(&message, allow_empty_message, &args)
             .await?;
 
         // Step 5: Push changes
-        self.logger.info("hooksmith", "git", "Pushing changes")?;
+        if self.verbose {
+            println!("🚀 Pushing changes");
+        }
         let push_result = self.push_changes(force).await?;
 
         let duration = start_time.elapsed().unwrap_or(Duration::from_secs(0));
@@ -158,7 +164,8 @@ impl StructuredAutoPush {
             }
 
             // Simplified validation - just run the command
-            let success = self.run_cargo_command(name, &args).await?;
+            let args_strings: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+            let success = self.run_cargo_command(name, &args_strings).await?;
 
             if !success {
                 if self.verbose {
@@ -178,7 +185,7 @@ impl StructuredAutoPush {
         let mut cmd = Command::new("cargo");
         cmd.args(args);
         
-        let output = cmd.output().await
+        let output = cmd.output()
             .context(format!("Failed to run cargo {}", name))?;
         
         Ok(output.status.success())
@@ -195,12 +202,6 @@ impl StructuredAutoPush {
             }
         }
 
-                return Ok(has_changes);
-            }
-        }
-
-        // Simplified git status check
-        let has_changes = self.check_git_status().await?;
         Ok(has_changes)
     }
 
@@ -211,7 +212,6 @@ impl StructuredAutoPush {
         let output = Command::new("git")
             .args(["add", "."])
             .output()
-            .await
             .context("Failed to run git add")?;
         
         if self.verbose {
@@ -257,14 +257,12 @@ impl StructuredAutoPush {
         let output = Command::new("git")
             .args(&commit_args)
             .output()
-            .await
             .context("Failed to run git commit")?;
 
         // Get commit hash
         let commit_hash_output = Command::new("git")
             .args(["rev-parse", "HEAD"])
             .output()
-            .await
             .context("Failed to get commit hash")?;
         
         let commit_hash = String::from_utf8_lossy(&commit_hash_output.stdout).trim().to_string();
@@ -283,7 +281,6 @@ impl StructuredAutoPush {
         let output = Command::new("git")
             .args(["status", "--porcelain"])
             .output()
-            .await
             .context("Failed to run git status")?;
         
         let status = String::from_utf8_lossy(&output.stdout);
@@ -292,24 +289,22 @@ impl StructuredAutoPush {
 
     /// Push changes
     async fn push_changes(&self, force: bool) -> Result<String> {
-        let mut push_args = vec!["push".to_string()];
+        use std::process::Command;
+        
+        let mut push_args = vec!["push"];
 
         if force {
-            push_args.push("--force".to_string());
+            push_args.push("--force");
         }
 
-        let output = self.logger.run_git_command("push", &push_args).await?;
+        let output = Command::new("git")
+            .args(push_args)
+            .output()
+            .context("Failed to run git push")?;
 
-        let push_details = serde_json::json!({
-            "force": force,
-            "output": output,
-            "session_id": self.session_id
-        });
-
-        let push_event = StructuredEvent::new("info", "git", "push", "Successfully pushed changes")
-            .with_details(push_details);
-
-        self.logger.log(push_event)?;
+        if self.verbose {
+            println!("🚀 Successfully pushed changes");
+        }
 
         Ok("Push completed successfully".to_string())
     }
@@ -323,11 +318,9 @@ impl StructuredAutoPush {
         args: Vec<String>,
         interval: u64,
     ) -> Result<()> {
-        self.logger.info(
-            "hooksmith",
-            "watchdog",
-            &format!("Starting watchdog mode with {}s interval", interval),
-        )?;
+        if self.verbose {
+            println!("🔄 Starting watchdog mode with {}s interval", interval);
+        }
 
         loop {
             match self
@@ -335,31 +328,21 @@ impl StructuredAutoPush {
                 .await
             {
                 Ok(_) => {
-                    self.logger.info(
-                        "hooksmith",
-                        "watchdog",
-                        "Watchdog cycle completed successfully",
-                    )?;
+                    if self.verbose {
+                        println!("✅ Watchdog cycle completed successfully");
+                    }
                 }
                 Err(e) => {
-                    self.logger.error(
-                        "hooksmith",
-                        "watchdog",
-                        &format!("Watchdog cycle failed: {}", e),
-                    )?;
-                    self.logger.info(
-                        "hooksmith",
-                        "watchdog",
-                        "Validation errors detected - skipping commit/push",
-                    )?;
+                    if self.verbose {
+                        println!("❌ Watchdog cycle failed: {}", e);
+                        println!("ℹ️  Validation errors detected - skipping commit/push");
+                    }
                 }
             }
 
-            self.logger.info(
-                "hooksmith",
-                "watchdog",
-                &format!("Waiting {} seconds before next cycle", interval),
-            )?;
+            if self.verbose {
+                println!("⏳ Waiting {} seconds before next cycle", interval);
+            }
 
             sleep(Duration::from_secs(interval)).await;
         }

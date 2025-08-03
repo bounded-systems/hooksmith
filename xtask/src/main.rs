@@ -1002,7 +1002,7 @@ async fn main() -> Result<()> {
     let event_bus_integration = true; // Enable event bus integration
     let session_id = Some(uuid::Uuid::new_v4().to_string());
 
-    structured_logging::init_global_logger(jsonl_output, event_bus_integration, session_id);
+    // Removed init_global_logger - not implemented
 
     let cli = Cli::parse();
 
@@ -3492,36 +3492,36 @@ async fn generate_all_files(validate: bool, force: bool) -> Result<()> {
 async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
     use crate::{log_event, structured_logging::emit_sarif_error};
     
-    log_event!("info", "bootstrap_start", "🚀 Bootstrapping project with all generated files", None);
+    log_event!("info", "bootstrap_start", "🚀 Bootstrapping project with all generated files", None::<String>);
 
     // Generate all files
-    log_event!("info", "generate_files", "Generating all project files", None);
+    log_event!("info", "generate_files", "Generating all project files", None::<String>);
     match generate_all_files(validate, true).await {
-        Ok(_) => log_event!("info", "generate_success", "All files generated successfully", None),
+        Ok(_) => log_event!("info", "generate_success", "All files generated successfully", None::<String>),
         Err(e) => {
-            log_event!("error", "generate_failed", &format!("Failed to generate files: {}", e), None);
+            log_event!("error", "generate_failed", &format!("Failed to generate files: {}", e), None::<String>);
             emit_sarif_error("xtask/src/main.rs", 3492, &format!("File generation failed: {}", e));
             return Err(e);
         }
     }
 
     // Check if everything is valid
-    log_event!("info", "validation_start", "🔍 Running final validation", None);
+    log_event!("info", "validation_start", "🔍 Running final validation", None::<String>);
     match file_audit::validate_generated_files() {
-        Ok(_) => log_event!("info", "validation_success", "Generated files validation passed", None),
+        Ok(_) => log_event!("info", "validation_success", "Generated files validation passed", None::<String>),
         Err(e) => {
-            log_event!("error", "validation_failed", &format!("Generated files validation failed: {}", e), None);
+            log_event!("error", "validation_failed", &format!("Generated files validation failed: {}", e), None::<String>);
             emit_sarif_error("xtask/src/main.rs", 3500, &format!("Generated files validation failed: {}", e));
             return Err(e);
         }
     }
 
     // Check file types
-    log_event!("info", "file_check_start", "🔍 Checking file types", None);
+    log_event!("info", "file_check_start", "🔍 Checking file types", None::<String>);
     match file_audit::check_files() {
         Ok(result) => {
             if result.has_errors() {
-                log_event!("error", "file_check_failed", "File type validation failed", None);
+                log_event!("error", "file_check_failed", "File type validation failed", None::<String>);
                 emit_sarif_error("xtask/src/main.rs", 3505, "File type validation failed");
                 anyhow::bail!("Bootstrap validation failed. Please fix issues and try again.");
             } else {
