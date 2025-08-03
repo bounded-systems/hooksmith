@@ -360,6 +360,14 @@ impl HooksmithHook for AutoPushHook {
             let validation_result = pre_commit.run(ctx)?;
 
             if !validation_result.success {
+                // Emit error event for validation failure
+                let _ = emit_error(
+                    EventCategory::HookStateMachine,
+                    "validation_failed",
+                    "Validation checks failed - see errors above",
+                    "auto_push_hook",
+                );
+
                 return Ok(validation_result);
             }
         } else {
@@ -458,6 +466,14 @@ impl HooksmithHook for AutoPushHook {
             .context("Failed to push changes")?;
 
         if !push_status.success() {
+            // Emit error event for git push failure
+            let _ = emit_error(
+                EventCategory::HookStateMachine,
+                "git_push_failed",
+                "Git push failed - check remote repository configuration",
+                "auto_push_hook",
+            );
+
             return Ok(HookResult::error(
                 HookState::Error,
                 "git push failed".to_string(),
