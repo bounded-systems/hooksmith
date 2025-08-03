@@ -56,6 +56,7 @@ cargo build
 │       └── hooksmith.bash
 │   ├── COMPREHENSIVE_DOCS_SUMMARY.md
 │   ├── CODEOWNERS
+│   ├── DIRENV_SETUP.md
 │   ├── wit/
 │   │   ├── lefthook-generator.wit
 │   │   ├── hooksmith.wit
@@ -289,6 +290,7 @@ cargo build
 │   ├── templates/
 │       └── README.hbs
 │   ├── RUST_TOOLING_SUMMARY.md
+│   ├── XTASK_COMMANDS.md
 │   ├── stuff.md
 │   ├── xtask/
 │   │   ├── Cargo.toml
@@ -379,6 +381,7 @@ cargo build
 │   ├── test_safeguards.rs
 │   ├── generated_file_demo
 │   ├── bootstrap-test.rs
+│   ├── ~/
 │   ├── HOOK_STATE_MACHINE_IMPLEMENTATION_SUMMARY.md
 │   ├── test_source_extraction.rs
 │   ├── BOOTSTRAP_SUMMARY.md

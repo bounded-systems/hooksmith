@@ -1,0 +1,59 @@
+# Global direnv configuration for Rust development
+# Place this file at ~/.config/direnv/direnvrc
+
+# Reusable layout_rust function for all Rust projects
+layout_rust() {
+  local cargo_home=${CARGO_HOME:-"$HOME/.cargo"}
+  
+  # Add cargo bin to PATH using PATH_add (safer than manual export)
+  PATH_add "$cargo_home/bin"
+  
+  # Set common Rust environment variables
+  export RUST_BACKTRACE=1
+  export RUST_LOG=info
+  
+  # Auto-detect and use project toolchain if rust-toolchain.toml exists
+  if [[ -f rust-toolchain.toml ]]; then
+    # Extract channel from rust-toolchain.toml
+    local channel=$(grep -E '^channel\s*=\s*"' rust-toolchain.toml | sed 's/.*"\([^"]*\)".*/\1/')
+    if [[ -n "$channel" ]]; then
+      export RUSTUP_TOOLCHAIN="$channel"
+      echo "Using Rust toolchain: $channel"
+    fi
+  fi
+  
+  # Add project-specific tools to PATH
+  PATH_add "$PWD/target/debug"
+  PATH_add "$PWD/target/release"
+  
+  # Set up xtask for development workflows
+  if [[ -d xtask ]]; then
+    PATH_add "$PWD/xtask/target/debug"
+    PATH_add "$PWD/xtask/target/release"
+  fi
+  
+  # Add common Rust development tools
+  PATH_add "$PWD/.cargo/bin"
+  
+  echo "Rust development environment loaded"
+}
+
+# Alternative: Simple rustup environment loading
+layout_rustup() {
+  if [[ -r "$HOME/.cargo/env" ]]; then
+    source_env "$HOME/.cargo/env"
+    echo "Rustup environment loaded"
+  else
+    echo "Warning: $HOME/.cargo/env not found"
+  fi
+}
+
+# Helper function to check if we're in a Rust project
+is_rust_project() {
+  [[ -f Cargo.toml ]] || [[ -f Cargo.lock ]]
+}
+
+# Auto-detect Rust projects and apply layout
+if is_rust_project; then
+  layout_rust
+fi 

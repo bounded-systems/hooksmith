@@ -6,6 +6,7 @@
 //! serde_json = "1.0"
 //! toml = "0.8"
 //! anyhow = "1.0"
+//! dirs = "5.0"
 //! ```
 
 use anyhow::{Context, Result};
@@ -33,11 +34,15 @@ fn main() -> Result<()> {
     println!("🏷️  Updating .gitattributes for Cargo.toml files...");
     update_gitattributes()?;
 
-    // Step 5: Build xtask
+    // Step 5: Set up direnv environment
+    println!("🔧 Setting up direnv environment...");
+    setup_direnv()?;
+
+    // Step 6: Build xtask
     println!("🔨 Building xtask...");
     build_xtask()?;
 
-    // Step 6: Generate documentation using existing doc gen system
+    // Step 7: Generate documentation using existing doc gen system
     println!("📚 Generating documentation...");
     generate_documentation()?;
 
@@ -45,8 +50,12 @@ fn main() -> Result<()> {
     println!("Next steps:");
     println!("  • Run 'cargo build' to build the project");
     println!("  • Run 'cargo test' to run tests");
-    println!("  • Run './target/debug/xtask --help' to see available xtask commands");
-    println!("  • Run './target/debug/xtask gen-docs-comprehensive --all' to regenerate all docs");
+    println!("  • Run 'xtask --help' to see available xtask commands (after direnv setup)");
+    println!("  • Run 'xtask gen-docs-comprehensive --all' to regenerate all docs");
+    println!("\n🔧 Direnv Setup:");
+    println!("  • Add 'eval \"$(direnv hook zsh)\"' to your ~/.zshrc (if not already added)");
+    println!("  • Run 'direnv allow' to enable the project environment");
+    println!("  • Use 'xtask' alias for convenient xtask commands");
 
     Ok(())
 }
@@ -449,6 +458,190 @@ xtask/Cargo.toml              codegen linguist-generated=true
 
     fs::write(gitattributes_path, content)
         .context("Failed to write .gitattributes")?;
+
+    Ok(())
+}
+
+fn setup_direnv() -> Result<()> {
+    // Check if direnv is installed
+    let direnv_check = Command::new("direnv")
+        .arg("--version")
+        .output();
+    
+    match direnv_check {
+        Ok(output) if output.status.success() => {
+            let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            println!("   ✅ Direnv found: {}", version);
+        }
+        _ => {
+            println!("   ⚠️  Direnv not found. Installing...");
+            println!("   📋 Installing direnv...");
+            
+            // Try to install direnv using common package managers
+            let install_commands = vec![
+                ("brew", vec!["install", "direnv"]),
+                ("apt", vec!["install", "-y", "direnv"]),
+                ("dnf", vec!["install", "-y", "direnv"]),
+                ("yum", vec!["install", "-y", "direnv"]),
+            ];
+            
+            let mut installed = false;
+            for (cmd, args) in install_commands {
+                let result = Command::new(cmd)
+                    .args(&args)
+                    .output();
+                
+                if let Ok(output) = result {
+                    if output.status.success() {
+                        println!("   ✅ Direnv installed successfully using {}", cmd);
+                        installed = true;
+                        break;
+                    }
+                }
+            }
+            
+            if !installed {
+                println!("   ❌ Failed to install direnv automatically");
+                println!("   📋 Please install direnv manually:");
+                println!("      • macOS: brew install direnv");
+                println!("      • Ubuntu/Debian: sudo apt install direnv");
+                println!("      • Fedora: sudo dnf install direnv");
+                println!("      • Or visit: https://direnv.net/");
+                println!("   ℹ️  Continuing with setup (you can install direnv later)");
+            }
+        }
+    }
+
+    println!("   📝 Creating .envrc file...");
+    
+    let envrc_content = r#"#!/usr/bin/env bash
+
+# Hooksmith Project Environment Configuration
+# Uses modern direnv patterns for Rust development
+
+# Apply the global Rust layout (defined in ~/.config/direnv/direnvrc)
+layout_rust
+
+# Project-specific environment variables
+export HOOKSMITH_PROJECT_ROOT="$PWD"
+export HOOKSMITH_LOG_DIR="$PWD/logs"
+
+# Ensure logs directory exists
+mkdir -p "$HOOKSMITH_LOG_DIR"
+
+# Add helpful aliases for xtask commands
+alias xtask="cargo run -p xtask"
+alias xtask-check="cargo check -p xtask"
+alias xtask-build="cargo build -p xtask"
+alias xtask-test="cargo test -p xtask"
+
+echo "Hooksmith development environment loaded"
+echo "Project root: $HOOKSMITH_PROJECT_ROOT"
+echo "Log directory: $HOOKSMITH_LOG_DIR"
+echo "Available xtask aliases: xtask, xtask-check, xtask-build, xtask-test"
+"#;
+
+    fs::write(".envrc", envrc_content)
+        .context("Failed to write .envrc")?;
+
+    // Make .envrc executable
+    let output = Command::new("chmod")
+        .args(&["+x", ".envrc"])
+        .output()
+        .context("Failed to make .envrc executable")?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        println!("⚠️  Warning: Failed to make .envrc executable: {}", stderr);
+    }
+
+    println!("   📝 Creating global direnv configuration...");
+    
+    // Create global direnv configuration directory
+    let config_dir = dirs::home_dir()
+        .context("Could not determine home directory")?
+        .join(".config/direnv");
+    
+    fs::create_dir_all(&config_dir)
+        .context("Failed to create direnv config directory")?;
+
+    let global_direnvrc_content = r#"# Global direnv configuration for Rust development
+# Place this file at ~/.config/direnv/direnvrc
+
+# Reusable layout_rust function for all Rust projects
+layout_rust() {
+  local cargo_home=${CARGO_HOME:-"$HOME/.cargo"}
+  
+  # Add cargo bin to PATH using PATH_add (safer than manual export)
+  PATH_add "$cargo_home/bin"
+  
+  # Set common Rust environment variables
+  export RUST_BACKTRACE=1
+  export RUST_LOG=info
+  
+  # Auto-detect and use project toolchain if rust-toolchain.toml exists
+  if [[ -f rust-toolchain.toml ]]; then
+    # Extract channel from rust-toolchain.toml
+    local channel=$(grep -E '^channel\s*=\s*"' rust-toolchain.toml | sed 's/.*"\([^"]*\)".*/\1/')
+    if [[ -n "$channel" ]]; then
+      export RUSTUP_TOOLCHAIN="$channel"
+      echo "Using Rust toolchain: $channel"
+    fi
+  fi
+  
+  # Add project-specific tools to PATH
+  PATH_add "$PWD/target/debug"
+  PATH_add "$PWD/target/release"
+  
+  # Set up xtask for development workflows
+  if [[ -d xtask ]]; then
+    PATH_add "$PWD/xtask/target/debug"
+    PATH_add "$PWD/xtask/target/release"
+  fi
+  
+  # Add common Rust development tools
+  PATH_add "$PWD/.cargo/bin"
+  
+  echo "Rust development environment loaded"
+}
+
+# Alternative: Simple rustup environment loading
+layout_rustup() {
+  if [[ -r "$HOME/.cargo/env" ]]; then
+    source_env "$HOME/.cargo/env"
+    echo "Rustup environment loaded"
+  else
+    echo "Warning: $HOME/.cargo/env not found"
+  fi
+}
+
+# Helper function to check if we're in a Rust project
+is_rust_project() {
+  [[ -f Cargo.toml ]] || [[ -f Cargo.lock ]]
+}
+
+# Auto-detect Rust projects and apply layout
+if is_rust_project; then
+  layout_rust
+fi
+"#;
+
+    let global_direnvrc_path = config_dir.join("direnvrc");
+    
+    // Only create if it doesn't exist (don't overwrite user's existing config)
+    if !global_direnvrc_path.exists() {
+        fs::write(&global_direnvrc_path, global_direnvrc_content)
+            .context("Failed to write global direnvrc")?;
+        println!("   ✅ Created global direnv configuration at ~/.config/direnv/direnvrc");
+    } else {
+        println!("   ℹ️  Global direnv configuration already exists, skipping");
+    }
+
+    println!("   ✅ Direnv environment setup complete");
+    println!("   📋 Next steps:");
+    println!("      • Add 'eval \"$(direnv hook zsh)\"' to your ~/.zshrc");
+    println!("      • Run 'direnv allow' to enable the project environment");
+    println!("      • Use 'xtask' alias for convenient xtask commands");
 
     Ok(())
 }

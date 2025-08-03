@@ -840,11 +840,12 @@ fn create_sample_jsonl() -> Result<()> {
             }
         }),
     ];
+    let events_count = events.len();
     let mut file = File::create("sample-events.jsonl")?;
     for event in events {
         writeln!(file, "{}", event)?;
     }
-    println!("✅ Created sample JSONL file with {} events", events.len());
+    println!("✅ Created sample JSONL file with {} events", events_count);
     Ok(())
 }
 fn create_sample_sarif_files() -> Result<()> {

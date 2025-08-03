@@ -830,38 +830,38 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       415
+- **Total Files**:       421
 - **Rust Files**:        140 (.rs)
 - **Configuration Files**:        40 (.toml, .yaml, .rc)
-- **Documentation**:        152 (.md)
+- **Documentation**:        156 (.md)
 - **Scripts**:        18 (.sh)
 
 ## 📋 File Type Breakdown
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .rs | 140 | Rust source files |
-| .jsonl | 2 | Other files |
-| .disabled | 7 | Other files |
 | .json | 10 | JSON schema and config files |
-| .backup | 1 | Other files |
-| .pdf | 1 | PDF documentation |
-| .lock | 2 | Other files |
-| .sed | 2 | Other files |
-| .wit | 10 | WebAssembly Interface Type definitions |
-| .html | 1 | HTML documentation |
-| .sh | 18 | Shell scripts |
-| .jsonc | 10 | Other files |
-| .yaml | 4 | YAML configuration files |
-| .toml | 17 | Cargo and configuration files |
-| .bash | 1 | Other files |
-| .dot | 1 | Other files |
-| .md | 152 | Markdown documentation |
-| .css | 1 | Stylesheet files |
 | .yml | 9 | YAML configuration files |
+| .html | 1 | HTML documentation |
+| .sed | 2 | Other files |
+| .jsonl | 2 | Other files |
+| .lock | 2 | Other files |
+| .toml | 17 | Cargo and configuration files |
+| .wit | 10 | WebAssembly Interface Type definitions |
+| .disabled | 7 | Other files |
+| .dot | 1 | Other files |
 | .epub | 1 | EPUB documentation |
+| .pdf | 1 | PDF documentation |
+| .md | 156 | Markdown documentation |
+| .bash | 1 | Other files |
+| .css | 1 | Stylesheet files |
 | .jql | 4 | Other files |
+| .backup | 1 | Other files |
+| .jsonc | 10 | Other files |
 | .hbs | 1 | Other files |
+| .rs | 140 | Rust source files |
+| .yaml | 4 | YAML configuration files |
+| .sh | 18 | Shell scripts |
 
 ## 🧩 Component Breakdown
 
@@ -892,9 +892,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 232
-- **Modified Files**: 29
+- **Total Commits**: 233
+- **Modified Files**: 8
 
 ---
 
-*Generated on Sun Aug  3 19:51:40 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 20:01:48 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

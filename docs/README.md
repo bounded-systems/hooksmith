@@ -8,31 +8,31 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **indicatif**: ^0.17
-- **tracing**: ^0.1
-- **git-filter**: *
-- **serde_yaml**: ^0.9
-- **clap**: ^4.0
 - **reqwest**: ^0.11
-- **which**: ^5.0
-- **wit-bindgen**: ^0.20
-- **chrono**: ^0.4
+- **git-filter**: *
 - **cli-core**: *
-- **regex**: ^1.0
-- **serde**: ^1.0
-- **toml**: ^0.8
-- **tracing-subscriber**: ^0.3
-- **serde_json**: ^1.0
-- **schemars**: ^0.8
-- **wasmtime**: ^18.0
 - **console**: ^0.15
-- **jsonschema**: ^0.17
-- **sha2**: ^0.10
+- **serde**: ^1.0
+- **tracing**: ^0.1
 - **wasmtime-wasi**: ^18.0
-- **tempfile**: dev
+- **wit-bindgen**: ^0.20
+- **toml**: ^0.8
+- **regex**: ^1.0
 - **anyhow**: ^1.0
+- **schemars**: ^0.8
+- **chrono**: ^0.4
+- **serde_json**: ^1.0
 - **git2**: ^0.18
+- **which**: ^5.0
 - **tokio**: ^1.0
+- **jsonschema**: ^0.17
+- **serde_yaml**: ^0.9
+- **sha2**: ^0.10
+- **tracing-subscriber**: ^0.3
+- **tempfile**: dev
+- **wasmtime**: ^18.0
+- **clap**: ^4.0
+- **indicatif**: ^0.17
 
 ## Installation
 
@@ -82,6 +82,7 @@ hooksmith --help
 │       └── hooksmith.bash
 │   ├── COMPREHENSIVE_DOCS_SUMMARY.md
 │   ├── CODEOWNERS
+│   ├── DIRENV_SETUP.md
 │   ├── wit/
 │   │   ├── lefthook-generator.wit
 │   │   ├── hooksmith.wit
@@ -315,6 +316,7 @@ hooksmith --help
 │   ├── templates/
 │       └── README.hbs
 │   ├── RUST_TOOLING_SUMMARY.md
+│   ├── XTASK_COMMANDS.md
 │   ├── stuff.md
 │   ├── xtask/
 │   │   ├── Cargo.toml
@@ -405,6 +407,7 @@ hooksmith --help
 │   ├── test_safeguards.rs
 │   ├── generated_file_demo
 │   ├── bootstrap-test.rs
+│   ├── ~/
 │   ├── HOOK_STATE_MACHINE_IMPLEMENTATION_SUMMARY.md
 │   ├── test_source_extraction.rs
 │   ├── BOOTSTRAP_SUMMARY.md
