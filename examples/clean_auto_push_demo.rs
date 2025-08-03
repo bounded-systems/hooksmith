@@ -30,7 +30,7 @@ fn main() {
 
     // Example 3: Watchdog mode
     println!("📦 Example 3: Watchdog mode");
-    println!("   cargo run -p xtask -- clean-auto-push --watchdog --interval 60 --skip-validation");
+    println!("   cargo run -p xtask -- clean-auto-push --watchdog --interval 60");
     println!();
 
     // Example 4: Force push (use with caution)

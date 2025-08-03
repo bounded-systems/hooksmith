@@ -29,7 +29,6 @@ impl CleanAutoPush {
         &self,
         message: Option<String>,
         allow_empty_message: bool,
-        skip_validation: bool,
         force: bool,
         args: Vec<String>,
     ) -> Result<()> {
@@ -46,14 +45,10 @@ impl CleanAutoPush {
 
         self.log("🚀 Starting clean auto-push workflow...");
 
-        // Step 1: Run validation checks (unless skipped)
-        if !skip_validation {
-            self.log("🔍 Running validation checks...");
-            self.run_validation().await?;
-            self.log("✅ All validation checks passed!");
-        } else {
-            self.log("⚠️  Skipping validation checks");
-        }
+        // Step 1: Run validation checks
+        self.log("🔍 Running validation checks...");
+        self.run_validation().await?;
+        self.log("✅ All validation checks passed!");
 
         // Step 2: Check for changes
         self.log("📊 Checking for changes...");
@@ -332,7 +327,6 @@ impl CleanAutoPush {
         &self,
         message: Option<String>,
         allow_empty_message: bool,
-        skip_validation: bool,
         force: bool,
         args: Vec<String>,
         interval: u64,
@@ -345,13 +339,7 @@ impl CleanAutoPush {
 
         loop {
             match self
-                .run(
-                    message.clone(),
-                    allow_empty_message,
-                    skip_validation,
-                    force,
-                    args.clone(),
-                )
+                .run(message.clone(), allow_empty_message, force, args.clone())
                 .await
             {
                 Ok(_) => {
@@ -359,9 +347,7 @@ impl CleanAutoPush {
                 }
                 Err(e) => {
                     self.log(&format!("❌ Watchdog cycle failed: {}", e));
-                    if !skip_validation {
-                        self.log("   Validation errors detected - skipping commit/push");
-                    }
+                    self.log("   Validation errors detected - skipping commit/push");
                 }
             }
 

@@ -626,9 +626,6 @@ enum Commands {
         /// Allow empty commit message (Trunk-style)
         #[arg(long)]
         allow_empty_message: bool,
-        /// Skip validation checks
-        #[arg(long)]
-        skip_validation: bool,
         /// Run in watchdog mode (continuous monitoring)
         #[arg(long)]
         watchdog: bool,
@@ -1084,7 +1081,6 @@ async fn main() -> Result<()> {
         Commands::CleanAutoPush {
             message,
             allow_empty_message,
-            skip_validation,
             watchdog,
             interval,
             force,
@@ -1096,7 +1092,6 @@ async fn main() -> Result<()> {
             run_clean_auto_push(
                 message,
                 allow_empty_message,
-                skip_validation,
                 watchdog,
                 interval,
                 force,
@@ -5418,7 +5413,6 @@ async fn run_single_auto_push(
 async fn run_clean_auto_push(
     message: Option<String>,
     allow_empty_message: bool,
-    skip_validation: bool,
     watchdog: bool,
     interval: u64,
     force: bool,
@@ -5436,18 +5430,11 @@ async fn run_clean_auto_push(
 
     if watchdog {
         auto_push
-            .run_watchdog(
-                message,
-                allow_empty_message,
-                skip_validation,
-                force,
-                args,
-                interval,
-            )
+            .run_watchdog(message, allow_empty_message, force, args, interval)
             .await?;
     } else {
         auto_push
-            .run(message, allow_empty_message, skip_validation, force, args)
+            .run(message, allow_empty_message, force, args)
             .await?;
     }
 

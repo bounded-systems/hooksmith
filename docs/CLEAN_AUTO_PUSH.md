@@ -61,8 +61,8 @@ cargo run -p xtask -- clean-auto-push --verbose --log-file logs/my-push.log
 # Watchdog mode (continuous monitoring)
 cargo run -p xtask -- clean-auto-push --watchdog --interval 60
 
-# Skip validation for faster pushes
-cargo run -p xtask -- clean-auto-push --skip-validation
+# Force push (use with caution)
+cargo run -p xtask -- clean-auto-push --force
 
 # Force push (use with caution)
 cargo run -p xtask -- clean-auto-push --force
@@ -74,7 +74,7 @@ cargo run -p xtask -- clean-auto-push --force
 |--------|-------------|---------|
 | `-m, --message` | Commit message | Auto-generated timestamp |
 | `--allow-empty-message` | Allow empty commit messages | false |
-| `--skip-validation` | Skip validation checks | false |
+
 | `--watchdog` | Run in continuous mode | false |
 | `--interval` | Watchdog interval (seconds) | 30 |
 | `--force` | Force push | false |
@@ -84,7 +84,7 @@ cargo run -p xtask -- clean-auto-push --force
 
 ## Workflow Steps
 
-1. **Validation** (unless `--skip-validation`)
+1. **Validation** (always required)
    - `cargo fix`
    - `cargo fmt`
    - `cargo clippy`
