@@ -277,7 +277,7 @@ impl GeneratedFileValidator {
 
     /// Check if a file has a generated header
     fn has_generated_header(file_path: &Path) -> Result<bool> {
-        // Skip binary files
+        // Skip binary files and files that can't have traditional headers
         let extension = file_path
             .extension()
             .and_then(|ext| ext.to_str())
@@ -285,18 +285,25 @@ impl GeneratedFileValidator {
         let binary_extensions = [
             "epub", "pdf", "png", "jpg", "jpeg", "gif", "ico", "svg", "zip", "tar", "gz",
         ];
+        let no_header_extensions = ["json"];
 
         if binary_extensions.contains(&extension) {
             // Binary files are considered to have headers (they can't have text headers)
             return Ok(true);
         }
 
+        if no_header_extensions.contains(&extension) {
+            // Files that can't have traditional headers are considered to have headers
+            return Ok(true);
+        }
+
         let content = std::fs::read_to_string(file_path)
             .context(format!("Failed to read file: {}", file_path.display()))?;
 
-        // Check for both comment styles
+        // Check for multiple comment styles
         Ok(content.starts_with("# GENERATED FILE - DO NOT EDIT")
-            || content.starts_with("// GENERATED FILE - DO NOT EDIT"))
+            || content.starts_with("// GENERATED FILE - DO NOT EDIT")
+            || content.starts_with("<!-- This file is auto-generated"))
     }
 
     /// Get list of all generated files in the repository
