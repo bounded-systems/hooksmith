@@ -283,6 +283,7 @@ mod strict_file_validator;
 mod structured_auto_push;
 mod structured_logging;
 mod wasm_event_bus;
+mod jsonc;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -697,6 +698,12 @@ enum Commands {
         /// Whether to remove original JSON files after conversion
         #[arg(long)]
         remove_original: bool,
+    },
+    /// Process JSONC configuration files
+    Jsonc {
+        /// Load and process JSONC files
+        #[command(subcommand)]
+        command: JsoncCommands,
     },
     /// Automated git workflow: validate, add, commit, and push
     AutoPush {
