@@ -124,6 +124,9 @@ xtask/Cargo.toml              codegen linguist-generated=true
 *.yml                          generated=true linguist-generated=true
 *.yaml                         generated=true linguist-generated=true
 
+# Exception: lefthook.yml is manually maintained since generation is disabled
+lefthook.yml                   -generated linguist-generated=false
+
 # Generated Rust module files
 src/commands/mod.rs             generated=true linguist-generated=true
 src/modules/mod.rs              generated=true linguist-generated=true

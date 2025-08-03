@@ -57,6 +57,7 @@ This document shows the complete file structure of the repository.
 ├── CONTRACT_WORKFLOW_DESIGN.md
 ├── CONTRIBUTING.md
 ├── Cargo.toml
+├── EXAMPLES_FIXES_SUMMARY.md
 ├── FILE_TYPE_ENFORCEMENT_SUMMARY.md
 ├── GENERATED_FILE_VALIDATION_SUMMARY.md
 ├── MIGRATION_PLAN.md
@@ -681,22 +682,22 @@ This document shows the complete file structure of the repository.
 | Extension | Count | Description |
 |-----------|-------|-------------|
 | .dot | 1 | Other files |
-| .yaml | 4 | YAML configuration files |
-| .wit | 9 | WebAssembly Interface Type definitions |
-| .toml | 16 | Cargo and configuration files |
-| .epub | 1 | EPUB documentation |
 | .sed | 2 | Other files |
-| .css | 1 | Stylesheet files |
-| .backup | 1 | Other files |
-| .lock | 2 | Other files |
+| .epub | 1 | EPUB documentation |
+| .toml | 16 | Cargo and configuration files |
 | .rs | 124 | Rust source files |
-| .pdf | 1 | PDF documentation |
-| .hbs | 1 | Other files |
-| .json | 10 | JSON schema and config files |
-| .bash | 1 | Other files |
-| .html | 1 | HTML documentation |
+| .backup | 1 | Other files |
 | .md | 133 | Markdown documentation |
 | .yml | 9 | YAML configuration files |
+| .hbs | 1 | Other files |
+| .bash | 1 | Other files |
+| .html | 1 | HTML documentation |
+| .lock | 2 | Other files |
+| .yaml | 4 | YAML configuration files |
+| .css | 1 | Stylesheet files |
+| .wit | 9 | WebAssembly Interface Type definitions |
+| .json | 10 | JSON schema and config files |
+| .pdf | 1 | PDF documentation |
 
 ## 🧩 Component Breakdown
 
@@ -727,9 +728,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 175
-- **Modified Files**: 4
+- **Total Commits**: 176
+- **Modified Files**: 3
 
 ---
 
-*Generated on Sun Aug  3 01:20:24 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 01:21:56 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

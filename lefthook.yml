@@ -13,13 +13,13 @@ pre-commit:
       run: git add .
       stage_fixed: true
     validate-extensions:
-      run: cargo run -p xtask -- validate-extensions
+      run: cargo run -p xtask -- contract-validate validate-extensions
     contract-validate:
-      run: cargo run -p xtask -- contract-validate --validate-generated
+      run: cargo run -p xtask -- contract-validate pre-commit --validate-generated
     validate-generated:
       run: cargo run -p xtask -- validate-generated --staged-only --strict
     check-generated:
-      run: cargo run -p xtask -- validate-headers
+      run: cargo run -p xtask -- validate-headers --strict
     audit:
       run: cargo audit
     deny:
@@ -29,11 +29,11 @@ pre-push:
   parallel: true
   commands:
     comprehensive-validate:
-      run: cargo run -p xtask -- contract-validate --validate-generated --comprehensive
+      run: cargo run -p xtask -- contract-validate validate --range HEAD~1..HEAD
     validate-all-generated:
       run: cargo run -p xtask -- validate-generated --strict
     validate-headers:
-      run: cargo run -p xtask -- validate-headers --all
+      run: cargo run -p xtask -- validate-headers --strict
 
 commit-msg:
   commands:
