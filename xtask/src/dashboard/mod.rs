@@ -405,13 +405,42 @@ impl Dashboard {
 
         // Push changes (never force push)
         println!("📤 Pushing changes...");
-        let push_status = std::process::Command::new("git")
-            .args(["push"])
-            .status()
+        let push_output = std::process::Command::new("git")
+            .args(["push", "--porcelain"])
+            .output()
             .map_err(|e| format!("Failed to push changes: {}", e))?;
 
-        if !push_status.success() {
-            return Err("Git push failed".into());
+        if !push_output.status.success() {
+            let stderr = String::from_utf8_lossy(&push_output.stderr);
+            let stdout = String::from_utf8_lossy(&push_output.stdout);
+
+            // Parse porcelain output for cleaner error messages
+            let error_message = if !stdout.is_empty() {
+                // Parse porcelain format: <ref> <status> <summary>
+                let lines: Vec<&str> = stdout.lines().collect();
+                if let Some(first_line) = lines.first() {
+                    let parts: Vec<&str> = first_line.split_whitespace().collect();
+                    if parts.len() >= 2 {
+                        match parts[1] {
+                            "rejected" => "Push rejected (non-fast-forward, requires pull/rebase)",
+                            "up to date" => "Already up to date",
+                            "forced update" => "Force update required",
+                            _ => format!("Push failed: {}", parts[1]),
+                        }
+                    } else {
+                        "Push failed: unknown error".to_string()
+                    }
+                } else {
+                    "Push failed: no output".to_string()
+                }
+            } else if !stderr.is_empty() {
+                // Fallback to stderr if no porcelain output
+                stderr.trim().to_string()
+            } else {
+                "Push failed: no error details available".to_string()
+            };
+
+            return Err(format!("Git push failed: {}", error_message).into());
         }
 
         println!("✅ Auto-push cycle completed successfully!");

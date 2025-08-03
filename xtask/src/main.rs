@@ -183,9 +183,11 @@ mod file_audit;
 mod generated_file_validator;
 mod git_notes_manager;
 mod hierarchical_validation;
+mod hook_runner;
 mod hook_state_machine;
 mod status;
 mod wasm_event_bus;
+mod auto_push;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -546,6 +548,24 @@ enum Commands {
         /// Auto-fix issues where possible
         #[arg(long)]
         auto_fix: bool,
+    },
+    /// Run hooks with clean, summarized output
+    RunHooks {
+        /// Hook type to run (pre-commit, pre-push, all)
+        #[arg(long, default_value = "pre-commit")]
+        hook_type: String,
+        /// Show detailed output
+        #[arg(long)]
+        verbose: bool,
+        /// Don't save logs
+        #[arg(long)]
+        no_logs: bool,
+        /// Don't emit events
+        #[arg(long)]
+        no_events: bool,
+        /// Custom log directory
+        #[arg(long)]
+        log_dir: Option<String>,
     },
     /// Check for dead code by temporarily stripping #[allow(dead_code)] attributes
     DeadCodeCheck {
@@ -5236,21 +5256,72 @@ async fn run_single_auto_push(
 
     // Step 6: Push changes
     println!("🚀 Pushing changes...");
-    let mut push_args = vec!["push"];
+    let mut push_args = vec!["push", "--porcelain"];
 
     if force {
         push_args.push("--force");
         println!("⚠️  Force pushing (use with caution!)");
     }
 
-    let push_status = Command::new("git")
+    let push_output = Command::new("git")
         .args(&push_args)
-        .status()
+        .output()
         .context("Failed to push changes")?;
 
-    if !push_status.success() {
-        anyhow::bail!("git push failed");
+    if !push_output.status.success() {
+        let stderr = String::from_utf8_lossy(&push_output.stderr);
+        let stdout = String::from_utf8_lossy(&push_output.stdout);
+
+        // Parse porcelain output for cleaner error messages
+        let error_message = if !stdout.is_empty() {
+            // Parse porcelain format: <ref> <status> <summary>
+            let lines: Vec<&str> = stdout.lines().collect();
+            if let Some(first_line) = lines.first() {
+                let parts: Vec<&str> = first_line.split_whitespace().collect();
+                if parts.len() >= 2 {
+                    match parts[1] {
+                        "rejected" => "Push rejected (non-fast-forward, requires pull/rebase)",
+                        "up to date" => "Already up to date",
+                        "forced update" => "Force update required",
+                        _ => format!("Push failed: {}", parts[1]),
+                    }
+                } else {
+                    "Push failed: unknown error".to_string()
+                }
+            } else {
+                "Push failed: no output".to_string()
+            }
+        } else if !stderr.is_empty() {
+            // Fallback to stderr if no porcelain output
+            stderr.trim().to_string()
+        } else {
+            "Push failed: no error details available".to_string()
+        };
+
+        anyhow::bail!("git push failed: {}", error_message);
     }
+
+    // Parse successful porcelain output for clean status message
+    let stdout = String::from_utf8_lossy(&push_output.stdout);
+    let push_status = if !stdout.is_empty() {
+        let lines: Vec<&str> = stdout.lines().collect();
+        if let Some(first_line) = lines.first() {
+            let parts: Vec<&str> = first_line.split_whitespace().collect();
+            if parts.len() >= 2 {
+                match parts[1] {
+                    "ok" => "Successfully pushed",
+                    "up to date" => "Already up to date",
+                    _ => format!("Push completed: {}", parts[1]),
+                }
+            } else {
+                "Push completed successfully".to_string()
+            }
+        } else {
+            "Push completed successfully".to_string()
+        }
+    } else {
+        "Push completed successfully".to_string()
+    };
 
     println!("✅ Automated git workflow completed successfully!");
     println!(
@@ -5261,7 +5332,7 @@ async fn run_single_auto_push(
             &commit_message
         }
     );
-    println!("   🚀 Pushed to remote repository");
+    println!("   🚀 {}", push_status);
 
     Ok(())
 }

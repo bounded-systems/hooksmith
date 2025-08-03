@@ -455,7 +455,7 @@ impl HooksmithHook for AutoPushHook {
         println!("🚀 Pushing changes...");
 
         let push_output = Command::new("git")
-            .args(["push"])
+            .args(["push", "--porcelain"])
             .output()
             .context("Failed to execute git push")?;
 
@@ -463,28 +463,68 @@ impl HooksmithHook for AutoPushHook {
             let stderr = String::from_utf8_lossy(&push_output.stderr);
             let stdout = String::from_utf8_lossy(&push_output.stdout);
 
-            let error_details = if !stderr.is_empty() {
+            // Parse porcelain output for cleaner error messages
+            let error_message = if !stdout.is_empty() {
+                // Parse porcelain format: <ref> <status> <summary>
+                let lines: Vec<&str> = stdout.lines().collect();
+                if let Some(first_line) = lines.first() {
+                    let parts: Vec<&str> = first_line.split_whitespace().collect();
+                    if parts.len() >= 2 {
+                        match parts[1] {
+                            "rejected" => "Push rejected (non-fast-forward, requires pull/rebase)",
+                            "up to date" => "Already up to date",
+                            "forced update" => "Force update required",
+                            _ => format!("Push failed: {}", parts[1]),
+                        }
+                    } else {
+                        "Push failed: unknown error".to_string()
+                    }
+                } else {
+                    "Push failed: no output".to_string()
+                }
+            } else if !stderr.is_empty() {
+                // Fallback to stderr if no porcelain output
                 stderr.trim().to_string()
-            } else if !stdout.is_empty() {
-                stdout.trim().to_string()
             } else {
-                "No error output available".to_string()
+                "Push failed: no error details available".to_string()
             };
 
             // Emit error event for git push failure with specific details
             let _ = emit_error(
                 EventCategory::HookStateMachine,
                 "git_push_failed",
-                &format!("Git push failed: {}", error_details),
+                &format!("Git push failed: {}", error_message),
                 "auto_push_hook",
             );
 
             return Ok(HookResult::error(
                 HookState::Error,
-                format!("git push failed: {}", error_details),
-                vec![format!("git push failed: {}", error_details)],
+                format!("git push failed: {}", error_message),
+                vec![format!("git push failed: {}", error_message)],
             ));
         }
+
+        // Parse successful porcelain output for clean status message
+        let stdout = String::from_utf8_lossy(&push_output.stdout);
+        let push_status = if !stdout.is_empty() {
+            let lines: Vec<&str> = stdout.lines().collect();
+            if let Some(first_line) = lines.first() {
+                let parts: Vec<&str> = first_line.split_whitespace().collect();
+                if parts.len() >= 2 {
+                    match parts[1] {
+                        "ok" => "Successfully pushed",
+                        "up to date" => "Already up to date",
+                        _ => format!("Push completed: {}", parts[1]),
+                    }
+                } else {
+                    "Push completed successfully".to_string()
+                }
+            } else {
+                "Push completed successfully".to_string()
+            }
+        } else {
+            "Push completed successfully".to_string()
+        };
 
         let duration = start_time.elapsed().unwrap_or(Duration::from_secs(0));
         println!("✅ Automated git workflow completed successfully!");
@@ -496,7 +536,7 @@ impl HooksmithHook for AutoPushHook {
                 &commit_message
             }
         );
-        println!("   🚀 Pushed to remote repository");
+        println!("   🚀 {}", push_status);
 
         Ok(HookResult::success(
             HookState::Success,
