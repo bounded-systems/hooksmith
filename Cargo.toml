@@ -113,6 +113,14 @@ path = "src/bin/dev-workflow.rs"
 name = "generate-cargo-toml"
 path = "src/bin/generate-cargo-toml.rs"
 
+[[bin]]
+name = "validate-file-extensions"
+path = "hooks/validate-file-extensions.rs"
+
+[[bin]]
+name = "validate-checksums"
+path = "hooks/validate-checksums.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
