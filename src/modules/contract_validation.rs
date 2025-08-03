@@ -222,31 +222,73 @@ impl ContractValidator {
             RuleType::Pattern => {
                 if let Some(pattern) = rule.parameters.get("pattern").and_then(|p| p.as_str()) {
                     let regex = regex::Regex::new(pattern)?;
-                    if let Some(content) = data.as_str() {
-                        if !regex.is_match(content) {
-                            let error = ValidationError {
-                                code: "PATTERN_MISMATCH".to_string(),
-                                message: format!("Content does not match pattern: {pattern}"),
-                                path: None,
-                                details: Some(serde_json::json!({
-                                    "pattern": pattern,
-                                    "content_preview": &content[..content.len().min(100)]
-                                })),
-                            };
 
-                            match rule.severity {
-                                RuleSeverity::Error | RuleSeverity::Critical => {
-                                    result.errors.push(error);
-                                    result.is_valid = false;
+                    // Check if we have a field parameter to validate specific JSON field
+                    if let Some(field) = rule.parameters.get("field").and_then(|f| f.as_str()) {
+                        if let Some(content) = data.get(field).and_then(|v| v.as_str()) {
+                            if !regex.is_match(content) {
+                                let error = ValidationError {
+                                    code: "PATTERN_MISMATCH".to_string(),
+                                    message: format!(
+                                        "Field '{field}' does not match pattern: {pattern}"
+                                    ),
+                                    path: Some(field.to_string()),
+                                    details: Some(serde_json::json!({
+                                        "pattern": pattern,
+                                        "field": field,
+                                        "content_preview": &content[..content.len().min(100)]
+                                    })),
+                                };
+
+                                match rule.severity {
+                                    RuleSeverity::Error | RuleSeverity::Critical => {
+                                        result.errors.push(error);
+                                        result.is_valid = false;
+                                    }
+                                    RuleSeverity::Warning => {
+                                        result.warnings.push(ValidationWarning {
+                                            code: error.code,
+                                            message: error.message,
+                                            path: error.path,
+                                            details: error.details,
+                                        })
+                                    }
+                                    RuleSeverity::Info => {
+                                        // Just log info, don't add to result
+                                    }
                                 }
-                                RuleSeverity::Warning => result.warnings.push(ValidationWarning {
-                                    code: error.code,
-                                    message: error.message,
-                                    path: error.path,
-                                    details: error.details,
-                                }),
-                                RuleSeverity::Info => {
-                                    // Just log info, don't add to result
+                            }
+                        }
+                    } else {
+                        // Fallback: try to validate the entire data as a string
+                        if let Some(content) = data.as_str() {
+                            if !regex.is_match(content) {
+                                let error = ValidationError {
+                                    code: "PATTERN_MISMATCH".to_string(),
+                                    message: format!("Content does not match pattern: {pattern}"),
+                                    path: None,
+                                    details: Some(serde_json::json!({
+                                        "pattern": pattern,
+                                        "content_preview": &content[..content.len().min(100)]
+                                    })),
+                                };
+
+                                match rule.severity {
+                                    RuleSeverity::Error | RuleSeverity::Critical => {
+                                        result.errors.push(error);
+                                        result.is_valid = false;
+                                    }
+                                    RuleSeverity::Warning => {
+                                        result.warnings.push(ValidationWarning {
+                                            code: error.code,
+                                            message: error.message,
+                                            path: error.path,
+                                            details: error.details,
+                                        })
+                                    }
+                                    RuleSeverity::Info => {
+                                        // Just log info, don't add to result
+                                    }
                                 }
                             }
                         }
@@ -500,7 +542,8 @@ mod tests {
                 description: Some("Name must be at least 2 characters".to_string()),
                 rule_type: RuleType::Pattern,
                 parameters: json!({
-                    "pattern": "^.{2,}$"
+                    "pattern": "^.{2,}$",
+                    "field": "name"
                 })
                 .as_object()
                 .unwrap()

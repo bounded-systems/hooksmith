@@ -24,8 +24,8 @@ rustflags = [
 [alias]
 # Useful cargo aliases for development
 # Note: fmt and clippy are handled by cargo-fmt and cargo-clippy tools, not as aliases
-check = "check --all-targets --all-features"
-test = "test --all-targets --all-features"
+qcheck = "check --all-targets --all-features --quiet"
+qtest = "test --all-targets --all-features --quiet"
 build = "build --all-targets --all-features"
 doc = "doc --all-features --no-deps"
 clean = "clean"
@@ -59,6 +59,10 @@ validate-strict = "run --bin xtask -- contract-validate --validate-generated --c
 [net]
 # Git protocol configuration
 git-fetch-with-cli = true
+
+[warnings]
+# Suppress WIT file warnings since we're not building components yet
+rustdoc = false
 
 [registries.crates-io]
 # Use sparse registry for faster dependency resolution
