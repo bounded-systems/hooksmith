@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
@@ -78,28 +77,42 @@ impl RegistryManager {
     pub fn update_checksums(&mut self) -> Result<()> {
         println!("Updating all checksums in registry...");
         
-        let files = self.registry_data["files"].as_array_mut()
-            .ok_or_else(|| anyhow!("Invalid registry format"))?;
-        
         let mut updated = 0;
         let mut unchanged = 0;
+        let mut updates = Vec::new();
 
-        for file_entry in files.iter_mut() {
-            let path = file_entry["path"].as_str()
-                .ok_or_else(|| anyhow!("Invalid file entry: missing path"))?;
-            
-            if Path::new(path).exists() {
-                let current_checksum = self.generate_checksum(path)?;
-                let stored_checksum = file_entry["checksum"].as_str()
-                    .ok_or_else(|| anyhow!("Invalid file entry: missing checksum"))?;
+        // First pass: collect all updates
+        {
+            let files = self.registry_data["files"].as_array()
+                .ok_or_else(|| anyhow!("Invalid registry format"))?;
+
+            for (i, file_entry) in files.iter().enumerate() {
+                let path = file_entry["path"].as_str()
+                    .ok_or_else(|| anyhow!("Invalid file entry: missing path"))?;
                 
-                if current_checksum != stored_checksum {
-                    file_entry["checksum"] = json!(current_checksum);
-                    println!("  Updated: {} ({} → {})", path, stored_checksum, current_checksum);
-                    updated += 1;
-                } else {
-                    unchanged += 1;
+                if Path::new(path).exists() {
+                    let current_checksum = self.generate_checksum(path)?;
+                    let stored_checksum = file_entry["checksum"].as_str()
+                        .ok_or_else(|| anyhow!("Invalid file entry: missing checksum"))?;
+                    
+                    if current_checksum != stored_checksum {
+                        updates.push((i, current_checksum.clone()));
+                        println!("  Updated: {} ({} → {})", path, stored_checksum, current_checksum);
+                        updated += 1;
+                    } else {
+                        unchanged += 1;
+                    }
                 }
+            }
+        }
+
+        // Second pass: apply updates
+        {
+            let files = self.registry_data["files"].as_array_mut()
+                .ok_or_else(|| anyhow!("Invalid registry format"))?;
+            
+            for (index, checksum) in updates {
+                files[index]["checksum"] = json!(checksum);
             }
         }
 
@@ -171,24 +184,34 @@ impl RegistryManager {
     }
 
     fn cleanup_ignored_files(&mut self) -> Result<()> {
-        let files = self.registry_data["files"].as_array_mut()
-            .ok_or_else(|| anyhow!("Invalid registry format"))?;
-        
         let mut to_remove = Vec::new();
         
-        for (i, file_entry) in files.iter().enumerate() {
-            let path = file_entry["path"].as_str()
-                .ok_or_else(|| anyhow!("Invalid file entry"))?;
+        // First pass: collect indices to remove
+        {
+            let files = self.registry_data["files"].as_array()
+                .ok_or_else(|| anyhow!("Invalid registry format"))?;
             
-            if !Path::new(path).exists() || self.is_ignored_by_git(path)? {
-                to_remove.push(i);
-                println!("  Removing: {}", path);
+            for (i, file_entry) in files.iter().enumerate() {
+                let path = file_entry["path"].as_str()
+                    .ok_or_else(|| anyhow!("Invalid file entry"))?;
+                
+                let should_remove = !Path::new(path).exists() || self.is_ignored_by_git(path)?;
+                if should_remove {
+                    to_remove.push(i);
+                    println!("  Removing: {}", path);
+                }
             }
         }
         
-        // Remove in reverse order to maintain indices
-        for &index in to_remove.iter().rev() {
-            files.remove(index);
+        // Second pass: remove items
+        {
+            let files = self.registry_data["files"].as_array_mut()
+                .ok_or_else(|| anyhow!("Invalid registry format"))?;
+            
+            // Remove in reverse order to maintain indices
+            for &index in to_remove.iter().rev() {
+                files.remove(index);
+            }
         }
         
         self.save_registry()?;
@@ -197,9 +220,10 @@ impl RegistryManager {
 
     fn add_missing_files(&mut self) -> Result<()> {
         let git_files = self.get_git_tracked_files()?;
+        let empty_vec = Vec::new();
         let registry_files: std::collections::HashSet<_> = self.registry_data["files"]
             .as_array()
-            .unwrap_or(&Vec::new())
+            .unwrap_or(&empty_vec)
             .iter()
             .filter_map(|f| f["path"].as_str())
             .collect();

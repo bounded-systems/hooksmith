@@ -1766,6 +1766,9 @@ async fn main() -> Result<()> {
                 git_lefthook_integration::run_status_command().await?
             }
         },
+        Commands::Registry { args } => {
+            registry::run_registry_command(&args)?;
+        },
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
                 config_dir,
