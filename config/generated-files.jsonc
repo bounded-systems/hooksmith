@@ -15,16 +15,10 @@
       "type": "gitattributes"
     },
     {
-      "checksum": "8e45f2a8",
+      "checksum": "1107288c",
       "path": ".gitignore",
       "slug": "root-gitignore",
       "type": "gitignore"
-    },
-    {
-      "checksum": "858918db",
-      "path": ".hooksmith/events.jsonl",
-      "slug": "-hooksmith-events",
-      "type": "jsonl"
     },
     {
       "checksum": "4aafe223",
@@ -627,12 +621,6 @@
       "type": "md"
     },
     {
-      "checksum": "45d59083",
-      "path": "fix_format.sed",
-      "slug": "fix_format",
-      "type": "sed"
-    },
-    {
       "checksum": "206d49f5",
       "path": "GENERATED_FILE_VALIDATION_SUMMARY.md",
       "slug": "generated_file_validation_summary",
@@ -661,12 +649,6 @@
       "path": "hooks/README.md",
       "slug": "hooks-readme",
       "type": "md"
-    },
-    {
-      "checksum": "a285482f",
-      "path": "hooksmith-events.jsonl",
-      "slug": "hooksmith-events",
-      "type": "jsonl"
     },
     {
       "checksum": "33720ea0",
@@ -774,12 +756,6 @@
       "checksum": "9219e833",
       "path": "README.md",
       "slug": "readme",
-      "type": "md"
-    },
-    {
-      "checksum": "4ca41b58",
-      "path": "RUST_BUILD_OPTIMIZATIONS_2025.md",
-      "slug": "rust_build_optimizations_2025",
       "type": "md"
     },
     {
@@ -1179,12 +1155,6 @@
       "type": "json"
     },
     {
-      "checksum": "2ad6a271",
-      "path": "xtask/status-trends/status-2025-08-02.json",
-      "slug": "xtask-status-trends-status-2025-08-02",
-      "type": "json"
-    },
-    {
       "checksum": "69890981",
       "path": "xtask/wit/hooksmith.wit",
       "slug": "xtask-wit-hooksmith",
@@ -1197,267 +1167,285 @@
       "type": "wit"
     },
     {
-      "path": ".cargo/aliases.toml",
       "checksum": "40037f1b",
+      "path": ".cargo/aliases.toml",
       "slug": "cargo_aliases_toml",
       "type": "toml"
     },
     {
-      "path": ".cargo/config.toml",
       "checksum": "2b2dc0d3",
+      "path": ".cargo/config.toml",
       "slug": "cargo_config_toml",
       "type": "toml"
     },
     {
-      "path": ".github/workflows/ci.yml",
       "checksum": "2d1675c3",
+      "path": ".github/workflows/ci.yml",
       "slug": "github_workflows_ci_yml",
       "type": "yaml"
     },
     {
-      "path": ".github/workflows/contract-check.yml",
       "checksum": "f09b0c31",
+      "path": ".github/workflows/contract-check.yml",
       "slug": "github_workflows_contract_check_yml",
       "type": "yaml"
     },
     {
-      "path": ".github/workflows/contract-validation.yml",
       "checksum": "190914c9",
+      "path": ".github/workflows/contract-validation.yml",
       "slug": "github_workflows_contract_validation_yml",
       "type": "yaml"
     },
     {
-      "path": ".github/workflows/verify-hooksmith.yml",
       "checksum": "e7279375",
+      "path": ".github/workflows/verify-hooksmith.yml",
       "slug": "github_workflows_verify_hooksmith_yml",
       "type": "yaml"
     },
     {
-      "path": ".trunk/.gitignore",
       "checksum": "8cf4d788",
+      "path": ".trunk/.gitignore",
       "slug": "trunk_gitignore",
       "type": "gitignore"
     },
     {
-      "path": ".trunk/configs/.markdownlint.yaml",
       "checksum": "12532598",
+      "path": ".trunk/configs/.markdownlint.yaml",
       "slug": "trunk_configs_markdownlint_yaml",
       "type": "yaml"
     },
     {
-      "path": ".trunk/configs/.rustfmt.toml",
       "checksum": "e744459a",
+      "path": ".trunk/configs/.rustfmt.toml",
       "slug": "trunk_configs_rustfmt_toml",
       "type": "toml"
     },
     {
-      "path": ".trunk/trunk.yaml",
       "checksum": "7f56c0b2",
+      "path": ".trunk/trunk.yaml",
       "slug": "trunk_trunk_yaml",
       "type": "yaml"
     },
     {
-      "path": "CHECKSUM_SYSTEM_IMPLEMENTATION.md",
       "checksum": "f37abe9a",
+      "path": "CHECKSUM_SYSTEM_IMPLEMENTATION.md",
       "slug": "CHECKSUM_SYSTEM_IMPLEMENTATION_md",
       "type": "md"
     },
     {
-      "path": "CHECKSUM_SYSTEM_INTEGRATION_COMPLETE.md",
       "checksum": "eee6906a",
+      "path": "CHECKSUM_SYSTEM_INTEGRATION_COMPLETE.md",
       "slug": "CHECKSUM_SYSTEM_INTEGRATION_COMPLETE_md",
       "type": "md"
     },
     {
-      "path": "components/worktree-runner/.wtp.yml",
       "checksum": "d402364f",
+      "path": "components/worktree-runner/.wtp.yml",
       "slug": "components_worktree_runner_wtp_yml",
       "type": "yaml"
     },
     {
-      "path": "COMPREHENSIVE_FILE_POLICY_REFACTOR.md",
       "checksum": "08f59598",
+      "path": "COMPREHENSIVE_FILE_POLICY_REFACTOR.md",
       "slug": "COMPREHENSIVE_FILE_POLICY_REFACTOR_md",
       "type": "md"
     },
     {
-      "path": "config/contract-state-machine.yaml",
       "checksum": "1b1b470d",
+      "path": "config/contract-state-machine.yaml",
       "slug": "config_contract_state_machine_yaml",
       "type": "yaml"
     },
     {
-      "path": "config/contract-state-machine.yml",
       "checksum": "43389e78",
+      "path": "config/contract-state-machine.yml",
       "slug": "config_contract_state_machine_yml",
       "type": "yaml"
     },
     {
-      "path": "config/docs_manifest.yaml",
       "checksum": "b80aaae0",
+      "path": "config/docs_manifest.yaml",
       "slug": "config_docs_manifest_yaml",
       "type": "yaml"
     },
     {
-      "path": "config/docs_manifest.yml",
       "checksum": "6d109c6c",
+      "path": "config/docs_manifest.yml",
       "slug": "config_docs_manifest_yml",
       "type": "yaml"
     },
     {
-      "path": "config/file_types.yaml",
       "checksum": "9aaa6559",
+      "path": "config/file_types.yaml",
       "slug": "config_file_types_yaml",
       "type": "yaml"
     },
     {
-      "path": "config/state-transitions.yml",
       "checksum": "c68a022d",
+      "path": "config/state-transitions.yml",
       "slug": "config_state_transitions_yml",
       "type": "yaml"
     },
     {
-      "path": "docs/state-transitions.yaml",
       "checksum": "75335416",
+      "path": "docs/state-transitions.yaml",
       "slug": "docs_state_transitions_yaml",
       "type": "yaml"
     },
     {
-      "path": "ENHANCED_CHECKSUM_SYSTEM_COMPLETE.md",
       "checksum": "aacba807",
+      "path": "ENHANCED_CHECKSUM_SYSTEM_COMPLETE.md",
       "slug": "ENHANCED_CHECKSUM_SYSTEM_COMPLETE_md",
       "type": "md"
     },
     {
-      "path": "ENVRRC_EDITORCONFIG_INTEGRATION_SUMMARY.md",
       "checksum": "67fb9b4b",
+      "path": "ENVRRC_EDITORCONFIG_INTEGRATION_SUMMARY.md",
       "slug": "ENVRRC_EDITORCONFIG_INTEGRATION_SUMMARY_md",
       "type": "md"
     },
     {
-      "path": "FILE_DISTRIBUTION_ANALYSIS_SUMMARY.md",
       "checksum": "ec685b46",
+      "path": "FILE_DISTRIBUTION_ANALYSIS_SUMMARY.md",
       "slug": "FILE_DISTRIBUTION_ANALYSIS_SUMMARY_md",
       "type": "md"
     },
     {
-      "path": "lefthook-example.yml",
       "checksum": "a47c543f",
+      "path": "lefthook-example.yml",
       "slug": "lefthook_example_yml",
       "type": "yaml"
     },
     {
-      "path": "lefthook.yml",
       "checksum": "3ceee387",
+      "path": "lefthook.yml",
       "slug": "lefthook_yml",
       "type": "yaml"
     },
     {
-      "path": "PRE_COMMIT_CHECKSUM_INTEGRATION_COMPLETE.md",
       "checksum": "a36a4830",
+      "path": "PRE_COMMIT_CHECKSUM_INTEGRATION_COMPLETE.md",
       "slug": "PRE_COMMIT_CHECKSUM_INTEGRATION_COMPLETE_md",
       "type": "md"
     },
     {
-      "path": "scripts/add-checksums-corrected.sh",
       "checksum": "c8e63f7d",
+      "path": "scripts/add-checksums-corrected.sh",
       "slug": "scripts_add_checksums_corrected_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/add-checksums-to-files.sh",
       "checksum": "b547c23d",
+      "path": "scripts/add-checksums-to-files.sh",
       "slug": "scripts_add_checksums_to_files_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/analyze-file-distribution.sh",
       "checksum": "be261105",
+      "path": "scripts/analyze-file-distribution.sh",
       "slug": "scripts_analyze_file_distribution_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/enhanced-file-analysis.sh",
       "checksum": "9ef26b89",
+      "path": "scripts/enhanced-file-analysis.sh",
       "slug": "scripts_enhanced_file_analysis_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/enhanced-gen-files.sh",
       "checksum": "a02d0ffe",
+      "path": "scripts/enhanced-gen-files.sh",
       "slug": "scripts_enhanced_gen_files_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/integrate-checksum-system.sh",
       "checksum": "afb8309b",
+      "path": "scripts/integrate-checksum-system.sh",
       "slug": "scripts_integrate_checksum_system_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/migrate-all-checksums.sh",
       "checksum": "3ad08056",
+      "path": "scripts/migrate-all-checksums.sh",
       "slug": "scripts_migrate_all_checksums_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/monitor-file-distribution.sh",
       "checksum": "b0f95753",
+      "path": "scripts/monitor-file-distribution.sh",
       "slug": "scripts_monitor_file_distribution_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/simple-checksum-demo.sh",
       "checksum": "ce4ddd48",
+      "path": "scripts/simple-checksum-demo.sh",
       "slug": "scripts_simple_checksum_demo_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/compare-generated-files.sh",
       "checksum": "02f3b54d",
+      "path": "scripts/compare-generated-files.sh",
       "slug": "scripts_compare_generated_files_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/fix-generated-files-registry.sh",
       "checksum": "2d448213",
+      "path": "scripts/fix-generated-files-registry.sh",
       "slug": "scripts_fix_generated_files_registry_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/cleanup-registry.sh",
       "checksum": "f1e5a184",
+      "path": "scripts/cleanup-registry.sh",
       "slug": "scripts_cleanup_registry",
       "type": "sh"
     },
     {
-      "path": "scripts/update-all-checksums.sh",
       "checksum": "360e2312",
+      "path": "scripts/update-all-checksums.sh",
       "slug": "scripts_update_all_checksums",
       "type": "sh"
     },
     {
-      "path": "scripts/validate-registry.sh",
       "checksum": "cfc7f364",
+      "path": "scripts/validate-registry.sh",
       "slug": "scripts_validate_registry",
       "type": "sh"
     },
     {
+      "checksum": "ee96c21e",
       "path": "scripts/registry-cleanup-plan.sh",
-      "checksum": "6d87a7b4",
       "slug": "scripts_registry_cleanup_plan_sh",
       "type": "sh"
     },
     {
+      "checksum": "d8853b75",
       "path": "scripts/execute-registry-cleanup.sh",
-      "checksum": "96efa2d5",
       "slug": "scripts_execute_registry_cleanup_sh",
       "type": "sh"
     },
     {
-      "path": "scripts/registry-status.sh",
       "checksum": "b570cb35",
+      "path": "scripts/registry-status.sh",
       "slug": "scripts_registry_status_sh",
+      "type": "sh"
+    },
+    {
+      "checksum": "0756780d",
+      "path": "docs/UNIFIED_REGISTRY_SYSTEM.md",
+      "slug": "docs_unified_registry_system_md",
+      "type": "md"
+    },
+    {
+      "checksum": "154b9333",
+      "path": ".github/workflows/registry-validation.yml",
+      "slug": "github_workflows_registry_validation_yml",
+      "type": "yml"
+    },
+    {
+      "checksum": "cce359c6",
+      "path": "scripts/enhanced-registry-cleanup.sh",
+      "slug": "scripts_enhanced_registry_cleanup_sh",
       "type": "sh"
     }
   ],

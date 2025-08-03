@@ -17,7 +17,7 @@ Thumbs.db
 
 # Logs
 *.log
-hooksmith-events.jsonl
+*.jsonl
 logs/
 
 # Generated files
@@ -60,3 +60,16 @@ scripts/test-*.sh
 # Temporary files
 *.tmp
 *.temp
+
+# Timestamped and temporary artifacts
+2025*
+*.backup
+*.disabled
+*.sed
+.shellcheckrc
+generated_file_demo
+
+# Development artifacts
+fix_format.sed
+examples/schema_validation_demo.rs.disabled
+tests/*.disabled

@@ -317,12 +317,31 @@ impl RegistryManager {
     }
 
     fn is_ignored_by_git(&self, path: &str) -> Result<bool> {
+        // Check if file is ignored by git
         let output = Command::new("git")
             .args(["check-ignore", path])
             .output()
             .with_context(|| format!("Failed to check git ignore for {}", path))?;
         
-        Ok(output.status.success())
+        let git_ignored = output.status.success();
+        
+        // Additional patterns for temporary/artifact files
+        let temp_patterns = [
+            "2025",           // Timestamped files
+            ".backup",        // Backup files
+            ".disabled",      // Disabled files
+            ".sed",           // Sed scripts
+            ".jsonl",         // Log files
+            ".shellcheckrc",  // ShellCheck config
+            "generated_file_demo", // Demo artifacts
+            "fix_format.sed", // Development artifacts
+        ];
+        
+        let matches_temp_pattern = temp_patterns.iter().any(|pattern| {
+            path.contains(pattern)
+        });
+        
+        Ok(git_ignored || matches_temp_pattern)
     }
 
     fn get_git_tracked_files(&self) -> Result<Vec<String>> {
