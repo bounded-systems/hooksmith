@@ -35,6 +35,35 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     exit 1
 fi
 
+# Security pre-flight check
+log_info "Running security pre-flight check..."
+if [[ -f "scripts/security-check.sh" ]]; then
+    ./scripts/security-check.sh
+    echo
+else
+    log_warning "Security check script not found - running basic checks..."
+
+    # Basic security checks
+    gatekeeper_status=$(spctl --status)
+    if [[ "$gatekeeper_status" != "assessments enabled" ]]; then
+        log_error "⚠️ Gatekeeper is disabled - this is less secure"
+        echo "Consider re-enabling Gatekeeper for better system protection"
+        echo
+    else
+        log_success "✅ Gatekeeper is enabled (system-wide protection active)"
+    fi
+
+    current_user=$(whoami)
+    if [[ "$current_user" == "root" ]]; then
+        log_error "⚠️ Running as root - this is not recommended for development"
+        echo "Please run this script as a regular user"
+        exit 1
+    else
+        log_success "✅ Running as user '$current_user' (safe)"
+    fi
+    echo
+fi
+
 echo "🍎 macOS Optimization Setup for Hooksmith"
 echo "=========================================="
 echo
@@ -45,8 +74,9 @@ macos_version=$(sw_vers -productVersion)
 echo "  macOS Version: $macos_version"
 
 # Check if we're on a supported version
-if [[ "$macos_version" < "11.0" ]]; then
-    log_warning "macOS 11.0+ recommended for optimal performance"
+major_version=$(echo "$macos_version" | cut -d. -f1)
+if [[ "$major_version" -lt 11 ]]; then
+    log_warning "macOS 11+ recommended for optimal performance"
 fi
 
 echo
@@ -184,4 +214,4 @@ echo "2. Restart your terminal"
 echo "3. Test the optimizations with: make dev"
 echo "4. Monitor performance with: make stats"
 echo
-echo "For more information, see: MACOS_OPTIMIZATIONS.md" 
+echo "For more information, see: MACOS_OPTIMIZATIONS.md"

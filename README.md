@@ -98,6 +98,15 @@ Options:
 
 2. **Install dependencies**
    ```bash
+   # Complete setup with all optimizations (recommended)
+   ./scripts/setup-default.sh
+   
+   # macOS-specific optimizations (Apple Silicon)
+   ./scripts/macos-optimize.sh
+   
+   # Verify security (important)
+   ./scripts/security-check.sh
+   ```
    # Install Lefthook (optional but recommended)
    npm install -g @evilmartians/lefthook
 

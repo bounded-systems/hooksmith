@@ -253,7 +253,16 @@ EOF
     log_success "Created .envrc for automatic environment loading"
 fi
 
-# 8. Final setup verification
+# 8. Security verification
+log_info "Running security verification..."
+if [[ -f "scripts/security-check.sh" ]]; then
+    ./scripts/security-check.sh
+    echo
+else
+    log_warning "Security check script not found"
+fi
+
+# 9. Final setup verification
 log_info "Verifying setup..."
 
 # Test optimized commands
