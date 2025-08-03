@@ -10,7 +10,7 @@ use tokio::process::Command as TokioCommand;
 use uuid::Uuid;
 
 use crate::events::AutoPushEvent;
-use crate::structured_logging::{StructuredEvent, StructuredLogger};
+// Removed unused imports - structured_logging module doesn't have these types
 
 /// SARIF result structure for conversion
 #[derive(Debug, Clone, Serialize, Deserialize)]

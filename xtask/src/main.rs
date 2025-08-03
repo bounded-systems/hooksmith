@@ -3490,54 +3490,113 @@ async fn generate_all_files(validate: bool, force: bool) -> Result<()> {
 
 /// Bootstrap the project with all generated files
 async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
-    println!("🚀 Bootstrapping project with all generated files...");
+    use crate::structured_logging::{log_event, emit_sarif_error};
+    
+    log_event!("info", "bootstrap_start", "🚀 Bootstrapping project with all generated files", None);
 
     // Generate all files
-    generate_all_files(validate, true).await?;
-
-    // Check if everything is valid
-    println!("🔍 Running final validation...");
-    file_audit::validate_generated_files()?;
-
-    // Check file types
-    println!("🔍 Checking file types...");
-    let result = file_audit::check_files()?;
-    if result.has_errors() {
-        anyhow::bail!("Bootstrap validation failed. Please fix issues and try again.");
+    log_event!("info", "generate_files", "Generating all project files", None);
+    match generate_all_files(validate, true).await {
+        Ok(_) => log_event!("info", "generate_success", "All files generated successfully", None),
+        Err(e) => {
+            log_event!("error", "generate_failed", &format!("Failed to generate files: {}", e), None);
+            emit_sarif_error("xtask/src/main.rs", 3492, &format!("File generation failed: {}", e));
+            return Err(e);
+        }
     }
 
-    println!("✅ Bootstrap completed successfully!");
+    // Check if everything is valid
+    log_event!("info", "validation_start", "🔍 Running final validation", None);
+    match file_audit::validate_generated_files() {
+        Ok(_) => log_event!("info", "validation_success", "Generated files validation passed", None),
+        Err(e) => {
+            log_event!("error", "validation_failed", &format!("Generated files validation failed: {}", e), None);
+            emit_sarif_error("xtask/src/main.rs", 3500, &format!("Generated files validation failed: {}", e));
+            return Err(e);
+        }
+    }
+
+    // Check file types
+    log_event!("info", "file_check_start", "🔍 Checking file types", None);
+    match file_audit::check_files() {
+        Ok(result) => {
+            if result.has_errors() {
+                log_event!("error", "file_check_failed", "File type validation failed", None);
+                emit_sarif_error("xtask/src/main.rs", 3505, "File type validation failed");
+                anyhow::bail!("Bootstrap validation failed. Please fix issues and try again.");
+            } else {
+                log_event!("info", "file_check_success", "File type validation passed", None);
+            }
+        }
+        Err(e) => {
+            log_event!("error", "file_check_error", &format!("File type check error: {}", e), None);
+            emit_sarif_error("xtask/src/main.rs", 3505, &format!("File type check error: {}", e));
+            return Err(e);
+        }
+    }
+
+    log_event!("info", "bootstrap_success", "✅ Bootstrap completed successfully", None);
 
     if commit {
-        println!("📝 Committing generated files...");
+        log_event!("info", "commit_start", "📝 Committing generated files", None);
+        
+        // Add files to git
         let status = std::process::Command::new("git")
             .args(["add", "."])
             .status()
-            .context("Failed to add files to git")?;
+            .context("Failed to add files to git");
 
-        if !status.success() {
-            anyhow::bail!("Failed to add files to git");
+        match status {
+            Ok(status) if status.success() => {
+                log_event!("info", "git_add_success", "Files added to git successfully", None);
+            }
+            Ok(_) => {
+                log_event!("error", "git_add_failed", "Failed to add files to git", None);
+                emit_sarif_error("xtask/src/main.rs", 3520, "Failed to add files to git");
+                anyhow::bail!("Failed to add files to git");
+            }
+            Err(e) => {
+                log_event!("error", "git_add_error", &format!("Git add error: {}", e), None);
+                emit_sarif_error("xtask/src/main.rs", 3520, &format!("Git add error: {}", e));
+                return Err(e);
+            }
         }
 
+        // Commit files
         let status = std::process::Command::new("git")
             .args(["commit", "-m", "Bootstrap: Add all generated files"])
             .status()
-            .context("Failed to commit files")?;
+            .context("Failed to commit files");
 
-        if !status.success() {
-            anyhow::bail!("Failed to commit files");
+        match status {
+            Ok(status) if status.success() => {
+                log_event!("info", "git_commit_success", "✅ Generated files committed successfully", None);
+            }
+            Ok(_) => {
+                log_event!("error", "git_commit_failed", "Failed to commit files", None);
+                emit_sarif_error("xtask/src/main.rs", 3530, "Failed to commit files");
+                anyhow::bail!("Failed to commit files");
+            }
+            Err(e) => {
+                log_event!("error", "git_commit_error", &format!("Git commit error: {}", e), None);
+                emit_sarif_error("xtask/src/main.rs", 3530, &format!("Git commit error: {}", e));
+                return Err(e);
+            }
         }
-
-        println!("✅ Generated files committed successfully!");
     }
 
-    println!("🎉 Project bootstrap completed!");
-    println!();
-    println!("📋 Next steps:");
-    println!("1. Review generated files");
-    println!("2. Run tests: cargo test");
-    println!("3. Build project: cargo build");
-    println!("4. Start development!");
+    log_event!("info", "bootstrap_complete", "🎉 Project bootstrap completed", None);
+    
+    let next_steps = vec![
+        "1. Review generated files",
+        "2. Run tests: cargo test", 
+        "3. Build project: cargo build",
+        "4. Start development!"
+    ];
+    
+    for step in next_steps {
+        log_event!("info", "next_step", step, None);
+    }
 
     Ok(())
 }

@@ -4,7 +4,7 @@ use std::time::{Duration, SystemTime};
 use tokio::time::sleep;
 use uuid::Uuid;
 
-use crate::structured_logging::{StructuredEvent, StructuredLogger};
+// Removed unused imports - structured_logging module doesn't have these types
 
 /// Structured auto-push workflow with JSONL output and event bus integration
 pub struct StructuredAutoPush {
