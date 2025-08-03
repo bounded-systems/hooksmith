@@ -20,9 +20,9 @@ pre-commit:
       run: cargo run -p xtask -- validate-generated --staged-only --strict
     check-generated:
       run: cargo run -p xtask -- validate-headers --strict
-    audit:
+    cargo-audit:
       run: cargo audit
-    deny:
+    cargo-deny:
       run: cargo deny check
 
 pre-push:
