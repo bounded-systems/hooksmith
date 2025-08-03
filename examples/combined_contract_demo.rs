@@ -146,7 +146,7 @@ fn demo_generated_files_validation() -> Result<(), Box<dyn std::error::Error>> {
     println!("==========================================\n");
 
     let tree_validator = TreeValidator::new(true, true, true);
-    let validator = GitObjectValidator::new(true, true, tree_validator);
+    let validator = GitObjectValidator::new(true, true, true, true, tree_validator);
 
     // Test various generated file patterns
     let test_cases = vec![
@@ -185,7 +185,7 @@ fn demo_complete_workflow() -> Result<(), Box<dyn std::error::Error>> {
     println!("===============================\n");
 
     let tree_validator = TreeValidator::new(true, true, true);
-    let git_validator = GitObjectValidator::new(true, true, tree_validator);
+    let git_validator = GitObjectValidator::new(true, true, true, true, tree_validator);
     let blob_validator = BlobValidator::new(true, true, 0.1, false);
 
     // Simulate a commit with multiple files

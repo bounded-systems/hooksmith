@@ -229,7 +229,7 @@ cargo test --test integration
 |---------|--------|-------|
 | CLI Structure | ✅ Complete | Full command parsing and help |
 | Documentation | ✅ Complete | Comprehensive docs and examples |
-| Tests | ⚠️ Partial | Library tests pass, some examples need fixes |
+| Tests | ⚠️ Partial | Library tests pass, most examples fixed |
 | Build System | ✅ Complete | Xtask-based workflow |
 | WASM Compilation | ✅ Complete | WASM toolchain integration |
 | WIT Processing | ✅ Complete | WIT parser and compiler |
@@ -238,9 +238,10 @@ cargo test --test integration
 
 ## Known Issues
 
-- Some example files have compilation errors due to API changes
+- Some example files have compilation errors due to API changes (most have been fixed)
 - Tests need to be updated to match current API signatures
 - Xtask commands must be run from the `xtask/` directory
+- Some validation logic may have changed, causing test failures in examples
 
 ## License
 

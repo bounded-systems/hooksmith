@@ -10,14 +10,14 @@
 //! - Git notes integration for proof storage
 //! - Hierarchical validation across multiple scopes
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::Path;
 
 /// Example contract structure for validation
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct HookContract {
     /// Contract name
     pub name: String,

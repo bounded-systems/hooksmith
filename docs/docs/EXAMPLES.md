@@ -150,7 +150,7 @@ fn test_blob_contract_attributes() -> Result<(), Box<dyn std::error::Error>> {
 fn test_git_object_contract_attributes() -> Result<(), Box<dyn std::error::Error>> {
     println!("🎯 Test 3: Git Object Contract with Attributes");
     let tree_validator = TreeValidator::new(true, true, true);
-    let validator = GitObjectValidator::new(true, true, tree_validator);
+    let validator = GitObjectValidator::new(true, true, true, true, tree_validator);
     // Test generated file with linguist-generated=true
     let contract = validator.validate_object(
         GitObjectType::Blob,
@@ -196,7 +196,7 @@ fn test_git_object_contract_attributes() -> Result<(), Box<dyn std::error::Error
 fn test_generated_file_detection() -> Result<(), Box<dyn std::error::Error>> {
     println!("🎯 Test 4: Generated File Detection");
     let tree_validator = TreeValidator::new(true, true, true);
-    let validator = GitObjectValidator::new(true, true, tree_validator);
+    let validator = GitObjectValidator::new(true, true, true, true, tree_validator);
     // Test directory patterns
     let directory_patterns = vec![
         "target/file.js",
@@ -719,7 +719,7 @@ fn demo_git_object_contract_attributes() -> Result<(), Box<dyn std::error::Error
     println!("🎯 Example 3: Git Object Contract with Attributes");
     println!("==================================================\n");
     let tree_validator = TreeValidator::new(true, true, true);
-    let validator = GitObjectValidator::new(true, true, tree_validator);
+    let validator = GitObjectValidator::new(true, true, true, true, tree_validator);
     // Validate a blob object with attributes
     let contract = validator.validate_object(
         GitObjectType::Blob,
@@ -750,7 +750,7 @@ fn demo_generated_files_validation() -> Result<(), Box<dyn std::error::Error>> {
     println!("🎯 Example 4: Generated Files Validation");
     println!("==========================================\n");
     let tree_validator = TreeValidator::new(true, true, true);
-    let validator = GitObjectValidator::new(true, true, tree_validator);
+    let validator = GitObjectValidator::new(true, true, true, true, tree_validator);
     // Test various generated file patterns
     let test_cases = vec![
         ("target/build/app.js", true, true), // Generated, should have linguist-generated=true
@@ -782,7 +782,7 @@ fn demo_complete_workflow() -> Result<(), Box<dyn std::error::Error>> {
     println!("🎯 Example 5: Complete Workflow");
     println!("===============================\n");
     let tree_validator = TreeValidator::new(true, true, true);
-    let git_validator = GitObjectValidator::new(true, true, tree_validator);
+    let git_validator = GitObjectValidator::new(true, true, true, true, tree_validator);
     let blob_validator = BlobValidator::new(true, true, 0.1, false);
     // Simulate a commit with multiple files
     let commit_files = vec![
@@ -1210,7 +1210,7 @@ Contract Validation Demo  This example demonstrates the comprehensive contract v
 
 ### Dependencies
 
-- anyhow::Result
+- anyhow::{Context,
 - serde::{Deserialize,
 - sha2::{Digest,
 - std::collections::HashMap
@@ -1220,12 +1220,12 @@ Contract Validation Demo  This example demonstrates the comprehensive contract v
 ### Code
 
 ```rust
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::Path;
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct HookContract {
     pub name: String,
     pub enabled: bool,
@@ -3237,7 +3237,8 @@ fn demo_chunk_contracts() -> Result<(), Box<dyn std::error::Error>> {
 }
 fn demo_complete_git_object_validation() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔍 Example 5: Complete Git Object Validation");
-    let validator = GitObjectValidator::new(true, true); // Enable both line and chunk validation
+    let tree_validator = TreeValidator::new(true, true, true);
+    let validator = GitObjectValidator::new(true, true, true, true, tree_validator); // Enable both line and chunk validation
     let content = b"Line 1: Valid content\nLine 2: Has\x01control char\nLine 3: CRLF\r\nLine 4: Valid again\n";
     // Validate as a complete Git object
     let git_object = validator.validate_git_object("mno345pqr678", content);
