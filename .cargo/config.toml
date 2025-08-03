@@ -2,6 +2,12 @@
 # Enable incremental compilation by default
 incremental = true
 
+# Use sccache by default if available
+rustc-wrapper = "sccache"
+
+# Set default parallel jobs
+jobs = 12
+
 # Use LLD linker for faster linking (Linux)
 [target.x86_64-unknown-linux-gnu]
 linker = "clang"

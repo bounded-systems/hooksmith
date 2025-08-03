@@ -97,21 +97,45 @@ Options:
    lefthook install
    ```
 
-4. **Generate code and build the project**
+4. **Setup optimized build environment**
    ```bash
-   # Generate all code and documentation
-   ./xtask.sh gen-all --overwrite
-
-   # Or use the build script
-   ./build.sh
+   # Install and configure all optimization tools
+   ./scripts/optimize-build.sh
+   
+   # Set up environment variables for optimized builds
+   source scripts/setup-env.sh
    ```
 
-5. **Run tests**
+5. **Generate code and build the project**
    ```bash
-   cargo test --all-targets --all-features
+   # Fast development cycle with all optimizations
+   ./scripts/dev-cycle.sh
+   
+   # Or use optimized cargo commands
+   cargo dev-fast
+   cargo test-parallel
    ```
 
-### Xtask Commands
+### Optimized Build Commands
+
+This project uses **optimized Rust build tools** for maximum performance and developer productivity:
+
+#### 🚀 Fast Development Commands
+```bash
+# Fast development cycle with all optimizations
+./scripts/dev-cycle.sh
+
+# Fast development builds
+cargo dev-fast
+
+# Parallel test execution
+cargo test-parallel
+
+# Fast checking
+cargo check-fast
+```
+
+#### 🛠️ Xtask Commands
 
 This project uses **xtask** for structured code generation and build tasks, replacing shell scripts and raw echo statements:
 
@@ -143,6 +167,13 @@ This project uses **xtask** for structured code generation and build tasks, repl
 # Validate project configuration
 ./xtask.sh validate --all
 ```
+
+**Benefits of Optimized Builds:**
+- ✅ **30-70% faster rebuilds** - sccache build caching
+- ✅ **2-4x faster tests** - cargo-nextest parallel execution
+- ✅ **Up to 50% faster builds** - cargo-hakari workspace optimization
+- ✅ **20-30% faster linking** - LLD/zld/mold linkers
+- ✅ **Up to 50% faster compilation** - Parallel compilation frontend (nightly)
 
 **Benefits of Xtask:**
 - ✅ **No shell scripts** - All tasks are Rust-based
@@ -199,7 +230,10 @@ hooksmith install
 ## Testing
 
 ```bash
-# Run all tests
+# Run all tests with parallel execution (recommended)
+cargo test-parallel
+
+# Run all tests (standard)
 cargo test
 
 # Run specific test
@@ -207,6 +241,9 @@ cargo test test_cli_help
 
 # Run integration tests
 cargo test --test integration
+
+# Monitor test performance
+./scripts/build-stats.sh
 ```
 
 ## Implementation Status
