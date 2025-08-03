@@ -173,7 +173,9 @@ mod code_stats;
 mod config;
 mod contract;
 mod contract_validation;
+mod dashboard;
 mod docs;
+mod error_deduplication;
 mod event_bus;
 mod event_stream;
 mod file_audit;
@@ -648,6 +650,27 @@ enum Commands {
         #[command(subcommand)]
         command: WasmComponentCommands,
     },
+    /// Interactive dashboard for monitoring and auto-push
+    Dashboard {
+        /// Update interval in seconds
+        #[arg(long, default_value = "30")]
+        interval: u64,
+        /// Whether to show TUI dashboard
+        #[arg(long, default_value = "true")]
+        show_dashboard: bool,
+        /// Whether to enable auto-push
+        #[arg(long, default_value = "true")]
+        auto_push: bool,
+        /// Whether to skip validation
+        #[arg(long)]
+        skip_validation: bool,
+        /// Force push
+        #[arg(long)]
+        force: bool,
+        /// Commit message template
+        #[arg(short, long)]
+        message: Option<String>,
+    },
 }
 
 /// WIT schema for function definition
@@ -1097,6 +1120,24 @@ async fn main() -> Result<()> {
                 build_validation_handler_command(output_dir).await?;
             }
         },
+        Commands::Dashboard {
+            interval,
+            show_dashboard,
+            auto_push,
+            skip_validation,
+            force,
+            message,
+        } => {
+            run_dashboard_command(
+                interval,
+                show_dashboard,
+                auto_push,
+                skip_validation,
+                force,
+                message,
+            )
+            .await?;
+        }
     }
 
     Ok(())
@@ -5043,29 +5084,29 @@ async fn run_single_auto_push(
 
         // Run cargo fix
         println!("   🔧 Running cargo fix...");
-        let fix_status = Command::new("cargo")
+        let fix_output = Command::new("cargo")
             .args(["fix", "--allow-dirty", "--allow-staged"])
-            .status()
+            .output()
             .context("Failed to run cargo fix")?;
 
-        if !fix_status.success() {
+        if !error_deduplication::process_command_output(&fix_output, "cargo fix") {
             anyhow::bail!("cargo fix failed");
         }
 
         // Run cargo fmt
         println!("   🎨 Running cargo fmt...");
-        let fmt_status = Command::new("cargo")
+        let fmt_output = Command::new("cargo")
             .args(["fmt", "--all"])
-            .status()
+            .output()
             .context("Failed to run cargo fmt")?;
 
-        if !fmt_status.success() {
+        if !error_deduplication::process_command_output(&fmt_output, "cargo fmt") {
             anyhow::bail!("cargo fmt failed");
         }
 
         // Run cargo clippy
         println!("   🔍 Running cargo clippy...");
-        let clippy_status = Command::new("cargo")
+        let clippy_output = Command::new("cargo")
             .args([
                 "clippy",
                 "--workspace",
@@ -5075,35 +5116,46 @@ async fn run_single_auto_push(
                 "-D",
                 "warnings",
             ])
-            .status()
+            .output()
             .context("Failed to run cargo clippy")?;
 
-        if !clippy_status.success() {
+        if !error_deduplication::process_command_output(&clippy_output, "cargo clippy") {
             anyhow::bail!("cargo clippy failed");
         }
 
         // Run contract validation
         println!("   📋 Running contract validation...");
-        let contract_status = Command::new("cargo")
+        let contract_output = Command::new("cargo")
             .args(["run", "-p", "xtask", "--", "contract-check", "--strict"])
-            .status()
+            .output()
             .context("Failed to run contract validation")?;
 
-        if !contract_status.success() {
+        if !error_deduplication::process_command_output(&contract_output, "contract validation") {
             anyhow::bail!("Contract validation failed");
         }
 
         // Run generated file validation
         println!("   📄 Running generated file validation...");
-        let generated_status = Command::new("cargo")
+        let generated_output = Command::new("cargo")
             .args(["run", "-p", "xtask", "--", "validate-generated", "--strict"])
-            .status()
+            .output()
             .context("Failed to run generated file validation")?;
 
-        if !generated_status.success() {
+        if !error_deduplication::process_command_output(
+            &generated_output,
+            "generated file validation",
+        ) {
             anyhow::bail!("Generated file validation failed");
         }
 
+        // Print error statistics
+        let (total_errors, unique_errors) = error_deduplication::get_error_stats();
+        if total_errors > 0 {
+            println!(
+                "📊 Error Summary: {} total errors, {} unique errors",
+                total_errors, unique_errors
+            );
+        }
         println!("✅ All validation checks passed!");
     } else {
         println!("⚠️  Skipping validation checks");
@@ -6021,4 +6073,35 @@ fn strip_json_header(content: &str) -> String {
 
     // Return everything from the JSON start onwards
     lines[json_start..].join("\n")
+}
+
+/// Run the interactive dashboard
+async fn run_dashboard_command(
+    interval: u64,
+    show_dashboard: bool,
+    auto_push: bool,
+    skip_validation: bool,
+    force: bool,
+    message: Option<String>,
+) -> Result<()> {
+    let config = dashboard::DashboardConfig {
+        update_interval: interval,
+        show_dashboard,
+        log_to_jsonl: true,
+        jsonl_path: Some("hooksmith-events.jsonl".to_string()),
+        auto_push_config: dashboard::AutoPushConfig {
+            enabled: auto_push,
+            commit_message: message,
+            skip_validation,
+            force,
+        },
+    };
+
+    let dashboard = dashboard::Dashboard::new(config);
+    dashboard
+        .start()
+        .await
+        .map_err(|e| anyhow::anyhow!("Dashboard error: {}", e))?;
+
+    Ok(())
 }
