@@ -151,6 +151,18 @@ futures-io = "0.3"
 name = "hooksmith"
 path = "src/main.rs"
 
+[[bin]]
+name = "setup"
+path = "src/bin/setup.rs"
+
+[[bin]]
+name = "dev-workflow"
+path = "src/bin/dev-workflow.rs"
+
+[[bin]]
+name = "generate-cargo-toml"
+path = "src/bin/generate-cargo-toml.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
@@ -189,6 +201,9 @@ reqwest.workspace = true
 
 # Cryptographic hashing
 sha2.workspace = true
+
+# Text processing
+regex.workspace = true
 
 [dev-dependencies]
 tempfile = "3.0"
@@ -350,6 +365,7 @@ tempfile = "3.0"
 jsonschema = "0.17"
 schemars = "0.8"
 toml = "0.8"
+glob = "0.3"
 hooksmith = { path = ".." }
 
 [dev-dependencies]

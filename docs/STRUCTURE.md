@@ -627,31 +627,32 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       302
-- **Rust Files**:        115 (.rs)
-- **Configuration Files**:        31 (.toml, .yaml, .rc)
-- **Documentation**:        118 (.md)
+- **Total Files**:       318
+- **Rust Files**:        120 (.rs)
+- **Configuration Files**:        35 (.toml, .yaml, .rc)
+- **Documentation**:        123 (.md)
 - **Scripts**:        0 (.sh)
 
 ## 📋 File Type Breakdown
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .pdf | 1 | PDF documentation |
-| .lock | 2 | Other files |
-| .wit | 9 | WebAssembly Interface Type definitions |
-| .dot | 1 | Other files |
-| .json | 10 | JSON schema and config files |
-| .yml | 9 | YAML configuration files |
 | .epub | 1 | EPUB documentation |
-| .bash | 1 | Other files |
-| .css | 1 | Stylesheet files |
-| .rs | 115 | Rust source files |
-| .yaml | 4 | YAML configuration files |
-| .md | 118 | Markdown documentation |
 | .html | 1 | HTML documentation |
-| .toml | 8 | Cargo and configuration files |
+| .yml | 9 | YAML configuration files |
+| .wit | 9 | WebAssembly Interface Type definitions |
+| .css | 1 | Stylesheet files |
+| .rs | 120 | Rust source files |
+| .lock | 2 | Other files |
+| .pdf | 1 | PDF documentation |
+| .json | 10 | JSON schema and config files |
+| .dot | 1 | Other files |
+| .toml | 12 | Cargo and configuration files |
+| .bash | 1 | Other files |
 | .hbs | 1 | Other files |
+| .yaml | 4 | YAML configuration files |
+| .backup | 2 | Other files |
+| .md | 123 | Markdown documentation |
 
 ## 🧩 Component Breakdown
 
@@ -682,9 +683,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 160
-- **Modified Files**: 21
+- **Total Commits**: 161
+- **Modified Files**: 28
 
 ---
 
-*Generated on Sat Aug  2 23:41:40 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 00:02:57 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

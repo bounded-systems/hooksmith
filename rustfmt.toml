@@ -1,0 +1,24 @@
+# Rustfmt configuration for Hooksmith project
+# Enforces consistent formatting across all contributors
+# Using only stable features for compatibility
+
+# Basic formatting
+edition = "2021"
+max_width = 100
+tab_spaces = 4
+use_small_heuristics = "Default"
+
+# Import formatting (stable features only)
+reorder_imports = true
+reorder_modules = true
+
+# Code style (stable features only)
+chain_width = 60
+fn_call_width = 60
+fn_params_layout = "Tall"
+hard_tabs = false
+match_arm_leading_pipes = "Never"
+match_block_trailing_comma = false
+merge_derives = true
+use_field_init_shorthand = false
+use_try_shorthand = false

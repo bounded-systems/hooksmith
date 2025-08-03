@@ -37,32 +37,6 @@ cargo xtask gen-all
 ## CLI Commands
 
 ```bash
-Main CLI application for Hooksmith
-
-This CLI provides tools for building Rust binaries into Lefthook hooks with WASM components. It serves as a bridge between Git hooks management and WebAssembly-based functionality.
-
-Usage: hooksmith <COMMAND>
-
-Commands:
-  test                    Test command to verify CLI functionality
-  build                   Build Rust binaries for Git hooks
-  generate                Generate Lefthook configuration
-  generate-comprehensive  Generate comprehensive Lefthook configuration
-  generate-code           Generate structured code and documentation
-  install                 Install hooks into Git repository
-  list                    List available hooks
-  validate                Validate Lefthook configuration
-  verify-hooks            Verify Hooksmith hooks registration
-  wasm                    WASM component management
-  worktree                Worktree management
-  help                    Print this message or the help of the given subcommand(s)
-
-Options:
-  -h, --help
-          Print help (see a summary with '-h')
-
-  -V, --version
-          Print version
 
 ```
 
@@ -228,4 +202,3 @@ MIT License - see LICENSE file for details.
 ---
 
 *This README is auto-generated using `cargo xtask gen-readme`. The CLI help section is automatically updated from the actual CLI output.*
-# Test comment

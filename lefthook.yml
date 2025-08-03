@@ -1,9 +1,16 @@
 pre_commit:
+  # Code quality checks
+  fmt:
+    run: cargo fmt --all -- --check
+    stage_fixed: true
   clippy:
     run: cargo clippy --workspace --fix --allow-dirty --allow-staged
+    stage_fixed: true
   git-add:
     run: git add .
     stage_fixed: true
+  
+  # Project-specific validations
   validate-extensions:
     run: cargo run -p xtask -- validate-extensions
   contract-validate:
@@ -12,6 +19,12 @@ pre_commit:
     run: cargo run -p xtask -- validate-generated --staged-only --strict
   check-generated:
     run: cargo run -p xtask -- validate-headers
+  
+  # Security and dependency checks
+  audit:
+    run: cargo audit
+  deny:
+    run: cargo deny check
 pre_push:
   comprehensive-validate:
     run: cargo run -p xtask -- contract-validate --validate-generated --comprehensive

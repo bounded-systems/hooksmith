@@ -8,152 +8,32 @@ This document contains the help output for all CLI commands.
 
 ## Main Help
 ```
-Main CLI application for Hooksmith
-
-This CLI provides tools for building Rust binaries into Lefthook hooks with WASM components. It serves as a bridge between Git hooks management and WebAssembly-based functionality.
-
-Usage: hooksmith <COMMAND>
-
-Commands:
-  test                    Test command to verify CLI functionality
-  build                   Build Rust binaries for Git hooks
-  generate                Generate Lefthook configuration
-  generate-comprehensive  Generate comprehensive Lefthook configuration
-  generate-code           Generate structured code and documentation
-  install                 Install hooks into Git repository
-  list                    List available hooks
-  validate                Validate Lefthook configuration
-  verify-hooks            Verify Hooksmith hooks registration
-  wasm                    WASM component management
-  worktree                Worktree management
-  help                    Print this message or the help of the given subcommand(s)
-
-Options:
-  -h, --help
-          Print help (see a summary with '-h')
-
-  -V, --version
-          Print version
 ```
 
 ## Command Help
 
 ### test Command
 ```
-Test command to verify CLI functionality
-
-Usage: hooksmith test [OPTIONS]
-
-Options:
-      --message <MESSAGE>  Custom test message [default: "Hello from Hooksmith"]
-  -h, --help               Print help
-  -V, --version            Print version
 ```
 
 ### build Command
 ```
-Build Rust binaries for Git hooks
-
-This command compiles Rust code into binary executables that can be used as Lefthook hooks. The binaries are optimized for performance and can integrate with WASM components.
-
-Usage: hooksmith build [OPTIONS] <HOOK_NAME>
-
-Arguments:
-  <HOOK_NAME>
-          Name of the hook to build
-
-Options:
-      --output <OUTPUT>
-          Output directory for built binaries
-          
-          [default: target/hooks]
-
-  -h, --help
-          Print help (see a summary with '-h')
-
-  -V, --version
-          Print version
 ```
 
 ### generate Command
 ```
-Generate Lefthook configuration
-
-Creates a lefthook.yml configuration file that integrates the built hooks with Git workflow. This enables automatic hook execution on Git events like pre-commit, pre-push, etc.
-
-Usage: hooksmith generate [OPTIONS]
-
-Options:
-      --output <OUTPUT>
-          Output file path for Lefthook configuration
-          
-          [default: lefthook.yml]
-
-      --validate-schema
-          Whether to validate against the official Lefthook schema
-
-  -h, --help
-          Print help (see a summary with '-h')
-
-  -V, --version
-          Print version
 ```
 
 ### install Command
 ```
-Install hooks into Git repository
-
-Installs the built hooks into the current Git repository's hooks directory, making them available for Lefthook to execute.
-
-Usage: hooksmith install [OPTIONS]
-
-Options:
-      --hooks <HOOKS>
-          Comma-separated list of hook names to install
-
-  -h, --help
-          Print help (see a summary with '-h')
-
-  -V, --version
-          Print version
 ```
 
 ### list Command
 ```
-List available hooks
-
-Displays all available hooks that can be built or installed.
-
-Usage: hooksmith list
-
-Options:
-  -h, --help
-          Print help (see a summary with '-h')
-
-  -V, --version
-          Print version
 ```
 
 ### wasm Command
 ```
-WASM component management
-
-Commands for building, running, and managing WebAssembly components that can be integrated with the hooks.
-
-Usage: hooksmith wasm <COMMAND>
-
-Commands:
-  build     Build WASM component from WIT interface
-  run       Run WASM component
-  bindings  Generate bindings from WIT
-  help      Print this message or the help of the given subcommand(s)
-
-Options:
-  -h, --help
-          Print help (see a summary with '-h')
-
-  -V, --version
-          Print version
 ```
 
 ## Xtask Commands

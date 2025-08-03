@@ -1,0 +1,191 @@
+# 🛠️ Hooksmith Development Scripts
+
+This directory contains Rust-based development tools for the Hooksmith project.
+
+## 📋 Available Scripts
+
+### `setup.rs` - Environment Setup
+Complete development environment setup with Rust toolchain and cargo tools.
+
+```bash
+# Basic setup
+cargo run --bin setup
+
+# Verbose output
+cargo run --bin setup --verbose
+
+# Dry run (see what would be done)
+cargo run --bin setup --dry-run
+
+# Skip tool installation (only setup project config)
+cargo run --bin setup --skip-tools
+
+# Force reinstallation
+cargo run --bin setup --force
+```
+
+**Features:**
+- Installs Rust toolchain with required components
+- Installs development tools (cargo-watch, cargo-audit, etc.)
+- Verifies installation
+- Sets up project configuration
+- Configures Git hooks with lefthook
+
+### `dev-workflow.rs` - Development Workflow
+Unified interface for common development tasks.
+
+```bash
+# Show project status
+cargo run --bin dev-workflow -- status
+
+# Run quality checks
+cargo run --bin dev-workflow -- quality
+
+# Run strict quality checks
+cargo run --bin dev-workflow -- quality --strict
+
+# Build project
+cargo run --bin dev-workflow -- build
+
+# Build with WASM support
+cargo run --bin dev-workflow -- build --wasm
+
+# Run tests
+cargo run --bin dev-workflow -- test --all-targets --all-features
+
+# Generate documentation
+cargo run --bin dev-workflow -- docs --open
+
+# Run Git hooks manually
+cargo run --bin dev-workflow -- hooks pre-commit
+
+# Update dependencies
+cargo run --bin dev-workflow -- update
+
+# Clean build artifacts
+cargo run --bin dev-workflow -- clean --all
+```
+
+### `generate-cargo-toml.rs` - Cargo.toml Generation
+Automatically generates Cargo.toml files for missing crates.
+
+```bash
+# Generate Cargo.toml for all missing crates
+cargo run --bin generate-cargo-toml
+
+# Or use the dev workflow
+cargo run --bin dev-workflow -- generate-cargo-toml
+```
+
+**Features:**
+- Scans repository for Rust entry points (main.rs, lib.rs)
+- Analyzes dependencies from use statements
+- Generates appropriate Cargo.toml files
+- Handles workspace integration
+- Sets smart defaults for crate types
+
+## 🚀 Getting Started
+
+1. **Initial Setup:**
+   ```bash
+   cargo run --bin setup
+   ```
+
+2. **Verify Installation:**
+   ```bash
+   cargo run --bin dev-workflow -- status
+   ```
+
+3. **Run Quality Checks:**
+   ```bash
+   cargo run --bin dev-workflow -- quality
+   ```
+
+## 🔧 Script Features
+
+### Cross-Platform Compatibility
+All scripts are written in Rust and work on:
+- macOS
+- Linux
+- Windows (with appropriate toolchain)
+
+### Error Handling
+- Comprehensive error reporting
+- Graceful failure handling
+- Detailed logging with `--verbose` flag
+
+### Dry Run Mode
+- Preview what would be done with `--dry-run`
+- Safe testing of commands
+- No actual changes made
+
+### Progress Indicators
+- Visual progress bars for long operations
+- Clear status messages
+- Color-coded output
+
+## 📊 Integration
+
+These scripts integrate seamlessly with:
+- **Lefthook**: Git hooks for automated quality checks
+- **xtask**: Existing build tasks
+- **WASM Components**: Optimized build configurations
+- **Git Workflow**: Automated quality gates
+
+## 🆘 Troubleshooting
+
+### Common Issues
+
+1. **Script not found:**
+   ```bash
+   # Ensure you're in the project root
+   ls Cargo.toml
+   
+   # Check if scripts are executable
+   ls -la scripts/
+   ```
+
+2. **Permission denied:**
+   ```bash
+   # Make scripts executable
+   chmod +x scripts/*.rs
+   ```
+
+3. **Dependencies missing:**
+   ```bash
+   # Run setup to install missing tools
+   cargo run --bin setup
+   ```
+
+### Getting Help
+
+```bash
+# Show help for any script
+cargo run --bin setup --help
+cargo run --bin dev-workflow --help
+cargo run --bin generate-cargo-toml --help
+```
+
+## 🔄 Development
+
+### Adding New Scripts
+
+1. Create a new `.rs` file in the `scripts/` directory
+2. Add the shebang: `#!/usr/bin/env cargo`
+3. Make it executable: `chmod +x scripts/new-script.rs`
+4. Update this README with documentation
+
+### Script Guidelines
+
+- Use `anyhow` for error handling
+- Use `clap` for command-line argument parsing
+- Use `console` for colored output
+- Use `indicatif` for progress indicators
+- Include `--verbose` and `--dry-run` options
+- Provide comprehensive help text
+
+## 📚 Related Documentation
+
+- [RUST_TOOLING_SETUP.md](../RUST_TOOLING_SETUP.md) - Comprehensive setup guide
+- [RUST_TOOLING_SUMMARY.md](../RUST_TOOLING_SUMMARY.md) - Quick reference
+- [CONTRIBUTING.md](../CONTRIBUTING.md) - Development guidelines 

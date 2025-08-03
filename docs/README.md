@@ -8,29 +8,30 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **reqwest**: ^0.11
+- **sha2**: ^0.10
+- **toml**: ^0.8
 - **serde_yaml**: ^0.9
 - **serde_json**: ^1.0
-- **toml**: ^0.8
-- **tracing-subscriber**: ^0.3
-- **serde**: ^1.0
-- **tokio**: ^1.0
-- **tracing**: ^0.1
-- **console**: ^0.15
-- **chrono**: ^0.4
-- **anyhow**: ^1.0
-- **git2**: ^0.18
-- **cli-core**: *
 - **jsonschema**: ^0.17
 - **indicatif**: ^0.17
-- **wit-bindgen**: ^0.20
-- **sha2**: ^0.10
-- **git-filter**: *
+- **regex**: ^1.0
+- **reqwest**: ^0.11
+- **chrono**: ^0.4
 - **clap**: ^4.0
-- **which**: ^5.0
+- **wit-bindgen**: ^0.20
+- **git-filter**: *
+- **cli-core**: *
 - **tempfile**: dev
-- **wasmtime**: ^18.0
+- **tracing**: ^0.1
+- **tracing-subscriber**: ^0.3
+- **anyhow**: ^1.0
+- **serde**: ^1.0
 - **wasmtime-wasi**: ^18.0
+- **tokio**: ^1.0
+- **wasmtime**: ^18.0
+- **which**: ^5.0
+- **console**: ^0.15
+- **git2**: ^0.18
 
 ## Installation
 
@@ -55,6 +56,9 @@ hooksmith --help
 │   ├── ARCHITECTURE.md
 │   ├── STRUCTURE.md
 │   ├── SOURCE_BASED_DOCS.md
+│   ├── clippy.toml.backup
+│   ├── RUST_TOOLING_SETUP.md
+│   ├── rustfmt.toml
 │   ├── CODEGEN_SUMMARY.md
 │   ├── CODE_STATS_SYSTEM_SUMMARY.md
 │   ├── MIGRATION_SUMMARY.md
@@ -99,6 +103,7 @@ hooksmith --help
 │   │   ├── config_formats_test.rs
 │       └── hooks_test.rs
 │   ├── Cargo.lock
+│   ├── build.rs
 │   ├── PHASE_4_FILE_TYPE_NORMALIZATION.md
 │   ├── bootstrap.rs
 │   ├── bootstrap-simple.rs
@@ -241,10 +246,12 @@ hooksmith --help
 │   │   ├── tree_contract_demo.rs
 │       └── git_model_demo.rs
 │   ├── scripts/
+│       └── README.md
 │   ├── lefthook.yml
 │   ├── BOOTSTRAP.md
 │   ├── templates/
 │       └── README.hbs
+│   ├── RUST_TOOLING_SUMMARY.md
 │   ├── stuff.md
 │   ├── xtask/
 │   │   ├── Cargo.toml
@@ -292,6 +299,7 @@ hooksmith --help
 │       │   ├── generated_file_validator.rs
 │           └── code_stats.rs
 │   ├── PHASE_3_CONFIGURATION_GENERATION_SUMMARY.md
+│   ├── rust-toolchain.toml
 │   ├── lefthook-rs/
 │   │   ├── Cargo.toml
 │       └── src/
@@ -312,6 +320,10 @@ hooksmith --help
 │   ├── test_source_extraction.rs
 │   ├── BOOTSTRAP_SUMMARY.md
     └── src/
+    │   ├── bin/
+    │   │   ├── generate-cargo-toml.rs
+    │   │   ├── dev-workflow.rs
+    │       └── setup.rs
     │   ├── lib.rs
     │   ├── main.rs
     │   ├── commands/
@@ -340,7 +352,7 @@ hooksmith --help
 
 
 
-**Dependencies:** anyhow, chrono, serde, serde_json, tokio, tracing, wasmparser, wasmtime, wat, which, wit-bindgen, wit-component, wit-parser
+**Dependencies:** anyhow, serde, serde_json, tokio, tracing, wasmparser, wasmtime, wat, wit-bindgen, wit-component, wit-parser
 
 ### cli-core
 
@@ -352,7 +364,7 @@ hooksmith --help
 
 
 
-**Dependencies:** anyhow, chrono, futures-io, git2, gix-filter, jsonschema, once_cell, regex, serde, serde_json, serde_yaml, sha2, thiserror, tracing, tracing-subscriber
+**Dependencies:** anyhow, chrono, futures-io, git2, gix-filter, jsonschema, once_cell, regex, serde, serde_json, serde_yaml, sha2, thiserror, tracing
 
 ### worktree-runner
 

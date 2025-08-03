@@ -31,6 +31,9 @@ cargo build
 │   ├── ARCHITECTURE.md
 │   ├── STRUCTURE.md
 │   ├── SOURCE_BASED_DOCS.md
+│   ├── clippy.toml.backup
+│   ├── RUST_TOOLING_SETUP.md
+│   ├── rustfmt.toml
 │   ├── CODEGEN_SUMMARY.md
 │   ├── CODE_STATS_SYSTEM_SUMMARY.md
 │   ├── MIGRATION_SUMMARY.md
@@ -75,6 +78,7 @@ cargo build
 │   │   ├── config_formats_test.rs
 │       └── hooks_test.rs
 │   ├── Cargo.lock
+│   ├── build.rs
 │   ├── PHASE_4_FILE_TYPE_NORMALIZATION.md
 │   ├── bootstrap.rs
 │   ├── bootstrap-simple.rs
@@ -217,10 +221,12 @@ cargo build
 │   │   ├── tree_contract_demo.rs
 │       └── git_model_demo.rs
 │   ├── scripts/
+│       └── README.md
 │   ├── lefthook.yml
 │   ├── BOOTSTRAP.md
 │   ├── templates/
 │       └── README.hbs
+│   ├── RUST_TOOLING_SUMMARY.md
 │   ├── stuff.md
 │   ├── xtask/
 │   │   ├── Cargo.toml
@@ -268,6 +274,7 @@ cargo build
 │       │   ├── generated_file_validator.rs
 │           └── code_stats.rs
 │   ├── PHASE_3_CONFIGURATION_GENERATION_SUMMARY.md
+│   ├── rust-toolchain.toml
 │   ├── lefthook-rs/
 │   │   ├── Cargo.toml
 │       └── src/
@@ -288,6 +295,10 @@ cargo build
 │   ├── test_source_extraction.rs
 │   ├── BOOTSTRAP_SUMMARY.md
     └── src/
+    │   ├── bin/
+    │   │   ├── generate-cargo-toml.rs
+    │   │   ├── dev-workflow.rs
+    │       └── setup.rs
     │   ├── lib.rs
     │   ├── main.rs
     │   ├── commands/

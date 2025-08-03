@@ -1,0 +1,359 @@
+# 🦀 Rust Tooling Setup for Hooksmith
+
+This document describes the comprehensive Rust tooling configuration that has been set up for the Hooksmith project to enhance development workflow, code quality, and maintainability.
+
+## 📁 Configuration Files Overview
+
+### Core Configuration Files
+
+| File | Purpose | Description |
+|------|---------|-------------|
+| `rust-toolchain.toml` | Toolchain Management | Pins Rust version and ensures required components |
+| `.cargo/config.toml` | Cargo Configuration | Workspace settings, aliases, and build targets |
+| `rustfmt.toml` | Code Formatting | Consistent formatting rules across the project |
+| `clippy.toml` | Linting Configuration | Custom lint rules for safety and style |
+| `build.rs` | Build Script | Code generation and conditional compilation |
+
+### Development Scripts
+
+| Script | Purpose | Description |
+|--------|---------|-------------|
+| `scripts/setup.rs` | Environment Setup | Complete development environment setup (Rust-based) |
+| `scripts/generate-cargo-toml.rs` | Cargo.toml Generation | Auto-generates Cargo.toml for missing crates |
+| `scripts/dev-workflow.rs` | Development Workflow | Unified interface for common dev tasks |
+
+## 🔧 Toolchain Configuration (`rust-toolchain.toml`)
+
+Pins the Rust toolchain to version 1.80.0 and ensures all necessary components are installed:
+
+```toml
+[toolchain]
+channel = "1.80.0"
+components = [
+    "rustfmt",
+    "clippy", 
+    "rust-analyzer",
+    "rust-src",
+    "rustc-dev",
+    "llvm-tools-preview",
+]
+targets = [
+    "wasm32-unknown-unknown",
+    "wasm32-wasi",
+]
+```
+
+### Benefits:
+- **Consistent Environment**: All developers use the same Rust version
+- **WASM Support**: Pre-installs WASM targets for web components
+- **Development Tools**: Includes rust-analyzer for better IDE support
+- **Build Tools**: Includes llvm-tools for advanced compilation features
+
+## 🚀 Cargo Configuration (`.cargo/config.toml`)
+
+Provides workspace-wide settings, useful aliases, and build optimizations:
+
+### Key Features:
+- **Parallel Compilation**: Optimized build performance
+- **WASM Configuration**: Specialized settings for WebAssembly targets
+- **Useful Aliases**: Shortcuts for common commands
+- **Sparse Registry**: Faster dependency resolution
+
+### Available Aliases:
+```bash
+# Quality checks
+cargo quality          # Run all quality checks
+cargo quality-strict   # Run strict quality checks
+
+# Building
+cargo wasm-build       # Build WASM target
+cargo wasi-build       # Build WASI target
+
+# Development
+cargo dev-watch        # Run with file watching
+cargo test-watch       # Test with file watching
+
+# Documentation
+cargo docs             # Generate and open docs
+cargo docs-serve       # Serve docs locally
+
+# Validation
+cargo validate         # Run project validations
+cargo validate-strict  # Run comprehensive validations
+```
+
+## 🎨 Code Formatting (`rustfmt.toml`)
+
+Enforces consistent code formatting across all contributors:
+
+### Key Settings:
+- **Max Width**: 100 characters for readability
+- **Import Organization**: Automatic import grouping and sorting
+- **Documentation**: Formats code in doc comments
+- **Modern Style**: Uses Rust 2021 edition conventions
+
+## 🔍 Linting Configuration (`clippy.toml`)
+
+Customizes Clippy lints for safety and maintainability:
+
+### Safety Rules (Denied):
+- `unwrap_used` / `expect_used`: Prefer explicit error handling
+- `panic`: Avoid panics in library code
+- `unused_*`: Clean up unused code
+- `dead_code`: Remove dead code
+
+### Allowed Exceptions:
+- `too_many_arguments`: Some functions legitimately need many args
+- `type_complexity`: Complex types are sometimes necessary
+- `manual_*`: Manual implementations can be clearer
+
+## 🔨 Build Script (`build.rs`)
+
+Handles code generation and conditional compilation:
+
+### Features:
+- **Version Information**: Auto-generates version constants
+- **Feature Flags**: Sets up conditional compilation
+- **WIT Bindings**: Generates WebAssembly Interface Types bindings
+- **Documentation Constants**: Provides project metadata
+
+### Generated Files:
+- `version.rs`: Package version and metadata
+- `features.rs`: Target and feature information
+- `docs.rs`: Documentation constants
+- `wit-bindings/`: WIT interface bindings
+
+## 📝 Cargo.toml Generation (`scripts/generate-cargo-toml.rs`)
+
+Automatically generates Cargo.toml files for missing crates:
+
+### Features:
+- **Crate Detection**: Finds Rust entry points (main.rs, lib.rs)
+- **Dependency Inference**: Analyzes use statements for dependencies
+- **Workspace Integration**: Handles internal dependencies
+- **Smart Defaults**: Sets appropriate crate types and metadata
+
+### Usage:
+```bash
+# Generate Cargo.toml for all missing crates
+cargo run --bin generate-cargo-toml
+
+# Or use the dev workflow script
+cargo run --bin dev-workflow -- generate-cargo-toml
+```
+
+## 🛠️ Development Workflow (`scripts/dev-workflow.rs`)
+
+Provides a unified interface for common development tasks:
+
+### Available Commands:
+
+#### Setup and Environment
+```bash
+# Set up development environment
+cargo run --bin dev-workflow -- setup
+
+# Show project status
+cargo run --bin dev-workflow -- status
+```
+
+#### Quality Assurance
+```bash
+# Run all quality checks
+cargo run --bin dev-workflow -- quality
+
+# Run strict quality checks
+cargo run --bin dev-workflow -- quality --strict
+
+# Fix issues automatically
+cargo run --bin dev-workflow -- quality --fix
+```
+
+#### Building and Testing
+```bash
+# Build all targets
+cargo run --bin dev-workflow -- build
+
+# Build with WASM support
+cargo run --bin dev-workflow -- build --wasm
+
+# Run all tests
+cargo run --bin dev-workflow -- test --all-targets --all-features
+```
+
+#### Documentation
+```bash
+# Generate documentation
+cargo run --bin dev-workflow -- docs
+
+# Generate and open docs
+cargo run --bin dev-workflow -- docs --open
+
+# Serve docs locally
+cargo run --bin dev-workflow -- docs --serve
+```
+
+#### Git Hooks
+```bash
+# Run pre-commit hooks manually
+cargo run --bin dev-workflow -- hooks pre-commit
+
+# Run pre-push hooks manually
+cargo run --bin dev-workflow -- hooks pre-push
+```
+
+#### Maintenance
+```bash
+# Update dependencies
+cargo run --bin dev-workflow -- update
+
+# Aggressive dependency updates
+cargo run --bin dev-workflow -- update --aggressive
+
+# Clean build artifacts
+cargo run --bin dev-workflow -- clean
+
+# Clean everything
+cargo run --bin dev-workflow -- clean --all
+```
+
+## 🎣 Git Hooks Integration
+
+The project uses Lefthook for Git hook management, enhanced with the new tooling:
+
+### Pre-commit Hooks:
+- **Formatting**: `cargo fmt --all -- --check`
+- **Linting**: `cargo clippy --workspace --fix`
+- **Security**: `cargo audit` and `cargo deny check`
+- **Project Validation**: Contract and generated file validation
+
+### Pre-push Hooks:
+- **Comprehensive Validation**: Full project validation
+- **Generated File Checks**: Strict validation of generated files
+
+## 🚀 Getting Started
+
+### 1. Initial Setup
+```bash
+# Install required tools
+cargo run --bin setup
+
+# Verify installation
+cargo run --bin dev-workflow -- status
+```
+
+### 2. Daily Development Workflow
+```bash
+# Run quality checks before committing
+cargo run --bin dev-workflow -- quality
+
+# Build and test
+cargo run --bin dev-workflow -- build
+cargo run --bin dev-workflow -- test
+
+# Generate documentation
+cargo run --bin dev-workflow -- docs --open
+```
+
+### 3. Adding New Crates
+```bash
+# Create new crate structure
+mkdir components/my-new-component
+mkdir components/my-new-component/src
+touch components/my-new-component/src/lib.rs
+
+# Generate Cargo.toml
+cargo run --bin dev-workflow -- generate-cargo-toml
+```
+
+## 🔧 Customization
+
+### Adding New Aliases
+Edit `.cargo/config.toml` and add to the `[alias]` section:
+```toml
+[alias]
+my-custom-command = "run --bin my-tool -- my-args"
+```
+
+### Modifying Lint Rules
+Edit `clippy.toml` to adjust allowed/denied lints:
+```toml
+allow = [
+    "clippy::my-custom-lint",
+]
+deny = [
+    "clippy::another-lint",
+]
+```
+
+### Extending Build Script
+Modify `build.rs` to add new code generation features:
+```rust
+fn generate_my_feature() {
+    // Add your code generation logic
+}
+```
+
+## 📊 Benefits
+
+### For Developers:
+- **Consistent Environment**: Same tools and versions for everyone
+- **Automated Quality**: Pre-commit hooks catch issues early
+- **Fast Feedback**: Parallel builds and optimized tooling
+- **Clear Workflow**: Unified commands for common tasks
+
+### For the Project:
+- **Code Quality**: Consistent formatting and linting
+- **Security**: Automated vulnerability scanning
+- **Maintainability**: Clear structure and documentation
+- **Scalability**: Easy to add new components and tools
+
+### For CI/CD:
+- **Reproducible Builds**: Pinned toolchain and dependencies
+- **Quality Gates**: Automated checks prevent regressions
+- **Fast Pipelines**: Optimized build configurations
+- **Clear Reporting**: Structured output for monitoring
+
+## 🆘 Troubleshooting
+
+### Common Issues:
+
+#### Toolchain Issues
+```bash
+# Update Rust toolchain
+rustup update
+
+# Install missing components
+rustup component add rustfmt clippy
+```
+
+#### Build Issues
+```bash
+# Clean and rebuild
+cargo run --bin dev-workflow -- clean --all
+cargo run --bin dev-workflow -- build
+```
+
+#### Hook Issues
+```bash
+# Run hooks manually to debug
+cargo run --bin dev-workflow -- hooks pre-commit --verbose
+```
+
+#### Dependency Issues
+```bash
+# Update dependencies
+cargo run --bin dev-workflow -- update --aggressive
+```
+
+## 📚 Additional Resources
+
+- [Rust Book](https://doc.rust-lang.org/book/)
+- [Cargo Book](https://doc.rust-lang.org/cargo/)
+- [Clippy Documentation](https://rust-lang.github.io/rust-clippy/)
+- [Rustfmt Documentation](https://rust-lang.github.io/rustfmt/)
+- [Lefthook Documentation](https://github.com/evilmartians/lefthook)
+
+---
+
+This tooling setup provides a solid foundation for Rust development with modern best practices, automated quality assurance, and a smooth developer experience. 
