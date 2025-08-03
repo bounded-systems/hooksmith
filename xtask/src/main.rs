@@ -6199,7 +6199,9 @@ async fn run_dashboard_command(
                 let _ = event_bus::emit_event(auto_push_event);
 
                 // Run auto-push
-                if let Err(e) = dashboard::Dashboard::run_auto_push_cycle(&config_clone.auto_push_config).await {
+                if let Err(e) =
+                    dashboard::Dashboard::run_auto_push_cycle(&config_clone.auto_push_config).await
+                {
                     // Emit auto-push failure event
                     let auto_push_failed_event = event_bus::HooksmithEvent::new(
                         "dashboard".to_string(),

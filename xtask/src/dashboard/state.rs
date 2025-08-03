@@ -117,6 +117,7 @@ impl Default for DashboardState {
 }
 
 /// Thread-safe state manager
+#[derive(Clone)]
 pub struct StateManager {
     state: Arc<Mutex<DashboardState>>,
     start_time: Instant,
@@ -167,7 +168,9 @@ impl StateManager {
         // Handle error events
         if let Some(error) = &event.error {
             state.event_stats.errors_count += 1;
-            self.process_error_event(&mut state, event, error);
+            if let Some(error_str) = error.as_str() {
+                self.process_error_event(&mut state, event, error_str);
+            }
         } else {
             state.event_stats.info_count += 1;
         }
@@ -177,7 +180,12 @@ impl StateManager {
             timestamp: event.ts,
             event_type: event.event.clone(),
             actor: event.actor.clone(),
-            message: event.error.clone().unwrap_or_else(|| event.event.clone()),
+            message: event
+                .error
+                .as_ref()
+                .and_then(|e| e.as_str())
+                .unwrap_or(&event.event)
+                .to_string(),
             severity: if event.error.is_some() {
                 EventSeverity::Error
             } else {
@@ -241,19 +249,17 @@ impl StateManager {
         event: &HooksmithEvent,
     ) -> (Option<String>, Option<u32>, Option<String>) {
         // Try to extract from context if available
-        if let Some(context) = &event.context {
-            if let Some(obj) = context.as_object() {
-                let file = obj
-                    .get("file")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string());
-                let line = obj.get("line").and_then(|v| v.as_u64()).map(|n| n as u32);
-                let code = obj
-                    .get("code")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string());
-                return (file, line, code);
-            }
+        if let Some(obj) = event.context.as_object() {
+            let file = obj
+                .get("file")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            let line = obj.get("line").and_then(|v| v.as_u64()).map(|n| n as u32);
+            let code = obj
+                .get("code")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            return (file, line, code);
         }
         (None, None, None)
     }

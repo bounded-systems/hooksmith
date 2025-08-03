@@ -9,10 +9,7 @@ use ratatui::{
 };
 
 /// Render the main dashboard UI
-pub fn render_dashboard(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    state: &DashboardState,
-) {
+pub fn render_dashboard(frame: &mut Frame, state: &DashboardState) {
     let size = frame.size();
 
     // Create main layout
@@ -48,11 +45,7 @@ pub fn render_dashboard(
 }
 
 /// Render the header section
-fn render_header(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-    state: &DashboardState,
-) {
+fn render_header(frame: &mut Frame, area: Rect, state: &DashboardState) {
     let header = Paragraph::new(vec![
         Line::from(vec![Span::styled(
             "🚀 Hooksmith Event-Driven Dashboard",
@@ -94,11 +87,7 @@ fn render_header(
 }
 
 /// Render the tabs
-fn render_tabs(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-    state: &DashboardState,
-) {
+fn render_tabs(frame: &mut Frame, area: Rect, state: &DashboardState) {
     let tabs = Tabs::new(vec!["Overview", "Errors", "Events", "Stats"])
         .block(Block::default().borders(Borders::ALL))
         .style(Style::default().fg(Color::White))
@@ -112,11 +101,7 @@ fn render_tabs(
 }
 
 /// Render the overview tab
-fn render_overview_tab(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-    state: &DashboardState,
-) {
+fn render_overview_tab(frame: &mut Frame, area: Rect, state: &DashboardState) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
@@ -130,11 +115,7 @@ fn render_overview_tab(
 }
 
 /// Render system status
-fn render_system_status(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-    state: &DashboardState,
-) {
+fn render_system_status(frame: &mut Frame, area: Rect, state: &DashboardState) {
     let status_text = vec![
         Line::from(vec![
             Span::raw("Uptime: "),
@@ -185,11 +166,7 @@ fn render_system_status(
 }
 
 /// Render quick stats
-fn render_quick_stats(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-    state: &DashboardState,
-) {
+fn render_quick_stats(frame: &mut Frame, area: Rect, state: &DashboardState) {
     let stats_text = vec![
         Line::from(vec![
             Span::raw("Active Errors: "),
@@ -232,11 +209,7 @@ fn render_quick_stats(
 }
 
 /// Render errors tab
-fn render_errors_tab(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-    state: &DashboardState,
-) {
+fn render_errors_tab(frame: &mut Frame, area: Rect, state: &DashboardState) {
     if state.errors.is_empty() {
         let no_errors = Paragraph::new("✅ No errors detected")
             .block(
@@ -301,11 +274,7 @@ fn render_errors_tab(
 }
 
 /// Render events tab
-fn render_events_tab(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-    state: &DashboardState,
-) {
+fn render_events_tab(frame: &mut Frame, area: Rect, state: &DashboardState) {
     if state.recent_events.is_empty() {
         let no_events = Paragraph::new("📡 No events recorded yet")
             .block(
@@ -356,11 +325,7 @@ fn render_events_tab(
 }
 
 /// Render stats tab
-fn render_stats_tab(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-    state: &DashboardState,
-) {
+fn render_stats_tab(frame: &mut Frame, area: Rect, state: &DashboardState) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(8), Constraint::Min(0)])
@@ -374,11 +339,7 @@ fn render_stats_tab(
 }
 
 /// Render event type statistics
-fn render_event_type_stats(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-    state: &DashboardState,
-) {
+fn render_event_type_stats(frame: &mut Frame, area: Rect, state: &DashboardState) {
     if state.event_stats.events_by_type.is_empty() {
         let no_stats = Paragraph::new("📊 No event statistics available")
             .block(Block::default().borders(Borders::ALL).title("Event Types"))
@@ -400,12 +361,19 @@ fn render_event_type_stats(
         })
         .collect();
 
-    // Sort by count (descending)
-    event_type_rows.sort_by(|a, b| {
-        let count_a: u64 = a.cells[1].content().parse().unwrap_or(0);
-        let count_b: u64 = b.cells[1].content().parse().unwrap_or(0);
-        count_b.cmp(&count_a)
-    });
+    // Sort by count (descending) - sort the data before creating rows
+    let mut event_type_data: Vec<_> = state.event_stats.events_by_type.iter().collect();
+    event_type_data.sort_by(|a, b| b.1.cmp(a.1));
+
+    let event_type_rows: Vec<Row> = event_type_data
+        .iter()
+        .map(|(event_type, count)| {
+            Row::new(vec![
+                Cell::from((*event_type).clone()),
+                Cell::from(count.to_string()),
+            ])
+        })
+        .collect();
 
     let table = Table::new(
         event_type_rows,
@@ -425,11 +393,7 @@ fn render_event_type_stats(
 }
 
 /// Render actor statistics
-fn render_actor_stats(
-    frame: &mut Frame<CrosstermBackend<std::io::Stdout>>,
-    area: Rect,
-    state: &DashboardState,
-) {
+fn render_actor_stats(frame: &mut Frame, area: Rect, state: &DashboardState) {
     if state.event_stats.events_by_actor.is_empty() {
         let no_stats = Paragraph::new("👥 No actor statistics available")
             .block(Block::default().borders(Borders::ALL).title("Actors"))
@@ -438,25 +402,19 @@ fn render_actor_stats(
         return;
     }
 
-    // Create table rows for actors
-    let mut actor_rows: Vec<Row> = state
-        .event_stats
-        .events_by_actor
+    // Sort by count (descending) - sort the data before creating rows
+    let mut actor_data: Vec<_> = state.event_stats.events_by_actor.iter().collect();
+    actor_data.sort_by(|a, b| b.1.cmp(a.1));
+
+    let actor_rows: Vec<Row> = actor_data
         .iter()
         .map(|(actor, count)| {
             Row::new(vec![
-                Cell::from(actor.clone()),
+                Cell::from((*actor).clone()),
                 Cell::from(count.to_string()),
             ])
         })
         .collect();
-
-    // Sort by count (descending)
-    actor_rows.sort_by(|a, b| {
-        let count_a: u64 = a.cells[1].content().parse().unwrap_or(0);
-        let count_b: u64 = b.cells[1].content().parse().unwrap_or(0);
-        count_b.cmp(&count_a)
-    });
 
     let table = Table::new(
         actor_rows,
@@ -476,7 +434,7 @@ fn render_actor_stats(
 }
 
 /// Render the footer
-fn render_footer(frame: &mut Frame<CrosstermBackend<std::io::Stdout>>, area: Rect) {
+fn render_footer(frame: &mut Frame, area: Rect) {
     let footer = Paragraph::new(vec![Line::from(vec![
         Span::raw("💡 Press "),
         Span::styled("Ctrl+C", Style::default().fg(Color::Yellow)),
