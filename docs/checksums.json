@@ -1,20 +1,20 @@
 {
   "files": {
-    "components/git-filter/README.md": "3e3634b84fc73d6a954f55ae61d06aa6dc06fe230c5f92f78ac023d940c0ca3c",
-    "docs/EXAMPLES.md": "f18417d37f0b4f34cccfbadfc3762a46dd73df93519fbfa9aa72c957c912db20",
-    "components/hook-builder/README.md": "91c0ffe08ac7b07fa03023e603f4f91163b4982c4522f2febe8341babd21e19c",
-    "README.md": "8c1f5afb567a0d74d1296ed369e8757ba560aa74d98fc4b85b0cb3f66481af66",
-    "STRUCTURE.md": "09f9e722739c8ef36548425406b01318186654cda1b1963a0d049e71f9990c30",
-    "docs/CONTRIBUTING.md": "cfb8304420e6fe4b159ab36355ae0b569919fb34eb1c2c6cfec27ffdd88b5955",
+    "components/cli-core/README.md": "95efb6d48b8e767c11da29483b2fb23c50f7bc6f610bbfa8d8125947ea5d54ca",
     "docs/DEVELOPMENT.md": "f7b89aed8cdc72c395d1e3e633ecfca11df03876327d406281cdb2cc8d0e0a1e",
+    "docs/CONTRIBUTING.md": "cfb8304420e6fe4b159ab36355ae0b569919fb34eb1c2c6cfec27ffdd88b5955",
     "docs/ARCHITECTURE.md": "b3a3c6aa7299d7b2a4bd91f7785f29740a5d82dd2503b0462f9a1dbc9f29e0dd",
-    "components/worktree-runner/README.md": "be46f887fce4e393a03eb5d64ec139a56c77eb1a1ab6e81be0fcdc0f2f122252",
+    "README.md": "212eb96b14ec21b38560e6796b0b87aaf6998bddb49b5f89498eebadd7c989c7",
+    "components/hook-builder/README.md": "91c0ffe08ac7b07fa03023e603f4f91163b4982c4522f2febe8341babd21e19c",
     "docs/TESTING.md": "96367b489da4cf41e2bff43d1c8947af93f716b0dc394d489482d5450d9c7f1a",
-    "docs/STRUCTURE.md": "4cfacc0e5d5225aa98dc73cfde4e9860dd5e2693b71d0f2b0611b13de29e88e3",
     "docs/API.md": "181c6123c9602506630b39faf15e38ad58a3f64fe298ffb00a052b28c82436ae",
+    "components/worktree-runner/README.md": "be46f887fce4e393a03eb5d64ec139a56c77eb1a1ab6e81be0fcdc0f2f122252",
     "docs/CLI_HELP.md": "7dead89c9b4855f37badd29058b3ee77e976d471031da1bdeba97bb8079eeb4b",
-    "components/cli-core/README.md": "95efb6d48b8e767c11da29483b2fb23c50f7bc6f610bbfa8d8125947ea5d54ca"
+    "docs/EXAMPLES.md": "f18417d37f0b4f34cccfbadfc3762a46dd73df93519fbfa9aa72c957c912db20",
+    "components/git-filter/README.md": "3e3634b84fc73d6a954f55ae61d06aa6dc06fe230c5f92f78ac023d940c0ca3c",
+    "STRUCTURE.md": "9691b3d877906b2900a0c8648f20fd982730e16125332d85cbdf5373c263e60f",
+    "docs/STRUCTURE.md": "24bfea0181eb6704a65c470e6a7da3f00de00db400ae5372c9a68c47fd579534"
   },
-  "generated_at": "2025-08-03T01:21:56.170767+00:00",
+  "generated_at": "2025-08-03T01:24:03.376821+00:00",
   "generator_version": "0.1.0"
 }

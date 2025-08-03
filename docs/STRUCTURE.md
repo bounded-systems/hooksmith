@@ -682,22 +682,22 @@ This document shows the complete file structure of the repository.
 | Extension | Count | Description |
 |-----------|-------|-------------|
 | .dot | 1 | Other files |
+| .css | 1 | Stylesheet files |
+| .json | 10 | JSON schema and config files |
+| .html | 1 | HTML documentation |
+| .bash | 1 | Other files |
+| .lock | 2 | Other files |
 | .sed | 2 | Other files |
-| .epub | 1 | EPUB documentation |
 | .toml | 16 | Cargo and configuration files |
 | .rs | 124 | Rust source files |
+| .yml | 9 | YAML configuration files |
+| .yaml | 4 | YAML configuration files |
+| .pdf | 1 | PDF documentation |
 | .backup | 1 | Other files |
 | .md | 133 | Markdown documentation |
-| .yml | 9 | YAML configuration files |
-| .hbs | 1 | Other files |
-| .bash | 1 | Other files |
-| .html | 1 | HTML documentation |
-| .lock | 2 | Other files |
-| .yaml | 4 | YAML configuration files |
-| .css | 1 | Stylesheet files |
+| .epub | 1 | EPUB documentation |
 | .wit | 9 | WebAssembly Interface Type definitions |
-| .json | 10 | JSON schema and config files |
-| .pdf | 1 | PDF documentation |
+| .hbs | 1 | Other files |
 
 ## 🧩 Component Breakdown
 
@@ -728,9 +728,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 176
-- **Modified Files**: 3
+- **Total Commits**: 178
+- **Modified Files**: 73
 
 ---
 
-*Generated on Sun Aug  3 01:21:56 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 01:24:03 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
