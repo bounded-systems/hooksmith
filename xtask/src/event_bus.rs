@@ -4,6 +4,7 @@
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -366,20 +367,19 @@ impl EventBus {
 }
 
 /// Global event bus instance
-static mut EVENT_BUS: Option<Arc<EventBus>> = None;
+static EVENT_BUS: Lazy<Mutex<Option<Arc<EventBus>>>> = Lazy::new(|| Mutex::new(None));
 
 /// Initialize the global event bus
 pub fn init_event_bus(config: EventBusConfig) -> Result<()> {
     let event_bus = EventBus::new(config)?;
-    unsafe {
-        EVENT_BUS = Some(Arc::new(event_bus));
-    }
+    let mut guard = EVENT_BUS.lock().unwrap();
+    *guard = Some(Arc::new(event_bus));
     Ok(())
 }
 
 /// Get the global event bus
 pub fn get_event_bus() -> Option<Arc<EventBus>> {
-    unsafe { EVENT_BUS.clone() }
+    EVENT_BUS.lock().unwrap().clone()
 }
 
 /// Emit an event using the global event bus

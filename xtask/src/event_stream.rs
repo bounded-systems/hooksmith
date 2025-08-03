@@ -4,6 +4,7 @@
 
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
@@ -364,20 +365,19 @@ impl EventStream {
 }
 
 /// Global event stream instance
-static mut EVENT_STREAM: Option<Arc<EventStream>> = None;
+static EVENT_STREAM: Lazy<Mutex<Option<Arc<EventStream>>>> = Lazy::new(|| Mutex::new(None));
 
 /// Initialize the global event stream
 pub fn init_event_stream(config: EventStreamConfig) -> Result<()> {
     let event_stream = EventStream::new(config)?;
-    unsafe {
-        EVENT_STREAM = Some(Arc::new(event_stream));
-    }
+    let mut guard = EVENT_STREAM.lock().unwrap();
+    *guard = Some(Arc::new(event_stream));
     Ok(())
 }
 
 /// Get the global event stream
 pub fn get_event_stream() -> Option<Arc<EventStream>> {
-    unsafe { EVENT_STREAM.clone() }
+    EVENT_STREAM.lock().unwrap().clone()
 }
 
 /// Emit an event using the global event stream
@@ -520,7 +520,6 @@ impl EventMonitor {
 }
 
 /// Default event handlers
-
 /// Console event handler
 pub struct ConsoleEventHandler {
     /// Whether to show metadata
