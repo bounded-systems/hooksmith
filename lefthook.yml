@@ -18,11 +18,11 @@ pre-commit:
     
     # File extension validation
     validate-extensions:
-      run: cargo run --bin validate-file-extensions {staged_files}
+      run: RUSTC_WRAPPER="" cargo run --bin validate-file-extensions {staged_files}
     
     # Checksum validation for generated files
     validate-checksums:
-      run: cargo run --bin validate-checksums {staged_files}
+      run: RUSTC_WRAPPER="" cargo run --bin validate-checksums {staged_files}
     
     # Contract validation
     contract-check:

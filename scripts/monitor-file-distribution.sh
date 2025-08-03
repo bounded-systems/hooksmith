@@ -22,7 +22,7 @@ echo ""
 # Calculate key metrics
 TOTAL_FILES=$(git ls-files | wc -l | tr -d ' ')
 ALLOWED_SOURCE=$(git ls-files | grep -E '\.(rs|jsonc)$' | wc -l | tr -d ' ')
-GENERATED_NEED_CHECKSUMS=$(git ls-files | grep -E '\.(md|toml|yml|yaml|json|wit|jql|jsonl|gitignore|gitattributes)$|^(CODEOWNERS|Makefile|\.editorconfig|\.envrc)$' | wc -l | tr -d ' ')
+GENERATED_NEED_CHECKSUMS=$(git ls-files | while read file; do if head -1 "$file" 2>/dev/null | grep -q "@generated"; then echo "1"; fi; done | wc -l | tr -d ' ')
 PROBLEMATIC=$(git ls-files | grep -E '\.(sh|disabled|pdf|html|hbs|dot|css|sed|backup|shellcheckrc)$' | wc -l | tr -d ' ')
 
 # Check checksum status
