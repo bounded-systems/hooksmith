@@ -461,6 +461,7 @@ mod wasm_event_bus;
 mod jsonc;
 mod git_lefthook_integration;
 mod checksum;
+mod checksum_registry;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Hooksmith Generated Files",
-  "description": "List of generated files with stable slugs for referencing in CI and automation.",
+  "description": "Registry of generated files with stable slugs and checksums for validation and regeneration.",
   
   // All files listed here are assumed to be generated
   // No redundant generated: true flags needed
@@ -9,13 +9,15 @@
     {
       "slug": "root-editorconfig",
       "path": ".editorconfig",
-      "type": "editorconfig"
+      "type": "editorconfig",
+      "checksum": "e3b0c442"
     }
 ,
     {
       "slug": "root-envrc",
       "path": ".envrc",
-      "type": "envrc"
+      "type": "envrc",
+      "checksum": "7a2f1b9d"
     }
 ,
     {
@@ -51,7 +53,8 @@
     {
       "slug": "architecture",
       "path": "ARCHITECTURE.md",
-      "type": "md"
+      "type": "md",
+      "checksum": "4f9e13ac"
     }
 ,
     {
