@@ -143,6 +143,9 @@ sha2 = "0.10"
 # Error handling
 thiserror = "1.0"
 
+# File system utilities
+tempfile = "3.0"
+
 # Async runtime
 once_cell = "1.0"
 regex = "1.0"
@@ -289,6 +292,7 @@ serde_yaml.workspace = true
 git2.workspace = true
 gix-filter.workspace = true
 tracing.workspace = true
+tracing-subscriber.workspace = true
 jsonschema.workspace = true
 sha2.workspace = true
 chrono.workspace = true
@@ -347,6 +351,7 @@ tracing.workspace = true
 tracing-subscriber.workspace = true
 clap.workspace = true
 thiserror.workspace = true
+tempfile.workspace = true
 "#.to_string();
     add_toml_codegen_marker(&mut lefthook_rs_toml, "lefthook-rs/Cargo.toml");
     fs::write("lefthook-rs/Cargo.toml", lefthook_rs_toml)?;
@@ -387,6 +392,10 @@ hooksmith = { path = ".." }
 reqwest = { version = "0.11", features = ["json"] }
 futures = "0.3"
 pathdiff = "0.2"
+# TUI and terminal support
+crossterm = "0.29.0"
+ratatui = { version = "0.26.0", features = ["crossterm"] }
+termcolor = "1.4"
 
 [dev-dependencies]
 tempfile = "3.0"

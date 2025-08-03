@@ -1,12 +1,12 @@
 use anyhow::{Context, Result};
 use chrono::Utc;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use std::process::{Command, Stdio};
 use std::io::{BufRead, BufReader};
+use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
-use once_cell::sync::Lazy;
 use tokio::process::Command as TokioCommand;
 
 /// Standard event structure for structured logging
@@ -195,20 +195,26 @@ impl StructuredLogger {
     /// Log diagnostic event (from cargo/rustc JSON output)
     pub fn diagnostic(&self, diagnostic: &serde_json::Value) -> Result<()> {
         if let Some(message) = diagnostic.get("message") {
-            let level = message.get("level")
+            let level = message
+                .get("level")
                 .and_then(|l| l.as_str())
                 .unwrap_or("info");
-            
+
             let tool = "cargo";
             let action = "diagnostic";
-            let msg = message.get("message")
+            let msg = message
+                .get("message")
                 .and_then(|m| m.as_str())
                 .unwrap_or("Unknown diagnostic");
 
             let mut event = StructuredEvent::new(level, tool, action, msg);
 
             // Extract diagnostic details
-            if let Some(code) = message.get("code").and_then(|c| c.get("code")).and_then(|c| c.as_str()) {
+            if let Some(code) = message
+                .get("code")
+                .and_then(|c| c.get("code"))
+                .and_then(|c| c.as_str())
+            {
                 event.code = Some(code.to_string());
             }
 
@@ -217,10 +223,13 @@ impl StructuredLogger {
                     if let Some(file_name) = first_span.get("file_name").and_then(|f| f.as_str()) {
                         event.file = Some(file_name.to_string());
                     }
-                    if let Some(line_start) = first_span.get("line_start").and_then(|l| l.as_u64()) {
+                    if let Some(line_start) = first_span.get("line_start").and_then(|l| l.as_u64())
+                    {
                         event.line = Some(line_start as u32);
                     }
-                    if let Some(column_start) = first_span.get("column_start").and_then(|c| c.as_u64()) {
+                    if let Some(column_start) =
+                        first_span.get("column_start").and_then(|c| c.as_u64())
+                    {
                         event.column = Some(column_start as u32);
                     }
                 }
@@ -246,7 +255,13 @@ impl StructuredLogger {
                 command_args.push("--message-format=json");
             }
             "test" => {
-                command_args.extend_from_slice(&["--", "-Z", "unstable-options", "--format", "json"]);
+                command_args.extend_from_slice(&[
+                    "--",
+                    "-Z",
+                    "unstable-options",
+                    "--format",
+                    "json",
+                ]);
             }
             "fmt" => {
                 command_args.extend_from_slice(&["--", "--emit=files", "--check"]);
@@ -254,7 +269,11 @@ impl StructuredLogger {
             _ => {}
         }
 
-        self.info("cargo", subcommand, &format!("Running cargo {}", subcommand))?;
+        self.info(
+            "cargo",
+            subcommand,
+            &format!("Running cargo {}", subcommand),
+        )?;
 
         let output = TokioCommand::new("cargo")
             .args(&command_args)
@@ -263,28 +282,40 @@ impl StructuredLogger {
             .spawn()
             .context(format!("Failed to spawn cargo {}", subcommand))?;
 
-        let output = output.wait_with_output().await
+        let output = output
+            .wait_with_output()
+            .await
             .context(format!("Failed to run cargo {}", subcommand))?;
 
         if output.status.success() {
-            self.info("cargo", subcommand, &format!("cargo {} completed successfully", subcommand))?;
-            
+            self.info(
+                "cargo",
+                subcommand,
+                &format!("cargo {} completed successfully", subcommand),
+            )?;
+
             // Parse JSON output for diagnostics
             if subcommand == "check" || subcommand == "build" || subcommand == "clippy" {
                 let stdout = String::from_utf8_lossy(&output.stdout);
                 for line in stdout.lines() {
                     if let Ok(diagnostic) = serde_json::from_str::<serde_json::Value>(line) {
-                        if diagnostic.get("reason") == Some(&serde_json::Value::String("compiler-message".to_string())) {
+                        if diagnostic.get("reason")
+                            == Some(&serde_json::Value::String("compiler-message".to_string()))
+                        {
                             self.diagnostic(&diagnostic)?;
                         }
                     }
                 }
             }
-            
+
             Ok(true)
         } else {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            self.error("cargo", subcommand, &format!("cargo {} failed: {}", subcommand, stderr))?;
+            self.error(
+                "cargo",
+                subcommand,
+                &format!("cargo {} failed: {}", subcommand, stderr),
+            )?;
             Ok(false)
         }
     }
@@ -317,13 +348,19 @@ impl StructuredLogger {
             .spawn()
             .context(format!("Failed to spawn git {}", subcommand))?;
 
-        let output = output.wait_with_output().await
+        let output = output
+            .wait_with_output()
+            .await
             .context(format!("Failed to run git {}", subcommand))?;
 
         if output.status.success() {
             let stdout = String::from_utf8_lossy(&output.stdout);
-            self.info("git", subcommand, &format!("git {} completed successfully", subcommand))?;
-            
+            self.info(
+                "git",
+                subcommand,
+                &format!("git {} completed successfully", subcommand),
+            )?;
+
             // Parse JSON output for structured events
             if subcommand == "status" || subcommand == "log" {
                 for line in stdout.lines() {
@@ -332,25 +369,36 @@ impl StructuredLogger {
                             "command": subcommand,
                             "output": json_value
                         });
-                        let event = StructuredEvent::new("info", "git", subcommand, &format!("git {} output", subcommand))
-                            .with_details(details);
+                        let event = StructuredEvent::new(
+                            "info",
+                            "git",
+                            subcommand,
+                            &format!("git {} output", subcommand),
+                        )
+                        .with_details(details);
                         self.log(event)?;
                     }
                 }
             }
-            
+
             Ok(stdout.trim().to_string())
         } else {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            self.error("git", subcommand, &format!("git {} failed: {}", subcommand, stderr))?;
+            self.error(
+                "git",
+                subcommand,
+                &format!("git {} failed: {}", subcommand, stderr),
+            )?;
             anyhow::bail!("git {} failed: {}", subcommand, stderr);
         }
     }
 
     /// Check git status with structured output
     pub async fn git_status(&self) -> Result<HashMap<String, Value>> {
-        let status_output = self.run_git_command("status", &["--json".to_string()]).await?;
-        
+        let status_output = self
+            .run_git_command("status", &["--json".to_string()])
+            .await?;
+
         if let Ok(status_json) = serde_json::from_str::<serde_json::Value>(&status_output) {
             if let Some(status_obj) = status_json.as_object() {
                 let mut status_map = HashMap::new();
@@ -360,11 +408,16 @@ impl StructuredLogger {
                 return Ok(status_map);
             }
         }
-        
+
         // Fallback to parsing porcelain output
-        let porcelain_output = self.run_git_command("status", &["--porcelain".to_string()]).await?;
+        let porcelain_output = self
+            .run_git_command("status", &["--porcelain".to_string()])
+            .await?;
         let mut status_map = HashMap::new();
-        status_map.insert("porcelain".to_string(), serde_json::Value::String(porcelain_output));
+        status_map.insert(
+            "porcelain".to_string(),
+            serde_json::Value::String(porcelain_output),
+        );
         Ok(status_map)
     }
 
@@ -375,27 +428,30 @@ impl StructuredLogger {
             args.push("-n".to_string());
             args.push(n.to_string());
         }
-        
+
         let log_output = self.run_git_command("log", &args).await?;
         let mut commits = Vec::new();
-        
+
         for line in log_output.lines() {
             if let Ok(commit_json) = serde_json::from_str::<serde_json::Value>(line) {
                 commits.push(commit_json);
             }
         }
-        
+
         Ok(commits)
     }
 }
 
 /// Global structured logger instance
-static GLOBAL_LOGGER: Lazy<Arc<Mutex<StructuredLogger>>> = Lazy::new(|| {
-    Arc::new(Mutex::new(StructuredLogger::new()))
-});
+static GLOBAL_LOGGER: Lazy<Arc<Mutex<StructuredLogger>>> =
+    Lazy::new(|| Arc::new(Mutex::new(StructuredLogger::new())));
 
 /// Initialize the global structured logger
-pub fn init_global_logger(jsonl_output: bool, event_bus_integration: bool, session_id: Option<String>) {
+pub fn init_global_logger(
+    jsonl_output: bool,
+    event_bus_integration: bool,
+    session_id: Option<String>,
+) {
     let mut logger = GLOBAL_LOGGER.lock().unwrap();
     logger.jsonl_output = jsonl_output;
     logger.event_bus_integration = event_bus_integration;
@@ -511,4 +567,4 @@ mod tests {
         assert!(logger.jsonl_output);
         assert!(logger.event_bus_integration);
     }
-} 
+}

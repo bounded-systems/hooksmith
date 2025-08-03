@@ -3,7 +3,7 @@ use std::path::Path;
 use std::process::Command;
 
 /// Example demonstrating SARIF and CodeQL integration with Hooksmith
-/// 
+///
 /// This example shows how to:
 /// 1. Run CodeQL analysis on a Rust project
 /// 2. Convert results to structured JSONL events
@@ -16,101 +16,115 @@ async fn main() -> Result<()> {
     println!("==========================================\n");
 
     // Check if CodeQL CLI is available
-    let codeql_available = Command::new("codeql")
-        .arg("version")
-        .output()
-        .is_ok();
+    let codeql_available = Command::new("codeql").arg("version").output().is_ok();
 
     if !codeql_available {
         println!("⚠️  CodeQL CLI not found. Install with: brew install codeql");
-        println!("   This demo will show the integration structure without running actual analysis.\n");
+        println!(
+            "   This demo will show the integration structure without running actual analysis.\n"
+        );
     }
 
     // Example 1: Basic SARIF operations
     println!("📋 Example 1: Basic SARIF Operations");
     println!("-----------------------------------");
-    
+
     // Create a sample JSONL file with validation events
     create_sample_jsonl()?;
-    
+
     // Convert JSONL to SARIF
     run_xtask_command(&[
-        "sarif", "jsonl-to-sarif",
-        "--input", "sample-events.jsonl",
-        "--output", "sample-events.sarif",
-        "--validate"
-    ]).await?;
+        "sarif",
+        "jsonl-to-sarif",
+        "--input",
+        "sample-events.jsonl",
+        "--output",
+        "sample-events.sarif",
+        "--validate",
+    ])
+    .await?;
 
     // Convert SARIF back to JSONL
     run_xtask_command(&[
-        "sarif", "sarif-to-jsonl",
-        "--input", "sample-events.sarif",
-        "--output", "converted-events.jsonl",
-        "--validate"
-    ]).await?;
+        "sarif",
+        "sarif-to-jsonl",
+        "--input",
+        "sample-events.sarif",
+        "--output",
+        "converted-events.jsonl",
+        "--validate",
+    ])
+    .await?;
 
     // Example 2: CodeQL Analysis (if available)
     if codeql_available {
         println!("\n📋 Example 2: CodeQL Analysis");
         println!("----------------------------");
-        
+
         // Run CodeQL analysis on the current project
         run_xtask_command(&[
-            "sarif", "codeql-analysis",
-            "--db-dir", "codeql-db",
-            "--query-suite", "codeql-cpp-queries:Security-and-quality.qls",
-            "--language", "cpp",
-            "--build-command", "cargo build",
-            "--output", "codeql-results.sarif",
-            "--to-jsonl"
-        ]).await?;
+            "sarif",
+            "codeql-analysis",
+            "--db-dir",
+            "codeql-db",
+            "--query-suite",
+            "codeql-cpp-queries:Security-and-quality.qls",
+            "--language",
+            "cpp",
+            "--build-command",
+            "cargo build",
+            "--output",
+            "codeql-results.sarif",
+            "--to-jsonl",
+        ])
+        .await?;
     }
 
     // Example 3: Validation Pipeline Integration
     println!("\n📋 Example 3: Validation Pipeline Integration");
     println!("-------------------------------------------");
-    
+
     // Run the full integration pipeline
     run_xtask_command(&[
-        "sarif", "integrate",
+        "sarif",
+        "integrate",
         "--run-analysis",
         "--to-jsonl",
         "--merge",
-        "--output-dir", "validation-results"
-    ]).await?;
+        "--output-dir",
+        "validation-results",
+    ])
+    .await?;
 
     // Example 4: SARIF Validation and Merging
     println!("\n📋 Example 4: SARIF Validation and Merging");
     println!("----------------------------------------");
-    
+
     // Create multiple sample SARIF files
     create_sample_sarif_files()?;
-    
+
     // Validate SARIF files
-    run_xtask_command(&[
-        "sarif", "validate",
-        "--file", "sample-1.sarif",
-        "--strict"
-    ]).await?;
-    
-    run_xtask_command(&[
-        "sarif", "validate",
-        "--file", "sample-2.sarif",
-        "--strict"
-    ]).await?;
+    run_xtask_command(&["sarif", "validate", "--file", "sample-1.sarif", "--strict"]).await?;
+
+    run_xtask_command(&["sarif", "validate", "--file", "sample-2.sarif", "--strict"]).await?;
 
     // Merge SARIF files
     run_xtask_command(&[
-        "sarif", "merge",
-        "--inputs", "sample-1.sarif", "sample-2.sarif",
-        "--output", "merged-results.sarif",
-        "--validate"
-    ]).await?;
+        "sarif",
+        "merge",
+        "--inputs",
+        "sample-1.sarif",
+        "sample-2.sarif",
+        "--output",
+        "merged-results.sarif",
+        "--validate",
+    ])
+    .await?;
 
     // Example 5: Integration with Auto-Push Pipeline
     println!("\n📋 Example 5: Integration with Auto-Push Pipeline");
     println!("-----------------------------------------------");
-    
+
     // Show how to integrate with the existing structured logging
     demonstrate_auto_push_integration().await?;
 
@@ -129,9 +143,9 @@ async fn main() -> Result<()> {
 
 /// Create a sample JSONL file with validation events
 fn create_sample_jsonl() -> Result<()> {
+    use serde_json::json;
     use std::fs::File;
     use std::io::Write;
-    use serde_json::json;
 
     let events = vec![
         json!({
@@ -171,23 +185,24 @@ fn create_sample_jsonl() -> Result<()> {
                 "warnings": 12,
                 "tool": "codeql"
             }
-        })
+        }),
     ];
 
+    let events_count = events.len();
     let mut file = File::create("sample-events.jsonl")?;
     for event in events {
         writeln!(file, "{}", event)?;
     }
 
-    println!("✅ Created sample JSONL file with {} events", events.len());
+    println!("✅ Created sample JSONL file with {} events", events_count);
     Ok(())
 }
 
 /// Create sample SARIF files for testing
 fn create_sample_sarif_files() -> Result<()> {
+    use serde_json::json;
     use std::fs::File;
     use std::io::Write;
-    use serde_json::json;
 
     let sarif_1 = json!({
         "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
@@ -268,9 +283,9 @@ async fn run_xtask_command(args: &[&str]) -> Result<()> {
     cmd.args(args);
 
     println!("   Running: cargo run --bin xtask {}", args.join(" "));
-    
+
     let output = cmd.output()?;
-    
+
     if output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         if !stdout.trim().is_empty() {
@@ -287,11 +302,11 @@ async fn run_xtask_command(args: &[&str]) -> Result<()> {
 /// Demonstrate integration with auto-push pipeline
 async fn demonstrate_auto_push_integration() -> Result<()> {
     println!("   🔄 Running validation pipeline with CodeQL integration...");
-    
+
     // This would typically be part of your auto-push workflow
     // The structured events from CodeQL would be integrated into
     // the existing JSONL pipeline alongside Clippy, cargo check, etc.
-    
+
     println!("   📊 Validation pipeline would:");
     println!("      1. Run cargo clippy --message-format=json");
     println!("      2. Run cargo check --message-format=json");
@@ -299,7 +314,7 @@ async fn demonstrate_auto_push_integration() -> Result<()> {
     println!("      4. Convert all results to unified JSONL format");
     println!("      5. Validate against schemas");
     println!("      6. Commit and push if validation passes");
-    
+
     // Show how the events would look in the pipeline
     use serde_json::json;
     let pipeline_event = json!({
@@ -315,9 +330,9 @@ async fn demonstrate_auto_push_integration() -> Result<()> {
             "pipeline_status": "success"
         }
     });
-    
+
     println!("   📝 Example pipeline event:");
     println!("      {}", serde_json::to_string_pretty(&pipeline_event)?);
 
     Ok(())
-} 
+}

@@ -1,13 +1,13 @@
 use anyhow::{Context, Result};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::io::{BufRead, BufReader};
 use tokio::process::Command as TokioCommand;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 use crate::events::AutoPushEvent;
 use crate::structured_logging::{StructuredEvent, StructuredLogger};
@@ -151,10 +151,10 @@ impl SarifIntegration {
     pub fn jsonl_to_sarif(&self, input: &Path) -> Result<String> {
         let file = std::fs::File::open(input)
             .context(format!("Failed to open input file: {}", input.display()))?;
-        
+
         let reader = BufReader::new(file);
         let mut events = Vec::new();
-        
+
         for line in reader.lines() {
             let line = line.context("Failed to read line")?;
             if !line.trim().is_empty() {
@@ -163,28 +163,44 @@ impl SarifIntegration {
                 events.push(event);
             }
         }
-        
+
         // Convert events to SARIF format
-        let sarif_results: Vec<SarifRunResult> = events.iter()
+        let sarif_results: Vec<SarifRunResult> = events
+            .iter()
             .filter_map(|event| {
                 if event.action == "validation" {
-                    let rule_id = event.details.as_ref()
+                    let rule_id = event
+                        .details
+                        .as_ref()
                         .and_then(|d| d.get("rule_id"))
                         .and_then(|v| v.as_str())
                         .unwrap_or("unknown")
                         .to_string();
-                    
+
                     let level = match event.level.as_str() {
                         "error" => "error",
                         "warning" => "warning",
                         "info" => "note",
                         _ => "note",
-                    }.to_string();
-                    
+                    }
+                    .to_string();
+
                     let locations = if let (Some(file), Some(line), Some(column)) = (
-                        event.details.as_ref().and_then(|d| d.get("file")).and_then(|v| v.as_str()),
-                        event.details.as_ref().and_then(|d| d.get("line")).and_then(|v| v.as_u64()),
-                        event.details.as_ref().and_then(|d| d.get("column")).and_then(|v| v.as_u64())
+                        event
+                            .details
+                            .as_ref()
+                            .and_then(|d| d.get("file"))
+                            .and_then(|v| v.as_str()),
+                        event
+                            .details
+                            .as_ref()
+                            .and_then(|d| d.get("line"))
+                            .and_then(|v| v.as_u64()),
+                        event
+                            .details
+                            .as_ref()
+                            .and_then(|d| d.get("column"))
+                            .and_then(|v| v.as_u64()),
                     ) {
                         vec![SarifLocation {
                             physical_location: SarifPhysicalLocation {
@@ -200,7 +216,7 @@ impl SarifIntegration {
                     } else {
                         vec![]
                     };
-                    
+
                     Some(SarifRunResult {
                         rule_id,
                         level,
@@ -214,10 +230,11 @@ impl SarifIntegration {
                 }
             })
             .collect();
-        
+
         // Create SARIF document
         let sarif_doc = SarifDocument {
-            schema: "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json".to_string(),
+            schema: "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json"
+                .to_string(),
             version: "2.1.0".to_string(),
             runs: vec![SarifRun {
                 tool: SarifTool {
@@ -229,7 +246,7 @@ impl SarifIntegration {
                 results: sarif_results,
             }],
         };
-        
+
         Ok(serde_json::to_string_pretty(&sarif_doc)?)
     }
 
@@ -237,27 +254,40 @@ impl SarifIntegration {
     pub fn sarif_to_jsonl(&self, input: &Path) -> Result<Vec<StructuredEvent>> {
         let sarif_content = std::fs::read_to_string(input)
             .context(format!("Failed to read SARIF file: {}", input.display()))?;
-        
-        let sarif_doc: SarifDocument = serde_json::from_str(&sarif_content)
-            .context("Failed to parse SARIF JSON")?;
+
+        let sarif_doc: SarifDocument =
+            serde_json::from_str(&sarif_content).context("Failed to parse SARIF JSON")?;
 
         let mut events = Vec::new();
         let timestamp = Utc::now();
 
         for run in sarif_doc.runs {
             let tool_name = run.tool.driver.name;
-            
+
             for result in run.results {
                 let mut details = serde_json::Map::new();
                 details.insert("rule_id".to_string(), Value::String(result.rule_id.clone()));
                 details.insert("tool".to_string(), Value::String(tool_name.clone()));
-                
+
                 if let Some(location) = result.locations.first() {
-                    details.insert("file".to_string(), Value::String(location.physical_location.artifact_location.uri.clone()));
-                    details.insert("line".to_string(), Value::Number(serde_json::Number::from(location.physical_location.region.start_line)));
-                    details.insert("column".to_string(), Value::Number(serde_json::Number::from(location.physical_location.region.start_column)));
+                    details.insert(
+                        "file".to_string(),
+                        Value::String(location.physical_location.artifact_location.uri.clone()),
+                    );
+                    details.insert(
+                        "line".to_string(),
+                        Value::Number(serde_json::Number::from(
+                            location.physical_location.region.start_line,
+                        )),
+                    );
+                    details.insert(
+                        "column".to_string(),
+                        Value::Number(serde_json::Number::from(
+                            location.physical_location.region.start_column,
+                        )),
+                    );
                 }
-                
+
                 let event = StructuredEvent {
                     timestamp: timestamp.to_rfc3339(),
                     level: result.level,
@@ -271,7 +301,7 @@ impl SarifIntegration {
                     column: None,
                     session_id: None,
                 };
-                
+
                 events.push(event);
             }
         }
@@ -283,91 +313,102 @@ impl SarifIntegration {
     pub fn validate_sarif(&self, file: &Path) -> Result<bool> {
         let content = std::fs::read_to_string(file)
             .context(format!("Failed to read SARIF file: {}", file.display()))?;
-        
+
         // Basic validation - check if it's valid JSON and has required fields
-        let sarif_doc: SarifDocument = serde_json::from_str(&content)
-            .context("Failed to parse SARIF JSON")?;
-        
+        let sarif_doc: SarifDocument =
+            serde_json::from_str(&content).context("Failed to parse SARIF JSON")?;
+
         // Check required fields
-        if sarif_doc.schema.is_empty() || sarif_doc.version.is_empty() || sarif_doc.runs.is_empty() {
+        if sarif_doc.schema.is_empty() || sarif_doc.version.is_empty() || sarif_doc.runs.is_empty()
+        {
             return Ok(false);
         }
-        
+
         Ok(true)
     }
 
     /// Run CodeQL analysis
     pub async fn run_codeql_analysis(&self) -> Result<Vec<StructuredEvent>> {
-        let config = self.config.as_ref()
+        let config = self
+            .config
+            .as_ref()
             .ok_or_else(|| anyhow::anyhow!("CodeQL configuration not set"))?;
-        
+
         // Check if CodeQL CLI is available
         let codeql_cmd = self.get_codeql_command()?;
-        
+
         // Create database directory
         if !config.db_dir.exists() {
             std::fs::create_dir_all(&config.db_dir)
                 .context("Failed to create CodeQL database directory")?;
         }
-        
+
         // Create database
         self.create_codeql_database(config).await?;
-        
+
         // Run analysis
         let sarif_output = self.run_codeql_analysis_command(config).await?;
-        
+
         // Convert SARIF to events
         let temp_file = tempfile::NamedTempFile::new()?;
         std::fs::write(&temp_file, sarif_output)?;
-        
+
         let events = self.sarif_to_jsonl(temp_file.path())?;
-        
+
         Ok(events)
     }
 
     /// Create CodeQL database
     async fn create_codeql_database(&self, config: &CodeQLConfig) -> Result<()> {
         let codeql_cmd = self.get_codeql_command()?;
-        
+
         let mut cmd = TokioCommand::new(&codeql_cmd);
         cmd.args(&[
-            "database", "create",
-            "--language", &config.language,
-            "--command", &config.build_command.join(" "),
-            &config.db_dir.to_string_lossy()
+            "database",
+            "create",
+            "--language",
+            &config.language,
+            "--command",
+            &config.build_command.join(" "),
+            &config.db_dir.to_string_lossy(),
         ]);
-        
-        let output = cmd.output().await
+
+        let output = cmd
+            .output()
+            .await
             .context("Failed to execute CodeQL database create command")?;
-        
+
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
             anyhow::bail!("CodeQL database creation failed: {}", stderr);
         }
-        
+
         Ok(())
     }
 
     /// Run CodeQL analysis command
     async fn run_codeql_analysis_command(&self, config: &CodeQLConfig) -> Result<String> {
         let codeql_cmd = self.get_codeql_command()?;
-        
+
         let mut cmd = TokioCommand::new(&codeql_cmd);
         cmd.args(&[
-            "database", "analyze",
+            "database",
+            "analyze",
             &config.db_dir.to_string_lossy(),
             &config.query_suite,
-            "--format=sarif-latest"
+            "--format=sarif-latest",
         ]);
-        
-        let output = cmd.output().await
+
+        let output = cmd
+            .output()
+            .await
             .context("Failed to execute CodeQL analysis command")?;
-        
+
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
             anyhow::bail!("CodeQL analysis failed: {}", stderr);
         }
-        
+
         let stdout = String::from_utf8_lossy(&output.stdout);
         Ok(stdout.to_string())
     }
@@ -379,12 +420,10 @@ impl SarifIntegration {
                 return Ok(cli_path.clone());
             }
         }
-        
+
         // Try to find codeql in PATH
-        let output = Command::new("which")
-            .arg("codeql")
-            .output();
-        
+        let output = Command::new("which").arg("codeql").output();
+
         match output {
             Ok(output) if output.status.success() => {
                 let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
@@ -397,13 +436,13 @@ impl SarifIntegration {
                     "/opt/homebrew/bin/codeql",
                     "/usr/bin/codeql",
                 ];
-                
+
                 for path in &common_paths {
                     if Path::new(path).exists() {
                         return Ok(path.to_string());
                     }
                 }
-                
+
                 anyhow::bail!("CodeQL CLI not found. Install with: brew install codeql")
             }
         }
@@ -412,23 +451,28 @@ impl SarifIntegration {
     /// Merge multiple SARIF files
     pub fn merge_sarif_files(&self, files: &[PathBuf]) -> Result<String> {
         let mut all_runs = Vec::new();
-        
+
         for file_path in files {
-            let content = std::fs::read_to_string(file_path)
-                .context(format!("Failed to read SARIF file: {}", file_path.display()))?;
-            
-            let sarif_doc: SarifDocument = serde_json::from_str(&content)
-                .context(format!("Failed to parse SARIF file: {}", file_path.display()))?;
-            
+            let content = std::fs::read_to_string(file_path).context(format!(
+                "Failed to read SARIF file: {}",
+                file_path.display()
+            ))?;
+
+            let sarif_doc: SarifDocument = serde_json::from_str(&content).context(format!(
+                "Failed to parse SARIF file: {}",
+                file_path.display()
+            ))?;
+
             all_runs.extend(sarif_doc.runs);
         }
-        
+
         let merged_doc = SarifDocument {
-            schema: "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json".to_string(),
+            schema: "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json"
+                .to_string(),
             version: "2.1.0".to_string(),
             runs: all_runs,
         };
-        
+
         Ok(serde_json::to_string_pretty(&merged_doc)?)
     }
 }
@@ -442,7 +486,10 @@ mod tests {
     fn test_codeql_config_default() {
         let config = CodeQLConfig::default();
         assert_eq!(config.language, "cpp");
-        assert_eq!(config.query_suite, "codeql-cpp-queries:Security-and-quality.qls");
+        assert_eq!(
+            config.query_suite,
+            "codeql-cpp-queries:Security-and-quality.qls"
+        );
     }
 
     #[test]
@@ -455,7 +502,7 @@ mod tests {
             },
             locations: vec![],
         };
-        
+
         assert_eq!(result.rule_id, "test-rule");
         assert_eq!(result.level, "error");
         assert_eq!(result.message.text, "Test message");
@@ -465,7 +512,7 @@ mod tests {
     async fn test_sarif_integration_creation() {
         let logger = StructuredLogger::new();
         let integration = SarifIntegration::new(logger);
-        
+
         assert!(integration.config.is_none());
     }
-} 
+}

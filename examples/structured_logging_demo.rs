@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
 
 fn demo_basic_events() -> Result<()> {
     println!("📝 Basic Events:");
-    
+
     // Info event
     let info_event = json!({
         "timestamp": "2025-08-03T18:11:44Z",
@@ -68,7 +68,7 @@ fn demo_basic_events() -> Result<()> {
 
 fn demo_cargo_commands() -> Result<()> {
     println!("🔧 Cargo Commands:");
-    
+
     // Cargo check with JSON output
     let cargo_check_event = json!({
         "timestamp": "2025-08-03T18:12:00Z",
@@ -121,7 +121,7 @@ fn demo_cargo_commands() -> Result<()> {
 
 fn demo_git_commands() -> Result<()> {
     println!("📦 Git Commands:");
-    
+
     // Git status with JSON output
     let git_status_event = json!({
         "timestamp": "2025-08-03T18:12:10Z",
@@ -185,7 +185,7 @@ fn demo_git_commands() -> Result<()> {
 
 fn demo_auto_push_workflow() -> Result<()> {
     println!("🔄 Auto-Push Workflow:");
-    
+
     // Start event
     let start_event = json!({
         "timestamp": "2025-08-03T18:12:25Z",
@@ -237,4 +237,4 @@ fn demo_auto_push_workflow() -> Result<()> {
 
     println!();
     Ok(())
-} 
+}

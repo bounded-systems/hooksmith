@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use schemars::JsonSchema;
 use chrono::{DateTime, Utc};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use std::io::BufRead;
 
 /// Schema-validated event structure for all CLI output
@@ -11,11 +11,11 @@ pub struct AutoPushEvent {
     #[serde(with = "chrono::serde::ts_seconds")]
     pub timestamp: DateTime<Utc>,
     /// Tool that generated the event (e.g., "git", "cargo-clippy", "hooksmith")
-    pub tool: &'static str,
+    pub tool: String,
     /// Action being performed (e.g., "commit", "validation", "build")
-    pub action: &'static str,
+    pub action: String,
     /// Event level: "info", "warn", "error"
-    pub level: &'static str,
+    pub level: String,
     /// Human-readable message
     pub message: String,
     /// Optional details (JSON object)
@@ -40,17 +40,17 @@ pub struct AutoPushEvent {
 impl AutoPushEvent {
     /// Create a new event with required fields
     pub fn new(
-        tool: &'static str,
-        action: &'static str,
-        level: &'static str,
+        tool: impl Into<String>,
+        action: impl Into<String>,
+        level: impl Into<String>,
         message: impl Into<String>,
         session_id: String,
     ) -> Self {
         Self {
             timestamp: Utc::now(),
-            tool,
-            action,
-            level,
+            tool: tool.into(),
+            action: action.into(),
+            level: level.into(),
             message: message.into(),
             details: None,
             code: None,
@@ -159,21 +159,28 @@ pub fn generate_schema() -> Result<String, serde_json::Error> {
 pub fn validate_json(json_str: &str) -> Result<bool, Box<dyn std::error::Error>> {
     // For now, just validate that it's valid JSON and has required fields
     let value: serde_json::Value = serde_json::from_str(json_str)?;
-    
+
     // Check required fields
     if !value.is_object() {
         return Ok(false);
     }
-    
+
     let obj = value.as_object().unwrap();
-    let required_fields = ["timestamp", "tool", "action", "level", "message", "sessionId"];
-    
+    let required_fields = [
+        "timestamp",
+        "tool",
+        "action",
+        "level",
+        "message",
+        "sessionId",
+    ];
+
     for field in &required_fields {
         if !obj.contains_key(*field) {
             return Ok(false);
         }
     }
-    
+
     // Check level enum
     if let Some(level) = obj.get("level") {
         if let Some(level_str) = level.as_str() {
@@ -184,25 +191,27 @@ pub fn validate_json(json_str: &str) -> Result<bool, Box<dyn std::error::Error>>
             return Ok(false);
         }
     }
-    
+
     Ok(true)
 }
 
 /// Validate a stream of JSONL events
-pub fn validate_jsonl_stream<R: std::io::Read>(reader: R) -> Result<(), Box<dyn std::error::Error>> {
+pub fn validate_jsonl_stream<R: std::io::Read>(
+    reader: R,
+) -> Result<(), Box<dyn std::error::Error>> {
     let lines = std::io::BufReader::new(reader).lines();
-    
+
     for (line_num, line) in lines.enumerate() {
         let line = line?;
         if line.trim().is_empty() {
             continue;
         }
-        
+
         if !validate_json(&line)? {
             return Err(format!("Invalid JSON at line {}: {}", line_num + 1, line).into());
         }
     }
-    
+
     Ok(())
 }
 
@@ -232,17 +241,11 @@ mod tests {
     #[test]
     fn test_event_with_details() {
         let session_id = Uuid::new_v4().to_string();
-        let event = AutoPushEvent::new(
-            "cargo",
-            "build",
-            "info",
-            "Build completed",
-            session_id,
-        )
-        .with_details(serde_json::json!({
-            "duration_ms": 1500,
-            "targets": ["release"]
-        }));
+        let event = AutoPushEvent::new("cargo", "build", "info", "Build completed", session_id)
+            .with_details(serde_json::json!({
+                "duration_ms": 1500,
+                "targets": ["release"]
+            }));
 
         assert!(event.details.is_some());
         let details = event.details.unwrap();
@@ -253,14 +256,8 @@ mod tests {
     #[test]
     fn test_event_with_diagnostic() {
         let session_id = Uuid::new_v4().to_string();
-        let event = AutoPushEvent::new(
-            "cargo",
-            "clippy",
-            "warn",
-            "Unused variable",
-            session_id,
-        )
-        .with_diagnostic("unused_variables", "src/main.rs", 42, 10);
+        let event = AutoPushEvent::new("cargo", "clippy", "warn", "Unused variable", session_id)
+            .with_diagnostic("unused_variables", "src/main.rs", 42, 10);
 
         assert_eq!(event.code, Some("unused_variables".to_string()));
         assert_eq!(event.file, Some("src/main.rs".to_string()));
@@ -271,13 +268,7 @@ mod tests {
     #[test]
     fn test_jsonl_serialization() {
         let session_id = Uuid::new_v4().to_string();
-        let event = AutoPushEvent::new(
-            "hooksmith",
-            "test",
-            "info",
-            "Test event",
-            session_id,
-        );
+        let event = AutoPushEvent::new("hooksmith", "test", "info", "Test event", session_id);
 
         let jsonl = event.to_jsonl().unwrap();
         let parsed: AutoPushEvent = serde_json::from_str(&jsonl).unwrap();
@@ -303,13 +294,8 @@ mod tests {
     #[test]
     fn test_json_validation() {
         let session_id = Uuid::new_v4().to_string();
-        let event = AutoPushEvent::new(
-            "hooksmith",
-            "validation",
-            "info",
-            "Valid event",
-            session_id,
-        );
+        let event =
+            AutoPushEvent::new("hooksmith", "validation", "info", "Valid event", session_id);
 
         let jsonl = event.to_jsonl().unwrap();
         assert!(validate_json(&jsonl).unwrap());
@@ -317,4 +303,4 @@ mod tests {
         // Test invalid JSON
         assert!(!validate_json("invalid json").unwrap());
     }
-} 
+}

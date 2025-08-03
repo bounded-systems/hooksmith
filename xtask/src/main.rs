@@ -266,22 +266,22 @@ mod contract;
 mod contract_validation;
 mod dashboard;
 mod docs;
+mod emit;
 mod error_deduplication;
 mod event_bus;
 mod event_stream;
+mod events;
 mod file_audit;
 mod generated_file_validator;
 mod git_notes_manager;
 mod hierarchical_validation;
 mod hook_runner;
 mod hook_state_machine;
+mod sarif_integration;
 mod status;
 mod structured_auto_push;
 mod structured_logging;
 mod wasm_event_bus;
-mod events;
-mod emit;
-mod sarif_integration;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -991,7 +991,7 @@ async fn main() -> Result<()> {
     let jsonl_output = true; // We want structured output by default
     let event_bus_integration = true; // Enable event bus integration
     let session_id = Some(uuid::Uuid::new_v4().to_string());
-    
+
     structured_logging::init_global_logger(jsonl_output, event_bus_integration, session_id);
 
     let cli = Cli::parse();
@@ -1007,7 +1007,11 @@ async fn main() -> Result<()> {
             generate_wit_interfaces(&output_dir, overwrite)?;
         }
         Commands::GenLefthook { output, validate } => {
-            emit_warning!("hooksmith", "lefthook", "Lefthook generation disabled - lefthook_rs dependency missing");
+            emit_warning!(
+                "hooksmith",
+                "lefthook",
+                "Lefthook generation disabled - lefthook_rs dependency missing"
+            );
             emit_info!("hooksmith", "lefthook", "Output: {output}");
             emit_info!("hooksmith", "lefthook", "Validate: {validate}");
         }
@@ -1418,12 +1422,16 @@ async fn main() -> Result<()> {
             validate_schema_command(input, strict)?;
         }
         Commands::Sarif { command } => match command {
-            SarifCommands::JsonlToSarif { input, output, validate } => {
-                run_jsonl_to_sarif_command(input, output, validate).await?
-            }
-            SarifCommands::SarifToJsonl { input, output, validate } => {
-                run_sarif_to_jsonl_command(input, output, validate).await?
-            }
+            SarifCommands::JsonlToSarif {
+                input,
+                output,
+                validate,
+            } => run_jsonl_to_sarif_command(input, output, validate).await?,
+            SarifCommands::SarifToJsonl {
+                input,
+                output,
+                validate,
+            } => run_sarif_to_jsonl_command(input, output, validate).await?,
             SarifCommands::CodeqlAnalysis {
                 cli_path,
                 db_dir,
@@ -1440,25 +1448,25 @@ async fn main() -> Result<()> {
                     language,
                     build_command,
                     output.as_deref(),
-                    *to_jsonl,
+                    to_jsonl,
                 )
-                .await
+                .await?
             }
             SarifCommands::ValidateSarif { file, strict } => {
-                run_validate_sarif_command(file, *strict)
+                run_validate_sarif_command(file, strict)?
             }
-            SarifCommands::MergeSarif { inputs, output, validate } => {
-                run_merge_sarif_command(inputs, output, *validate)
-            }
+            SarifCommands::MergeSarif {
+                inputs,
+                output,
+                validate,
+            } => run_merge_sarif_command(inputs, output, validate)?,
             SarifCommands::IntegrateCodeql {
                 run_analysis,
                 to_jsonl,
                 merge,
                 output_dir,
-            } => {
-                run_integrate_codeql_command(*run_analysis, *to_jsonl, *merge, output_dir).await
-            }
-        }
+            } => run_integrate_codeql_command(run_analysis, to_jsonl, merge, output_dir).await?,
+        },
     }
 
     Ok(())
@@ -5677,8 +5685,7 @@ async fn run_structured_auto_push(
     no_event_bus: bool,
     args: Vec<String>,
 ) -> Result<()> {
-    let mut auto_push = structured_auto_push::StructuredAutoPush::new()
-        .with_verbose(verbose);
+    let mut auto_push = structured_auto_push::StructuredAutoPush::new().with_verbose(verbose);
 
     if no_jsonl {
         auto_push = auto_push.without_jsonl();
@@ -6685,14 +6692,14 @@ async fn run_dashboard_command(
 /// Generate JSON schema for AutoPushEvent
 fn generate_schema_command(output: Option<String>) -> Result<()> {
     let schema = emit::generate_schema()?;
-    
+
     if let Some(output_path) = output {
         std::fs::write(&output_path, schema)?;
         emit_info!("hooksmith", "schema", "Schema written to: {}", output_path);
     } else {
         println!("{}", schema);
     }
-    
+
     Ok(())
 }
 
@@ -6704,7 +6711,7 @@ fn validate_schema_command(input: Option<String>, strict: bool) -> Result<()> {
     } else {
         emit::validate_output(std::io::stdin())
     };
-    
+
     match result {
         Ok(()) => {
             emit_success!("hooksmith", "validation", "Schema validation passed");
@@ -6774,14 +6781,18 @@ async fn run_sarif_to_jsonl_command(input: String, output: String, validate: boo
     // Write JSONL output
     let mut output_file = std::fs::File::create(&output)
         .context(format!("Failed to create output file: {}", output))?;
-    
+
+    let events_count = events.len();
     for event in events {
         let jsonl = event.to_jsonl()?;
         use std::io::Write;
         writeln!(output_file, "{}", jsonl)?;
     }
 
-    println!("✅ Successfully converted SARIF to JSONL ({} events)", events.len());
+    println!(
+        "✅ Successfully converted SARIF to JSONL ({} events)",
+        events_count
+    );
 
     Ok(())
 }
@@ -6803,13 +6814,16 @@ async fn run_codeql_analysis_command(
     println!("   Build command: {}", build_command);
 
     let logger = structured_logging::StructuredLogger::new();
-    
+
     let mut config = sarif_integration::CodeQLConfig::default();
     config.cli_path = cli_path.map(|s| s.to_string());
     config.db_dir = PathBuf::from(db_dir);
     config.query_suite = query_suite;
     config.language = language;
-    config.build_command = build_command.split_whitespace().map(|s| s.to_string()).collect();
+    config.build_command = build_command
+        .split_whitespace()
+        .map(|s| s.to_string())
+        .collect();
 
     let integration = sarif_integration::SarifIntegration::new(logger).with_config(config);
 
@@ -6821,12 +6835,12 @@ async fn run_codeql_analysis_command(
     // Save SARIF output if requested
     if let Some(output_path) = output {
         println!("💾 Saving SARIF output to: {}", output_path);
-        
+
         // Convert events back to SARIF for output
         let temp_jsonl = format!("{}.tmp.jsonl", output_path);
-        let temp_file = std::fs::File::create(&temp_jsonl)
-            .context("Failed to create temporary JSONL file")?;
-        
+        let mut temp_file =
+            std::fs::File::create(&temp_jsonl).context("Failed to create temporary JSONL file")?;
+
         use std::io::Write;
         for event in &events {
             let jsonl = event.to_jsonl()?;
@@ -6845,12 +6859,14 @@ async fn run_codeql_analysis_command(
 
     // Convert to JSONL if requested
     if to_jsonl {
-        let jsonl_output = output.map(|s| format!("{}.jsonl", s)).unwrap_or_else(|| "codeql-results.jsonl".to_string());
+        let jsonl_output = output
+            .map(|s| format!("{}.jsonl", s))
+            .unwrap_or_else(|| "codeql-results.jsonl".to_string());
         println!("💾 Saving JSONL output to: {}", jsonl_output);
-        
+
         let mut output_file = std::fs::File::create(&jsonl_output)
             .context(format!("Failed to create JSONL file: {}", jsonl_output))?;
-        
+
         use std::io::Write;
         for event in events {
             let jsonl = event.to_jsonl()?;
@@ -6944,9 +6960,9 @@ async fn run_integrate_codeql_command(
 
         // Convert to SARIF
         let temp_jsonl = output_path.join("temp.jsonl");
-        let temp_file = std::fs::File::create(&temp_jsonl)
-            .context("Failed to create temporary JSONL file")?;
-        
+        let mut temp_file =
+            std::fs::File::create(&temp_jsonl).context("Failed to create temporary JSONL file")?;
+
         use std::io::Write;
         for event in &events {
             let jsonl = event.to_jsonl()?;
@@ -6955,14 +6971,13 @@ async fn run_integrate_codeql_command(
         drop(temp_file);
 
         let sarif_content = integration.jsonl_to_sarif(&temp_jsonl)?;
-        std::fs::write(&sarif_output, &sarif_content)
-            .context("Failed to write SARIF file")?;
+        std::fs::write(&sarif_output, &sarif_content).context("Failed to write SARIF file")?;
 
         // Save JSONL if requested
         if to_jsonl {
-            let mut output_file = std::fs::File::create(&jsonl_output)
-                .context("Failed to create JSONL file")?;
-            
+            let mut output_file =
+                std::fs::File::create(&jsonl_output).context("Failed to create JSONL file")?;
+
             use std::io::Write;
             for event in events {
                 let jsonl = event.to_jsonl()?;
@@ -6982,7 +6997,7 @@ async fn run_integrate_codeql_command(
 
     if merge {
         println!("🔄 Merging with existing validation results...");
-        
+
         // Look for existing SARIF files in output directory
         let mut sarif_files = Vec::new();
         for entry in std::fs::read_dir(output_path)? {
@@ -6996,11 +7011,15 @@ async fn run_integrate_codeql_command(
         if sarif_files.len() > 1 {
             let merged_output = output_path.join("merged-results.sarif");
             let merged_content = integration.merge_sarif_files(&sarif_files)?;
-            
+
             std::fs::write(&merged_output, &merged_content)
                 .context("Failed to write merged SARIF file")?;
-            
-            println!("✅ Merged {} SARIF files into: {}", sarif_files.len(), merged_output.display());
+
+            println!(
+                "✅ Merged {} SARIF files into: {}",
+                sarif_files.len(),
+                merged_output.display()
+            );
         } else {
             println!("ℹ️  No multiple SARIF files found to merge");
         }

@@ -1,12 +1,11 @@
 use crate::events::AutoPushEvent;
-use std::sync::{Arc, Mutex};
 use once_cell::sync::Lazy;
+use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 /// Global session ID for the current process
-static SESSION_ID: Lazy<Arc<Mutex<String>>> = Lazy::new(|| {
-    Arc::new(Mutex::new(Uuid::new_v4().to_string()))
-});
+static SESSION_ID: Lazy<Arc<Mutex<String>>> =
+    Lazy::new(|| Arc::new(Mutex::new(Uuid::new_v4().to_string())));
 
 /// Get the current session ID
 pub fn get_session_id() -> String {
@@ -14,41 +13,37 @@ pub fn get_session_id() -> String {
 }
 
 /// Centralized emit macro that ensures all output is schema-validated JSONL
-/// 
+///
 /// Usage:
 /// - `emit_json!("tool", "action", "level", "message")`
 /// - `emit_json!("tool", "action", "level", "message", { "key": "value" })`
-/// 
+///
 /// This macro guarantees that every console output line is a valid AutoPushEvent
 /// and prevents any ad-hoc println! usage.
 #[macro_export]
 macro_rules! emit_json {
-    ($tool:expr, $action:expr, $level:expr, $msg:expr) => {
-        {
-            let ev = $crate::events::AutoPushEvent::new(
-                $tool,
-                $action,
-                $level,
-                $msg.to_string(),
-                $crate::emit::get_session_id(),
-            );
-            println!("{}", ev.to_jsonl().unwrap());
-        }
-    };
-    
-    ($tool:expr, $action:expr, $level:expr, $msg:expr, $details:expr) => {
-        {
-            let ev = $crate::events::AutoPushEvent::new(
-                $tool,
-                $action,
-                $level,
-                $msg.to_string(),
-                $crate::emit::get_session_id(),
-            )
-            .with_details($details);
-            println!("{}", ev.to_jsonl().unwrap());
-        }
-    };
+    ($tool:expr, $action:expr, $level:expr, $msg:expr) => {{
+        let ev = $crate::events::AutoPushEvent::new(
+            $tool,
+            $action,
+            $level,
+            $msg.to_string(),
+            $crate::emit::get_session_id(),
+        );
+        println!("{}", ev.to_jsonl().unwrap());
+    }};
+
+    ($tool:expr, $action:expr, $level:expr, $msg:expr, $details:expr) => {{
+        let ev = $crate::events::AutoPushEvent::new(
+            $tool,
+            $action,
+            $level,
+            $msg.to_string(),
+            $crate::emit::get_session_id(),
+        )
+        .with_details($details);
+        println!("{}", ev.to_jsonl().unwrap());
+    }};
 }
 
 /// Convenience macros for common event types
@@ -97,19 +92,17 @@ macro_rules! emit_warning {
 /// Emit diagnostic information (for compiler/tool diagnostics)
 #[macro_export]
 macro_rules! emit_diagnostic {
-    ($tool:expr, $action:expr, $level:expr, $msg:expr, $code:expr, $file:expr, $line:expr, $column:expr) => {
-        {
-            let ev = $crate::events::AutoPushEvent::new(
-                $tool,
-                $action,
-                $level,
-                $msg.to_string(),
-                $crate::emit::get_session_id(),
-            )
-            .with_diagnostic($code, $file, $line, $column);
-            println!("{}", ev.to_jsonl().unwrap());
-        }
-    };
+    ($tool:expr, $action:expr, $level:expr, $msg:expr, $code:expr, $file:expr, $line:expr, $column:expr) => {{
+        let ev = $crate::events::AutoPushEvent::new(
+            $tool,
+            $action,
+            $level,
+            $msg.to_string(),
+            $crate::emit::get_session_id(),
+        )
+        .with_diagnostic($code, $file, $line, $column);
+        println!("{}", ev.to_jsonl().unwrap());
+    }};
 }
 
 /// Emit event with custom details
@@ -148,15 +141,24 @@ mod tests {
 
     #[test]
     fn test_emit_with_details() {
-        emit_with_details!("test", "build", "info", "Build completed", {
+        emit_with_details!("test", "build", "info", "Build completed", serde_json::json!({
             "duration_ms": 1500,
             "targets": ["release"]
-        });
+        }));
     }
 
     #[test]
     fn test_emit_diagnostic() {
-        emit_diagnostic!("cargo", "clippy", "warn", "Unused variable", "unused_variables", "src/main.rs", 42, 10);
+        emit_diagnostic!(
+            "cargo",
+            "clippy",
+            "warn",
+            "Unused variable",
+            "unused_variables",
+            "src/main.rs",
+            42,
+            10
+        );
     }
 
     #[test]
@@ -165,4 +167,4 @@ mod tests {
         let id2 = get_session_id();
         assert_eq!(id1, id2, "Session ID should be consistent within a process");
     }
-} 
+}

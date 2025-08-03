@@ -69,25 +69,33 @@ impl StructuredAutoPush {
         )?;
 
         // Step 1: Run validation checks
-        self.logger.info("hooksmith", "validation", "Running validation checks")?;
+        self.logger
+            .info("hooksmith", "validation", "Running validation checks")?;
         let validation_result = self.run_validation().await;
-        
+
         match validation_result {
             Ok(_) => {
-                self.logger.info("hooksmith", "validation", "All validation checks passed")?;
+                self.logger
+                    .info("hooksmith", "validation", "All validation checks passed")?;
             }
             Err(e) => {
-                self.logger.error("hooksmith", "validation", &format!("Validation failed: {}", e))?;
+                self.logger.error(
+                    "hooksmith",
+                    "validation",
+                    &format!("Validation failed: {}", e),
+                )?;
                 return Err(e);
             }
         }
 
         // Step 2: Check for changes
-        self.logger.info("hooksmith", "git", "Checking for changes")?;
+        self.logger
+            .info("hooksmith", "git", "Checking for changes")?;
         let has_changes = self.check_for_changes().await?;
 
         if !has_changes {
-            self.logger.info("hooksmith", "git", "No changes to commit")?;
+            self.logger
+                .info("hooksmith", "git", "No changes to commit")?;
             return Ok(());
         }
 
@@ -156,12 +164,14 @@ impl StructuredAutoPush {
         ];
 
         for (name, args) in checks {
-            self.logger.info("cargo", name, &format!("Running cargo {}", name))?;
+            self.logger
+                .info("cargo", name, &format!("Running cargo {}", name))?;
 
             let success = self.logger.run_cargo_command(name, &args).await?;
 
             if !success {
-                self.logger.error("cargo", name, &format!("cargo {} failed", name))?;
+                self.logger
+                    .error("cargo", name, &format!("cargo {} failed", name))?;
                 anyhow::bail!("cargo {} failed", name);
             }
         }
@@ -172,14 +182,15 @@ impl StructuredAutoPush {
     /// Check if there are any changes to commit
     async fn check_for_changes(&self) -> Result<bool> {
         let status = self.logger.git_status().await?;
-        
+
         if let Some(porcelain) = status.get("porcelain") {
             if let Some(porcelain_str) = porcelain.as_str() {
                 let has_changes = !porcelain_str.trim().is_empty();
-                
+
                 if has_changes {
-                    self.logger.info("git", "status", "Found changes to commit")?;
-                    
+                    self.logger
+                        .info("git", "status", "Found changes to commit")?;
+
                     // Log each changed file
                     for line in porcelain_str.lines() {
                         if !line.trim().is_empty() {
@@ -187,33 +198,46 @@ impl StructuredAutoPush {
                                 "status_line": line,
                                 "session_id": self.session_id
                             });
-                            
-                            let event = StructuredEvent::new("info", "git", "status", &format!("Changed: {}", line))
-                                .with_details(details);
+
+                            let event = StructuredEvent::new(
+                                "info",
+                                "git",
+                                "status",
+                                &format!("Changed: {}", line),
+                            )
+                            .with_details(details);
                             self.logger.log(event)?;
                         }
                     }
                 }
-                
+
                 return Ok(has_changes);
             }
         }
-        
+
         // Fallback: check if there are any changes
-        let porcelain_output = self.logger.run_git_command("status", &["--porcelain".to_string()]).await?;
+        let porcelain_output = self
+            .logger
+            .run_git_command("status", &["--porcelain".to_string()])
+            .await?;
         let has_changes = !porcelain_output.trim().is_empty();
-        
+
         if has_changes {
-            self.logger.info("git", "status", "Found changes to commit")?;
+            self.logger
+                .info("git", "status", "Found changes to commit")?;
         }
-        
+
         Ok(has_changes)
     }
 
     /// Add all changes
     async fn add_changes(&self) -> Result<()> {
-        let output = self.logger.run_git_command("add", &[".".to_string()]).await?;
-        self.logger.info("git", "add", "Successfully added all changes")?;
+        let output = self
+            .logger
+            .run_git_command("add", &[".".to_string()])
+            .await?;
+        self.logger
+            .info("git", "add", "Successfully added all changes")?;
         Ok(())
     }
 
@@ -235,7 +259,11 @@ impl StructuredAutoPush {
         let mut commit_args = vec!["commit".to_string()];
 
         if allow_empty_message || commit_message.is_empty() {
-            commit_args.extend_from_slice(&["--allow-empty-message".to_string(), "-m".to_string(), "".to_string()]);
+            commit_args.extend_from_slice(&[
+                "--allow-empty-message".to_string(),
+                "-m".to_string(),
+                "".to_string(),
+            ]);
         } else {
             commit_args.extend_from_slice(&["-m".to_string(), commit_message.clone()]);
         }
@@ -246,16 +274,19 @@ impl StructuredAutoPush {
         }
 
         let output = self.logger.run_git_command("commit", &commit_args).await?;
-        
+
         // Get commit hash
-        let commit_hash = self.logger.run_git_command("rev-parse", &["HEAD".to_string()]).await?;
-        
+        let commit_hash = self
+            .logger
+            .run_git_command("rev-parse", &["HEAD".to_string()])
+            .await?;
+
         let commit_details = serde_json::json!({
             "commit_hash": commit_hash.trim(),
             "commit_message": commit_message,
             "session_id": self.session_id
         });
-        
+
         let commit_event = StructuredEvent::new(
             "info",
             "git",
@@ -263,38 +294,33 @@ impl StructuredAutoPush {
             &format!("Committed changes: {}", commit_hash.trim()),
         )
         .with_details(commit_details);
-        
+
         self.logger.log(commit_event)?;
-        
+
         Ok(commit_hash.trim().to_string())
     }
 
     /// Push changes
     async fn push_changes(&self, force: bool) -> Result<String> {
         let mut push_args = vec!["push".to_string()];
-        
+
         if force {
             push_args.push("--force".to_string());
         }
-        
+
         let output = self.logger.run_git_command("push", &push_args).await?;
-        
+
         let push_details = serde_json::json!({
             "force": force,
             "output": output,
             "session_id": self.session_id
         });
-        
-        let push_event = StructuredEvent::new(
-            "info",
-            "git",
-            "push",
-            "Successfully pushed changes",
-        )
-        .with_details(push_details);
-        
+
+        let push_event = StructuredEvent::new("info", "git", "push", "Successfully pushed changes")
+            .with_details(push_details);
+
         self.logger.log(push_event)?;
-        
+
         Ok("Push completed successfully".to_string())
     }
 
@@ -319,11 +345,23 @@ impl StructuredAutoPush {
                 .await
             {
                 Ok(_) => {
-                    self.logger.info("hooksmith", "watchdog", "Watchdog cycle completed successfully")?;
+                    self.logger.info(
+                        "hooksmith",
+                        "watchdog",
+                        "Watchdog cycle completed successfully",
+                    )?;
                 }
                 Err(e) => {
-                    self.logger.error("hooksmith", "watchdog", &format!("Watchdog cycle failed: {}", e))?;
-                    self.logger.info("hooksmith", "watchdog", "Validation errors detected - skipping commit/push")?;
+                    self.logger.error(
+                        "hooksmith",
+                        "watchdog",
+                        &format!("Watchdog cycle failed: {}", e),
+                    )?;
+                    self.logger.info(
+                        "hooksmith",
+                        "watchdog",
+                        "Validation errors detected - skipping commit/push",
+                    )?;
                 }
             }
 
@@ -332,7 +370,7 @@ impl StructuredAutoPush {
                 "watchdog",
                 &format!("Waiting {} seconds before next cycle", interval),
             )?;
-            
+
             sleep(Duration::from_secs(interval)).await;
         }
     }
@@ -370,4 +408,4 @@ mod tests {
         let auto_push = StructuredAutoPush::new().without_jsonl();
         assert!(!auto_push.logger.jsonl_output);
     }
-} 
+}
