@@ -132,7 +132,7 @@ fn test_git_object_contract_attributes() -> Result<(), Box<dyn std::error::Error
     println!("🎯 Test 3: Git Object Contract with Attributes");
 
     let tree_validator = TreeValidator::new(true, true, true);
-    let validator = GitObjectValidator::new(true, true, tree_validator);
+    let validator = GitObjectValidator::new(true, true, true, true, tree_validator);
 
     // Test generated file with linguist-generated=true
     let contract = validator.validate_object(
@@ -187,7 +187,7 @@ fn test_generated_file_detection() -> Result<(), Box<dyn std::error::Error>> {
     println!("🎯 Test 4: Generated File Detection");
 
     let tree_validator = TreeValidator::new(true, true, true);
-    let validator = GitObjectValidator::new(true, true, tree_validator);
+    let validator = GitObjectValidator::new(true, true, true, true, tree_validator);
 
     // Test directory patterns
     let directory_patterns = vec![
