@@ -259,6 +259,59 @@ enum WasmComponentCommands {
     },
 }
 
+/// JSONC processing commands
+#[derive(Subcommand)]
+enum JsoncCommands {
+    /// Load and process JSONC files
+    Process {
+        /// Config directory containing JSONC files
+        #[arg(long, default_value = "bootstrap-config")]
+        config_dir: String,
+        /// Output directory for processed files
+        #[arg(long, default_value = "generated")]
+        output_dir: String,
+        /// Whether to validate against schemas
+        #[arg(long)]
+        validate: bool,
+        /// Template variables (key=value pairs)
+        #[arg(long)]
+        vars: Vec<String>,
+    },
+    /// Create sample JSONC files
+    CreateSample {
+        /// Config directory to create samples in
+        #[arg(long, default_value = "bootstrap-config")]
+        config_dir: String,
+        /// File type to create (cargo, config, template)
+        #[arg(long, default_value = "cargo")]
+        file_type: String,
+        /// Output filename
+        #[arg(long)]
+        filename: String,
+    },
+    /// Validate JSONC files
+    Validate {
+        /// Config directory containing JSONC files
+        #[arg(long, default_value = "bootstrap-config")]
+        config_dir: String,
+        /// Whether to exit with error on validation failures
+        #[arg(long)]
+        strict: bool,
+    },
+    /// Convert JSONC to other formats
+    Convert {
+        /// Input JSONC file
+        #[arg(long)]
+        input: String,
+        /// Output format (toml, yaml, json)
+        #[arg(long, default_value = "toml")]
+        format: String,
+        /// Output file path
+        #[arg(long)]
+        output: String,
+    },
+}
+
 mod auto_push;
 mod code_stats;
 mod config;
