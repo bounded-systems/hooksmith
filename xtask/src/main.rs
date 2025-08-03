@@ -656,7 +656,7 @@ enum Commands {
         #[arg(long, default_value = "30")]
         interval: u64,
         /// Whether to show TUI dashboard
-        #[arg(long, default_value = "true")]
+        #[arg(long)]
         show_dashboard: bool,
         /// Whether to enable auto-push
         #[arg(long, default_value = "true")]

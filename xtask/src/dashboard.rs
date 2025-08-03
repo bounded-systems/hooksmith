@@ -78,7 +78,7 @@ impl Default for DashboardConfig {
     fn default() -> Self {
         Self {
             update_interval: 30,
-            show_dashboard: true,
+            show_dashboard: false, // Default to headless mode
             log_to_jsonl: true,
             jsonl_path: Some("hooksmith-events.jsonl".to_string()),
             auto_push_config: AutoPushConfig {
@@ -104,16 +104,60 @@ impl Dashboard {
 
     /// Start the dashboard
     pub async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        println!("🚀 Starting Hooksmith Dashboard...");
+        println!(
+            "   📊 Update interval: {} seconds",
+            self.config.update_interval
+        );
+        println!(
+            "   🖥️  Dashboard mode: {}",
+            if self.config.show_dashboard {
+                "TUI"
+            } else {
+                "Headless"
+            }
+        );
+        println!(
+            "   📝 JSONL logging: {}",
+            if self.config.log_to_jsonl {
+                "Enabled"
+            } else {
+                "Disabled"
+            }
+        );
+        println!(
+            "   🔄 Auto-push: {}",
+            if self.config.auto_push_config.enabled {
+                "Enabled"
+            } else {
+                "Disabled"
+            }
+        );
+        println!(
+            "   🔍 Skip validation: {}",
+            if self.config.auto_push_config.skip_validation {
+                "Yes"
+            } else {
+                "No"
+            }
+        );
+        println!("   Press 'q' to quit, 'c' to clear errors, 'r' to refresh");
+        println!("");
+
         let running = Arc::clone(&self.running);
         let mut running_guard = running.lock().unwrap();
         *running_guard = true;
         drop(running_guard);
 
-        if self.config.show_dashboard {
-            self.setup_terminal()?;
-        }
+        println!("✅ Dashboard state initialized");
 
-        println!("🚀 Starting Hooksmith Dashboard...");
+        if self.config.show_dashboard {
+            println!("🖥️  Setting up TUI terminal...");
+            self.setup_terminal()?;
+            println!("✅ TUI terminal setup complete");
+        } else {
+            println!("📊 Running in headless mode");
+        }
         println!(
             "   📊 Update interval: {} seconds",
             self.config.update_interval
@@ -391,7 +435,7 @@ impl Dashboard {
             template.clone()
         } else {
             let timestamp = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-            format!("auto: update at {}", timestamp)
+            format!("chore: auto-update at {}", timestamp)
         };
 
         // Commit changes
@@ -496,8 +540,15 @@ impl Dashboard {
 
     /// Setup terminal for TUI
     fn setup_terminal(&self) -> std::io::Result<()> {
-        execute!(stdout(), EnterAlternateScreen, Hide)?;
-        Ok(())
+        // Try to set up the terminal, but don't fail if it doesn't work
+        match execute!(stdout(), EnterAlternateScreen, Hide) {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                eprintln!("⚠️  Warning: Could not set up TUI terminal: {}", e);
+                eprintln!("📊 Falling back to console mode");
+                Ok(())
+            }
+        }
     }
 
     /// Cleanup terminal
