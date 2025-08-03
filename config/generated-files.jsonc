@@ -1,1295 +1,1278 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Hooksmith Generated Files",
   "description": "Registry of generated files with stable slugs and checksums for validation and regeneration.",
-  
-  // All files listed here are assumed to be generated
-  // No redundant generated: true flags needed
   "files": [
     {
-      "slug": "root-editorconfig",
+      "checksum": "e3b0c442",
       "path": ".editorconfig",
-      "type": "editorconfig",
-      "checksum": "e3b0c442"
-    }
-,
+      "slug": "root-editorconfig",
+      "type": "editorconfig"
+    },
     {
-      "slug": "root-envrc",
+      "checksum": "7a2f1b9d",
       "path": ".envrc",
-      "type": "envrc",
-      "checksum": "7a2f1b9d"
-    }
-,
+      "slug": "root-envrc",
+      "type": "envrc"
+    },
     {
-      "slug": "root-gitattributes",
+      "checksum": "c6b4b64f",
       "path": ".gitattributes",
+      "slug": "root-gitattributes",
       "type": "gitattributes"
-    }
-,
+    },
     {
-      "slug": "root-gitignore",
+      "checksum": "4b66ab7e",
       "path": ".gitignore",
+      "slug": "root-gitignore",
       "type": "gitignore"
-    }
-,
+    },
     {
-      "slug": "-hooksmith-events",
+      "checksum": "f60e8554",
       "path": ".hooksmith/events.jsonl",
+      "slug": "-hooksmith-events",
       "type": "jsonl"
-    }
-,
+    },
     {
-      "slug": "-hooksmith-logs-safe-commit",
+      "checksum": "41a20810",
       "path": ".hooksmith/logs/safe-commit.jsonl",
+      "slug": "-hooksmith-logs-safe-commit",
       "type": "jsonl"
-    }
-,
+    },
     {
-      "slug": "-hooksmith-logs-safe-push",
+      "checksum": "873711be",
       "path": ".hooksmith/logs/safe-push.jsonl",
+      "slug": "-hooksmith-logs-safe-push",
       "type": "jsonl"
-    }
-,
+    },
     {
-      "slug": "architecture",
+      "checksum": "4f9e13ac",
       "path": "ARCHITECTURE.md",
-      "type": "md",
-      "checksum": "4f9e13ac"
-    }
-,
+      "slug": "architecture",
+      "type": "md"
+    },
     {
-      "slug": "autopush_workflow",
+      "checksum": "4cea4813",
       "path": "AUTOPUSH_WORKFLOW.md",
+      "slug": "autopush_workflow",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "build_optimization_summary",
+      "checksum": "ae62f06a",
       "path": "BUILD_OPTIMIZATION_SUMMARY.md",
+      "slug": "build_optimization_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "cargo_best_practices",
+      "checksum": "8890953a",
       "path": "CARGO_BEST_PRACTICES.md",
+      "slug": "cargo_best_practices",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "cargo",
+      "checksum": "0de3190b",
       "path": "Cargo.toml",
+      "slug": "cargo",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "changelog",
+      "checksum": "d74e21cc",
       "path": "CHANGELOG.md",
+      "slug": "changelog",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "ci_cd_integration_summary",
+      "checksum": "008bc496",
       "path": "CI_CD_INTEGRATION_SUMMARY.md",
+      "slug": "ci_cd_integration_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "ci_cd_integration_verification",
+      "checksum": "127bfc6f",
       "path": "CI_CD_INTEGRATION_VERIFICATION.md",
+      "slug": "ci_cd_integration_verification",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "ci_integration_report",
+      "checksum": "69a38288",
       "path": "CI_INTEGRATION_REPORT.md",
+      "slug": "ci_integration_report",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "cleaned_file_policy_summary",
+      "checksum": "658265aa",
       "path": "CLEANED_FILE_POLICY_SUMMARY.md",
+      "slug": "cleaned_file_policy_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "clippy_fixes_summary",
+      "checksum": "3f1d29de",
       "path": "CLIPPY_FIXES_SUMMARY.md",
+      "slug": "clippy_fixes_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "clippy",
+      "checksum": "1763ac0d",
       "path": "clippy.toml",
+      "slug": "clippy",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "code_stats_system_summary",
+      "checksum": "1345eccd",
       "path": "CODE_STATS_SYSTEM_SUMMARY.md",
+      "slug": "code_stats_system_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "codegen_markers",
+      "checksum": "080db5a4",
       "path": "CODEGEN_MARKERS.md",
+      "slug": "codegen_markers",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "codegen_summary",
+      "checksum": "51becaa4",
       "path": "CODEGEN_SUMMARY.md",
+      "slug": "codegen_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "root-codeowners",
+      "checksum": "541fd0ca",
       "path": "CODEOWNERS",
+      "slug": "root-codeowners",
       "type": "CODEOWNERS"
-    }
-,
+    },
     {
-      "slug": "components-cli-core-cargo",
+      "checksum": "98aef933",
       "path": "components/cli-core/Cargo.toml",
+      "slug": "components-cli-core-cargo",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "components-git-filter-cargo",
+      "checksum": "5bc45e36",
       "path": "components/git-filter/Cargo.toml",
+      "slug": "components-git-filter-cargo",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "components-git-filter-readme",
+      "checksum": "e7364d93",
       "path": "components/git-filter/README.md",
+      "slug": "components-git-filter-readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "components-hook-builder-cargo",
+      "checksum": "c8b18c98",
       "path": "components/hook-builder/Cargo.toml",
+      "slug": "components-hook-builder-cargo",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "components-hook-builder-wit-hook-builder",
+      "checksum": "fef8bfbc",
       "path": "components/hook-builder/wit/hook-builder.wit",
+      "slug": "components-hook-builder-wit-hook-builder",
       "type": "wit"
-    }
-,
+    },
     {
-      "slug": "components-validation-handler-cargo",
+      "checksum": "526a8b34",
       "path": "components/validation-handler/Cargo.toml",
+      "slug": "components-validation-handler-cargo",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "components-worktree-runner-cargo",
+      "checksum": "88f9fa9e",
       "path": "components/worktree-runner/Cargo.toml",
+      "slug": "components-worktree-runner-cargo",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "components-worktree-runner-wit-worktree-runner",
+      "checksum": "cd812841",
       "path": "components/worktree-runner/wit/worktree-runner.wit",
+      "slug": "components-worktree-runner-wit-worktree-runner",
       "type": "wit"
-    }
-,
+    },
     {
-      "slug": "comprehensive_docs_summary",
+      "checksum": "28efd42d",
       "path": "COMPREHENSIVE_DOCS_SUMMARY.md",
+      "slug": "comprehensive_docs_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "contract_workflow_design",
+      "checksum": "52af9880",
       "path": "CONTRACT_WORKFLOW_DESIGN.md",
+      "slug": "contract_workflow_design",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "contributing",
+      "checksum": "172e20eb",
       "path": "CONTRIBUTING.md",
+      "slug": "contributing",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "deny",
+      "checksum": "9f399c5f",
       "path": "deny.toml",
+      "slug": "deny",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "diagrams-git_commit_workflow",
+      "checksum": "b2bb3609",
       "path": "diagrams/git_commit_workflow.md",
+      "slug": "diagrams-git_commit_workflow",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "diagrams-git_comprehensive",
+      "checksum": "a68196a6",
       "path": "diagrams/git_comprehensive.md",
+      "slug": "diagrams-git_comprehensive",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "diagrams-git_file_states",
+      "checksum": "12d520df",
       "path": "diagrams/git_file_states.md",
+      "slug": "diagrams-git_file_states",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "diagrams-git_skip_only_conditions",
+      "checksum": "f12edc58",
       "path": "diagrams/git_skip_only_conditions.md",
+      "slug": "diagrams-git_skip_only_conditions",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "direnv_integration_summary",
+      "checksum": "b5be9724",
       "path": "DIRENV_INTEGRATION_SUMMARY.md",
+      "slug": "direnv_integration_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "direnv_setup",
+      "checksum": "5050112f",
       "path": "DIRENV_SETUP.md",
+      "slug": "direnv_setup",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-api",
+      "checksum": "8c55ee71",
       "path": "docs/api.md",
+      "slug": "docs-api",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-architecture_diagram",
+      "checksum": "294f61ae",
       "path": "docs/ARCHITECTURE_DIAGRAM.md",
+      "slug": "docs-architecture_diagram",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-attributes_validation",
+      "checksum": "2bb80f60",
       "path": "docs/attributes_validation.md",
+      "slug": "docs-attributes_validation",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-blob_contract_system",
+      "checksum": "2327efd7",
       "path": "docs/blob_contract_system.md",
+      "slug": "docs-blob_contract_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-character_contract_system",
+      "checksum": "199ccad3",
       "path": "docs/character_contract_system.md",
+      "slug": "docs-character_contract_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-checksum_report",
+      "checksum": "d133a1de",
       "path": "docs/CHECKSUM_REPORT.md",
+      "slug": "docs-checksum_report",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-checksums",
+      "checksum": "94275a36",
       "path": "docs/checksums.json",
+      "slug": "docs-checksums",
       "type": "json"
-    }
-,
+    },
     {
-      "slug": "docs-clean_auto_push",
+      "checksum": "b8bf6e1b",
       "path": "docs/CLEAN_AUTO_PUSH.md",
+      "slug": "docs-clean_auto_push",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-cli_help",
+      "checksum": "b8a82e7b",
       "path": "docs/CLI_HELP.md",
+      "slug": "docs-cli_help",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-components-cli-core-readme",
+      "checksum": "95efb6d4",
       "path": "docs/components/cli-core/README.md",
+      "slug": "docs-components-cli-core-readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-components-git-filter-readme",
+      "checksum": "3e3634b8",
       "path": "docs/components/git-filter/README.md",
+      "slug": "docs-components-git-filter-readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-components-hook-builder-readme",
+      "checksum": "91c0ffe0",
       "path": "docs/components/hook-builder/README.md",
+      "slug": "docs-components-hook-builder-readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-components-worktree-runner-readme",
+      "checksum": "be46f887",
       "path": "docs/components/worktree-runner/README.md",
+      "slug": "docs-components-worktree-runner-readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-contract_check_system",
+      "checksum": "7098cc33",
       "path": "docs/CONTRACT_CHECK_SYSTEM.md",
+      "slug": "docs-contract_check_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-contract_state_machine",
+      "checksum": "8d453a05",
       "path": "docs/CONTRACT_STATE_MACHINE.md",
+      "slug": "docs-contract_state_machine",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-contract_validation_summary",
+      "checksum": "e55fb60c",
       "path": "docs/CONTRACT_VALIDATION_SUMMARY.md",
+      "slug": "docs-contract_validation_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-contract_validation_system",
+      "checksum": "50a49418",
       "path": "docs/CONTRACT_VALIDATION_SYSTEM.md",
+      "slug": "docs-contract_validation_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-contract_validation_with_git_notes",
+      "checksum": "009ba278",
       "path": "docs/CONTRACT_VALIDATION_WITH_GIT_NOTES.md",
+      "slug": "docs-contract_validation_with_git_notes",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-contract-state-machine-readme",
+      "checksum": "e6a58ea5",
       "path": "docs/contract-state-machine-README.md",
+      "slug": "docs-contract-state-machine-readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-contract-state-machine-schema",
+      "checksum": "d9185f8a",
       "path": "docs/contract-state-machine-schema.json",
+      "slug": "docs-contract-state-machine-schema",
       "type": "json"
-    }
-,
+    },
     {
-      "slug": "docs-contract-state-machine",
+      "checksum": "f581acd7",
       "path": "docs/contract-state-machine.md",
+      "slug": "docs-contract-state-machine",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-contract-validation-architecture",
+      "checksum": "e0185810",
       "path": "docs/contract-validation-architecture.md",
+      "slug": "docs-contract-validation-architecture",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-development_summary",
+      "checksum": "6f5fb38f",
       "path": "docs/DEVELOPMENT_SUMMARY.md",
+      "slug": "docs-development_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-development",
+      "checksum": "49d9e396",
       "path": "docs/DEVELOPMENT.md",
+      "slug": "docs-development",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-docs-api",
+      "checksum": "51186478",
       "path": "docs/docs/API.md",
+      "slug": "docs-docs-api",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-docs-architecture",
+      "checksum": "8835a670",
       "path": "docs/docs/ARCHITECTURE.md",
+      "slug": "docs-docs-architecture",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-docs-cli_help",
+      "checksum": "84126ad3",
       "path": "docs/docs/CLI_HELP.md",
+      "slug": "docs-docs-cli_help",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-docs-contributing",
+      "checksum": "cfb83044",
       "path": "docs/docs/CONTRIBUTING.md",
+      "slug": "docs-docs-contributing",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-docs-development",
+      "checksum": "5d522291",
       "path": "docs/docs/DEVELOPMENT.md",
+      "slug": "docs-docs-development",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-docs-examples",
+      "checksum": "c1e08f6a",
       "path": "docs/docs/EXAMPLES.md",
+      "slug": "docs-docs-examples",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-docs-structure",
+      "checksum": "31f0da4b",
       "path": "docs/docs/STRUCTURE.md",
+      "slug": "docs-docs-structure",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-docs-testing",
+      "checksum": "47b62e21",
       "path": "docs/docs/TESTING.md",
+      "slug": "docs-docs-testing",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-examples",
+      "checksum": "86f683cf",
       "path": "docs/examples.md",
+      "slug": "docs-examples",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-filename_contract_system",
+      "checksum": "61769dea",
       "path": "docs/filename_contract_system.md",
+      "slug": "docs-filename_contract_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-generated_file_validation",
+      "checksum": "f6ef1e2f",
       "path": "docs/GENERATED_FILE_VALIDATION.md",
+      "slug": "docs-generated_file_validation",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-git_filter_system",
+      "checksum": "030c314b",
       "path": "docs/git_filter_system.md",
+      "slug": "docs-git_filter_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-git_lefthook_integration",
+      "checksum": "d49e8498",
       "path": "docs/GIT_LEFTHOOK_INTEGRATION.md",
+      "slug": "docs-git_lefthook_integration",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-git_model_contracts",
+      "checksum": "cf1bb49e",
       "path": "docs/git_model_contracts.md",
+      "slug": "docs-git_model_contracts",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-git_object_contract_system",
+      "checksum": "b3325f90",
       "path": "docs/git_object_contract_system.md",
+      "slug": "docs-git_object_contract_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-git_state_machine",
+      "checksum": "a7b1ccce",
       "path": "docs/git_state_machine.md",
+      "slug": "docs-git_state_machine",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-git_workflow",
+      "checksum": "d5aba8a9",
       "path": "docs/git_workflow.md",
+      "slug": "docs-git_workflow",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-git-notes-schema",
+      "checksum": "8ad31c33",
       "path": "docs/git-notes-schema.json",
+      "slug": "docs-git-notes-schema",
       "type": "json"
-    }
-,
+    },
     {
-      "slug": "docs-hook_state_machine",
+      "checksum": "64e534f4",
       "path": "docs/HOOK_STATE_MACHINE.md",
+      "slug": "docs-hook_state_machine",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-jql_with_structured_logging",
+      "checksum": "a18ced14",
       "path": "docs/JQL_WITH_STRUCTURED_LOGGING.md",
+      "slug": "docs-jql_with_structured_logging",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-line_contract_system",
+      "checksum": "c509b246",
       "path": "docs/line_contract_system.md",
+      "slug": "docs-line_contract_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-merkle-chain-spec",
+      "checksum": "b3638bca",
       "path": "docs/merkle-chain-spec.md",
+      "slug": "docs-merkle-chain-spec",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-readme",
+      "checksum": "876ef798",
       "path": "docs/README.md",
+      "slug": "docs-readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-safe_git_workflow",
+      "checksum": "b3b55fc6",
       "path": "docs/SAFE_GIT_WORKFLOW.md",
+      "slug": "docs-safe_git_workflow",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-sarif_codecl_integration",
+      "checksum": "c199509c",
       "path": "docs/SARIF_CODECL_INTEGRATION.md",
+      "slug": "docs-sarif_codecl_integration",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-schema_documentation",
+      "checksum": "6ed018f3",
       "path": "docs/SCHEMA_DOCUMENTATION.md",
+      "slug": "docs-schema_documentation",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-schema_validation",
+      "checksum": "7d26b033",
       "path": "docs/SCHEMA_VALIDATION.md",
+      "slug": "docs-schema_validation",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-structure",
+      "checksum": "0b65fe36",
       "path": "docs/STRUCTURE.md",
+      "slug": "docs-structure",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-structured_logging_migration",
+      "checksum": "e929dadb",
       "path": "docs/STRUCTURED_LOGGING_MIGRATION.md",
+      "slug": "docs-structured_logging_migration",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-structured_logging_tools",
+      "checksum": "2333f63d",
       "path": "docs/STRUCTURED_LOGGING_TOOLS.md",
+      "slug": "docs-structured_logging_tools",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-structured_logging",
+      "checksum": "79666fe0",
       "path": "docs/STRUCTURED_LOGGING.md",
+      "slug": "docs-structured_logging",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-style",
+      "checksum": "1159dc11",
       "path": "docs/style.css",
+      "slug": "docs-style",
       "type": "css"
-    }
-,
+    },
     {
-      "slug": "docs-test_summary",
+      "checksum": "e6fa900b",
       "path": "docs/TEST_SUMMARY.md",
+      "slug": "docs-test_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-tree_contract_system",
+      "checksum": "8ec52e20",
       "path": "docs/tree_contract_system.md",
+      "slug": "docs-tree_contract_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-tree_filename_chars_contract_system",
+      "checksum": "4edba2d1",
       "path": "docs/tree_filename_chars_contract_system.md",
+      "slug": "docs-tree_filename_chars_contract_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-trunk_style_commits",
+      "checksum": "548f8b54",
       "path": "docs/TRUNK_STYLE_COMMITS.md",
+      "slug": "docs-trunk_style_commits",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-trunk_style_quickstart",
+      "checksum": "38acd8ea",
       "path": "docs/TRUNK_STYLE_QUICKSTART.md",
+      "slug": "docs-trunk_style_quickstart",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-tui_dashboard_modernization",
+      "checksum": "05b81e0c",
       "path": "docs/TUI_DASHBOARD_MODERNIZATION.md",
+      "slug": "docs-tui_dashboard_modernization",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-unified_contracts_system",
+      "checksum": "a28d1a0e",
       "path": "docs/unified_contracts_system.md",
+      "slug": "docs-unified_contracts_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-verify_hooks",
+      "checksum": "12556f2a",
       "path": "docs/VERIFY_HOOKS.md",
+      "slug": "docs-verify_hooks",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "docs-wit_documentation",
+      "checksum": "1547b135",
       "path": "docs/WIT_DOCUMENTATION.md",
+      "slug": "docs-wit_documentation",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "examples_fixes_summary",
+      "checksum": "ba3dac65",
       "path": "EXAMPLES_FIXES_SUMMARY.md",
+      "slug": "examples_fixes_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "file_type_enforcement_summary",
+      "checksum": "f66e0fb4",
       "path": "FILE_TYPE_ENFORCEMENT_SUMMARY.md",
+      "slug": "file_type_enforcement_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "fix_format",
+      "checksum": "45d59083",
       "path": "fix_format.sed",
+      "slug": "fix_format",
       "type": "sed"
-    }
-,
+    },
     {
-      "slug": "generated_file_demo",
       "path": "generated_file_demo",
+      "slug": "generated_file_demo",
       "type": ""
-    }
-,
+    },
     {
-      "slug": "generated_file_validation_summary",
+      "checksum": "281e2dbe",
       "path": "GENERATED_FILE_VALIDATION_SUMMARY.md",
+      "slug": "generated_file_validation_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "generated_files_system_summary",
+      "checksum": "a7864368",
       "path": "GENERATED_FILES_SYSTEM_SUMMARY.md",
+      "slug": "generated_files_system_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "hook_state_machine_implementation_summary",
+      "checksum": "e2071316",
       "path": "HOOK_STATE_MACHINE_IMPLEMENTATION_SUMMARY.md",
+      "slug": "hook_state_machine_implementation_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "hooks",
+      "checksum": "b5792e07",
       "path": "hooks/.gitattributes",
+      "slug": "hooks",
       "type": "gitattributes"
-    }
-,
+    },
     {
-      "slug": "hooks-readme",
+      "checksum": "0b479b60",
       "path": "hooks/README.md",
+      "slug": "hooks-readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "hooksmith-events",
+      "checksum": "a0b808b7",
       "path": "hooksmith-events.jsonl",
+      "slug": "hooksmith-events",
       "type": "jsonl"
-    }
-,
+    },
     {
-      "slug": "improved_generated_files_system",
+      "checksum": "33720ea0",
       "path": "IMPROVED_GENERATED_FILES_SYSTEM.md",
+      "slug": "improved_generated_files_system",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "jql_integration_complete",
+      "checksum": "9da9cc5a",
       "path": "JQL_INTEGRATION_COMPLETE.md",
+      "slug": "jql_integration_complete",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "lefthook-rs-cargo",
+      "checksum": "38adef07",
       "path": "lefthook-rs/Cargo.toml",
+      "slug": "lefthook-rs-cargo",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "macos_optimization_verification",
+      "checksum": "d910ede5",
       "path": "MACOS_OPTIMIZATION_VERIFICATION.md",
+      "slug": "macos_optimization_verification",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "macos_optimizations",
+      "checksum": "a7867620",
       "path": "MACOS_OPTIMIZATIONS.md",
+      "slug": "macos_optimizations",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "root-makefile",
+      "checksum": "6ce8dbc3",
       "path": "Makefile",
+      "slug": "root-makefile",
       "type": "makefile"
-    }
-,
+    },
     {
-      "slug": "migration_plan",
+      "checksum": "f10bb590",
       "path": "MIGRATION_PLAN.md",
+      "slug": "migration_plan",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "migration_summary",
+      "checksum": "dfcfba4f",
       "path": "MIGRATION_SUMMARY.md",
+      "slug": "migration_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "optimized_default_workflow",
+      "checksum": "389ffb97",
       "path": "OPTIMIZED_DEFAULT_WORKFLOW.md",
+      "slug": "optimized_default_workflow",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "phase_3_configuration_generation_summary",
+      "checksum": "0566c631",
       "path": "PHASE_3_CONFIGURATION_GENERATION_SUMMARY.md",
+      "slug": "phase_3_configuration_generation_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "phase_4_complete_summary",
+      "checksum": "f1fecff2",
       "path": "PHASE_4_COMPLETE_SUMMARY.md",
+      "slug": "phase_4_complete_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "phase_4_file_type_normalization",
+      "checksum": "7e650844",
       "path": "PHASE_4_FILE_TYPE_NORMALIZATION.md",
+      "slug": "phase_4_file_type_normalization",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "phase_4_implementation_summary",
+      "checksum": "76a734e1",
       "path": "PHASE_4_IMPLEMENTATION_SUMMARY.md",
+      "slug": "phase_4_implementation_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "phase_5_ci_enforcement_summary",
+      "checksum": "1870cfdd",
       "path": "PHASE_5_CI_ENFORCEMENT_SUMMARY.md",
+      "slug": "phase_5_ci_enforcement_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "project_structure",
+      "checksum": "68381ead",
       "path": "PROJECT_STRUCTURE.md",
+      "slug": "project_structure",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "quickstart_optimized",
+      "checksum": "251e4a23",
       "path": "QUICKSTART_OPTIMIZED.md",
+      "slug": "quickstart_optimized",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "readme_structure",
+      "checksum": "c59e1620",
       "path": "README_STRUCTURE.md",
+      "slug": "readme_structure",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "readme",
+      "checksum": "2ff52bc5",
       "path": "README.md",
+      "slug": "readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "rust_build_optimizations_2025",
+      "checksum": "30e86595",
       "path": "RUST_BUILD_OPTIMIZATIONS_2025.md",
+      "slug": "rust_build_optimizations_2025",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "rust_tooling_setup",
+      "checksum": "c21dbe32",
       "path": "RUST_TOOLING_SETUP.md",
+      "slug": "rust_tooling_setup",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "rust_tooling_summary",
+      "checksum": "085a59c4",
       "path": "RUST_TOOLING_SUMMARY.md",
+      "slug": "rust_tooling_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "rust-toolchain",
+      "checksum": "ddc596b8",
       "path": "rust-toolchain.toml",
+      "slug": "rust-toolchain",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "rustfmt",
+      "checksum": "6e297d29",
       "path": "rustfmt.toml",
+      "slug": "rustfmt",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "safeguards_summary",
+      "checksum": "989cea5f",
       "path": "SAFEGUARDS_SUMMARY.md",
+      "slug": "safeguards_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "schema_validated_logging_complete",
+      "checksum": "40331d72",
       "path": "SCHEMA_VALIDATED_LOGGING_COMPLETE.md",
+      "slug": "schema_validated_logging_complete",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "schemas-contract-state-schema",
+      "checksum": "d1a06253",
       "path": "schemas/contract-state.schema.json",
+      "slug": "schemas-contract-state-schema",
       "type": "json"
-    }
-,
+    },
     {
-      "slug": "schemas-contract-transition-schema",
+      "checksum": "ea4b444f",
       "path": "schemas/contract-transition.schema.json",
+      "slug": "schemas-contract-transition-schema",
       "type": "json"
-    }
-,
+    },
     {
-      "slug": "schemas-merkle-proof-schema",
+      "checksum": "77b3396d",
       "path": "schemas/merkle-proof.schema.json",
+      "slug": "schemas-merkle-proof-schema",
       "type": "json"
-    }
-,
+    },
     {
-      "slug": "scripts-advanced-git-aliases",
+      "checksum": "40165470",
       "path": "scripts/advanced-git-aliases.sh",
+      "slug": "scripts-advanced-git-aliases",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-build-stats",
+      "checksum": "dea3f920",
       "path": "scripts/build-stats.sh",
+      "slug": "scripts-build-stats",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-check-errors",
+      "checksum": "d482758d",
       "path": "scripts/check-errors.sh",
+      "slug": "scripts-check-errors",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-ci-build",
+      "checksum": "6e0b106a",
       "path": "scripts/ci-build.sh",
+      "slug": "scripts-ci-build",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-cleanup-logs",
+      "checksum": "021c2cd0",
       "path": "scripts/cleanup-logs.sh",
+      "slug": "scripts-cleanup-logs",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-debug-pre-push",
+      "checksum": "0efb0d74",
       "path": "scripts/debug-pre-push.sh",
+      "slug": "scripts-debug-pre-push",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-demo_jql_analysis",
+      "checksum": "b4ee9570",
       "path": "scripts/demo_jql_analysis.sh",
+      "slug": "scripts-demo_jql_analysis",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-dev-cycle",
+      "checksum": "7df4c125",
       "path": "scripts/dev-cycle.sh",
+      "slug": "scripts-dev-cycle",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-enforce_structured_logging",
+      "checksum": "c152ab63",
       "path": "scripts/enforce_structured_logging.sh",
+      "slug": "scripts-enforce_structured_logging",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-generate-files-config",
+      "checksum": "ce1bae03",
       "path": "scripts/generate-files-config.sh",
+      "slug": "scripts-generate-files-config",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-install_logging_tools",
+      "checksum": "ec2a6608",
       "path": "scripts/install_logging_tools.sh",
+      "slug": "scripts-install_logging_tools",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-log-stats",
+      "checksum": "b34e8181",
       "path": "scripts/log-stats.sh",
+      "slug": "scripts-log-stats",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-macos-optimize",
+      "checksum": "321549d1",
       "path": "scripts/macos-optimize.sh",
+      "slug": "scripts-macos-optimize",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-monitor_errors",
+      "checksum": "25d07e60",
       "path": "scripts/monitor_errors.sh",
+      "slug": "scripts-monitor_errors",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-monitor-errors",
+      "checksum": "ba538a83",
       "path": "scripts/monitor-errors.sh",
+      "slug": "scripts-monitor-errors",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-optimize-build",
+      "checksum": "2456432b",
       "path": "scripts/optimize-build.sh",
+      "slug": "scripts-optimize-build",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-readme",
+      "checksum": "a91fedd1",
       "path": "scripts/README.md",
+      "slug": "scripts-readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "scripts-safe-commit",
+      "checksum": "1ddce2c1",
       "path": "scripts/safe-commit.sh",
+      "slug": "scripts-safe-commit",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-safe-git-aliases",
+      "checksum": "10c90c84",
       "path": "scripts/safe-git-aliases.sh",
+      "slug": "scripts-safe-git-aliases",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-safe-pre-push-hook",
+      "checksum": "ba3db00e",
       "path": "scripts/safe-pre-push-hook.sh",
+      "slug": "scripts-safe-pre-push-hook",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-safe-push",
+      "checksum": "d328faab",
       "path": "scripts/safe-push.sh",
+      "slug": "scripts-safe-push",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-security-check",
+      "checksum": "3e027ba2",
       "path": "scripts/security-check.sh",
+      "slug": "scripts-security-check",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-setup-default",
+      "checksum": "5e00fb77",
       "path": "scripts/setup-default.sh",
+      "slug": "scripts-setup-default",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-setup-env",
+      "checksum": "fdeb471c",
       "path": "scripts/setup-env.sh",
+      "slug": "scripts-setup-env",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-setup-log-cleanup",
+      "checksum": "04dc6f1c",
       "path": "scripts/setup-log-cleanup.sh",
+      "slug": "scripts-setup-log-cleanup",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-simple-git-aliases",
+      "checksum": "2cc969d9",
       "path": "scripts/simple-git-aliases.sh",
+      "slug": "scripts-simple-git-aliases",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-update-ci-integration",
+      "checksum": "63f37491",
       "path": "scripts/update-ci-integration.sh",
+      "slug": "scripts-update-ci-integration",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-validate-ci-setup",
+      "checksum": "3102fd6b",
       "path": "scripts/validate-ci-setup.sh",
+      "slug": "scripts-validate-ci-setup",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-validation_summary",
+      "checksum": "1435c57b",
       "path": "scripts/validation_summary.sh",
+      "slug": "scripts-validation_summary",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-verify-ci-readiness",
+      "checksum": "ea5b572d",
       "path": "scripts/verify-ci-readiness.sh",
+      "slug": "scripts-verify-ci-readiness",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "scripts-watch-dashboard",
+      "checksum": "7bd6e897",
       "path": "scripts/watch-dashboard.sh",
+      "slug": "scripts-watch-dashboard",
       "type": "sh"
-    }
-,
+    },
     {
-      "slug": "security_guide",
+      "checksum": "ab5ecff9",
       "path": "SECURITY_GUIDE.md",
+      "slug": "security_guide",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "security_summary",
+      "checksum": "0f8da58d",
       "path": "SECURITY_SUMMARY.md",
+      "slug": "security_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "shell_script_migration_complete",
+      "checksum": "9eaf6b69",
       "path": "SHELL_SCRIPT_MIGRATION_COMPLETE.md",
+      "slug": "shell_script_migration_complete",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "shell_script_migration_summary",
+      "checksum": "748a6074",
       "path": "SHELL_SCRIPT_MIGRATION_SUMMARY.md",
+      "slug": "shell_script_migration_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "source_based_docs",
+      "checksum": "733c8d8e",
       "path": "SOURCE_BASED_DOCS.md",
+      "slug": "source_based_docs",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "status_system_design",
+      "checksum": "1fc835d6",
       "path": "STATUS_SYSTEM_DESIGN.md",
+      "slug": "status_system_design",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "status_system_json_codegen_summary",
+      "checksum": "eea35482",
       "path": "STATUS_SYSTEM_JSON_CODEGEN_SUMMARY.md",
+      "slug": "status_system_json_codegen_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "status_system_summary",
+      "checksum": "17e08fda",
       "path": "STATUS_SYSTEM_SUMMARY.md",
+      "slug": "status_system_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "status-badge",
+      "checksum": "3b1bdab6",
       "path": "status-badge.json",
+      "slug": "status-badge",
       "type": "json"
-    }
-,
+    },
     {
-      "slug": "strict_file_policy_summary",
+      "checksum": "6944158e",
       "path": "STRICT_FILE_POLICY_SUMMARY.md",
+      "slug": "strict_file_policy_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "structure",
+      "checksum": "fc1aaee5",
       "path": "STRUCTURE.md",
+      "slug": "structure",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "structured_logging_complete",
+      "checksum": "b5d51486",
       "path": "STRUCTURED_LOGGING_COMPLETE.md",
+      "slug": "structured_logging_complete",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "structured_logging_implementation_summary",
+      "checksum": "e99a7a5b",
       "path": "STRUCTURED_LOGGING_IMPLEMENTATION_SUMMARY.md",
+      "slug": "structured_logging_implementation_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "stuff",
+      "checksum": "61cc8793",
       "path": "stuff.md",
+      "slug": "stuff",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "template_system_summary",
+      "checksum": "e83a73da",
       "path": "TEMPLATE_SYSTEM_SUMMARY.md",
+      "slug": "template_system_summary",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "templates-readme",
+      "checksum": "554877b5",
       "path": "templates/README.hbs",
+      "slug": "templates-readme",
       "type": "hbs"
-    }
-,
+    },
     {
-      "slug": "warning_and_validation_fixes",
+      "checksum": "7aebf335",
       "path": "WARNING_AND_VALIDATION_FIXES.md",
+      "slug": "warning_and_validation_fixes",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "wit-event-bus",
+      "checksum": "7d82e5af",
       "path": "wit/event-bus.wit",
+      "slug": "wit-event-bus",
       "type": "wit"
-    }
-,
+    },
     {
-      "slug": "wit-hook-builder",
+      "checksum": "befb38bb",
       "path": "wit/hook-builder.wit",
+      "slug": "wit-hook-builder",
       "type": "wit"
-    }
-,
+    },
     {
-      "slug": "wit-hooksmith",
+      "checksum": "d59fa021",
       "path": "wit/hooksmith.wit",
+      "slug": "wit-hooksmith",
       "type": "wit"
-    }
-,
+    },
     {
-      "slug": "wit-lefthook-generator",
+      "checksum": "29d7ae50",
       "path": "wit/lefthook-generator.wit",
+      "slug": "wit-lefthook-generator",
       "type": "wit"
-    }
-,
+    },
     {
-      "slug": "wit-validation",
+      "checksum": "8ef2443b",
       "path": "wit/validation.wit",
+      "slug": "wit-validation",
       "type": "wit"
-    }
-,
+    },
     {
-      "slug": "wit-worktree-runner",
+      "checksum": "3edee0c1",
       "path": "wit/worktree-runner.wit",
+      "slug": "wit-worktree-runner",
       "type": "wit"
-    }
-,
+    },
     {
-      "slug": "workspace_layout",
+      "checksum": "a164f6ad",
       "path": "WORKSPACE_LAYOUT.md",
+      "slug": "workspace_layout",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "xtask_commands",
+      "checksum": "09ac1c90",
       "path": "XTASK_COMMANDS.md",
+      "slug": "xtask_commands",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "xtask-cargo",
+      "checksum": "ca389ad2",
       "path": "xtask/Cargo.toml",
+      "slug": "xtask-cargo",
       "type": "toml"
-    }
-,
+    },
     {
-      "slug": "xtask-docs-cli_help",
+      "checksum": "2c212372",
       "path": "xtask/docs/CLI_HELP.md",
+      "slug": "xtask-docs-cli_help",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "xtask-hooks",
+      "checksum": "83902c69",
       "path": "xtask/hooks/.gitattributes",
+      "slug": "xtask-hooks",
       "type": "gitattributes"
-    }
-,
+    },
     {
-      "slug": "xtask-hooks-readme",
+      "checksum": "d1895896",
       "path": "xtask/hooks/README.md",
+      "slug": "xtask-hooks-readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "xtask-readme",
+      "checksum": "d13b9ccd",
       "path": "xtask/README.md",
+      "slug": "xtask-readme",
       "type": "md"
-    }
-,
+    },
     {
-      "slug": "xtask-status-badge",
+      "checksum": "aa512456",
       "path": "xtask/status-badge.json",
+      "slug": "xtask-status-badge",
       "type": "json"
-    }
-,
+    },
     {
-      "slug": "xtask-status-trends-status-2025-08-02",
+      "checksum": "394222e4",
       "path": "xtask/status-trends/status-2025-08-02.json",
+      "slug": "xtask-status-trends-status-2025-08-02",
       "type": "json"
-    }
-,
+    },
     {
-      "slug": "xtask-wit-hooksmith",
+      "checksum": "30e5e560",
       "path": "xtask/wit/hooksmith.wit",
+      "slug": "xtask-wit-hooksmith",
       "type": "wit"
-    }
-,
+    },
     {
-      "slug": "xtask-wit-worktree-runner",
+      "checksum": "ea5f44bf",
       "path": "xtask/wit/worktree-runner.wit",
+      "slug": "xtask-wit-worktree-runner",
       "type": "wit"
     }
   ],
-
-  // Ignore rules, structured to support nested .gitignore-style matching
   "ignore": {
     "dirs": [
-      "target/"
-,
-      "dist/"
-,
-      "node_modules/"
-,
-      "logs/"
-,
-      "status-trends/"
-,
-      "generated_file_demo/"
-,
-      ".cargo/"
-,
-      ".trunk/"
-,
-      ".hooks/"
-,
+      "target/",
+      "dist/",
+      "node_modules/",
+      "logs/",
+      "status-trends/",
+      "generated_file_demo/",
+      ".cargo/",
+      ".trunk/",
+      ".hooks/",
       ".git/"
     ],
     "patterns": [
       "*.lock",
       "*.jsonl"
     ]
-  }
+  },
+  "title": "Hooksmith Generated Files"
 }

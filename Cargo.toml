@@ -126,6 +126,14 @@ path = "hooks/validate-checksums.rs"
 name = "add-checksums"
 path = "scripts/add-checksums.rs"
 
+[[bin]]
+name = "report-file-checksums"
+path = "scripts/report-file-checksums.rs"
+
+[[bin]]
+name = "add-registry-checksums"
+path = "scripts/add-registry-checksums.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
