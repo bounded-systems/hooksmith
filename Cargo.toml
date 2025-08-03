@@ -62,12 +62,12 @@ rustdoc-stripper = "0.1"
 
 # WASM and WIT support
 wasmtime = "34.0"
-wit-bindgen = "0.20"
+wit-bindgen = "0.34"
 wasmtime-wasi = "34.0"
-wit-parser = "0.12"
-wit-component = "0.12"
+wit-parser = "0.219"
+wit-component = "0.219"
 wat = "1.0"
-wasmparser = "0.120"
+wasmparser = "0.219"
 
 # Time and date handling
 chrono = { version = "0.4", features = ["serde"] }

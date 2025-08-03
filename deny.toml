@@ -3,16 +3,6 @@
 [advisories]
 db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
-# Temporarily allow security issues while we work on fixing them
-ignore = [
-    "RUSTSEC-2025-0021",  # gix-features SHA-1 collision
-    "RUSTSEC-2024-0438",  # wasmtime Windows device filenames
-    "RUSTSEC-2025-0046",  # wasmtime fd_renumber panic
-    "RUSTSEC-2020-0168",  # mach unmaintained
-    "RUSTSEC-2024-0436",  # paste unmaintained
-    "RUSTSEC-2024-0359",  # gix-attributes unsound
-    "RUSTSEC-2024-0442",  # wasmtime-jit-debug unsound
-]
 
 [licenses]
 allow = [
