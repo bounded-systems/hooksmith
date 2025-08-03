@@ -55,14 +55,16 @@ pub struct ContractProof {
 /// Contract validator implementation
 pub struct ContractValidator {
     /// Git repository path
-    repo_path: String,
+    _repo_path: String,
 }
 
 impl ContractValidator {
     /// Create a new contract validator
     pub fn new() -> Result<Self> {
         let repo_path = std::env::current_dir()?.to_string_lossy().to_string();
-        Ok(Self { repo_path })
+        Ok(Self {
+            _repo_path: repo_path,
+        })
     }
 
     /// Validate a contract file and generate proof

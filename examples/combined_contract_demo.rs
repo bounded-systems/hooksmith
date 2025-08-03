@@ -157,7 +157,7 @@ fn demo_generated_files_validation() -> Result<(), Box<dyn std::error::Error>> {
         ("docs/README.md", false, false),    // Docs, should not have linguist-generated=true
     ];
 
-    for (filepath, is_generated, should_have_linguist) in test_cases {
+    for (filepath, _is_generated, should_have_linguist) in test_cases {
         let attributes = if should_have_linguist {
             Some(vec!["linguist-generated=true".to_string()])
         } else {

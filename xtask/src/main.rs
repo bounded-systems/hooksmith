@@ -1276,7 +1276,7 @@ fn generate_readme(output: &str, overwrite: bool) -> Result<()> {
 
     // Get CLI help
     let cli_help = Command::new("cargo")
-        .args(["run", "--", "--help"])
+        .args(["run", "--bin", "hooksmith", "--", "--help"])
         .output()
         .context("Failed to get CLI help")?;
 

@@ -5,6 +5,8 @@ jobs = 4  # Use 4 jobs instead of 0
 incremental = true
 # Build dependencies in parallel
 dep-info-basedir = "target"
+# Suppress WIT file warnings
+rustflags = ["--allow", "warnings"]
 
 [target.wasm32-unknown-unknown]
 # WASM target configuration

@@ -36,7 +36,7 @@ fn demo_tree_mode_validation() -> Result<(), Box<dyn std::error::Error>> {
         ("040000", "Tree (directory)"),
     ];
 
-    for (mode_str, description) in modes {
+    for (mode_str, _description) in modes {
         match TreeMode::parse_from_str(mode_str) {
             Some(mode) => {
                 println!("  ✅ Mode {}: {}", mode_str, mode.description());

@@ -162,3 +162,9 @@ tempfile = "3.0"
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[package.metadata.component]
+wit = ["wit", "components/hook-builder/wit", "components/worktree-runner/wit"]
+
+[package.metadata.component.bindings]
+exports = { world = "hooksmith" }
