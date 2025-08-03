@@ -52,13 +52,12 @@ pub const BUILD_TIMESTAMP: &str = "{}";
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs()
-            .to_string()
     );
 
     let out_dir = env::var("OUT_DIR").expect("OUT_DIR not set");
     let version_file = Path::new(&out_dir).join("version.rs");
     fs::write(version_file, version_info).expect("Failed to write version.rs");
-    println!("cargo:rustc-env=VERSION_RS={}", out_dir);
+    println!("cargo:rustc-env=VERSION_RS={out_dir}");
 }
 
 fn generate_feature_flags() {
@@ -87,7 +86,7 @@ pub const IS_NATIVE: bool = {};
     let out_dir = env::var("OUT_DIR").expect("OUT_DIR not set");
     let features_file = Path::new(&out_dir).join("features.rs");
     fs::write(features_file, feature_flags).expect("Failed to write features.rs");
-    println!("cargo:rustc-env=FEATURES_RS={}", out_dir);
+    println!("cargo:rustc-env=FEATURES_RS={out_dir}");
 }
 
 fn generate_wit_bindings() {
@@ -101,8 +100,8 @@ fn generate_wit_bindings() {
 
     for wit_file in &wit_files {
         if Path::new(wit_file).exists() {
-            println!("cargo:rerun-if-changed={}", wit_file);
-            println!("cargo:warning=WIT file found: {}", wit_file);
+            println!("cargo:rerun-if-changed={wit_file}");
+            println!("cargo:warning=WIT file found: {wit_file}");
         }
     }
 
@@ -152,7 +151,7 @@ pub const COMPONENTS: &[&str] = &[
     let out_dir = env::var("OUT_DIR").expect("OUT_DIR not set");
     let docs_file = Path::new(&out_dir).join("docs.rs");
     fs::write(docs_file, doc_constants).expect("Failed to write docs.rs");
-    println!("cargo:rustc-env=DOCS_RS={}", out_dir);
+    println!("cargo:rustc-env=DOCS_RS={out_dir}");
 }
 
 fn setup_conditional_compilation() {
@@ -172,7 +171,7 @@ fn setup_conditional_compilation() {
 
     // Set up debug/release flags
     let profile = env::var("PROFILE").unwrap_or_else(|_| "debug".to_string());
-    println!("cargo:rustc-cfg=profile=\"{}\"", profile);
+    println!("cargo:rustc-cfg=profile=\"{profile}\"");
 
     // Set up feature flags for conditional compilation
     // Note: These are placeholders for future feature support

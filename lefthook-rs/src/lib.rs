@@ -87,8 +87,7 @@ pub async fn install() -> Result<()> {
 
     if !status.success() {
         return Err(LefthookError::Installation(format!(
-            "Lefthook install failed with status: {}",
-            status
+            "Lefthook install failed with status: {status}"
         )));
     }
 
@@ -120,12 +119,11 @@ pub async fn run_hook(hook_name: &str) -> Result<()> {
         .arg("run")
         .arg(hook_name)
         .status()
-        .context(format!("Failed to execute lefthook run {}", hook_name))?;
+        .context(format!("Failed to execute lefthook run {hook_name}"))?;
 
     if !status.success() {
         return Err(LefthookError::CommandExecution(format!(
-            "Lefthook run {} failed with status: {}",
-            hook_name, status
+            "Lefthook run {hook_name} failed with status: {status}"
         )));
     }
 

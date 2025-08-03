@@ -31,7 +31,6 @@ cargo build
 │   ├── ARCHITECTURE.md
 │   ├── STRUCTURE.md
 │   ├── SOURCE_BASED_DOCS.md
-│   ├── clippy.toml.backup
 │   ├── RUST_TOOLING_SETUP.md
 │   ├── rustfmt.toml
 │   ├── CODEGEN_SUMMARY.md
@@ -224,6 +223,7 @@ cargo build
 │       └── README.md
 │   ├── lefthook.yml
 │   ├── BOOTSTRAP.md
+│   ├── clippy.toml
 │   ├── templates/
 │       └── README.hbs
 │   ├── RUST_TOOLING_SUMMARY.md

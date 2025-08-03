@@ -1,58 +1,6 @@
 [toolchain]
-channel = "1.80.0"
+channel = "1.88.0"
 components = [
     "rustfmt",
     "clippy",
-    "rust-analyzer",
-    "rust-src",
-    "rustc-dev",
-    "llvm-tools-preview",
 ]
-targets = [
-    "wasm32-unknown-unknown",
-    "wasm32-wasi",
-]
-
-[profile.dev]
-opt-level = 0
-debug = true
-split-debuginfo = "unpacked"
-debug-assertions = true
-overflow-checks = true
-lto = false
-panic = "unwind"
-codegen-units = 256
-rpath = false
-
-[profile.release]
-opt-level = 3
-debug = false
-split-debuginfo = "packed"
-debug-assertions = false
-overflow-checks = false
-lto = "thin"
-panic = "unwind"
-codegen-units = 16
-rpath = false
-
-[profile.test]
-opt-level = 0
-debug = 2
-split-debuginfo = "unpacked"
-debug-assertions = true
-overflow-checks = true
-lto = false
-panic = "unwind"
-codegen-units = 256
-rpath = false
-
-[profile.bench]
-opt-level = 3
-debug = false
-split-debuginfo = "packed"
-debug-assertions = false
-overflow-checks = false
-lto = "thin"
-panic = "unwind"
-codegen-units = 16
-rpath = false 

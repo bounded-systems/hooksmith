@@ -61,7 +61,7 @@ impl CliOperations for DefaultCliOperations {
         // Placeholder implementation
         Ok(CliResult {
             success: true,
-            message: format!("Executed {} with args {:?}", command, args),
+            message: format!("Executed {command} with args {args:?}"),
             error: None,
             data: None,
         })

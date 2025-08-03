@@ -10,6 +10,8 @@ This document shows the complete file structure of the repository.
 
 ```
 .
+├── .cargo/
+  ├── config.toml
 ├── .editorconfig
 ├── .gitattributes
 ├── .gitattributes-blob-contract
@@ -62,6 +64,8 @@ This document shows the complete file structure of the repository.
 ├── PHASE_4_IMPLEMENTATION_SUMMARY.md
 ├── PHASE_5_CI_ENFORCEMENT_SUMMARY.md
 ├── README.md
+├── RUST_TOOLING_SETUP.md
+├── RUST_TOOLING_SUMMARY.md
 ├── SAFEGUARDS_SUMMARY.md
 ├── SHELL_SCRIPT_MIGRATION_COMPLETE.md
 ├── SHELL_SCRIPT_MIGRATION_SUMMARY.md
@@ -75,6 +79,7 @@ This document shows the complete file structure of the repository.
 ├── bootstrap-simple.rs
 ├── bootstrap-test.rs
 ├── bootstrap.rs
+├── build.rs
 ├── components/
   ├── cli-core/
     ├── Cargo.toml
@@ -411,12 +416,25 @@ This document shows the complete file structure of the repository.
   ├── src/
     ├── main.rs
 ├── lefthook.yml
+├── rust-toolchain.toml
+├── rustfmt.toml
 ├── schemas/
   ├── contract-state.schema.json
 ├── schemas/
   ├── contract-transition.schema.json
 ├── schemas/
   ├── merkle-proof.schema.json
+├── scripts/
+  ├── README.md
+├── src/
+  ├── bin/
+    ├── dev-workflow.rs
+├── src/
+  ├── bin/
+    ├── generate-cargo-toml.rs
+├── src/
+  ├── bin/
+    ├── setup.rs
 ├── src/
   ├── commands/
     ├── mod.rs
@@ -629,7 +647,7 @@ This document shows the complete file structure of the repository.
 
 - **Total Files**:       318
 - **Rust Files**:        120 (.rs)
-- **Configuration Files**:        35 (.toml, .yaml, .rc)
+- **Configuration Files**:        37 (.toml, .yaml, .rc)
 - **Documentation**:        123 (.md)
 - **Scripts**:        0 (.sh)
 
@@ -637,22 +655,21 @@ This document shows the complete file structure of the repository.
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .epub | 1 | EPUB documentation |
-| .html | 1 | HTML documentation |
 | .yml | 9 | YAML configuration files |
+| .html | 1 | HTML documentation |
+| .bash | 1 | Other files |
 | .wit | 9 | WebAssembly Interface Type definitions |
 | .css | 1 | Stylesheet files |
-| .rs | 120 | Rust source files |
-| .lock | 2 | Other files |
-| .pdf | 1 | PDF documentation |
-| .json | 10 | JSON schema and config files |
 | .dot | 1 | Other files |
-| .toml | 12 | Cargo and configuration files |
-| .bash | 1 | Other files |
 | .hbs | 1 | Other files |
 | .yaml | 4 | YAML configuration files |
-| .backup | 2 | Other files |
+| .lock | 2 | Other files |
+| .toml | 14 | Cargo and configuration files |
 | .md | 123 | Markdown documentation |
+| .json | 10 | JSON schema and config files |
+| .epub | 1 | EPUB documentation |
+| .pdf | 1 | PDF documentation |
+| .rs | 120 | Rust source files |
 
 ## 🧩 Component Breakdown
 
@@ -683,9 +700,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 161
-- **Modified Files**: 28
+- **Total Commits**: 162
+- **Modified Files**: 12
 
 ---
 
-*Generated on Sun Aug  3 00:02:57 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 00:10:17 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*

@@ -95,7 +95,7 @@ pub async fn run() -> Result<()> {
             hook_name,
             config: _,
         } => {
-            println!("Running hook: {}", hook_name);
+            println!("Running hook: {hook_name}");
             crate::run_hook(&hook_name).await?;
             println!("✅ Hook completed successfully");
         }
@@ -114,7 +114,7 @@ pub async fn run() -> Result<()> {
             }
 
             config.write_to_file(&output).await?;
-            println!("✅ Configuration generated at: {:?}", output);
+            println!("✅ Configuration generated at: {output:?}");
         }
 
         Commands::Validate { config } => {
@@ -131,7 +131,7 @@ pub async fn run() -> Result<()> {
 
         Commands::Version => {
             let version = crate::get_version().await?;
-            println!("Lefthook version: {}", version);
+            println!("Lefthook version: {version}");
         }
 
         Commands::Init {
@@ -139,7 +139,7 @@ pub async fn run() -> Result<()> {
             dir,
             template,
         } => {
-            println!("Initializing new project: {}", name);
+            println!("Initializing new project: {name}");
             init_project(&name, dir, &template).await?;
             println!("✅ Project initialized successfully");
         }
@@ -227,8 +227,7 @@ fi"#),
 
         _ => {
             return Err(crate::error::LefthookError::Configuration(format!(
-                "Unknown template: {}",
-                template
+                "Unknown template: {template}"
             )));
         }
     }
@@ -253,7 +252,7 @@ async fn init_project(name: &str, dir: Option<PathBuf>, template: &str) -> Resul
 
     // Create README
     let readme_content = format!(
-        r#"# {}
+        r#"# {name}
 
 This project uses Lefthook for Git hooks management.
 
@@ -279,7 +278,7 @@ This project uses Lefthook for Git hooks management.
 
 ## Configuration
 
-Hooks are configured in `lefthook.yml`. This file was generated using the `{}` template.
+Hooks are configured in `lefthook.yml`. This file was generated using the `{template}` template.
 
 ## Development
 
@@ -291,8 +290,7 @@ lefthook run pre-push
 # Validate configuration
 lefthook run commit-msg
 ```
-"#,
-        name, template
+"#
     );
 
     let readme_path = project_dir.join("README.md");
@@ -318,8 +316,8 @@ lefthook run commit-msg
         println!("   Lefthook hooks installed");
     }
 
-    println!("   Project created at: {:?}", project_dir);
-    println!("   Configuration: {:?}", config_path);
+    println!("   Project created at: {project_dir:?}");
+    println!("   Configuration: {config_path:?}");
 
     Ok(())
 }

@@ -330,6 +330,9 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[features]
+download = []
+
 [dependencies]
 anyhow.workspace = true
 serde.workspace = true
@@ -337,6 +340,8 @@ serde_yaml.workspace = true
 tokio.workspace = true
 which.workspace = true
 tracing.workspace = true
+clap.workspace = true
+thiserror.workspace = true
 "#.to_string();
     add_toml_codegen_marker(&mut lefthook_rs_toml, "lefthook-rs/Cargo.toml");
     fs::write("lefthook-rs/Cargo.toml", lefthook_rs_toml)?;

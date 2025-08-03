@@ -8,30 +8,30 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **sha2**: ^0.10
-- **toml**: ^0.8
-- **serde_yaml**: ^0.9
-- **serde_json**: ^1.0
-- **jsonschema**: ^0.17
-- **indicatif**: ^0.17
-- **regex**: ^1.0
 - **reqwest**: ^0.11
-- **chrono**: ^0.4
-- **clap**: ^4.0
-- **wit-bindgen**: ^0.20
-- **git-filter**: *
-- **cli-core**: *
-- **tempfile**: dev
-- **tracing**: ^0.1
-- **tracing-subscriber**: ^0.3
-- **anyhow**: ^1.0
-- **serde**: ^1.0
-- **wasmtime-wasi**: ^18.0
 - **tokio**: ^1.0
-- **wasmtime**: ^18.0
-- **which**: ^5.0
-- **console**: ^0.15
+- **serde**: ^1.0
+- **serde_yaml**: ^0.9
+- **regex**: ^1.0
+- **git-filter**: *
 - **git2**: ^0.18
+- **serde_json**: ^1.0
+- **cli-core**: *
+- **tracing-subscriber**: ^0.3
+- **wit-bindgen**: ^0.20
+- **chrono**: ^0.4
+- **wasmtime**: ^18.0
+- **console**: ^0.15
+- **anyhow**: ^1.0
+- **toml**: ^0.8
+- **wasmtime-wasi**: ^18.0
+- **tempfile**: dev
+- **indicatif**: ^0.17
+- **clap**: ^4.0
+- **jsonschema**: ^0.17
+- **sha2**: ^0.10
+- **tracing**: ^0.1
+- **which**: ^5.0
 
 ## Installation
 
@@ -56,7 +56,6 @@ hooksmith --help
 │   ├── ARCHITECTURE.md
 │   ├── STRUCTURE.md
 │   ├── SOURCE_BASED_DOCS.md
-│   ├── clippy.toml.backup
 │   ├── RUST_TOOLING_SETUP.md
 │   ├── rustfmt.toml
 │   ├── CODEGEN_SUMMARY.md
@@ -249,6 +248,7 @@ hooksmith --help
 │       └── README.md
 │   ├── lefthook.yml
 │   ├── BOOTSTRAP.md
+│   ├── clippy.toml
 │   ├── templates/
 │       └── README.hbs
 │   ├── RUST_TOOLING_SUMMARY.md
