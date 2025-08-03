@@ -178,13 +178,26 @@ impl StateMachine {
         to: &ContractState,
         transition: &str,
     ) -> bool {
-        match (from, to, transition) {
-            (ContractState::UNTRACKED, ContractState::UNVALIDATED, "detect_contract") => true,
-            (ContractState::UNVALIDATED, ContractState::VALIDATED, "validate_contract") => true,
-            (ContractState::VALIDATED, ContractState::LOCKED, "lock_contract") => true,
-            (ContractState::LOCKED, ContractState::UNVALIDATED, "modify_contract") => true,
-            _ => false,
-        }
+        matches!(
+            (from, to, transition),
+            (
+                ContractState::UNTRACKED,
+                ContractState::UNVALIDATED,
+                "detect_contract"
+            ) | (
+                ContractState::UNVALIDATED,
+                ContractState::VALIDATED,
+                "validate_contract"
+            ) | (
+                ContractState::VALIDATED,
+                ContractState::LOCKED,
+                "lock_contract"
+            ) | (
+                ContractState::LOCKED,
+                ContractState::UNVALIDATED,
+                "modify_contract"
+            )
+        )
     }
 }
 

@@ -25,6 +25,9 @@ toml = "0.8"
 glob = "0.3"
 git2 = "0.18"
 hex = "0.4"
+uuid = { version = "1.0", features = ["v4"] }
+wasmtime = "18.0"
+wasmtime-wasi = "18.0"
 hooksmith = { path = ".." }
 
 [dev-dependencies]

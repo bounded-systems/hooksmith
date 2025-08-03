@@ -39,17 +39,150 @@ impl From<HookTypeArg> for HookType {
     }
 }
 
+/// Event stream commands
+#[derive(Debug, Clone, clap::Subcommand)]
+enum EventStreamCommands {
+    /// Initialize event stream
+    Init {
+        /// Output file for JSONL events
+        #[arg(long)]
+        output_file: Option<String>,
+        /// Whether to enable console output
+        #[arg(long, default_value = "true")]
+        console_output: bool,
+        /// Whether to enable real-time broadcasting
+        #[arg(long, default_value = "true")]
+        enable_broadcast: bool,
+        /// Minimum severity level to log
+        #[arg(long, default_value = "info")]
+        min_severity: String,
+    },
+    /// Monitor events in real-time
+    Monitor {
+        /// Whether to show metadata
+        #[arg(long)]
+        show_metadata: bool,
+        /// Performance threshold in milliseconds
+        #[arg(long, default_value = "1000")]
+        performance_threshold: u64,
+        /// Error threshold for alerts
+        #[arg(long, default_value = "5")]
+        error_threshold: u64,
+    },
+    /// Analyze event stream
+    Analyze {
+        /// Input file to analyze
+        #[arg(long)]
+        input_file: String,
+        /// Output format (json, table, summary)
+        #[arg(long, default_value = "summary")]
+        format: String,
+    },
+    /// Generate event stream configuration
+    GenConfig {
+        /// Output file path
+        #[arg(long, default_value = "event-stream.yml")]
+        output: String,
+    },
+}
+
+/// Event bus commands
+#[derive(Debug, Clone, clap::Subcommand)]
+enum EventBusCommands {
+    /// Initialize event bus
+    Init {
+        /// Whether to enable JSONL persistence
+        #[arg(long, default_value = "true")]
+        enable_persistence: bool,
+        /// JSONL file path
+        #[arg(long)]
+        jsonl_file: Option<String>,
+        /// Batch size for JSONL writes
+        #[arg(long, default_value = "10")]
+        batch_size: usize,
+        /// Flush interval in milliseconds
+        #[arg(long, default_value = "1000")]
+        flush_interval_ms: u64,
+        /// Whether to enable console output
+        #[arg(long, default_value = "true")]
+        console_output: bool,
+    },
+    /// Start event processor with handlers
+    Process {
+        /// Whether to enable auto-push handler
+        #[arg(long)]
+        auto_push: bool,
+        /// Whether to enable notification handler
+        #[arg(long)]
+        notifications: bool,
+        /// Whether to enable metrics handler
+        #[arg(long)]
+        metrics: bool,
+    },
+    /// Replay events from JSONL file
+    Replay {
+        /// Input JSONL file to replay
+        #[arg(long)]
+        input_file: String,
+        /// Whether to enable auto-push handler during replay
+        #[arg(long)]
+        auto_push: bool,
+        /// Whether to enable notification handler during replay
+        #[arg(long)]
+        notifications: bool,
+    },
+    /// Emit test events
+    EmitTest {
+        /// Number of test events to emit
+        #[arg(long, default_value = "5")]
+        count: usize,
+    },
+}
+
+/// WASM component commands
+#[derive(Debug, Clone, clap::Subcommand)]
+enum WasmComponentCommands {
+    /// Load a WASM component
+    Load {
+        /// Path to WASM component file
+        #[arg(long)]
+        component_path: String,
+        /// Component configuration (JSON)
+        #[arg(long)]
+        config: Option<String>,
+    },
+    /// List loaded WASM components
+    List,
+    /// Unload a WASM component
+    Unload {
+        /// Handler ID of component to unload
+        #[arg(long)]
+        handler_id: u32,
+    },
+    /// Get WASM component statistics
+    Stats,
+    /// Build validation handler component
+    BuildValidationHandler {
+        /// Output directory for built component
+        #[arg(long, default_value = "target/wasm")]
+        output_dir: String,
+    },
+}
+
 mod code_stats;
 mod config;
 mod contract;
 mod contract_validation;
 mod docs;
+mod event_bus;
+mod event_stream;
 mod file_audit;
 mod generated_file_validator;
 mod git_notes_manager;
 mod hierarchical_validation;
 mod hook_state_machine;
 mod status;
+mod wasm_event_bus;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -500,6 +633,21 @@ enum Commands {
         #[arg(long)]
         validate: bool,
     },
+    /// Event stream management and monitoring
+    EventStream {
+        #[command(subcommand)]
+        command: EventStreamCommands,
+    },
+    /// Event bus management and processing
+    EventBus {
+        #[command(subcommand)]
+        command: EventBusCommands,
+    },
+    /// WASM component management
+    WasmComponents {
+        #[command(subcommand)]
+        command: WasmComponentCommands,
+    },
 }
 
 /// WIT schema for function definition
@@ -605,6 +753,17 @@ struct LefthookConfig {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Initialize event bus with default configuration
+    let event_bus_config = event_bus::EventBusConfig::default();
+    event_bus::init_event_bus(event_bus_config.clone())?;
+
+    // Initialize WASM event bus host
+    wasm_event_bus::init_wasm_event_bus_host(event_bus_config)?;
+
+    // Initialize legacy event stream for backward compatibility
+    let event_stream_config = event_stream::EventStreamConfig::default();
+    event_stream::init_event_stream(event_stream_config)?;
+
     let cli = Cli::parse();
 
     match cli.command {
@@ -853,6 +1012,91 @@ async fn main() -> Result<()> {
         Commands::GenLefthookHooks { output, validate } => {
             generate_lefthook_hooks_config(output, validate).await?;
         }
+        Commands::EventStream { command } => match command {
+            EventStreamCommands::Init {
+                output_file,
+                console_output,
+                enable_broadcast,
+                min_severity,
+            } => {
+                init_event_stream_command(
+                    output_file,
+                    console_output,
+                    enable_broadcast,
+                    min_severity,
+                )
+                .await?;
+            }
+            EventStreamCommands::Monitor {
+                show_metadata,
+                performance_threshold,
+                error_threshold,
+            } => {
+                monitor_events_command(show_metadata, performance_threshold, error_threshold)
+                    .await?;
+            }
+            EventStreamCommands::Analyze { input_file, format } => {
+                analyze_events_command(input_file, format).await?;
+            }
+            EventStreamCommands::GenConfig { output } => {
+                generate_event_stream_config(output).await?;
+            }
+        },
+        Commands::EventBus { command } => match command {
+            EventBusCommands::Init {
+                enable_persistence,
+                jsonl_file,
+                batch_size,
+                flush_interval_ms,
+                console_output,
+            } => {
+                init_event_bus_command(
+                    enable_persistence,
+                    jsonl_file,
+                    batch_size,
+                    flush_interval_ms,
+                    console_output,
+                )
+                .await?;
+            }
+            EventBusCommands::Process {
+                auto_push,
+                notifications,
+                metrics,
+            } => {
+                process_events_command(auto_push, notifications, metrics).await?;
+            }
+            EventBusCommands::Replay {
+                input_file,
+                auto_push,
+                notifications,
+            } => {
+                replay_events_command(input_file, auto_push, notifications).await?;
+            }
+            EventBusCommands::EmitTest { count } => {
+                emit_test_events_command(count).await?;
+            }
+        },
+        Commands::WasmComponents { command } => match command {
+            WasmComponentCommands::Load {
+                component_path,
+                config,
+            } => {
+                load_wasm_component_command(component_path, config).await?;
+            }
+            WasmComponentCommands::List => {
+                list_wasm_components_command()?;
+            }
+            WasmComponentCommands::Unload { handler_id } => {
+                unload_wasm_component_command(handler_id)?;
+            }
+            WasmComponentCommands::Stats => {
+                get_wasm_component_stats_command()?;
+            }
+            WasmComponentCommands::BuildValidationHandler { output_dir } => {
+                build_validation_handler_command(output_dir).await?;
+            }
+        },
     }
 
     Ok(())
@@ -5101,6 +5345,489 @@ fn list_available_hooks() -> Result<()> {
 }
 
 /// Generate Lefthook configuration that uses the hook state machine
+async fn init_event_stream_command(
+    output_file: Option<String>,
+    console_output: bool,
+    enable_broadcast: bool,
+    min_severity: String,
+) -> Result<()> {
+    println!("🎯 Initializing event stream...");
+
+    let min_severity = match min_severity.to_lowercase().as_str() {
+        "trace" => event_stream::EventSeverity::Trace,
+        "debug" => event_stream::EventSeverity::Debug,
+        "info" => event_stream::EventSeverity::Info,
+        "warn" => event_stream::EventSeverity::Warn,
+        "error" => event_stream::EventSeverity::Error,
+        "critical" => event_stream::EventSeverity::Critical,
+        _ => event_stream::EventSeverity::Info,
+    };
+
+    let config = event_stream::EventStreamConfig {
+        output_file: output_file.clone().map(PathBuf::from),
+        console_output,
+        enable_broadcast,
+        broadcast_capacity: 1000,
+        retention_period: Some(Duration::from_secs(24 * 60 * 60)), // 24 hours
+        enable_filtering: true,
+        min_severity: min_severity.clone(),
+    };
+
+    event_stream::init_event_stream(config)?;
+
+    println!("✅ Event stream initialized successfully");
+    println!("   📁 Output file: {:?}", output_file);
+    println!("   🖥️ Console output: {}", console_output);
+    println!("   📡 Broadcasting: {}", enable_broadcast);
+    println!("   📊 Min severity: {:?}", min_severity);
+
+    Ok(())
+}
+
+async fn monitor_events_command(
+    show_metadata: bool,
+    performance_threshold: u64,
+    error_threshold: u64,
+) -> Result<()> {
+    println!("🎯 Starting event monitor...");
+
+    let mut monitor = event_stream::EventMonitor::new()?;
+
+    // Add default handlers
+    monitor.add_handler(Box::new(event_stream::ConsoleEventHandler::new(
+        show_metadata,
+    )));
+    monitor.add_handler(Box::new(event_stream::PerformanceEventHandler::new()));
+    monitor.add_handler(Box::new(event_stream::ErrorAggregationHandler::new(
+        error_threshold,
+    )));
+
+    println!("✅ Event monitor started with handlers:");
+    println!("   📺 Console handler (show_metadata: {})", show_metadata);
+    println!(
+        "   ⚡ Performance handler (threshold: {}ms)",
+        performance_threshold
+    );
+    println!(
+        "   🚨 Error aggregation handler (threshold: {})",
+        error_threshold
+    );
+    println!("   Press Ctrl+C to stop");
+
+    // Start monitoring
+    monitor.start().await?;
+
+    Ok(())
+}
+
+async fn analyze_events_command(input_file: String, format: String) -> Result<()> {
+    println!("📊 Analyzing event stream from: {}", input_file);
+
+    let content = fs::read_to_string(&input_file)
+        .context(format!("Failed to read event file: {}", input_file))?;
+
+    let mut events = Vec::new();
+    for line in content.lines() {
+        if !line.trim().is_empty() {
+            if let Ok(event) = serde_json::from_str::<event_stream::Event>(line) {
+                events.push(event);
+            }
+        }
+    }
+
+    println!("📈 Found {} events", events.len());
+
+    match format.to_lowercase().as_str() {
+        "json" => {
+            println!("{}", serde_json::to_string_pretty(&events)?);
+        }
+        "summary" => {
+            print_event_summary(&events)?;
+        }
+        "table" => {
+            print_event_table(&events)?;
+        }
+        _ => {
+            anyhow::bail!("Unknown format: {}", format);
+        }
+    }
+
+    Ok(())
+}
+
+async fn init_event_bus_command(
+    enable_persistence: bool,
+    jsonl_file: Option<String>,
+    batch_size: usize,
+    flush_interval_ms: u64,
+    console_output: bool,
+) -> Result<()> {
+    println!("🎯 Initializing event bus...");
+
+    let config = event_bus::EventBusConfig {
+        enable_persistence,
+        jsonl_file: jsonl_file.clone().map(PathBuf::from),
+        batch_size,
+        flush_interval_ms,
+        broadcast_capacity: 1000,
+        console_output,
+        session_id: Some(uuid::Uuid::new_v4().to_string()),
+    };
+
+    event_bus::init_event_bus(config)?;
+
+    println!("✅ Event bus initialized successfully");
+    println!("   📁 JSONL file: {:?}", jsonl_file);
+    println!("   💾 Persistence: {}", enable_persistence);
+    println!("   📦 Batch size: {}", batch_size);
+    println!("   ⏱️ Flush interval: {}ms", flush_interval_ms);
+    println!("   🖥️ Console output: {}", console_output);
+
+    Ok(())
+}
+
+async fn process_events_command(auto_push: bool, notifications: bool, metrics: bool) -> Result<()> {
+    println!("🎯 Starting event processor...");
+
+    let mut processor = event_bus::EventProcessor::new(false);
+
+    if auto_push {
+        processor.add_handler(Box::new(event_bus::AutoPushHandler::new(true)));
+        println!("   ✅ Auto-push handler enabled");
+    }
+
+    if notifications {
+        processor.add_handler(Box::new(event_bus::NotificationHandler::new(true)));
+        println!("   ✅ Notification handler enabled");
+    }
+
+    if metrics {
+        processor.add_handler(Box::new(event_bus::MetricsHandler::new()));
+        println!("   ✅ Metrics handler enabled");
+    }
+
+    println!("🎯 Event processor started with handlers");
+    println!("   Press Ctrl+C to stop");
+
+    // Start processing events
+    processor.start_processing().await?;
+
+    Ok(())
+}
+
+async fn replay_events_command(
+    input_file: String,
+    auto_push: bool,
+    notifications: bool,
+) -> Result<()> {
+    println!("🔄 Replaying events from: {}", input_file);
+
+    let mut processor = event_bus::EventProcessor::new(true);
+
+    if auto_push {
+        processor.add_handler(Box::new(event_bus::AutoPushHandler::new(true)));
+        println!("   ✅ Auto-push handler enabled");
+    }
+
+    if notifications {
+        processor.add_handler(Box::new(event_bus::NotificationHandler::new(true)));
+        println!("   ✅ Notification handler enabled");
+    }
+
+    let file_path = PathBuf::from(input_file);
+    processor.process_file(&file_path)?;
+
+    println!("✅ Event replay completed");
+
+    Ok(())
+}
+
+async fn emit_test_events_command(count: usize) -> Result<()> {
+    println!("🧪 Emitting {} test events...", count);
+
+    for i in 0..count {
+        let context = serde_json::json!({
+            "test_number": i + 1,
+            "timestamp": chrono::Utc::now().to_rfc3339(),
+            "branch": "test-branch",
+            "files": ["test-file.rs"]
+        });
+
+        match i % 4 {
+            0 => {
+                event_bus::emit_validation_event(
+                    "test-actor",
+                    Some("pre-commit"),
+                    Some("validating"),
+                    true,
+                    context,
+                )?;
+            }
+            1 => {
+                event_bus::emit_commit_event(
+                    "test-actor",
+                    &format!("test-commit-{}", i),
+                    "Test commit message",
+                    vec!["test-file.rs".to_string()],
+                )?;
+            }
+            2 => {
+                event_bus::emit_push_event("test-actor", true, "test-branch", "origin", None)?;
+            }
+            3 => {
+                event_bus::emit_state_transition_event(
+                    "test-actor",
+                    "idle",
+                    "validating",
+                    "test-trigger",
+                )?;
+            }
+            _ => {}
+        }
+
+        // Small delay between events
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+
+    println!("✅ Test events emitted successfully");
+
+    Ok(())
+}
+
+async fn load_wasm_component_command(component_path: String, config: Option<String>) -> Result<()> {
+    println!("🔧 Loading WASM component: {}", component_path);
+
+    let path = PathBuf::from(component_path);
+    if !path.exists() {
+        anyhow::bail!("Component file not found: {}", path.display());
+    }
+
+    let handler_id = wasm_event_bus::load_wasm_component(&path).await?;
+    println!("✅ Component loaded with handler ID: {}", handler_id);
+
+    if let Some(config_str) = config {
+        println!("📋 Component configuration: {}", config_str);
+    }
+
+    Ok(())
+}
+
+fn list_wasm_components_command() -> Result<()> {
+    println!("📦 Listing WASM components...");
+
+    let components = wasm_event_bus::list_wasm_components()?;
+
+    if components.is_empty() {
+        println!("   No components loaded");
+    } else {
+        println!("   Loaded components:");
+        for component in components {
+            println!("   - ID: {} | Name: {}", component.id, component.name);
+            println!("     Events: {:?}", component.supported_events);
+            println!("     Categories: {:?}", component.supported_categories);
+        }
+    }
+
+    Ok(())
+}
+
+fn unload_wasm_component_command(handler_id: u32) -> Result<()> {
+    println!("🗑️ Unloading WASM component: {}", handler_id);
+
+    wasm_event_bus::unregister_wasm_handler(handler_id)?;
+    println!("✅ Component unloaded successfully");
+
+    Ok(())
+}
+
+fn get_wasm_component_stats_command() -> Result<()> {
+    println!("📊 WASM component statistics...");
+
+    let stats = wasm_event_bus::get_wasm_event_bus_stats()?;
+    println!("{}", serde_json::to_string_pretty(&stats)?);
+
+    Ok(())
+}
+
+async fn build_validation_handler_command(output_dir: String) -> Result<()> {
+    println!("🔨 Building validation handler component...");
+
+    let output_path = PathBuf::from(&output_dir);
+    std::fs::create_dir_all(&output_path)?;
+
+    // Build the validation handler component
+    let status = std::process::Command::new("cargo")
+        .args(&[
+            "build",
+            "--target",
+            "wasm32-unknown-unknown",
+            "--release",
+            "--manifest-path",
+            "components/validation-handler/Cargo.toml",
+        ])
+        .status()?;
+
+    if !status.success() {
+        anyhow::bail!("Failed to build validation handler component");
+    }
+
+    // Copy the built component to output directory
+    let source_path =
+        PathBuf::from("target/wasm32-unknown-unknown/release/validation_handler.wasm");
+    let dest_path = output_path.join("validation-handler.wasm");
+
+    if source_path.exists() {
+        std::fs::copy(&source_path, &dest_path)?;
+        println!("✅ Component built successfully: {}", dest_path.display());
+    } else {
+        anyhow::bail!("Built component not found at: {}", source_path.display());
+    }
+
+    Ok(())
+}
+
+async fn generate_event_stream_config(output: String) -> Result<()> {
+    println!("📝 Generating event stream configuration...");
+
+    let config_content = r#"# Event Stream Configuration for Hooksmith
+# This file configures the centralized event streaming system
+
+# Output configuration
+output:
+  # JSONL file for event persistence
+  file: "hooksmith-events.jsonl"
+  # Whether to enable console output
+  console: true
+  # Whether to enable real-time broadcasting
+  broadcast: true
+  # Broadcast channel capacity
+  broadcast_capacity: 1000
+
+# Event filtering
+filtering:
+  # Minimum severity level to log
+  min_severity: "info"
+  # Event retention period (24 hours)
+  retention_period: 86400
+
+# Event handlers
+handlers:
+  # Console output handler
+  console:
+    enabled: true
+    show_metadata: true
+
+  # Performance monitoring handler
+  performance:
+    enabled: true
+    slow_operation_threshold: 1000  # 1 second
+    very_slow_operation_threshold: 5000  # 5 seconds
+
+  # Error aggregation handler
+  error_aggregation:
+    enabled: true
+    error_threshold: 5
+    alert_on_threshold_exceeded: true
+
+# Event categories
+categories:
+  - HookStateMachine
+  - Git
+  - Validation
+  - Build
+  - Contract
+  - File
+  - System
+  - User
+  - Performance
+  - Security
+"#;
+
+    fs::write(&output, config_content).context(format!(
+        "Failed to write event stream configuration to {}",
+        output
+    ))?;
+
+    println!("✅ Event stream configuration generated successfully");
+    println!("   📁 File: {}", output);
+
+    Ok(())
+}
+
+fn print_event_summary(events: &[event_stream::Event]) -> Result<()> {
+    println!("📊 Event Summary");
+    println!("================");
+    println!("Total events: {}", events.len());
+
+    if events.is_empty() {
+        return Ok(());
+    }
+
+    // Group by severity
+    let mut severity_counts = std::collections::HashMap::new();
+    let mut category_counts = std::collections::HashMap::new();
+    let mut source_counts = std::collections::HashMap::new();
+
+    for event in events {
+        *severity_counts.entry(&event.severity).or_insert(0) += 1;
+        *category_counts.entry(&event.category).or_insert(0) += 1;
+        *source_counts.entry(&event.source).or_insert(0) += 1;
+    }
+
+    println!("\n📈 By Severity:");
+    for (severity, count) in severity_counts {
+        println!("  {:?}: {}", severity, count);
+    }
+
+    println!("\n📂 By Category:");
+    for (category, count) in category_counts {
+        println!("  {:?}: {}", category, count);
+    }
+
+    println!("\n🔧 By Source:");
+    for (source, count) in source_counts {
+        println!("  {}: {}", source, count);
+    }
+
+    // Time range
+    if let (Some(first), Some(last)) = (events.first(), events.last()) {
+        println!("\n⏰ Time Range:");
+        println!("  Start: {}", first.timestamp);
+        println!("  End: {}", last.timestamp);
+        println!("  Duration: {:?}", last.timestamp - first.timestamp);
+    }
+
+    Ok(())
+}
+
+fn print_event_table(events: &[event_stream::Event]) -> Result<()> {
+    println!("📋 Event Table");
+    println!("==============");
+    println!(
+        "{:<20} {:<15} {:<20} {:<30} {:<10}",
+        "Timestamp", "Severity", "Category", "Event Type", "Source"
+    );
+    println!("{:-<95}", "");
+
+    for event in events.iter().take(50) {
+        // Limit to first 50 events
+        println!(
+            "{:<20} {:<15?} {:<20?} {:<30} {:<10}",
+            event.timestamp.format("%H:%M:%S"),
+            event.severity,
+            event.category,
+            event.event_type,
+            event.source
+        );
+    }
+
+    if events.len() > 50 {
+        println!("... and {} more events", events.len() - 50);
+    }
+
+    Ok(())
+}
+
 async fn generate_lefthook_hooks_config(output: String, validate: bool) -> Result<()> {
     println!("📝 Generating Lefthook configuration with hook state machine...");
     println!("   Output: {output}");

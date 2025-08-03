@@ -1,3 +1,6 @@
+use crate::event_stream::{
+    emit_error, emit_event, emit_info, emit_warn, Event, EventCategory, EventSeverity,
+};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -548,9 +551,19 @@ impl HookStateMachine {
 
     /// Handle a hook event
     pub fn handle_event(&mut self, event: HookEvent) -> Result<HookResult> {
+        let start_time = std::time::Instant::now();
+
+        // Emit event received
+        emit_info(
+            EventCategory::HookStateMachine,
+            "event_received",
+            &format!("Received event: {:?}", event),
+            "hook_state_machine",
+        )?;
+
         println!("📡 Handling event: {:?}", event);
 
-        match event {
+        let result = match event {
             HookEvent::RunValidation => {
                 self.transition_to(HookState::Validating);
                 self.run_validation()
@@ -591,7 +604,27 @@ impl HookStateMachine {
                     _ => self.handle_event(HookEvent::RunValidation),
                 }
             }
+        };
+
+        // Emit event completion
+        let duration = start_time.elapsed();
+        if result.is_ok() {
+            emit_info(
+                EventCategory::HookStateMachine,
+                "event_completed",
+                &format!("Event {:?} completed successfully", event),
+                "hook_state_machine",
+            )?;
+        } else {
+            emit_error(
+                EventCategory::HookStateMachine,
+                "event_failed",
+                &format!("Event {:?} failed", event),
+                "hook_state_machine",
+            )?;
         }
+
+        result
     }
 
     /// Run validation phase
