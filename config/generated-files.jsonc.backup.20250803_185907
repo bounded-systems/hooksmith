@@ -15,21 +15,33 @@
       "type": "envrc"
     },
     {
-      "checksum": "70479580",
+      "checksum": "c6b4b64f",
       "path": ".gitattributes",
       "slug": "root-gitattributes",
       "type": "gitattributes"
     },
     {
-      "checksum": "b0389685",
+      "checksum": "4b66ab7e",
       "path": ".gitignore",
       "slug": "root-gitignore",
       "type": "gitignore"
     },
     {
-      "checksum": "858918db",
+      "checksum": "f60e8554",
       "path": ".hooksmith/events.jsonl",
       "slug": "-hooksmith-events",
+      "type": "jsonl"
+    },
+    {
+      "checksum": "41a20810",
+      "path": ".hooksmith/logs/safe-commit.jsonl",
+      "slug": "-hooksmith-logs-safe-commit",
+      "type": "jsonl"
+    },
+    {
+      "checksum": "873711be",
+      "path": ".hooksmith/logs/safe-push.jsonl",
+      "slug": "-hooksmith-logs-safe-push",
       "type": "jsonl"
     },
     {
@@ -39,19 +51,19 @@
       "type": "md"
     },
     {
-      "checksum": "12d71b89",
+      "checksum": "4cea4813",
       "path": "AUTOPUSH_WORKFLOW.md",
       "slug": "autopush_workflow",
       "type": "md"
     },
     {
-      "checksum": "d52a294e",
+      "checksum": "ae62f06a",
       "path": "BUILD_OPTIMIZATION_SUMMARY.md",
       "slug": "build_optimization_summary",
       "type": "md"
     },
     {
-      "checksum": "db596de9",
+      "checksum": "8890953a",
       "path": "CARGO_BEST_PRACTICES.md",
       "slug": "cargo_best_practices",
       "type": "md"
@@ -63,19 +75,19 @@
       "type": "toml"
     },
     {
-      "checksum": "ba9a69c8",
+      "checksum": "d74e21cc",
       "path": "CHANGELOG.md",
       "slug": "changelog",
       "type": "md"
     },
     {
-      "checksum": "c5103b54",
+      "checksum": "008bc496",
       "path": "CI_CD_INTEGRATION_SUMMARY.md",
       "slug": "ci_cd_integration_summary",
       "type": "md"
     },
     {
-      "checksum": "295d08af",
+      "checksum": "127bfc6f",
       "path": "CI_CD_INTEGRATION_VERIFICATION.md",
       "slug": "ci_cd_integration_verification",
       "type": "md"
@@ -93,145 +105,145 @@
       "type": "md"
     },
     {
-      "checksum": "25553cbe",
+      "checksum": "3f1d29de",
       "path": "CLIPPY_FIXES_SUMMARY.md",
       "slug": "clippy_fixes_summary",
       "type": "md"
     },
     {
-      "checksum": "a5050118",
+      "checksum": "1763ac0d",
       "path": "clippy.toml",
       "slug": "clippy",
       "type": "toml"
     },
     {
-      "checksum": "673dbb09",
+      "checksum": "1345eccd",
       "path": "CODE_STATS_SYSTEM_SUMMARY.md",
       "slug": "code_stats_system_summary",
       "type": "md"
     },
     {
-      "checksum": "71adac31",
+      "checksum": "080db5a4",
       "path": "CODEGEN_MARKERS.md",
       "slug": "codegen_markers",
       "type": "md"
     },
     {
-      "checksum": "4123bbe1",
+      "checksum": "51becaa4",
       "path": "CODEGEN_SUMMARY.md",
       "slug": "codegen_summary",
       "type": "md"
     },
     {
-      "checksum": "285ebff5",
+      "checksum": "541fd0ca",
       "path": "CODEOWNERS",
       "slug": "root-codeowners",
       "type": "CODEOWNERS"
     },
     {
-      "checksum": "2119858b",
+      "checksum": "98aef933",
       "path": "components/cli-core/Cargo.toml",
       "slug": "components-cli-core-cargo",
       "type": "toml"
     },
     {
-      "checksum": "8ca15589",
+      "checksum": "5bc45e36",
       "path": "components/git-filter/Cargo.toml",
       "slug": "components-git-filter-cargo",
       "type": "toml"
     },
     {
-      "checksum": "ebece026",
+      "checksum": "e7364d93",
       "path": "components/git-filter/README.md",
       "slug": "components-git-filter-readme",
       "type": "md"
     },
     {
-      "checksum": "69121ce3",
+      "checksum": "c8b18c98",
       "path": "components/hook-builder/Cargo.toml",
       "slug": "components-hook-builder-cargo",
       "type": "toml"
     },
     {
-      "checksum": "6388f068",
+      "checksum": "fef8bfbc",
       "path": "components/hook-builder/wit/hook-builder.wit",
       "slug": "components-hook-builder-wit-hook-builder",
       "type": "wit"
     },
     {
-      "checksum": "490e442c",
+      "checksum": "526a8b34",
       "path": "components/validation-handler/Cargo.toml",
       "slug": "components-validation-handler-cargo",
       "type": "toml"
     },
     {
-      "checksum": "0ea654e0",
+      "checksum": "88f9fa9e",
       "path": "components/worktree-runner/Cargo.toml",
       "slug": "components-worktree-runner-cargo",
       "type": "toml"
     },
     {
-      "checksum": "ea1e5fcc",
+      "checksum": "cd812841",
       "path": "components/worktree-runner/wit/worktree-runner.wit",
       "slug": "components-worktree-runner-wit-worktree-runner",
       "type": "wit"
     },
     {
-      "checksum": "6bc02911",
+      "checksum": "28efd42d",
       "path": "COMPREHENSIVE_DOCS_SUMMARY.md",
       "slug": "comprehensive_docs_summary",
       "type": "md"
     },
     {
-      "checksum": "dc272924",
+      "checksum": "52af9880",
       "path": "CONTRACT_WORKFLOW_DESIGN.md",
       "slug": "contract_workflow_design",
       "type": "md"
     },
     {
-      "checksum": "23118813",
+      "checksum": "172e20eb",
       "path": "CONTRIBUTING.md",
       "slug": "contributing",
       "type": "md"
     },
     {
-      "checksum": "4fb5f7b4",
+      "checksum": "9f399c5f",
       "path": "deny.toml",
       "slug": "deny",
       "type": "toml"
     },
     {
-      "checksum": "cdb3f360",
+      "checksum": "b2bb3609",
       "path": "diagrams/git_commit_workflow.md",
       "slug": "diagrams-git_commit_workflow",
       "type": "md"
     },
     {
-      "checksum": "ff502c82",
+      "checksum": "a68196a6",
       "path": "diagrams/git_comprehensive.md",
       "slug": "diagrams-git_comprehensive",
       "type": "md"
     },
     {
-      "checksum": "fc4053e0",
+      "checksum": "12d520df",
       "path": "diagrams/git_file_states.md",
       "slug": "diagrams-git_file_states",
       "type": "md"
     },
     {
-      "checksum": "c4f02147",
+      "checksum": "f12edc58",
       "path": "diagrams/git_skip_only_conditions.md",
       "slug": "diagrams-git_skip_only_conditions",
       "type": "md"
     },
     {
-      "checksum": "b53484bd",
+      "checksum": "b5be9724",
       "path": "DIRENV_INTEGRATION_SUMMARY.md",
       "slug": "direnv_integration_summary",
       "type": "md"
     },
     {
-      "checksum": "24fbb2cc",
+      "checksum": "5050112f",
       "path": "DIRENV_SETUP.md",
       "slug": "direnv_setup",
       "type": "md"
@@ -243,25 +255,25 @@
       "type": "md"
     },
     {
-      "checksum": "f8b84f05",
+      "checksum": "294f61ae",
       "path": "docs/ARCHITECTURE_DIAGRAM.md",
       "slug": "docs-architecture_diagram",
       "type": "md"
     },
     {
-      "checksum": "391a5466",
+      "checksum": "2bb80f60",
       "path": "docs/attributes_validation.md",
       "slug": "docs-attributes_validation",
       "type": "md"
     },
     {
-      "checksum": "2d33cf36",
+      "checksum": "2327efd7",
       "path": "docs/blob_contract_system.md",
       "slug": "docs-blob_contract_system",
       "type": "md"
     },
     {
-      "checksum": "640ed59e",
+      "checksum": "199ccad3",
       "path": "docs/character_contract_system.md",
       "slug": "docs-character_contract_system",
       "type": "md"
@@ -273,19 +285,19 @@
       "type": "md"
     },
     {
-      "checksum": "f80f0952",
+      "checksum": "94275a36",
       "path": "docs/checksums.json",
       "slug": "docs-checksums",
       "type": "json"
     },
     {
-      "checksum": "724a2acf",
+      "checksum": "b8bf6e1b",
       "path": "docs/CLEAN_AUTO_PUSH.md",
       "slug": "docs-clean_auto_push",
       "type": "md"
     },
     {
-      "checksum": "0f3a04eb",
+      "checksum": "b8a82e7b",
       "path": "docs/CLI_HELP.md",
       "slug": "docs-cli_help",
       "type": "md"
@@ -315,7 +327,7 @@
       "type": "md"
     },
     {
-      "checksum": "eab79e49",
+      "checksum": "7098cc33",
       "path": "docs/CONTRACT_CHECK_SYSTEM.md",
       "slug": "docs-contract_check_system",
       "type": "md"
@@ -327,25 +339,25 @@
       "type": "md"
     },
     {
-      "checksum": "0f8a3002",
+      "checksum": "e55fb60c",
       "path": "docs/CONTRACT_VALIDATION_SUMMARY.md",
       "slug": "docs-contract_validation_summary",
       "type": "md"
     },
     {
-      "checksum": "246ea176",
+      "checksum": "50a49418",
       "path": "docs/CONTRACT_VALIDATION_SYSTEM.md",
       "slug": "docs-contract_validation_system",
       "type": "md"
     },
     {
-      "checksum": "0771431a",
+      "checksum": "009ba278",
       "path": "docs/CONTRACT_VALIDATION_WITH_GIT_NOTES.md",
       "slug": "docs-contract_validation_with_git_notes",
       "type": "md"
     },
     {
-      "checksum": "75893396",
+      "checksum": "e6a58ea5",
       "path": "docs/contract-state-machine-README.md",
       "slug": "docs-contract-state-machine-readme",
       "type": "md"
@@ -357,25 +369,25 @@
       "type": "json"
     },
     {
-      "checksum": "b35df906",
+      "checksum": "f581acd7",
       "path": "docs/contract-state-machine.md",
       "slug": "docs-contract-state-machine",
       "type": "md"
     },
     {
-      "checksum": "710955af",
+      "checksum": "e0185810",
       "path": "docs/contract-validation-architecture.md",
       "slug": "docs-contract-validation-architecture",
       "type": "md"
     },
     {
-      "checksum": "28f23d5c",
+      "checksum": "6f5fb38f",
       "path": "docs/DEVELOPMENT_SUMMARY.md",
       "slug": "docs-development_summary",
       "type": "md"
     },
     {
-      "checksum": "d5b08b4f",
+      "checksum": "49d9e396",
       "path": "docs/DEVELOPMENT.md",
       "slug": "docs-development",
       "type": "md"
@@ -417,6 +429,12 @@
       "type": "md"
     },
     {
+      "checksum": "31f0da4b",
+      "path": "docs/docs/STRUCTURE.md",
+      "slug": "docs-docs-structure",
+      "type": "md"
+    },
+    {
       "checksum": "47b62e21",
       "path": "docs/docs/TESTING.md",
       "slug": "docs-docs-testing",
@@ -429,49 +447,49 @@
       "type": "md"
     },
     {
-      "checksum": "d9974e3c",
+      "checksum": "61769dea",
       "path": "docs/filename_contract_system.md",
       "slug": "docs-filename_contract_system",
       "type": "md"
     },
     {
-      "checksum": "707218d6",
+      "checksum": "f6ef1e2f",
       "path": "docs/GENERATED_FILE_VALIDATION.md",
       "slug": "docs-generated_file_validation",
       "type": "md"
     },
     {
-      "checksum": "8b58ba47",
+      "checksum": "030c314b",
       "path": "docs/git_filter_system.md",
       "slug": "docs-git_filter_system",
       "type": "md"
     },
     {
-      "checksum": "29ad0f3e",
+      "checksum": "d49e8498",
       "path": "docs/GIT_LEFTHOOK_INTEGRATION.md",
       "slug": "docs-git_lefthook_integration",
       "type": "md"
     },
     {
-      "checksum": "695c6662",
+      "checksum": "cf1bb49e",
       "path": "docs/git_model_contracts.md",
       "slug": "docs-git_model_contracts",
       "type": "md"
     },
     {
-      "checksum": "22279c9f",
+      "checksum": "b3325f90",
       "path": "docs/git_object_contract_system.md",
       "slug": "docs-git_object_contract_system",
       "type": "md"
     },
     {
-      "checksum": "db39f958",
+      "checksum": "a7b1ccce",
       "path": "docs/git_state_machine.md",
       "slug": "docs-git_state_machine",
       "type": "md"
     },
     {
-      "checksum": "3f956b23",
+      "checksum": "d5aba8a9",
       "path": "docs/git_workflow.md",
       "slug": "docs-git_workflow",
       "type": "md"
@@ -483,25 +501,25 @@
       "type": "json"
     },
     {
-      "checksum": "e53b430a",
+      "checksum": "64e534f4",
       "path": "docs/HOOK_STATE_MACHINE.md",
       "slug": "docs-hook_state_machine",
       "type": "md"
     },
     {
-      "checksum": "8b545797",
+      "checksum": "a18ced14",
       "path": "docs/JQL_WITH_STRUCTURED_LOGGING.md",
       "slug": "docs-jql_with_structured_logging",
       "type": "md"
     },
     {
-      "checksum": "57e18b70",
+      "checksum": "c509b246",
       "path": "docs/line_contract_system.md",
       "slug": "docs-line_contract_system",
       "type": "md"
     },
     {
-      "checksum": "7ff89b7f",
+      "checksum": "b3638bca",
       "path": "docs/merkle-chain-spec.md",
       "slug": "docs-merkle-chain-spec",
       "type": "md"
@@ -513,25 +531,25 @@
       "type": "md"
     },
     {
-      "checksum": "c51441fe",
+      "checksum": "b3b55fc6",
       "path": "docs/SAFE_GIT_WORKFLOW.md",
       "slug": "docs-safe_git_workflow",
       "type": "md"
     },
     {
-      "checksum": "dc362d4f",
+      "checksum": "c199509c",
       "path": "docs/SARIF_CODECL_INTEGRATION.md",
       "slug": "docs-sarif_codecl_integration",
       "type": "md"
     },
     {
-      "checksum": "6c0dd57d",
+      "checksum": "6ed018f3",
       "path": "docs/SCHEMA_DOCUMENTATION.md",
       "slug": "docs-schema_documentation",
       "type": "md"
     },
     {
-      "checksum": "6ef73a8b",
+      "checksum": "7d26b033",
       "path": "docs/SCHEMA_VALIDATION.md",
       "slug": "docs-schema_validation",
       "type": "md"
@@ -543,25 +561,25 @@
       "type": "md"
     },
     {
-      "checksum": "13fa3e0c",
+      "checksum": "e929dadb",
       "path": "docs/STRUCTURED_LOGGING_MIGRATION.md",
       "slug": "docs-structured_logging_migration",
       "type": "md"
     },
     {
-      "checksum": "a3bc1cbf",
+      "checksum": "2333f63d",
       "path": "docs/STRUCTURED_LOGGING_TOOLS.md",
       "slug": "docs-structured_logging_tools",
       "type": "md"
     },
     {
-      "checksum": "96fd5f73",
+      "checksum": "79666fe0",
       "path": "docs/STRUCTURED_LOGGING.md",
       "slug": "docs-structured_logging",
       "type": "md"
     },
     {
-      "checksum": "51f35cdb",
+      "checksum": "1159dc11",
       "path": "docs/style.css",
       "slug": "docs-style",
       "type": "css"
@@ -573,43 +591,43 @@
       "type": "md"
     },
     {
-      "checksum": "96200a91",
+      "checksum": "8ec52e20",
       "path": "docs/tree_contract_system.md",
       "slug": "docs-tree_contract_system",
       "type": "md"
     },
     {
-      "checksum": "a866aac4",
+      "checksum": "4edba2d1",
       "path": "docs/tree_filename_chars_contract_system.md",
       "slug": "docs-tree_filename_chars_contract_system",
       "type": "md"
     },
     {
-      "checksum": "a5c5a0d1",
+      "checksum": "548f8b54",
       "path": "docs/TRUNK_STYLE_COMMITS.md",
       "slug": "docs-trunk_style_commits",
       "type": "md"
     },
     {
-      "checksum": "ab4047af",
+      "checksum": "38acd8ea",
       "path": "docs/TRUNK_STYLE_QUICKSTART.md",
       "slug": "docs-trunk_style_quickstart",
       "type": "md"
     },
     {
-      "checksum": "019abe74",
+      "checksum": "05b81e0c",
       "path": "docs/TUI_DASHBOARD_MODERNIZATION.md",
       "slug": "docs-tui_dashboard_modernization",
       "type": "md"
     },
     {
-      "checksum": "d5c49e2d",
+      "checksum": "a28d1a0e",
       "path": "docs/unified_contracts_system.md",
       "slug": "docs-unified_contracts_system",
       "type": "md"
     },
     {
-      "checksum": "a23a31ec",
+      "checksum": "12556f2a",
       "path": "docs/VERIFY_HOOKS.md",
       "slug": "docs-verify_hooks",
       "type": "md"
@@ -621,7 +639,7 @@
       "type": "md"
     },
     {
-      "checksum": "98f3c5e8",
+      "checksum": "ba3dac65",
       "path": "EXAMPLES_FIXES_SUMMARY.md",
       "slug": "examples_fixes_summary",
       "type": "md"
@@ -639,7 +657,7 @@
       "type": "sed"
     },
     {
-      "checksum": "206d49f5",
+      "checksum": "281e2dbe",
       "path": "GENERATED_FILE_VALIDATION_SUMMARY.md",
       "slug": "generated_file_validation_summary",
       "type": "md"
@@ -651,25 +669,25 @@
       "type": "md"
     },
     {
-      "checksum": "97b0bda3",
+      "checksum": "e2071316",
       "path": "HOOK_STATE_MACHINE_IMPLEMENTATION_SUMMARY.md",
       "slug": "hook_state_machine_implementation_summary",
       "type": "md"
     },
     {
-      "checksum": "c3dd3489",
+      "checksum": "b5792e07",
       "path": "hooks/.gitattributes",
       "slug": "hooks",
       "type": "gitattributes"
     },
     {
-      "checksum": "343b4ab1",
+      "checksum": "0b479b60",
       "path": "hooks/README.md",
       "slug": "hooks-readme",
       "type": "md"
     },
     {
-      "checksum": "a285482f",
+      "checksum": "a0b808b7",
       "path": "hooksmith-events.jsonl",
       "slug": "hooksmith-events",
       "type": "jsonl"
@@ -681,145 +699,145 @@
       "type": "md"
     },
     {
-      "checksum": "7aa64c10",
+      "checksum": "9da9cc5a",
       "path": "JQL_INTEGRATION_COMPLETE.md",
       "slug": "jql_integration_complete",
       "type": "md"
     },
     {
-      "checksum": "0729c2cc",
+      "checksum": "38adef07",
       "path": "lefthook-rs/Cargo.toml",
       "slug": "lefthook-rs-cargo",
       "type": "toml"
     },
     {
-      "checksum": "71dc2fb1",
+      "checksum": "d910ede5",
       "path": "MACOS_OPTIMIZATION_VERIFICATION.md",
       "slug": "macos_optimization_verification",
       "type": "md"
     },
     {
-      "checksum": "35c988ae",
+      "checksum": "a7867620",
       "path": "MACOS_OPTIMIZATIONS.md",
       "slug": "macos_optimizations",
       "type": "md"
     },
     {
-      "checksum": "d6024471",
+      "checksum": "6ce8dbc3",
       "path": "Makefile",
       "slug": "root-makefile",
       "type": "makefile"
     },
     {
-      "checksum": "9f2b7aa1",
+      "checksum": "f10bb590",
       "path": "MIGRATION_PLAN.md",
       "slug": "migration_plan",
       "type": "md"
     },
     {
-      "checksum": "0d9a30fc",
+      "checksum": "dfcfba4f",
       "path": "MIGRATION_SUMMARY.md",
       "slug": "migration_summary",
       "type": "md"
     },
     {
-      "checksum": "5a35fea1",
+      "checksum": "389ffb97",
       "path": "OPTIMIZED_DEFAULT_WORKFLOW.md",
       "slug": "optimized_default_workflow",
       "type": "md"
     },
     {
-      "checksum": "45d1360c",
+      "checksum": "0566c631",
       "path": "PHASE_3_CONFIGURATION_GENERATION_SUMMARY.md",
       "slug": "phase_3_configuration_generation_summary",
       "type": "md"
     },
     {
-      "checksum": "93bc757c",
+      "checksum": "f1fecff2",
       "path": "PHASE_4_COMPLETE_SUMMARY.md",
       "slug": "phase_4_complete_summary",
       "type": "md"
     },
     {
-      "checksum": "dcdff4d6",
+      "checksum": "7e650844",
       "path": "PHASE_4_FILE_TYPE_NORMALIZATION.md",
       "slug": "phase_4_file_type_normalization",
       "type": "md"
     },
     {
-      "checksum": "fa87b2c0",
+      "checksum": "76a734e1",
       "path": "PHASE_4_IMPLEMENTATION_SUMMARY.md",
       "slug": "phase_4_implementation_summary",
       "type": "md"
     },
     {
-      "checksum": "a933ee1a",
+      "checksum": "1870cfdd",
       "path": "PHASE_5_CI_ENFORCEMENT_SUMMARY.md",
       "slug": "phase_5_ci_enforcement_summary",
       "type": "md"
     },
     {
-      "checksum": "bd99e4f0",
+      "checksum": "68381ead",
       "path": "PROJECT_STRUCTURE.md",
       "slug": "project_structure",
       "type": "md"
     },
     {
-      "checksum": "da1e0aaf",
+      "checksum": "251e4a23",
       "path": "QUICKSTART_OPTIMIZED.md",
       "slug": "quickstart_optimized",
       "type": "md"
     },
     {
-      "checksum": "04e692b3",
+      "checksum": "c59e1620",
       "path": "README_STRUCTURE.md",
       "slug": "readme_structure",
       "type": "md"
     },
     {
-      "checksum": "9219e833",
+      "checksum": "2ff52bc5",
       "path": "README.md",
       "slug": "readme",
       "type": "md"
     },
     {
-      "checksum": "4ca41b58",
+      "checksum": "30e86595",
       "path": "RUST_BUILD_OPTIMIZATIONS_2025.md",
       "slug": "rust_build_optimizations_2025",
       "type": "md"
     },
     {
-      "checksum": "fbdc0127",
+      "checksum": "c21dbe32",
       "path": "RUST_TOOLING_SETUP.md",
       "slug": "rust_tooling_setup",
       "type": "md"
     },
     {
-      "checksum": "dd722cda",
+      "checksum": "085a59c4",
       "path": "RUST_TOOLING_SUMMARY.md",
       "slug": "rust_tooling_summary",
       "type": "md"
     },
     {
-      "checksum": "006e9bef",
+      "checksum": "ddc596b8",
       "path": "rust-toolchain.toml",
       "slug": "rust-toolchain",
       "type": "toml"
     },
     {
-      "checksum": "593b9355",
+      "checksum": "6e297d29",
       "path": "rustfmt.toml",
       "slug": "rustfmt",
       "type": "toml"
     },
     {
-      "checksum": "a2d23595",
+      "checksum": "989cea5f",
       "path": "SAFEGUARDS_SUMMARY.md",
       "slug": "safeguards_summary",
       "type": "md"
     },
     {
-      "checksum": "7d9ac325",
+      "checksum": "40331d72",
       "path": "SCHEMA_VALIDATED_LOGGING_COMPLETE.md",
       "slug": "schema_validated_logging_complete",
       "type": "md"
@@ -939,7 +957,7 @@
       "type": "sh"
     },
     {
-      "checksum": "ef169562",
+      "checksum": "a91fedd1",
       "path": "scripts/README.md",
       "slug": "scripts-readme",
       "type": "md"
@@ -1029,55 +1047,55 @@
       "type": "sh"
     },
     {
-      "checksum": "3762916e",
+      "checksum": "ab5ecff9",
       "path": "SECURITY_GUIDE.md",
       "slug": "security_guide",
       "type": "md"
     },
     {
-      "checksum": "b74544f0",
+      "checksum": "0f8da58d",
       "path": "SECURITY_SUMMARY.md",
       "slug": "security_summary",
       "type": "md"
     },
     {
-      "checksum": "50b3194e",
+      "checksum": "9eaf6b69",
       "path": "SHELL_SCRIPT_MIGRATION_COMPLETE.md",
       "slug": "shell_script_migration_complete",
       "type": "md"
     },
     {
-      "checksum": "533fc1bc",
+      "checksum": "748a6074",
       "path": "SHELL_SCRIPT_MIGRATION_SUMMARY.md",
       "slug": "shell_script_migration_summary",
       "type": "md"
     },
     {
-      "checksum": "712bd8ec",
+      "checksum": "733c8d8e",
       "path": "SOURCE_BASED_DOCS.md",
       "slug": "source_based_docs",
       "type": "md"
     },
     {
-      "checksum": "b049a486",
+      "checksum": "1fc835d6",
       "path": "STATUS_SYSTEM_DESIGN.md",
       "slug": "status_system_design",
       "type": "md"
     },
     {
-      "checksum": "4b1a52bd",
+      "checksum": "eea35482",
       "path": "STATUS_SYSTEM_JSON_CODEGEN_SUMMARY.md",
       "slug": "status_system_json_codegen_summary",
       "type": "md"
     },
     {
-      "checksum": "a018e03b",
+      "checksum": "17e08fda",
       "path": "STATUS_SYSTEM_SUMMARY.md",
       "slug": "status_system_summary",
       "type": "md"
     },
     {
-      "checksum": "28a2247b",
+      "checksum": "3b1bdab6",
       "path": "status-badge.json",
       "slug": "status-badge",
       "type": "json"
@@ -1089,31 +1107,31 @@
       "type": "md"
     },
     {
-      "checksum": "8c8f2a92",
+      "checksum": "fc1aaee5",
       "path": "STRUCTURE.md",
       "slug": "structure",
       "type": "md"
     },
     {
-      "checksum": "9f66ba7c",
+      "checksum": "b5d51486",
       "path": "STRUCTURED_LOGGING_COMPLETE.md",
       "slug": "structured_logging_complete",
       "type": "md"
     },
     {
-      "checksum": "86d4d8fb",
+      "checksum": "e99a7a5b",
       "path": "STRUCTURED_LOGGING_IMPLEMENTATION_SUMMARY.md",
       "slug": "structured_logging_implementation_summary",
       "type": "md"
     },
     {
-      "checksum": "75cbf4a7",
+      "checksum": "61cc8793",
       "path": "stuff.md",
       "slug": "stuff",
       "type": "md"
     },
     {
-      "checksum": "203f78bd",
+      "checksum": "e83a73da",
       "path": "TEMPLATE_SYSTEM_SUMMARY.md",
       "slug": "template_system_summary",
       "type": "md"
@@ -1125,79 +1143,109 @@
       "type": "hbs"
     },
     {
-      "checksum": "df910ee8",
+      "checksum": "7aebf335",
       "path": "WARNING_AND_VALIDATION_FIXES.md",
       "slug": "warning_and_validation_fixes",
       "type": "md"
     },
     {
-      "checksum": "1bc3d46b",
+      "checksum": "7d82e5af",
+      "path": "wit/event-bus.wit",
+      "slug": "wit-event-bus",
+      "type": "wit"
+    },
+    {
+      "checksum": "befb38bb",
+      "path": "wit/hook-builder.wit",
+      "slug": "wit-hook-builder",
+      "type": "wit"
+    },
+    {
+      "checksum": "d59fa021",
       "path": "wit/hooksmith.wit",
       "slug": "wit-hooksmith",
       "type": "wit"
     },
     {
-      "checksum": "8830100b",
+      "checksum": "29d7ae50",
+      "path": "wit/lefthook-generator.wit",
+      "slug": "wit-lefthook-generator",
+      "type": "wit"
+    },
+    {
+      "checksum": "8ef2443b",
+      "path": "wit/validation.wit",
+      "slug": "wit-validation",
+      "type": "wit"
+    },
+    {
+      "checksum": "3edee0c1",
+      "path": "wit/worktree-runner.wit",
+      "slug": "wit-worktree-runner",
+      "type": "wit"
+    },
+    {
+      "checksum": "a164f6ad",
       "path": "WORKSPACE_LAYOUT.md",
       "slug": "workspace_layout",
       "type": "md"
     },
     {
-      "checksum": "328cc572",
+      "checksum": "09ac1c90",
       "path": "XTASK_COMMANDS.md",
       "slug": "xtask_commands",
       "type": "md"
     },
     {
-      "checksum": "3d6874fd",
+      "checksum": "ca389ad2",
       "path": "xtask/Cargo.toml",
       "slug": "xtask-cargo",
       "type": "toml"
     },
     {
-      "checksum": "f6a4d3e9",
+      "checksum": "2c212372",
       "path": "xtask/docs/CLI_HELP.md",
       "slug": "xtask-docs-cli_help",
       "type": "md"
     },
     {
-      "checksum": "3dac4f65",
+      "checksum": "83902c69",
       "path": "xtask/hooks/.gitattributes",
       "slug": "xtask-hooks",
       "type": "gitattributes"
     },
     {
-      "checksum": "b20ab1b8",
+      "checksum": "d1895896",
       "path": "xtask/hooks/README.md",
       "slug": "xtask-hooks-readme",
       "type": "md"
     },
     {
-      "checksum": "6b018af3",
+      "checksum": "d13b9ccd",
       "path": "xtask/README.md",
       "slug": "xtask-readme",
       "type": "md"
     },
     {
-      "checksum": "4ba71804",
+      "checksum": "aa512456",
       "path": "xtask/status-badge.json",
       "slug": "xtask-status-badge",
       "type": "json"
     },
     {
-      "checksum": "2ad6a271",
+      "checksum": "394222e4",
       "path": "xtask/status-trends/status-2025-08-02.json",
       "slug": "xtask-status-trends-status-2025-08-02",
       "type": "json"
     },
     {
-      "checksum": "69890981",
+      "checksum": "30e5e560",
       "path": "xtask/wit/hooksmith.wit",
       "slug": "xtask-wit-hooksmith",
       "type": "wit"
     },
     {
-      "checksum": "fa1dcb4c",
+      "checksum": "ea5f44bf",
       "path": "xtask/wit/worktree-runner.wit",
       "slug": "xtask-wit-worktree-runner",
       "type": "wit"
@@ -1491,21 +1539,9 @@
       "type": "sh"
     },
     {
-      "path": "scripts/cleanup-registry.sh",
-      "checksum": "065524c4",
-      "slug": "scripts_cleanup_registry",
-      "type": "sh"
-    },
-    {
-      "path": "scripts/update-all-checksums.sh",
-      "checksum": "d2974afa",
-      "slug": "scripts_update_all_checksums",
-      "type": "sh"
-    },
-    {
-      "path": "scripts/validate-registry.sh",
-      "checksum": "a56807f8",
-      "slug": "scripts_validate_registry",
+      "path": "scripts/add-new-scripts-to-registry.sh",
+      "checksum": "2640024e",
+      "slug": "scripts_add_new_scripts_to_registry",
       "type": "sh"
     }
   ],

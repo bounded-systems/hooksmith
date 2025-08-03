@@ -16,7 +16,7 @@ echo -e "${BLUE}Comparing git-tracked files with generated files registry...${NC
 
 # Get all git-tracked files that match generated file patterns
 echo -e "${YELLOW}Getting git-tracked files...${NC}"
-GIT_FILES=$(git ls-files | grep -E '\.(md|toml|sh|json|wit|hbs|css|sed|jsonl|yml|yaml|CODEOWNERS|makefile|editorconfig|envrc|gitignore|gitattributes)$' | sort)
+GIT_FILES=$(git ls-files | grep -E '\.(md|toml|sh|json|wit|hbs|css|sed|jsonl|yml|yaml|editorconfig|envrc|gitignore|gitattributes)$|^(CODEOWNERS|Makefile)$' | sort)
 
 # Extract paths from the registry
 echo -e "${YELLOW}Extracting paths from registry...${NC}"
