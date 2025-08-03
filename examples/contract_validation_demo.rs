@@ -67,11 +67,11 @@ impl ContractValidator {
 
     /// Validate a contract file and generate proof
     pub async fn validate_contract(&self, file_path: &str) -> Result<ContractProof> {
-        println!("🔍 Validating contract: {}", file_path);
+        println!("🔍 Validating contract: {file_path}");
 
         // Read file content
         let content = std::fs::read_to_string(file_path)
-            .with_context(|| format!("Failed to read file: {}", file_path))?;
+            .with_context(|| format!("Failed to read file: {file_path}"))?;
 
         // Generate blob hash
         let blob_hash = self.generate_blob_hash(&content);
@@ -127,13 +127,13 @@ impl ContractValidator {
         let note_content = serde_json::to_string_pretty(proof)?;
         let note_ref = format!(
             "refs/notes/contracts/{}",
-            proof.file_path.replace('/', "_").replace('.', "_")
+            proof.file_path.replace(['/', '.'], "_")
         );
 
         // In a real implementation, this would use git2 to create the note
         println!("💾 Would store Git note:");
-        println!("   Reference: {}", note_ref);
-        println!("   Content: {}", note_content);
+        println!("   Reference: {note_ref}");
+        println!("   Content: {note_content}");
 
         Ok(())
     }
@@ -144,7 +144,7 @@ impl ContractValidator {
         file_path: &str,
         expected_proof: &ContractProof,
     ) -> Result<bool> {
-        println!("🔍 Verifying contract: {}", file_path);
+        println!("🔍 Verifying contract: {file_path}");
 
         // Generate current proof
         let current_proof = self.validate_contract(file_path).await?;
@@ -226,6 +226,12 @@ pub struct ExampleContract {
     pub data: HookContract,
 }
 
+impl Default for ExampleContract {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ExampleContract {
     /// Create a new example contract
     pub fn new() -> Self {
@@ -287,7 +293,7 @@ async fn main() -> Result<()> {
     // Generate and display schema
     let schema = contract.generate_schema()?;
     println!("\n📋 Generated JSON Schema:");
-    println!("{}", schema);
+    println!("{schema}");
 
     // Create validator
     let validator = ContractValidator::new()?;

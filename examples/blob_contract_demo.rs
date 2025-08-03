@@ -60,7 +60,7 @@ fn demo_blob_with_forbidden_bytes() -> Result<(), Box<dyn std::error::Error>> {
     println!("    Forbidden bytes: {}", contract.has_forbidden_byte);
 
     if let Some(positions) = &contract.forbidden_byte_positions {
-        println!("    Forbidden byte positions: {:?}", positions);
+        println!("    Forbidden byte positions: {positions:?}");
     }
 
     println!("    Action: {:?}", contract.action);
@@ -89,8 +89,8 @@ fn demo_line_ending_normalization() -> Result<(), Box<dyn std::error::Error>> {
     let processed_lf = processed.iter().filter(|&&b| b == b'\n').count();
     let processed_cr = processed.iter().filter(|&&b| b == b'\r').count();
 
-    println!("    Original: {} LF, {} CR", original_lf, original_cr);
-    println!("    Processed: {} LF, {} CR", processed_lf, processed_cr);
+    println!("    Original: {original_lf} LF, {original_cr} CR");
+    println!("    Processed: {processed_lf} LF, {processed_cr} CR");
 
     println!();
     Ok(())
@@ -157,7 +157,7 @@ fn demo_byte_audit_records() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("    Byte classification:");
     for (class, count) in class_counts {
-        println!("      {:?}: {} bytes", class, count);
+        println!("      {class:?}: {count} bytes");
     }
 
     println!();

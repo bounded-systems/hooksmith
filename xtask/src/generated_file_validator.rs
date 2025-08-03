@@ -285,7 +285,7 @@ impl GeneratedFileValidator {
         let binary_extensions = [
             "epub", "pdf", "png", "jpg", "jpeg", "gif", "ico", "svg", "zip", "tar", "gz",
         ];
-        let no_header_extensions = ["json"];
+        let no_header_extensions = ["json", "jsonc"];
 
         if binary_extensions.contains(&extension) {
             // Binary files are considered to have headers (they can't have text headers)
