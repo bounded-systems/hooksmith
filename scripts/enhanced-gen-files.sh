@@ -126,8 +126,8 @@ generate_file_with_checksum() {
     
     echo "✅ Generated $file_path with checksum: $checksum"
     
-    # Return checksum for registry update
-    echo "$checksum"
+    # Return checksum for registry update (without echo statement)
+    printf "%s" "$checksum"
 }
 
 # Generate sample files
