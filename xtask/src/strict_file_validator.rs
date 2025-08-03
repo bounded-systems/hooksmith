@@ -58,9 +58,19 @@ impl FilePolicy {
             // TODO: Implement .gitignore parsing
             // For now, use basic patterns
             let gitignore_patterns = [
-                "target/", "dist/", "node_modules/", "*.lock", "*.jsonl",
-                ".git/", "logs/", "status-trends/", ".cargo/hakari/",
-                ".hooks/", ".trunk/", ".cargo/", "Cargo.lock"
+                "target/",
+                "dist/",
+                "node_modules/",
+                "*.lock",
+                "*.jsonl",
+                ".git/",
+                "logs/",
+                "status-trends/",
+                ".cargo/hakari/",
+                ".hooks/",
+                ".trunk/",
+                ".cargo/",
+                "Cargo.lock",
             ];
 
             for pattern in &gitignore_patterns {
@@ -249,7 +259,10 @@ fn check_generated_header(path: &Path, policy: &FilePolicy, extension: &str) -> 
     }
 
     // For other files, check for the generated marker using comment syntax
-    let marker = format!("{} @generated {}", comment_syntax.prefix, comment_syntax.suffix);
+    let marker = format!(
+        "{} @generated {}",
+        comment_syntax.prefix, comment_syntax.suffix
+    );
     Ok(content.contains(&marker))
 }
 
