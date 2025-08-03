@@ -279,10 +279,10 @@ mod hook_runner;
 mod hook_state_machine;
 mod sarif_integration;
 mod status;
+mod strict_file_validator;
 mod structured_auto_push;
 mod structured_logging;
 mod wasm_event_bus;
-mod strict_file_validator;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -3392,11 +3392,20 @@ fn validate_files_strict(strict: bool, verbose: bool) -> Result<()> {
                     println!("❌ Policy violations found:");
                     for violation in &result.violations {
                         match violation {
-                            strict_file_validator::FileViolation::DisallowedExtension { file, extension } => {
+                            strict_file_validator::FileViolation::DisallowedExtension {
+                                file,
+                                extension,
+                            } => {
                                 println!("   ❌ Disallowed extension '{}' in: {}", extension, file);
                             }
-                            strict_file_validator::FileViolation::MissingGeneratedHeader { file, extension } => {
-                                println!("   ❌ Missing generated header in: {} (extension: {})", file, extension);
+                            strict_file_validator::FileViolation::MissingGeneratedHeader {
+                                file,
+                                extension,
+                            } => {
+                                println!(
+                                    "   ❌ Missing generated header in: {} (extension: {})",
+                                    file, extension
+                                );
                             }
                         }
                     }
@@ -3491,55 +3500,132 @@ async fn generate_all_files(validate: bool, force: bool) -> Result<()> {
 /// Bootstrap the project with all generated files
 async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
     use crate::{log_event, structured_logging::emit_sarif_error};
-    
-    log_event!("info", "bootstrap_start", "🚀 Bootstrapping project with all generated files", None::<String>);
+
+    log_event!(
+        "info",
+        "bootstrap_start",
+        "🚀 Bootstrapping project with all generated files",
+        None::<String>
+    );
 
     // Generate all files
-    log_event!("info", "generate_files", "Generating all project files", None::<String>);
+    log_event!(
+        "info",
+        "generate_files",
+        "Generating all project files",
+        None::<String>
+    );
     match generate_all_files(validate, true).await {
-        Ok(_) => log_event!("info", "generate_success", "All files generated successfully", None::<String>),
+        Ok(_) => log_event!(
+            "info",
+            "generate_success",
+            "All files generated successfully",
+            None::<String>
+        ),
         Err(e) => {
-            log_event!("error", "generate_failed", &format!("Failed to generate files: {}", e), None::<String>);
-            emit_sarif_error("xtask/src/main.rs", 3492, &format!("File generation failed: {}", e));
+            log_event!(
+                "error",
+                "generate_failed",
+                &format!("Failed to generate files: {}", e),
+                None::<String>
+            );
+            emit_sarif_error(
+                "xtask/src/main.rs",
+                3492,
+                &format!("File generation failed: {}", e),
+            );
             return Err(e);
         }
     }
 
     // Check if everything is valid
-    log_event!("info", "validation_start", "🔍 Running final validation", None::<String>);
+    log_event!(
+        "info",
+        "validation_start",
+        "🔍 Running final validation",
+        None::<String>
+    );
     match file_audit::validate_generated_files() {
-        Ok(_) => log_event!("info", "validation_success", "Generated files validation passed", None::<String>),
+        Ok(_) => log_event!(
+            "info",
+            "validation_success",
+            "Generated files validation passed",
+            None::<String>
+        ),
         Err(e) => {
-            log_event!("error", "validation_failed", &format!("Generated files validation failed: {}", e), None::<String>);
-            emit_sarif_error("xtask/src/main.rs", 3500, &format!("Generated files validation failed: {}", e));
+            log_event!(
+                "error",
+                "validation_failed",
+                &format!("Generated files validation failed: {}", e),
+                None::<String>
+            );
+            emit_sarif_error(
+                "xtask/src/main.rs",
+                3500,
+                &format!("Generated files validation failed: {}", e),
+            );
             return Err(e);
         }
     }
 
     // Check file types
-    log_event!("info", "file_check_start", "🔍 Checking file types", None::<String>);
+    log_event!(
+        "info",
+        "file_check_start",
+        "🔍 Checking file types",
+        None::<String>
+    );
     match file_audit::check_files() {
         Ok(result) => {
             if result.has_errors() {
-                log_event!("error", "file_check_failed", "File type validation failed", None::<String>);
+                log_event!(
+                    "error",
+                    "file_check_failed",
+                    "File type validation failed",
+                    None::<String>
+                );
                 emit_sarif_error("xtask/src/main.rs", 3505, "File type validation failed");
                 anyhow::bail!("Bootstrap validation failed. Please fix issues and try again.");
             } else {
-                log_event!("info", "file_check_success", "File type validation passed", None);
+                log_event!(
+                    "info",
+                    "file_check_success",
+                    "File type validation passed",
+                    None::<String>
+                );
             }
         }
         Err(e) => {
-            log_event!("error", "file_check_error", &format!("File type check error: {}", e), None);
-            emit_sarif_error("xtask/src/main.rs", 3505, &format!("File type check error: {}", e));
+            log_event!(
+                "error",
+                "file_check_error",
+                &format!("File type check error: {}", e),
+                None::<String>
+            );
+            emit_sarif_error(
+                "xtask/src/main.rs",
+                3505,
+                &format!("File type check error: {}", e),
+            );
             return Err(e);
         }
     }
 
-    log_event!("info", "bootstrap_success", "✅ Bootstrap completed successfully", None);
+    log_event!(
+        "info",
+        "bootstrap_success",
+        "✅ Bootstrap completed successfully",
+        None::<String>
+    );
 
     if commit {
-        log_event!("info", "commit_start", "📝 Committing generated files", None);
-        
+        log_event!(
+            "info",
+            "commit_start",
+            "📝 Committing generated files",
+            None::<String>
+        );
+
         // Add files to git
         let status = std::process::Command::new("git")
             .args(["add", "."])
@@ -3548,15 +3634,30 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
 
         match status {
             Ok(status) if status.success() => {
-                log_event!("info", "git_add_success", "Files added to git successfully", None);
+                log_event!(
+                    "info",
+                    "git_add_success",
+                    "Files added to git successfully",
+                    None::<String>
+                );
             }
             Ok(_) => {
-                log_event!("error", "git_add_failed", "Failed to add files to git", None);
+                log_event!(
+                    "error",
+                    "git_add_failed",
+                    "Failed to add files to git",
+                    None
+                );
                 emit_sarif_error("xtask/src/main.rs", 3520, "Failed to add files to git");
                 anyhow::bail!("Failed to add files to git");
             }
             Err(e) => {
-                log_event!("error", "git_add_error", &format!("Git add error: {}", e), None);
+                log_event!(
+                    "error",
+                    "git_add_error",
+                    &format!("Git add error: {}", e),
+                    None
+                );
                 emit_sarif_error("xtask/src/main.rs", 3520, &format!("Git add error: {}", e));
                 return Err(e);
             }
@@ -3570,7 +3671,12 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
 
         match status {
             Ok(status) if status.success() => {
-                log_event!("info", "git_commit_success", "✅ Generated files committed successfully", None);
+                log_event!(
+                    "info",
+                    "git_commit_success",
+                    "✅ Generated files committed successfully",
+                    None
+                );
             }
             Ok(_) => {
                 log_event!("error", "git_commit_failed", "Failed to commit files", None);
@@ -3578,22 +3684,36 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                 anyhow::bail!("Failed to commit files");
             }
             Err(e) => {
-                log_event!("error", "git_commit_error", &format!("Git commit error: {}", e), None);
-                emit_sarif_error("xtask/src/main.rs", 3530, &format!("Git commit error: {}", e));
+                log_event!(
+                    "error",
+                    "git_commit_error",
+                    &format!("Git commit error: {}", e),
+                    None
+                );
+                emit_sarif_error(
+                    "xtask/src/main.rs",
+                    3530,
+                    &format!("Git commit error: {}", e),
+                );
                 return Err(e);
             }
         }
     }
 
-    log_event!("info", "bootstrap_complete", "🎉 Project bootstrap completed", None);
-    
+    log_event!(
+        "info",
+        "bootstrap_complete",
+        "🎉 Project bootstrap completed",
+        None
+    );
+
     let next_steps = vec![
         "1. Review generated files",
-        "2. Run tests: cargo test", 
+        "2. Run tests: cargo test",
         "3. Build project: cargo build",
-        "4. Start development!"
+        "4. Start development!",
     ];
-    
+
     for step in next_steps {
         log_event!("info", "next_step", step, None);
     }

@@ -181,13 +181,14 @@ impl StructuredAutoPush {
     /// Run a cargo command
     async fn run_cargo_command(&self, name: &str, args: &[String]) -> Result<bool> {
         use std::process::Command;
-        
+
         let mut cmd = Command::new("cargo");
         cmd.args(args);
-        
-        let output = cmd.output()
+
+        let output = cmd
+            .output()
             .context(format!("Failed to run cargo {}", name))?;
-        
+
         Ok(output.status.success())
     }
 
@@ -208,12 +209,12 @@ impl StructuredAutoPush {
     /// Add all changes
     async fn add_changes(&self) -> Result<()> {
         use std::process::Command;
-        
+
         let output = Command::new("git")
             .args(["add", "."])
             .output()
             .context("Failed to run git add")?;
-        
+
         if self.verbose {
             println!("📝 Added all changes");
         }
@@ -253,7 +254,7 @@ impl StructuredAutoPush {
         }
 
         use std::process::Command;
-        
+
         let output = Command::new("git")
             .args(&commit_args)
             .output()
@@ -264,8 +265,10 @@ impl StructuredAutoPush {
             .args(["rev-parse", "HEAD"])
             .output()
             .context("Failed to get commit hash")?;
-        
-        let commit_hash = String::from_utf8_lossy(&commit_hash_output.stdout).trim().to_string();
+
+        let commit_hash = String::from_utf8_lossy(&commit_hash_output.stdout)
+            .trim()
+            .to_string();
 
         if self.verbose {
             println!("💾 Committed changes: {}", commit_hash);
@@ -277,12 +280,12 @@ impl StructuredAutoPush {
     /// Check git status for changes
     async fn check_git_status(&self) -> Result<bool> {
         use std::process::Command;
-        
+
         let output = Command::new("git")
             .args(["status", "--porcelain"])
             .output()
             .context("Failed to run git status")?;
-        
+
         let status = String::from_utf8_lossy(&output.stdout);
         Ok(!status.trim().is_empty())
     }
@@ -290,7 +293,7 @@ impl StructuredAutoPush {
     /// Push changes
     async fn push_changes(&self, force: bool) -> Result<String> {
         use std::process::Command;
-        
+
         let mut push_args = vec!["push"];
 
         if force {

@@ -134,9 +134,7 @@ pub struct SarifIntegration {
 impl SarifIntegration {
     /// Create a new SARIF integration instance
     pub fn new() -> Self {
-        Self {
-            config: None,
-        }
+        Self { config: None }
     }
 
     /// Set CodeQL configuration

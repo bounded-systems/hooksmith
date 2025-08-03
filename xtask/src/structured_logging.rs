@@ -184,7 +184,8 @@ macro_rules! log_event_with_metadata {
 
 pub fn emit_sarif_error(file: &str, line: u32, msg: &str) {
     let sarif = SarifResult {
-        schema: "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json".to_string(),
+        schema: "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json"
+            .to_string(),
         version: "2.1.0".to_string(),
         runs: vec![SarifRun {
             tool: SarifTool {
@@ -218,7 +219,8 @@ pub fn emit_sarif_error(file: &str, line: u32, msg: &str) {
 
 pub fn emit_sarif_warning(file: &str, line: u32, msg: &str) {
     let sarif = SarifResult {
-        schema: "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json".to_string(),
+        schema: "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json"
+            .to_string(),
         version: "2.1.0".to_string(),
         runs: vec![SarifRun {
             tool: SarifTool {

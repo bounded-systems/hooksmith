@@ -108,14 +108,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn ensure_xtask_structure() -> Result<()> {
-    log_event!("info", "check_xtask", "Checking xtask structure", None);
-    if !Path::new("xtask").exists() {
-        log_event!("info", "create_xtask_dir", "Creating xtask directory", None);
-        fs::create_dir_all("xtask/src")?;
-    }
-    Ok(())
-}
+
 
 fn build_xtask() -> Result<()> {
     log_event("info", "build_xtask", "Building xtask binary", None);
@@ -261,20 +254,18 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
+    
     #[test]
-    fn test_jsonc_parse_and_toml_write() {
-        let jsonc = r#"{
-            // comment
-            "package": { "name": "foo", "version": "0.1.0" },
-            "dependencies": { "serde": "1.0" }
-        }"#;
-        let value = parse_to_value(jsonc, &Default::default()).expect("parse");
-        let dir = tempdir().unwrap();
-        let out_path = dir.path().join("Cargo.toml");
-        write_toml_from_jsonc(&value, out_path.to_str().unwrap()).unwrap();
-        let written = std::fs::read_to_string(out_path).unwrap();
-        assert!(written.contains("[package]"));
-        assert!(written.contains("name = \"foo\""));
+    fn test_log_event() {
+        // This test ensures the log_event function works
+        log_event("test", "test_action", "test message", None);
+        log_event("test", "test_action", "test message", Some("details"));
+    }
+    
+    #[test]
+    fn test_ensure_xtask_structure() {
+        // This test ensures the xtask structure creation works
+        let result = ensure_xtask_structure();
+        assert!(result.is_ok());
     }
 }

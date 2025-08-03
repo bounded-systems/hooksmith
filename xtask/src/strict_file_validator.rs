@@ -22,12 +22,12 @@ impl FilePolicy {
             bail!("File policy configuration not found: config/file-policy.jsonc");
         }
 
-        let content = fs::read_to_string(config_path)
-            .context("Failed to read file policy configuration")?;
+        let content =
+            fs::read_to_string(config_path).context("Failed to read file policy configuration")?;
 
         // Parse JSONC (JSON with comments) by stripping comments
         let json_content = strip_jsonc_comments(&content);
-        
+
         let policy: FilePolicy = serde_json::from_str(&json_content)
             .context("Failed to parse file policy configuration")?;
 
@@ -110,7 +110,10 @@ impl StrictFileValidationResult {
                         println!("   ❌ Disallowed extension '{}' in: {}", extension, file);
                     }
                     FileViolation::MissingGeneratedHeader { file, extension } => {
-                        println!("   ❌ Missing generated header in: {} (extension: {})", file, extension);
+                        println!(
+                            "   ❌ Missing generated header in: {} (extension: {})",
+                            file, extension
+                        );
                     }
                 }
             }
@@ -152,7 +155,7 @@ pub fn validate_files() -> Result<StrictFileValidationResult> {
         .filter_map(|e| e.ok())
     {
         let path = entry.path();
-        
+
         // Skip directories
         if path.is_dir() {
             continue;
@@ -174,10 +177,7 @@ pub fn validate_files() -> Result<StrictFileValidationResult> {
         }
 
         // Get file extension
-        let extension = path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .unwrap_or("");
+        let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
 
         // Check if extension is allowed
         if policy.is_allowed_extension(extension) {
@@ -193,10 +193,12 @@ pub fn validate_files() -> Result<StrictFileValidationResult> {
                     result.generated_files += 1;
                 }
                 Ok(false) => {
-                    result.violations.push(FileViolation::MissingGeneratedHeader {
-                        file: path_str.to_string(),
-                        extension: extension.to_string(),
-                    });
+                    result
+                        .violations
+                        .push(FileViolation::MissingGeneratedHeader {
+                            file: path_str.to_string(),
+                            extension: extension.to_string(),
+                        });
                 }
                 Err(e) => {
                     result.errors.push(format!(
@@ -224,8 +226,8 @@ fn check_generated_header(path: &Path, policy: &FilePolicy, extension: &str) -> 
         None => return Ok(false), // No marker defined for this extension
     };
 
-    let content = fs::read_to_string(path)
-        .context(format!("Failed to read file: {}", path.display()))?;
+    let content =
+        fs::read_to_string(path).context(format!("Failed to read file: {}", path.display()))?;
 
     Ok(content.contains(marker))
 }
@@ -315,4 +317,4 @@ mod tests {
 
         assert_eq!(strip_jsonc_comments(input).trim(), expected.trim());
     }
-} 
+}

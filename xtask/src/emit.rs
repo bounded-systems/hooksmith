@@ -141,10 +141,16 @@ mod tests {
 
     #[test]
     fn test_emit_with_details() {
-        emit_with_details!("test", "build", "info", "Build completed", serde_json::json!({
-            "duration_ms": 1500,
-            "targets": ["release"]
-        }));
+        emit_with_details!(
+            "test",
+            "build",
+            "info",
+            "Build completed",
+            serde_json::json!({
+                "duration_ms": 1500,
+                "targets": ["release"]
+            })
+        );
     }
 
     #[test]
