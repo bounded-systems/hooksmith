@@ -8,32 +8,32 @@ CLI tool for building Rust binaries into Lefthook hooks with WASM components
 
 ## Dependencies
 
-- **anyhow**: ^1.0
-- **git-filter**: *
-- **toml**: ^0.8
-- **serde_json**: ^1.0
 - **console**: ^0.15
-- **which**: ^5.0
-- **reqwest**: ^0.11
-- **tracing-subscriber**: ^0.3
-- **sha2**: ^0.10
-- **jsonschema**: ^0.17
-- **serde**: ^1.0
-- **serde_yaml**: ^0.9
-- **tracing**: ^0.1
-- **wasmtime**: ^18.0
-- **clap**: ^4.0
-- **cli-core**: *
 - **wasmtime-wasi**: ^18.0
-- **git2**: ^0.18
-- **chrono**: ^0.4
+- **cli-core**: *
+- **which**: ^5.0
+- **git-filter**: *
 - **wit-bindgen**: ^0.20
-- **tokio**: ^1.0
-- **tempfile**: dev
-- **indicatif**: ^0.17
-- **schemars**: ^0.8
-- **regex**: ^1.0
+- **git2**: ^0.18
 - **hex**: ^0.4
+- **serde_json**: ^1.0
+- **anyhow**: ^1.0
+- **regex**: ^1.0
+- **tracing-subscriber**: ^0.3
+- **tokio**: ^1.0
+- **indicatif**: ^0.17
+- **serde_yaml**: ^0.9
+- **schemars**: ^0.8
+- **reqwest**: ^0.11
+- **tracing**: ^0.1
+- **clap**: ^4.0
+- **tempfile**: dev
+- **chrono**: ^0.4
+- **jsonschema**: ^0.17
+- **sha2**: ^0.10
+- **wasmtime**: ^18.0
+- **toml**: ^0.8
+- **serde**: ^1.0
 
 ## Installation
 
@@ -177,6 +177,7 @@ hooksmith --help
 │   │   ├── TRUNK_STYLE_QUICKSTART.md
 │   │   ├── CONTRACT_VALIDATION_WITH_GIT_NOTES.md
 │   │   ├── style.css
+│   │   ├── CHECKSUM_REPORT.md
 │   │   ├── git_object_contract_system.md
 │   │   ├── STRUCTURED_LOGGING.md
 │   │   ├── CONTRACT_STATE_MACHINE.pdf

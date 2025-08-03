@@ -77,10 +77,10 @@ docs:
     generator: "structure"
     description: "Project structure summary"
 
-  # Checksum Report
-  - path: "docs/CHECKSUM_REPORT.md"
-    generator: "checksum_report"
-    description: "Checksum validation report"
+  # Checksum Report (generated outside manifest flow)
+  # - path: "docs/CHECKSUM_REPORT.md"
+  #   generator: "checksum_report"
+  #   description: "Checksum validation report"
 
 global_config:
   output_dir: "docs"

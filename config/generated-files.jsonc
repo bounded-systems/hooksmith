@@ -1,0 +1,367 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Hooksmith Generated Files",
+  "description": "List of generated files with stable slugs for referencing in CI and automation.",
+  
+  // All files listed here are assumed to be generated
+  // No redundant generated: true flags needed
+  "files": [
+    // Documentation files
+    {
+      "slug": "docs-architecture-diagram",
+      "path": "docs/ARCHITECTURE_DIAGRAM.md",
+      "extension": "md"
+    },
+    {
+      "slug": "docs-cli-help",
+      "path": "docs/CLI_HELP.md",
+      "extension": "md"
+    },
+    {
+      "slug": "docs-structure",
+      "path": "docs/STRUCTURE.md",
+      "extension": "md"
+    },
+    {
+      "slug": "docs-examples",
+      "path": "docs/EXAMPLES.md",
+      "extension": "md"
+    },
+    {
+      "slug": "docs-api",
+      "path": "docs/API.md",
+      "extension": "md"
+    },
+    {
+      "slug": "docs-development",
+      "path": "docs/DEVELOPMENT.md",
+      "extension": "md"
+    },
+    {
+      "slug": "docs-testing",
+      "path": "docs/TESTING.md",
+      "extension": "md"
+    },
+    {
+      "slug": "docs-contributing",
+      "path": "docs/CONTRIBUTING.md",
+      "extension": "md"
+    },
+    {
+      "slug": "docs-architecture",
+      "path": "docs/ARCHITECTURE.md",
+      "extension": "md"
+    },
+    {
+      "slug": "docs-checksum-report",
+      "path": "docs/CHECKSUM_REPORT.md",
+      "extension": "md"
+    },
+    {
+      "slug": "docs-checksums-json",
+      "path": "docs/checksums.json",
+      "extension": "json"
+    },
+    {
+      "slug": "docs-style-css",
+      "path": "docs/style.css",
+      "extension": "css"
+    },
+
+    // Component documentation
+    {
+      "slug": "components-cli-core-readme",
+      "path": "components/cli-core/README.md",
+      "extension": "md"
+    },
+    {
+      "slug": "components-git-filter-readme",
+      "path": "components/git-filter/README.md",
+      "extension": "md"
+    },
+    {
+      "slug": "components-hook-builder-readme",
+      "path": "components/hook-builder/README.md",
+      "extension": "md"
+    },
+    {
+      "slug": "components-worktree-runner-readme",
+      "path": "components/worktree-runner/README.md",
+      "extension": "md"
+    },
+
+    // Main project files
+    {
+      "slug": "readme",
+      "path": "README.md",
+      "extension": "md"
+    },
+    {
+      "slug": "structure",
+      "path": "STRUCTURE.md",
+      "extension": "md"
+    },
+
+    // Configuration files
+    {
+      "slug": "gitignore",
+      "path": ".gitignore",
+      "extension": ""
+    },
+    {
+      "slug": "gitattributes",
+      "path": ".gitattributes",
+      "extension": ""
+    },
+    {
+      "slug": "codeowners",
+      "path": "CODEOWNERS",
+      "extension": ""
+    },
+    {
+      "slug": "editorconfig",
+      "path": ".editorconfig",
+      "extension": ""
+    },
+    {
+      "slug": "envrc",
+      "path": ".envrc",
+      "extension": ""
+    },
+    {
+      "slug": "makefile",
+      "path": "Makefile",
+      "extension": ""
+    },
+
+    // Scripts
+    {
+      "slug": "scripts-setup-default",
+      "path": "scripts/setup-default.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-safe-push",
+      "path": "scripts/safe-push.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-setup-env",
+      "path": "scripts/setup-env.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-check-errors",
+      "path": "scripts/check-errors.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-safe-pre-push-hook",
+      "path": "scripts/safe-pre-push-hook.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-ci-build",
+      "path": "scripts/ci-build.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-enforce-structured-logging",
+      "path": "scripts/enforce_structured_logging.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-security-check",
+      "path": "scripts/security-check.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-setup-log-cleanup",
+      "path": "scripts/setup-log-cleanup.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-dev-cycle",
+      "path": "scripts/dev-cycle.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-verify-ci-readiness",
+      "path": "scripts/verify-ci-readiness.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-log-stats",
+      "path": "scripts/log-stats.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-monitor-errors",
+      "path": "scripts/monitor-errors.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-advanced-git-aliases",
+      "path": "scripts/advanced-git-aliases.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-build-stats",
+      "path": "scripts/build-stats.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-install-logging-tools",
+      "path": "scripts/install_logging_tools.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-optimize-build",
+      "path": "scripts/optimize-build.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-debug-pre-push",
+      "path": "scripts/debug-pre-push.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-monitor-errors-alt",
+      "path": "scripts/monitor_errors.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-safe-commit",
+      "path": "scripts/safe-commit.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-safe-git-aliases",
+      "path": "scripts/safe-git-aliases.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-demo-jql-analysis",
+      "path": "scripts/demo_jql_analysis.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-macos-optimize",
+      "path": "scripts/macos-optimize.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-update-ci-integration",
+      "path": "scripts/update-ci-integration.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-simple-git-aliases",
+      "path": "scripts/simple-git-aliases.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-validation-summary",
+      "path": "scripts/validation_summary.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-watch-dashboard",
+      "path": "scripts/watch-dashboard.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-validate-ci-setup",
+      "path": "scripts/validate-ci-setup.sh",
+      "extension": "sh"
+    },
+    {
+      "slug": "scripts-cleanup-logs",
+      "path": "scripts/cleanup-logs.sh",
+      "extension": "sh"
+    },
+
+    // Templates
+    {
+      "slug": "templates-readme",
+      "path": "templates/README.hbs",
+      "extension": "hbs"
+    },
+
+    // WIT files
+    {
+      "slug": "wit-lefthook-generator",
+      "path": "wit/lefthook-generator.wit",
+      "extension": "wit"
+    },
+    {
+      "slug": "wit-hooksmith",
+      "path": "wit/hooksmith.wit",
+      "extension": "wit"
+    },
+    {
+      "slug": "wit-hook-builder",
+      "path": "wit/hook-builder.wit",
+      "extension": "wit"
+    },
+    {
+      "slug": "wit-worktree-runner",
+      "path": "wit/worktree-runner.wit",
+      "extension": "wit"
+    },
+    {
+      "slug": "wit-event-bus",
+      "path": "wit/event-bus.wit",
+      "extension": "wit"
+    },
+    {
+      "slug": "wit-validation",
+      "path": "wit/validation.wit",
+      "extension": "wit"
+    },
+    {
+      "slug": "components-hook-builder-wit",
+      "path": "components/hook-builder/wit/hook-builder.wit",
+      "extension": "wit"
+    },
+    {
+      "slug": "components-worktree-runner-wit",
+      "path": "components/worktree-runner/wit/worktree-runner.wit",
+      "extension": "wit"
+    },
+    {
+      "slug": "xtask-wit-hooksmith",
+      "path": "xtask/wit/hooksmith.wit",
+      "extension": "wit"
+    },
+    {
+      "slug": "xtask-wit-worktree-runner",
+      "path": "xtask/wit/worktree-runner.wit",
+      "extension": "wit"
+    },
+
+    // JSONL files
+    {
+      "slug": "hooksmith-events",
+      "path": "hooksmith-events.jsonl",
+      "extension": "jsonl"
+    },
+    {
+      "slug": "hooksmith-events-dot",
+      "path": ".hooksmith/events.jsonl",
+      "extension": "jsonl"
+    },
+
+    // Other files
+    {
+      "slug": "fix-format-sed",
+      "path": "fix_format.sed",
+      "extension": "sed"
+    },
+    {
+      "slug": "generated-file-demo",
+      "path": "generated_file_demo",
+      "extension": ""
+    }
+  ]
+} 

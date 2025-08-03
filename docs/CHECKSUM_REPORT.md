@@ -4,7 +4,7 @@
 
 # Documentation Checksum Report
 
-Generated at: 2025-08-03T21:53:30.975754+00:00
+Generated at: 2025-08-03T21:54:47.748696+00:00
 Generator version: 0.1.0
 Total files: 14
 
@@ -21,7 +21,7 @@ Total files: 14
 | CONTRACT_VALIDATION_SYSTEM.md | N/A | ⚠️ No checksum |
 | tree_contract_system.md | N/A | ⚠️ No checksum |
 | TEST_SUMMARY.md | N/A | ⚠️ No checksum |
-| STRUCTURE.md | 55071f0e0fea5cb955951c4e9aed492a2e0768ec2ea6ec46ba581b8509c8f699 | ✅ Valid |
+| STRUCTURE.md | 0b65fe36ed56b557ce15d4b4761713b58b788a5b33bfffda0f4812d79c939abd | ✅ Valid |
 | CLEAN_AUTO_PUSH.md | N/A | ⚠️ No checksum |
 | api.md | N/A | ⚠️ No checksum |
 | TRUNK_STYLE_COMMITS.md | N/A | ⚠️ No checksum |
@@ -34,15 +34,15 @@ Total files: 14
 | merkle-chain-spec.md | N/A | ⚠️ No checksum |
 | docs/EXAMPLES.md | c1e08f6a33a27e6d5a558c348ba6e4fcdb2e401dd2252f8bbc287d34e53b3444 | ✅ Valid |
 | docs/ARCHITECTURE.md | 8835a6700a3c887a78193ba066f99f27bf146971148b6285ad3c05cd16b50e94 | ✅ Valid |
-| docs/STRUCTURE.md | baa141731e0488a690c252f9de7a84059f2af17139c9b3229b30d4cee84c7329 | ✅ Valid |
+| docs/STRUCTURE.md | 31f0da4b1f0202960b2f3f80844cb9e7208adf809b4141767bb32f33bd18141e | ✅ Valid |
 | docs/API.md | 51186478297f7f118029edc0ee5d1f8e98926b7bcc208644745660c80b71d47f | ✅ Valid |
 | docs/TESTING.md | 47b62e216640cc24485107f8357d5028eba87a0ead82014ddff9ac4fc768110b | ✅ Valid |
 | docs/CONTRIBUTING.md | cfb8304420e6fe4b159ab36355ae0b569919fb34eb1c2c6cfec27ffdd88b5955 | ✅ Valid |
 | docs/CLI_HELP.md | 84126ad3ba9c076cc9ac274a1474b4524b06ce5a1f451bddbbeacc1ac8986c3a | ✅ Valid |
-| docs/DEVELOPMENT.md | d931bd9d454fbd9a21fd42a2213eeabfc84bc62611ee7ba73805867404312d47 | ✅ Valid |
+| docs/DEVELOPMENT.md | 5d52229125dacbcaa12e7e33b029299e6bcbe1b1f79fcddd848d38c7c698e8ed | ✅ Valid |
 | git_filter_system.md | N/A | ⚠️ No checksum |
 | CONTRACT_CHECK_SYSTEM.md | N/A | ⚠️ No checksum |
-| README.md | b9d37f16870b27de42c28ff40294b97cb1581290d635e369a0f5259f3042f80c | ✅ Valid |
+| README.md | 876ef798ae7ec13529af9f5d7a9991d3babafc95e981b92b3195676106d4745f | ✅ Valid |
 | contract-state-machine.md | N/A | ⚠️ No checksum |
 | filename_contract_system.md | N/A | ⚠️ No checksum |
 | components/hook-builder/README.md | 91c0ffe08ac7b07fa03023e603f4f91163b4982c4522f2febe8341babd21e19c | ✅ Valid |
@@ -55,6 +55,7 @@ Total files: 14
 | DEVELOPMENT_SUMMARY.md | N/A | ⚠️ No checksum |
 | TRUNK_STYLE_QUICKSTART.md | N/A | ⚠️ No checksum |
 | CONTRACT_VALIDATION_WITH_GIT_NOTES.md | N/A | ⚠️ No checksum |
+| CHECKSUM_REPORT.md | N/A | ⚠️ No checksum |
 | git_object_contract_system.md | N/A | ⚠️ No checksum |
 | STRUCTURED_LOGGING.md | N/A | ⚠️ No checksum |
 | unified_contracts_system.md | N/A | ⚠️ No checksum |

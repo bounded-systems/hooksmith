@@ -150,6 +150,7 @@ cargo build
 │   │   ├── TRUNK_STYLE_QUICKSTART.md
 │   │   ├── CONTRACT_VALIDATION_WITH_GIT_NOTES.md
 │   │   ├── style.css
+│   │   ├── CHECKSUM_REPORT.md
 │   │   ├── git_object_contract_system.md
 │   │   ├── STRUCTURED_LOGGING.md
 │   │   ├── CONTRACT_STATE_MACHINE.pdf

@@ -11,12 +11,18 @@ pub struct FilePolicy {
     pub allowed_extensions: Vec<String>,
     #[serde(rename = "generatedExtensions")]
     pub generated_extensions: Vec<String>,
-    #[serde(rename = "ignorePaths")]
-    pub ignore_paths: Vec<String>,
+    #[serde(rename = "useGitignore")]
+    pub use_gitignore: Option<bool>,
     #[serde(rename = "generatedMarkers")]
-    pub generated_markers: HashMap<String, String>,
+    pub generated_markers: HashMap<String, CommentSyntax>,
     #[serde(rename = "generationCommands")]
     pub generation_commands: HashMap<String, String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CommentSyntax {
+    pub prefix: String,
+    pub suffix: String,
 }
 
 impl FilePolicy {
@@ -47,9 +53,20 @@ impl FilePolicy {
     }
 
     pub fn should_ignore_path(&self, path: &str) -> bool {
-        for pattern in &self.ignore_paths {
-            if path.contains(pattern) || path.ends_with(pattern) {
-                return true;
+        // Use .gitignore if enabled
+        if self.use_gitignore.unwrap_or(false) {
+            // TODO: Implement .gitignore parsing
+            // For now, use basic patterns
+            let gitignore_patterns = [
+                "target/", "dist/", "node_modules/", "*.lock", "*.jsonl",
+                ".git/", "logs/", "status-trends/", ".cargo/hakari/",
+                ".hooks/", ".trunk/", ".cargo/", "Cargo.lock"
+            ];
+
+            for pattern in &gitignore_patterns {
+                if path.contains(pattern) || path.ends_with(pattern) {
+                    return true;
+                }
             }
         }
         false
@@ -57,10 +74,11 @@ impl FilePolicy {
 
     pub fn is_exempt_file(&self, _path: &str) -> bool {
         // No exemptions allowed - strict policy only
+        // Only .rs and .jsonc files can exist without headers
         false
     }
 
-    pub fn get_generated_marker(&self, extension: &str) -> Option<&String> {
+    pub fn get_generated_marker(&self, extension: &str) -> Option<&CommentSyntax> {
         self.generated_markers.get(extension)
     }
 }
@@ -99,7 +117,6 @@ impl StrictFileValidationResult {
         println!("✅ Allowed files (.rs, .jsonc): {}", self.allowed_files);
         println!("🔧 Generated files: {}", self.generated_files);
         println!("🚫 Ignored files: {}", self.ignored_files);
-        println!("🛡️  Exempt files: {}", self.exempt_files);
         println!();
 
         if self.has_violations() {
@@ -170,11 +187,8 @@ pub fn validate_files() -> Result<StrictFileValidationResult> {
             continue;
         }
 
-        // Check if file is exempt
-        if policy.is_exempt_file(&path_str) {
-            result.exempt_files += 1;
-            continue;
-        }
+        // No exemptions allowed - strict policy only
+        // Only .rs and .jsonc files can exist without headers
 
         // Get file extension
         let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
@@ -221,15 +235,22 @@ pub fn validate_files() -> Result<StrictFileValidationResult> {
 }
 
 fn check_generated_header(path: &Path, policy: &FilePolicy, extension: &str) -> Result<bool> {
-    let marker = match policy.get_generated_marker(extension) {
-        Some(marker) => marker,
+    let comment_syntax = match policy.get_generated_marker(extension) {
+        Some(syntax) => syntax,
         None => return Ok(false), // No marker defined for this extension
     };
 
     let content =
         fs::read_to_string(path).context(format!("Failed to read file: {}", path.display()))?;
 
-    Ok(content.contains(marker))
+    // Handle JSON/JSONL files specially (no comments)
+    if extension == "json" || extension == "jsonl" {
+        return Ok(content.contains("\"_generated\"") || content.contains("\"_generated_by\""));
+    }
+
+    // For other files, check for the generated marker using comment syntax
+    let marker = format!("{} @generated {}", comment_syntax.prefix, comment_syntax.suffix);
+    Ok(content.contains(&marker))
 }
 
 fn strip_jsonc_comments(content: &str) -> String {

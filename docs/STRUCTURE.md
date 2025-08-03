@@ -271,6 +271,8 @@ This document shows the complete file structure of the repository.
 ├── docs/
   ├── ARCHITECTURE_DIAGRAM.md
 ├── docs/
+  ├── CHECKSUM_REPORT.md
+├── docs/
   ├── CLEAN_AUTO_PUSH.md
 ├── docs/
   ├── CLI_HELP.md
@@ -538,8 +540,6 @@ This document shows the complete file structure of the repository.
   ├── dev-cycle.sh
 ├── scripts/
   ├── enforce_structured_logging.sh
-├── scripts/
-  ├── fix-generated-headers.sh
 ├── scripts/
   ├── install_logging_tools.sh
 ├── scripts/
@@ -900,38 +900,38 @@ This document shows the complete file structure of the repository.
 
 ## 📊 File Count Summary
 
-- **Total Files**:       464
+- **Total Files**:       465
 - **Rust Files**:        141 (.rs)
 - **Configuration Files**:        40 (.toml, .yaml, .rc)
-- **Documentation**:        184 (.md)
+- **Documentation**:        185 (.md)
 - **Scripts**:        29 (.sh)
 
 ## 📋 File Type Breakdown
 
 | Extension | Count | Description |
 |-----------|-------|-------------|
-| .css | 1 | Stylesheet files |
-| .wit | 10 | WebAssembly Interface Type definitions |
-| .json | 10 | JSON schema and config files |
-| .disabled | 7 | Other files |
-| .sed | 2 | Other files |
-| .toml | 17 | Cargo and configuration files |
-| .jsonl | 2 | Other files |
 | .pdf | 1 | PDF documentation |
-| .html | 1 | HTML documentation |
-| .bash | 1 | Other files |
-| .backup | 1 | Other files |
-| .dot | 1 | Other files |
-| .sh | 29 | Shell scripts |
-| .jsonc | 11 | Other files |
-| .lock | 2 | Other files |
-| .md | 184 | Markdown documentation |
-| .epub | 1 | EPUB documentation |
-| .yml | 9 | YAML configuration files |
-| .jql | 4 | Other files |
 | .yaml | 4 | YAML configuration files |
+| .dot | 1 | Other files |
+| .bash | 1 | Other files |
+| .html | 1 | HTML documentation |
+| .jql | 4 | Other files |
+| .jsonl | 2 | Other files |
 | .rs | 141 | Rust source files |
+| .css | 1 | Stylesheet files |
+| .sed | 2 | Other files |
+| .wit | 10 | WebAssembly Interface Type definitions |
+| .epub | 1 | EPUB documentation |
+| .backup | 1 | Other files |
+| .yml | 9 | YAML configuration files |
+| .disabled | 7 | Other files |
 | .hbs | 1 | Other files |
+| .sh | 29 | Shell scripts |
+| .toml | 17 | Cargo and configuration files |
+| .lock | 2 | Other files |
+| .json | 10 | JSON schema and config files |
+| .jsonc | 11 | Other files |
+| .md | 185 | Markdown documentation |
 
 ## 🧩 Component Breakdown
 
@@ -962,9 +962,9 @@ This document shows the complete file structure of the repository.
 ## 📈 Repository Information
 
 - **Current Branch**: feature/wasm-wit-support
-- **Total Commits**: 261
-- **Modified Files**: 85
+- **Total Commits**: 262
+- **Modified Files**: 6
 
 ---
 
-*Generated on Sun Aug  3 21:53:30 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
+*Generated on Sun Aug  3 21:54:47 UTC 2025 using `cargo xtask gen-docs-comprehensive`. This file is auto-generated and should not be edited manually.*
