@@ -288,20 +288,20 @@ impl StructuredLogger {
     }
 
     /// Run git command with structured output
-    pub async fn run_git_command(&self, subcommand: &str, args: &[&str]) -> Result<String> {
-        let mut command_args = vec![subcommand];
+    pub async fn run_git_command(&self, subcommand: &str, args: &[String]) -> Result<String> {
+        let mut command_args = vec![subcommand.to_string()];
         command_args.extend_from_slice(args);
 
         // Add JSON output format for supported commands
         match subcommand {
             "status" => {
-                command_args.push("--json");
+                command_args.push("--json".to_string());
             }
             "log" => {
-                command_args.push("--format=json");
+                command_args.push("--format=json".to_string());
             }
             "for-each-ref" => {
-                command_args.push("--format=%(objectname:json)");
+                command_args.push("--format=%(objectname:json)".to_string());
             }
             _ => {}
         }
@@ -347,7 +347,7 @@ impl StructuredLogger {
 
     /// Check git status with structured output
     pub async fn git_status(&self) -> Result<HashMap<String, Value>> {
-        let status_output = self.run_git_command("status", &["--json"]).await?;
+        let status_output = self.run_git_command("status", &["--json".to_string()]).await?;
         
         if let Ok(status_json) = serde_json::from_str::<serde_json::Value>(&status_output) {
             if let Some(status_obj) = status_json.as_object() {
@@ -360,7 +360,7 @@ impl StructuredLogger {
         }
         
         // Fallback to parsing porcelain output
-        let porcelain_output = self.run_git_command("status", &["--porcelain"]).await?;
+        let porcelain_output = self.run_git_command("status", &["--porcelain".to_string()]).await?;
         let mut status_map = HashMap::new();
         status_map.insert("porcelain".to_string(), serde_json::Value::String(porcelain_output));
         Ok(status_map)
@@ -368,11 +368,10 @@ impl StructuredLogger {
 
     /// Get git log with structured output
     pub async fn git_log(&self, count: Option<usize>) -> Result<Vec<Value>> {
-        let mut args = vec!["--format=json"];
+        let mut args = vec!["--format=json".to_string()];
         if let Some(n) = count {
-            args.push("-n");
-            let count_str = n.to_string();
-            args.push(&count_str);
+            args.push("-n".to_string());
+            args.push(n.to_string());
         }
         
         let log_output = self.run_git_command("log", &args).await?;

@@ -200,7 +200,7 @@ impl StructuredAutoPush {
         }
         
         // Fallback: check if there are any changes
-        let porcelain_output = self.logger.run_git_command("status", &["--porcelain"]).await?;
+        let porcelain_output = self.logger.run_git_command("status", &["--porcelain".to_string()]).await?;
         let has_changes = !porcelain_output.trim().is_empty();
         
         if has_changes {
@@ -212,7 +212,7 @@ impl StructuredAutoPush {
 
     /// Add all changes
     async fn add_changes(&self) -> Result<()> {
-        let output = self.logger.run_git_command("add", &["."]).await?;
+        let output = self.logger.run_git_command("add", &[".".to_string()]).await?;
         self.logger.info("git", "add", "Successfully added all changes")?;
         Ok(())
     }
@@ -232,23 +232,23 @@ impl StructuredAutoPush {
             format!("chore: auto-update at {}", timestamp)
         };
 
-        let mut commit_args = vec!["commit"];
+        let mut commit_args = vec!["commit".to_string()];
 
         if allow_empty_message || commit_message.is_empty() {
-            commit_args.extend_from_slice(&["--allow-empty-message", "-m", ""]);
+            commit_args.extend_from_slice(&["--allow-empty-message".to_string(), "-m".to_string(), "".to_string()]);
         } else {
-            commit_args.extend_from_slice(&["-m", &commit_message]);
+            commit_args.extend_from_slice(&["-m".to_string(), commit_message.clone()]);
         }
 
         // Add any additional arguments
         for arg in args {
-            commit_args.push(arg);
+            commit_args.push(arg.clone());
         }
 
         let output = self.logger.run_git_command("commit", &commit_args).await?;
         
         // Get commit hash
-        let commit_hash = self.logger.run_git_command("rev-parse", &["HEAD"]).await?;
+        let commit_hash = self.logger.run_git_command("rev-parse", &["HEAD".to_string()]).await?;
         
         let commit_details = serde_json::json!({
             "commit_hash": commit_hash.trim(),
@@ -271,10 +271,10 @@ impl StructuredAutoPush {
 
     /// Push changes
     async fn push_changes(&self, force: bool) -> Result<String> {
-        let mut push_args = vec!["push"];
+        let mut push_args = vec!["push".to_string()];
         
         if force {
-            push_args.push("--force");
+            push_args.push("--force".to_string());
         }
         
         let output = self.logger.run_git_command("push", &push_args).await?;
