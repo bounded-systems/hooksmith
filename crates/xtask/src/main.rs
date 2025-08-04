@@ -469,6 +469,7 @@ mod registry;
 mod workflow;
 mod unified_generator;
 mod repo_structure_validator;
+mod component_status;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
