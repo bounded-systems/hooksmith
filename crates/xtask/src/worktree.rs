@@ -4,12 +4,12 @@
 //! including tool detection, configuration management, and integration
 //! with various worktree management tools like wtp, wt, and git.
 
-use anyhow::{Context, Result};
-use console::style;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use anyhow::{Context, Result};
+use console::style;
+use serde::{Deserialize, Serialize};
 use tokio::fs;
 
 use crate::WorktreeCommands;
@@ -17,9 +17,7 @@ use crate::WorktreeCommands;
 /// Worktree configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorktreeConfig {
-    /// Preferred tool to use
-    pub preferred_tool: Option<String>,
-    /// Base directory for worktrees
+    /// Worktree base directory
     pub worktree_base: Option<String>,
     /// Worktree template pattern
     pub worktree_template: Option<String>,
@@ -64,7 +62,6 @@ pub struct IntegrationConfig {
 impl Default for WorktreeConfig {
     fn default() -> Self {
         Self {
-            preferred_tool: Some("workbloom".to_string()),
             worktree_base: Some("../".to_string()),
             worktree_template: Some("{repo}-{branch}".to_string()),
             run_setup: true,
@@ -112,8 +109,6 @@ impl Default for WorktreeConfig {
 /// Worktree management tool
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum WorktreeTool {
-    Wtp,
-    Gwtr,
     Workbloom,
     Git,
 }
@@ -122,8 +117,6 @@ impl WorktreeTool {
     /// Get command name for the tool
     pub fn command_name(&self) -> &'static str {
         match self {
-            WorktreeTool::Wtp => "wtp",
-            WorktreeTool::Gwtr => "gwtr",
             WorktreeTool::Workbloom => "workbloom",
             WorktreeTool::Git => "git",
         }
@@ -140,8 +133,6 @@ impl WorktreeTool {
     /// Get tool description
     pub fn description(&self) -> &'static str {
         match self {
-            WorktreeTool::Wtp => "Git worktree management with hooks and automation",
-            WorktreeTool::Gwtr => "Rust-based Git worktree manager with configuration layers",
             WorktreeTool::Workbloom => "Rust-based CLI with automatic file copying and port allocation",
             WorktreeTool::Git => "Native Git worktree commands",
         }
@@ -150,8 +141,6 @@ impl WorktreeTool {
     /// Get configuration file name for the tool
     pub fn config_file_name(&self) -> &'static str {
         match self {
-            WorktreeTool::Wtp => ".wtp.yml",
-            WorktreeTool::Gwtr => ".gwtr.toml",
             WorktreeTool::Workbloom => ".workbloom",
             WorktreeTool::Git => ".git/config",
         }
@@ -194,29 +183,9 @@ impl WorktreeManager {
     /// Load configuration from multiple sources
     pub async fn load_config(&mut self, config_path: &Path) -> Result<()> {
         // Load configuration in order of precedence:
-        // 1. Project-specific config files
-        // 2. User/global config
+        // 1. Project-specific workbloom config
+        // 2. Hooksmith-specific config
         // 3. Defaults
-
-        // Try to load project-specific gwtr config
-        let gwtr_config = PathBuf::from(".gwtr.toml");
-        if gwtr_config.exists() {
-            if let Ok(content) = fs::read_to_string(&gwtr_config).await {
-                println!("{}", style("✓ Loaded .gwtr.toml configuration").green());
-                // Parse TOML configuration (simplified for now)
-                self.parse_gwtr_config(&content)?;
-            }
-        }
-
-        // Try to load project-specific wtp config
-        let wtp_config = PathBuf::from(".wtp.yml");
-        if wtp_config.exists() {
-            if let Ok(content) = fs::read_to_string(&wtp_config).await {
-                println!("{}", style("✓ Loaded .wtp.yml configuration").green());
-                // Parse YAML configuration (simplified for now)
-                self.parse_wtp_config(&content)?;
-            }
-        }
 
         // Try to load project-specific workbloom config
         let workbloom_config = PathBuf::from(".workbloom");
@@ -232,58 +201,6 @@ impl WorktreeManager {
         if config_path.exists() {
             let content = fs::read_to_string(config_path).await?;
             self.config = serde_json::from_str(&content)?;
-        }
-
-        Ok(())
-    }
-
-    /// Parse gwtr TOML configuration
-    fn parse_gwtr_config(&mut self, content: &str) -> Result<()> {
-        // Simplified TOML parsing - in a real implementation, you'd use a TOML parser
-        if content.contains("worktree_storage") {
-            // Extract worktree storage path
-            if let Some(line) = content.lines().find(|l| l.contains("worktree_storage")) {
-                if let Some(value) = line.split('=').nth(1) {
-                    let value = value.trim().trim_matches('"');
-                    self.config.worktree_base = Some(value.to_string());
-                }
-            }
-        }
-
-        if content.contains("default_branch_pattern") {
-            // Extract branch pattern
-            if let Some(line) = content.lines().find(|l| l.contains("default_branch_pattern")) {
-                if let Some(value) = line.split('=').nth(1) {
-                    let value = value.trim().trim_matches('"');
-                    self.config.worktree_template = Some(value.to_string());
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Parse wtp YAML configuration
-    fn parse_wtp_config(&mut self, content: &str) -> Result<()> {
-        // Simplified YAML parsing - in a real implementation, you'd use a YAML parser
-        if content.contains("base_path") {
-            // Extract base path
-            if let Some(line) = content.lines().find(|l| l.contains("base_path")) {
-                if let Some(value) = line.split(':').nth(1) {
-                    let value = value.trim().trim_matches('"');
-                    self.config.worktree_base = Some(value.to_string());
-                }
-            }
-        }
-
-        if content.contains("template") {
-            // Extract template
-            if let Some(line) = content.lines().find(|l| l.contains("template")) {
-                if let Some(value) = line.split(':').nth(1) {
-                    let value = value.trim().trim_matches('\'');
-                    self.config.worktree_template = Some(value.to_string());
-                }
-            }
         }
 
         Ok(())
@@ -319,7 +236,7 @@ impl WorktreeManager {
 
     /// Get available worktree tools
     pub fn get_available_tools(&self) -> Vec<WorktreeTool> {
-        let tools = vec![WorktreeTool::Gwtr, WorktreeTool::Workbloom, WorktreeTool::Wtp, WorktreeTool::Git];
+        let tools = vec![WorktreeTool::Workbloom, WorktreeTool::Git];
         tools
             .into_iter()
             .filter(|tool| tool.is_available())
@@ -328,24 +245,9 @@ impl WorktreeManager {
 
     /// Select the best available tool
     pub fn select_best_tool(&self) -> Result<WorktreeTool> {
-        // Check if preferred tool is available
-        if let Some(ref preferred) = self.config.preferred_tool {
-            match preferred.as_str() {
-                "gwtr" if WorktreeTool::Gwtr.is_available() => return Ok(WorktreeTool::Gwtr),
-                "wtp" if WorktreeTool::Wtp.is_available() => return Ok(WorktreeTool::Wtp),
-                "workbloom" if WorktreeTool::Workbloom.is_available() => return Ok(WorktreeTool::Workbloom),
-                "git" if WorktreeTool::Git.is_available() => return Ok(WorktreeTool::Git),
-                _ => {}
-            }
-        }
-
-        // Fall back to best available tool
-        if WorktreeTool::Gwtr.is_available() {
-            Ok(WorktreeTool::Gwtr)
-        } else if WorktreeTool::Workbloom.is_available() {
+        // Prefer Workbloom for its advanced features
+        if WorktreeTool::Workbloom.is_available() {
             Ok(WorktreeTool::Workbloom)
-        } else if WorktreeTool::Wtp.is_available() {
-            Ok(WorktreeTool::Wtp)
         } else if WorktreeTool::Git.is_available() {
             Ok(WorktreeTool::Git)
         } else {
@@ -358,8 +260,6 @@ impl WorktreeManager {
         let tool = self.select_best_tool()?;
 
         match tool {
-            WorktreeTool::Gwtr => self.list_with_gwtr().await,
-            WorktreeTool::Wtp => self.list_with_wtp().await,
             WorktreeTool::Workbloom => self.list_with_workbloom().await,
             WorktreeTool::Git => self.list_with_git().await,
         }
@@ -375,8 +275,6 @@ impl WorktreeManager {
         let tool = self.select_best_tool()?;
 
         match tool {
-            WorktreeTool::Gwtr => self.create_with_gwtr(branch, base_dir, switch).await,
-            WorktreeTool::Wtp => self.create_with_wtp(branch, base_dir, switch).await,
             WorktreeTool::Workbloom => self.create_with_workbloom(branch, base_dir, switch).await,
             WorktreeTool::Git => self.create_with_git(branch, base_dir, switch).await,
         }
@@ -387,8 +285,6 @@ impl WorktreeManager {
         let tool = self.select_best_tool()?;
 
         match tool {
-            WorktreeTool::Gwtr => self.switch_with_gwtr(worktree).await,
-            WorktreeTool::Wtp => self.switch_with_wtp(worktree).await,
             WorktreeTool::Workbloom => self.switch_with_workbloom(worktree).await,
             WorktreeTool::Git => self.switch_with_git(worktree).await,
         }
@@ -399,8 +295,6 @@ impl WorktreeManager {
         let tool = self.select_best_tool()?;
 
         match tool {
-            WorktreeTool::Gwtr => self.remove_with_gwtr(worktree, with_branch).await,
-            WorktreeTool::Wtp => self.remove_with_wtp(worktree, with_branch).await,
             WorktreeTool::Workbloom => self.remove_with_workbloom(worktree).await,
             WorktreeTool::Git => self.remove_with_git(worktree, with_branch).await,
         }
@@ -413,37 +307,7 @@ impl WorktreeManager {
             style("Installing worktree management tools...").bold()
         );
 
-        // Try to install gwtr (primary tool)
-        if !WorktreeTool::Gwtr.is_available() {
-            println!("Installing gwtr...");
-            let output = Command::new("cargo")
-                .args(["install", "gwtr"])
-                .output()
-                .context("Failed to install gwtr")?;
-
-            if output.status.success() {
-                println!("{}", style("✓ gwtr installed successfully").green());
-            } else {
-                println!("{}", style("✗ Failed to install gwtr").red());
-            }
-        }
-
-        // Try to install wtp
-        if !WorktreeTool::Wtp.is_available() {
-            println!("Installing wtp...");
-            let output = Command::new("cargo")
-                .args(["install", "wtp"])
-                .output()
-                .context("Failed to install wtp")?;
-
-            if output.status.success() {
-                println!("{}", style("✓ wtp installed successfully").green());
-            } else {
-                println!("{}", style("✗ Failed to install wtp").red());
-            }
-        }
-
-        // Try to install workbloom
+        // Try to install workbloom (primary tool)
         if !WorktreeTool::Workbloom.is_available() {
             println!("Installing workbloom...");
             let output = Command::new("cargo")
@@ -467,134 +331,6 @@ impl WorktreeManager {
             "{}",
             style("Creating worktree configuration files...").bold()
         );
-
-        // Create .gwtr.toml
-        let gwtr_config = r#"# .gwtr.toml
-# Hooksmith Git Worktree Manager Configuration
-
-[general]
-worktree_storage = "../"
-default_branch_pattern = "feature/* => {repo}-{branch}"
-ignore_glob = ["target/", ".cache/", "node_modules/", "dist/"]
-
-[storage]
-lru_limit = 15
-use_named_subdirs = true
-auto_cleanup = true
-
-[named_worktrees]
-"feature/spin-integration" = "hooksmith-spin"
-"feature/spin-integration-v2" = "hooksmith-spin-integration"
-
-[hooks]
-post_create = [
-    "echo 'Setting up worktree: {worktree_path}'",
-    "cd {worktree_path} && cargo build",
-    "cd {worktree_path} && cargo xtask gen-all --validate",
-    "cd {worktree_path} && spin build || true"
-]
-
-post_switch = [
-    "echo 'Switching to worktree: {worktree_path}'",
-    "cd {worktree_path} && cargo check",
-    "cd {worktree_path} && cargo xtask check-all"
-]
-
-pre_remove = [
-    "echo 'Cleaning up worktree: {worktree_path}'",
-    "cd {worktree_path} && cargo clean",
-    "cd {worktree_path} && rm -rf target/"
-]
-
-[patterns]
-[patterns.feature]
-glob = "feature/*"
-template = "{repo}-{branch}"
-hooks = [
-    "cd {worktree_path} && cargo build",
-    "cd {worktree_path} && cargo xtask gen-all"
-]
-
-[patterns.bugfix]
-glob = "bugfix/*"
-template = "{repo}-{branch}"
-hooks = [
-    "cd {worktree_path} && cargo build",
-    "cd {worktree_path} && cargo test"
-]
-
-[patterns.hotfix]
-glob = "hotfix/*"
-template = "{repo}-{branch}"
-hooks = [
-    "cd {worktree_path} && cargo build",
-    "cd {worktree_path} && cargo xtask check-all"
-]
-
-[integration]
-lefthook = true
-xtask = true
-wasm_components = true
-preserve_branches = ["main", "develop", "master"]
-"#;
-
-        fs::write(".gwtr.toml", gwtr_config).await?;
-        println!("{}", style("✓ Created .gwtr.toml").green());
-
-        // Create .wtp.yml
-        let wtp_config = r#"# .wtp.yml
-wtp_version: 1
-
-defaults:
-  base_path: ../
-  template: '{repo}-{branch}'
-  post_create:
-    - echo "Setting up worktree: {worktree_path}"
-    - cd {worktree_path} && cargo build
-    - cd {worktree_path} && cargo xtask gen-all --validate
-    - cd {worktree_path} && spin build || true
-
-branches:
-  feature/spin-integration:
-    path: ../hooksmith-spin
-    post_create:
-      - cd {worktree_path} && spin up
-      - cd {worktree_path} && cargo xtask bootstrap --validate
-
-  feature/spin-integration-v2:
-    path: ../hooksmith-spin-integration
-    post_create:
-      - cd {worktree_path} && spin build
-      - cd {worktree_path} && cargo xtask gen-config
-
-patterns:
-  feature/*:
-    template: '{repo}-{branch}'
-    post_create:
-      - cd {worktree_path} && cargo build
-      - cd {worktree_path} && cargo xtask gen-all
-
-  bugfix/*:
-    template: '{repo}-{branch}'
-    post_create:
-      - cd {worktree_path} && cargo build
-      - cd {worktree_path} && cargo test
-
-  hotfix/*:
-    template: '{repo}-{branch}'
-    post_create:
-      - cd {worktree_path} && cargo build
-      - cd {worktree_path} && cargo xtask check-all
-
-project:
-  name: hooksmith
-  repo: hooksmith
-  preserve_branches: [main, develop, master]
-  auto_cleanup: true
-"#;
-
-        fs::write(".wtp.yml", wtp_config).await?;
-        println!("{}", style("✓ Created .wtp.yml").green());
 
         // Create .workbloom configuration
         let workbloom_config = r#"# .workbloom
@@ -690,36 +426,6 @@ local/
 
     // Tool-specific implementations
 
-    async fn list_with_gwtr(&self) -> Result<Vec<WorktreeInfo>> {
-        let output = Command::new("gwtr")
-            .args(["list"])
-            .output()
-            .context("Failed to run gwtr list")?;
-
-        if output.status.success() {
-            let output_str = String::from_utf8_lossy(&output.stdout);
-            self.parse_gwtr_list_output(&output_str)
-        } else {
-            let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("gwtr list failed: {}", error))
-        }
-    }
-
-    async fn list_with_wtp(&self) -> Result<Vec<WorktreeInfo>> {
-        let output = Command::new("wtp")
-            .args(["list"])
-            .output()
-            .context("Failed to run wtp list")?;
-
-        if output.status.success() {
-            let output_str = String::from_utf8_lossy(&output.stdout);
-            self.parse_wtp_list_output(&output_str)
-        } else {
-            let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("wtp list failed: {}", error))
-        }
-    }
-
     async fn list_with_workbloom(&self) -> Result<Vec<WorktreeInfo>> {
         let output = Command::new("workbloom")
             .args(["list"])
@@ -747,56 +453,6 @@ local/
         } else {
             let error = String::from_utf8_lossy(&output.stderr);
             Err(anyhow::anyhow!("git worktree list failed: {}", error))
-        }
-    }
-
-    async fn create_with_gwtr(
-        &self,
-        branch: &str,
-        _base_dir: Option<&str>,
-        switch: bool,
-    ) -> Result<()> {
-        let mut args = vec!["add", branch];
-        if switch {
-            args.push("--switch");
-        }
-
-        let output = Command::new("gwtr")
-            .args(&args)
-            .output()
-            .context("Failed to run gwtr add")?;
-
-        if output.status.success() {
-            println!("{}", style("✓ Worktree created successfully").green());
-            Ok(())
-        } else {
-            let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("gwtr add failed: {}", error))
-        }
-    }
-
-    async fn create_with_wtp(
-        &self,
-        branch: &str,
-        _base_dir: Option<&str>,
-        switch: bool,
-    ) -> Result<()> {
-        let mut args = vec!["add", branch];
-        if switch {
-            args.push("--switch");
-        }
-
-        let output = Command::new("wtp")
-            .args(&args)
-            .output()
-            .context("Failed to run wtp add")?;
-
-        if output.status.success() {
-            println!("{}", style("✓ Worktree created successfully").green());
-            Ok(())
-        } else {
-            let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("wtp add failed: {}", error))
         }
     }
 
@@ -866,36 +522,6 @@ local/
         }
     }
 
-    async fn switch_with_gwtr(&self, worktree: &str) -> Result<()> {
-        let output = Command::new("gwtr")
-            .args(["cd", worktree])
-            .output()
-            .context("Failed to run gwtr cd")?;
-
-        if output.status.success() {
-            println!("{}", style("✓ Switched to worktree successfully").green());
-            Ok(())
-        } else {
-            let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("gwtr cd failed: {}", error))
-        }
-    }
-
-    async fn switch_with_wtp(&self, worktree: &str) -> Result<()> {
-        let output = Command::new("wtp")
-            .args(["cd", worktree])
-            .output()
-            .context("Failed to run wtp cd")?;
-
-        if output.status.success() {
-            println!("{}", style("✓ Switched to worktree successfully").green());
-            Ok(())
-        } else {
-            let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("wtp cd failed: {}", error))
-        }
-    }
-
     async fn switch_with_workbloom(&self, worktree: &str) -> Result<()> {
         let output = Command::new("workbloom")
             .args(["cd", worktree])
@@ -920,46 +546,6 @@ local/
             Ok(())
         } else {
             Err(anyhow::anyhow!("Worktree '{}' not found", worktree))
-        }
-    }
-
-    async fn remove_with_gwtr(&self, worktree: &str, with_branch: bool) -> Result<()> {
-        let mut args = vec!["remove", worktree];
-        if with_branch {
-            args.push("--with-branch");
-        }
-
-        let output = Command::new("gwtr")
-            .args(&args)
-            .output()
-            .context("Failed to run gwtr remove")?;
-
-        if output.status.success() {
-            println!("{}", style("✓ Worktree removed successfully").green());
-            Ok(())
-        } else {
-            let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("gwtr remove failed: {}", error))
-        }
-    }
-
-    async fn remove_with_wtp(&self, worktree: &str, with_branch: bool) -> Result<()> {
-        let mut args = vec!["remove", worktree];
-        if with_branch {
-            args.push("--with-branch");
-        }
-
-        let output = Command::new("wtp")
-            .args(&args)
-            .output()
-            .context("Failed to run wtp remove")?;
-
-        if output.status.success() {
-            println!("{}", style("✓ Worktree removed successfully").green());
-            Ok(())
-        } else {
-            let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("wtp remove failed: {}", error))
         }
     }
 
@@ -1013,56 +599,6 @@ local/
     }
 
     // Output parsing methods
-
-    fn parse_gwtr_list_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
-        // Parse gwtr list output format
-        let mut worktrees = Vec::new();
-
-        for line in output.lines() {
-            if line.trim().is_empty() {
-                continue;
-            }
-
-            // Basic parsing - adjust based on actual gwtr output format
-            let parts: Vec<&str> = line.split_whitespace().collect();
-            if parts.len() >= 2 {
-                worktrees.push(WorktreeInfo {
-                    path: parts[0].to_string(),
-                    branch: parts[1].to_string(),
-                    commit: parts.get(2).unwrap_or(&"").to_string(),
-                    current: false, // Would need to detect current
-                    dirty: false,   // Would need to detect dirty state
-                });
-            }
-        }
-
-        Ok(worktrees)
-    }
-
-    fn parse_wtp_list_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
-        // Parse wtp list output format
-        let mut worktrees = Vec::new();
-
-        for line in output.lines() {
-            if line.trim().is_empty() {
-                continue;
-            }
-
-            // Basic parsing - adjust based on actual wtp output format
-            let parts: Vec<&str> = line.split_whitespace().collect();
-            if parts.len() >= 2 {
-                worktrees.push(WorktreeInfo {
-                    path: parts[0].to_string(),
-                    branch: parts[1].to_string(),
-                    commit: parts.get(2).unwrap_or(&"").to_string(),
-                    current: false, // Would need to detect current
-                    dirty: false,   // Would need to detect dirty state
-                });
-            }
-        }
-
-        Ok(worktrees)
-    }
 
     fn parse_workbloom_list_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
         // Parse workbloom list output format
@@ -1159,7 +695,6 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             if let Some(ref tool_name) = tool {
                 // Override preferred tool for this command
                 let mut config = WorktreeConfig::default();
-                config.preferred_tool = Some(tool_name.clone());
                 let manager = WorktreeManager::with_config(config);
                 manager.create_worktree(&branch, base_dir.as_deref(), switch).await?;
             } else {
@@ -1204,7 +739,6 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             if let Some(ref tool_name) = tool {
                 // Override preferred tool for this command
                 let mut config = WorktreeConfig::default();
-                config.preferred_tool = Some(tool_name.clone());
                 let manager = WorktreeManager::with_config(config);
                 manager.switch_worktree(&worktree).await?;
             } else {
@@ -1230,7 +764,6 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             if let Some(ref tool_name) = tool {
                 // Override preferred tool for this command
                 let mut config = WorktreeConfig::default();
-                config.preferred_tool = Some(tool_name.clone());
                 let manager = WorktreeManager::with_config(config);
                 manager.remove_worktree(&worktree, with_branch).await?;
             } else {
