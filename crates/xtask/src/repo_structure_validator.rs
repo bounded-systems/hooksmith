@@ -434,7 +434,7 @@ impl RepoStructureValidator {
     fn validate_component_cargo_toml(&self, crate_path: &Path, crate_name: &str, result: &mut ValidationResult) -> Result<()> {
         let cargo_toml_path = crate_path.join("Cargo.toml");
         if !cargo_toml_path.exists() {
-            return Ok(); // Already reported as missing required file
+            return Ok(()); // Already reported as missing required file
         }
 
         let cargo_content = fs::read_to_string(&cargo_toml_path)?;
@@ -462,7 +462,7 @@ impl RepoStructureValidator {
                     category: "component_crates".to_string(),
                 });
             }
-            return Ok();
+            return Ok(());
         }
 
         // Check for WIT files
@@ -581,7 +581,7 @@ impl RepoStructureValidator {
         let generated_dir = self.workspace_root.join(&self.schema.generated_sources.location);
         
         if !generated_dir.exists() {
-            return Ok(); // Generated sources directory is optional
+            return Ok(()); // Generated sources directory is optional
         }
 
         // Check registry file exists
@@ -632,7 +632,7 @@ impl RepoStructureValidator {
         let examples_dir = self.workspace_root.join(&self.schema.examples.location);
         
         if !examples_dir.exists() {
-            return Ok(); // Examples directory is optional
+            return Ok(()); // Examples directory is optional
         }
 
         for entry in fs::read_dir(&examples_dir)? {
@@ -674,7 +674,7 @@ impl RepoStructureValidator {
         let tests_dir = self.workspace_root.join(&self.schema.tests.location);
         
         if !tests_dir.exists() {
-            return Ok(); // Tests directory is optional
+            return Ok(()); // Tests directory is optional
         }
 
         for entry in fs::read_dir(&tests_dir)? {

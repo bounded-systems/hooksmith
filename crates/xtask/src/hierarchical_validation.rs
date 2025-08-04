@@ -9,7 +9,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs;
 
-use hooksmith::modules::hierarchical_validation::HierarchicalValidator;
+// Temporarily disabled due to circular dependency
+// use hooksmith::modules::hierarchical_validation::HierarchicalValidator;
 
 /// CLI for hierarchical contract validation
 #[derive(Parser)]
