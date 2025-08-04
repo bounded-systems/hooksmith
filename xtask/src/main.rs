@@ -697,6 +697,9 @@ enum Commands {
         /// Show detailed output
         #[arg(long)]
         verbose: bool,
+        /// Whether to check only staged files
+        #[arg(long)]
+        staged: bool,
     },
     /// Generate all code-generated files
     GenAll {
@@ -739,6 +742,15 @@ enum Commands {
         /// Path to the file to allow manual maintenance
         #[arg(long)]
         path: String,
+        /// Whether to show detailed output
+        #[arg(long)]
+        verbose: bool,
+    },
+    /// Regenerate all files and check for consistency
+    RegenCheck {
+        /// Whether to exit with error on any diff
+        #[arg(long)]
+        strict: bool,
         /// Whether to show detailed output
         #[arg(long)]
         verbose: bool,
@@ -1442,8 +1454,8 @@ async fn main() -> Result<()> {
         Commands::CheckFiles { strict, verbose } => {
             check_files(strict, verbose)?;
         }
-        Commands::ValidateFiles { strict, verbose } => {
-            validate_files_strict(strict, verbose)?;
+        Commands::ValidateFiles { strict, verbose, staged } => {
+            validate_files_strict(strict, verbose, staged)?;
         }
         Commands::GenAll { validate, force } => {
             generate_all_files(validate, force).await?;
@@ -1459,6 +1471,9 @@ async fn main() -> Result<()> {
         }
         Commands::AllowManual { path, verbose } => {
             allow_manual_file(path, verbose).await?;
+        }
+        Commands::RegenCheck { strict, verbose } => {
+            run_regen_check(strict, verbose).await?;
         }
         Commands::Bootstrap { validate, commit, clean, build_xtask, dry_run, verbose } => {
             bootstrap_project(validate, commit, clean, build_xtask, dry_run, verbose).await?;
@@ -3903,10 +3918,14 @@ fn check_files(strict: bool, verbose: bool) -> Result<()> {
     }
 }
 
-fn validate_files_strict(strict: bool, verbose: bool) -> Result<()> {
+fn validate_files_strict(strict: bool, verbose: bool, staged: bool) -> Result<()> {
     use strict_file_validator::validate_files;
 
-    println!("🔍 Validating files against strict extension policy...");
+    if staged {
+        println!("🔍 Validating staged files against strict extension policy...");
+    } else {
+        println!("🔍 Validating files against strict extension policy...");
+    }
 
     match validate_files() {
         Ok(result) => {
@@ -8189,4 +8208,127 @@ async fn allow_manual_file(path: String, verbose: bool) -> Result<()> {
     Ok(())
 }
 
+/// Run regeneration check: delete all generated files, regenerate, and compare
+async fn run_regen_check(strict: bool, verbose: bool) -> Result<()> {
+    use std::collections::HashMap;
+    use std::fs;
+    use std::path::Path;
 
+    println!("🔄 Running regeneration consistency check...");
+
+    // Step 1: Get current state
+    if verbose {
+        println!("📊 Step 1: Capturing current state...");
+    }
+    
+    let current_files = get_generated_files_state()?;
+    
+    if verbose {
+        println!("   Found {} generated files", current_files.len());
+    }
+
+    // Step 2: Clean all generated files
+    if verbose {
+        println!("🧹 Step 2: Cleaning all generated files...");
+    }
+    
+    clean_generated_files_enhanced(verbose).await?;
+
+    // Step 3: Regenerate all files
+    if verbose {
+        println!("🔄 Step 3: Regenerating all files...");
+    }
+    
+    regenerate_all_files_unified().await?;
+
+    // Step 4: Get new state
+    if verbose {
+        println!("📊 Step 4: Capturing new state...");
+    }
+    
+    let new_files = get_generated_files_state()?;
+
+    // Step 5: Compare states
+    if verbose {
+        println!("🔍 Step 5: Comparing states...");
+    }
+    
+    let differences = compare_file_states(&current_files, &new_files)?;
+    
+    if differences.is_empty() {
+        println!("✅ Regeneration check passed! All files are consistent.");
+    } else {
+        println!("❌ Regeneration check failed! Found {} differences:", differences.len());
+        
+        for diff in &differences {
+            match diff {
+                FileDifference::Added(path) => println!("   ➕ Added: {}", path),
+                FileDifference::Removed(path) => println!("   ➖ Removed: {}", path),
+                FileDifference::Modified(path) => println!("   🔄 Modified: {}", path),
+            }
+        }
+        
+        if strict {
+            anyhow::bail!("Regeneration check failed with {} differences", differences.len());
+        }
+    }
+
+    Ok(())
+}
+
+/// Get the current state of all generated files
+fn get_generated_files_state() -> Result<HashMap<String, String>> {
+    use checksum_registry::ChecksumRegistry;
+    
+    let registry = ChecksumRegistry::load()?;
+    let mut state = HashMap::new();
+    
+    for file in &registry.files {
+        let content = std::fs::read_to_string(&file.path)
+            .unwrap_or_else(|_| String::new());
+        state.insert(file.path.clone(), content);
+    }
+    
+    Ok(state)
+}
+
+/// Compare two file states and return differences
+fn compare_file_states(
+    before: &HashMap<String, String>,
+    after: &HashMap<String, String>,
+) -> Result<Vec<FileDifference>> {
+    let mut differences = Vec::new();
+    
+    // Check for added files
+    for path in after.keys() {
+        if !before.contains_key(path) {
+            differences.push(FileDifference::Added(path.clone()));
+        }
+    }
+    
+    // Check for removed files
+    for path in before.keys() {
+        if !after.contains_key(path) {
+            differences.push(FileDifference::Removed(path.clone()));
+        }
+    }
+    
+    // Check for modified files
+    for (path, after_content) in after {
+        if let Some(before_content) = before.get(path) {
+            if before_content != after_content {
+                differences.push(FileDifference::Modified(path.clone()));
+            }
+        }
+    }
+    
+    Ok(differences)
+}
+
+/// Represents a difference between file states
+#[derive(Debug)]
+enum FileDifference {
+    Added(String),
+    Removed(String),
+    Modified(String),
+}

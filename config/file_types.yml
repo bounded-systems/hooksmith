@@ -11,12 +11,11 @@ allowed_extensions:
   - rs
   - jsonc
 
-# Generated extensions that must have proper headers
-generated_extensions:
+# Generated types that must have proper headers
+generated_types:
   - toml
   - md
   - yml
-  - yaml
   - gitignore
   - gitattributes
   - CODEOWNERS
@@ -28,56 +27,38 @@ generated_extensions:
   - editorconfig
   - envrc
 
-# Use .gitignore for ignoring files instead of manual list
-use_gitignore: true
+# Excluded paths (patterns to ignore)
+excluded_paths:
+  - target/
+  - .git/
+  - node_modules/
+  - dist/
+  - build/
+
+# Manual files (files that are manually maintained)
+manual_files:
+  - Cargo.toml
+  - Cargo.lock
+  - rust-toolchain.toml
+  - .gitignore
+  - .gitattributes
 
 # Define comment syntax for each file type
-generated_markers:
-  md:
-    prefix: "<!--"
-    suffix: "-->"
-  toml:
-    prefix: "#"
-    suffix: ""
-  yml:
-    prefix: "#"
-    suffix: ""
-  yaml:
-    prefix: "#"
-    suffix: ""
-  gitignore:
-    prefix: "#"
-    suffix: ""
-  gitattributes:
-    prefix: "#"
-    suffix: ""
-  CODEOWNERS:
-    prefix: "#"
-    suffix: ""
-  json:
-    prefix: "//"
-    suffix: ""
-  jsonc:
-    prefix: "//"
-    suffix: ""
-  jsonl:
-    prefix: "//"
-    suffix: ""
-  jql:
-    prefix: "//"
-    suffix: ""
-  wit:
-    prefix: "//"
-    suffix: ""
-  makefile:
-    prefix: "#"
-    suffix: ""
-  editorconfig:
-    prefix: "#"
-    suffix: ""
-  envrc:
-    prefix: "#"
-    suffix: ""
+markers:
+  md: "<!--"
+  toml: "#"
+  yml: "#"
+  gitignore: "#"
+  gitattributes: "#"
+  CODEOWNERS: "#"
+  json: "//"
+  jsonc: "//"
+  jsonl: "//"
+  jql: "//"
+  wit: "//"
+  makefile: "#"
+  editorconfig: "#"
+  envrc: "#"
 
 # Generation commands for each file type
 generation_commands:

@@ -12,7 +12,7 @@
 
 #### 2. **🪝 Fixed `hooks/pre-add` File Issue**
 - **Issue**: File without extension that should be a shell script
-- **Fix**: Renamed `hooks/pre-add` → `hooks/pre-add.sh`
+- **Fix**: Renamed `hooks/pre-add` → `hooks/pre-add.rs`
 - **Result**: Now properly recognized as shell script with helpful suggestions
 
 #### 3. **📁 Added Directory Validation Display**
@@ -85,7 +85,7 @@ cargo run -p xtask -- validate-files --strict --verbose
 # Example output improvements:
 # 📁 Allowed directories: (shows all permitted directories)
 # 💡 Suggestion: Consider using .yml extension instead (more standard)
-# 💡 Suggestion: Consider renaming to pre-add.sh for shell scripts
+# 💡 Suggestion: Convert to .rs for Rust-based scripts
 ```
 
 ### ✅ **Summary**

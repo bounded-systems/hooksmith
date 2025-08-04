@@ -325,15 +325,16 @@ pub fn validate_files() -> Result<StrictFileValidationResult> {
         // Extension is not allowed - provide suggestions
         let suggestion = match extension {
             "yaml" => Some("Consider using .yml extension instead (more standard)"),
-            "bash" => Some("Consider using .sh extension for shell scripts"),
-            "sed" => Some("Consider using .sh extension for shell scripts"),
+            "bash" => Some("Convert to .rs for Rust-based scripts"),
+            "sed" => Some("Convert to .rs for Rust-based scripts"),
+            "sh" => Some("Convert to .rs for Rust-based scripts"),
             "disabled" => Some("Remove .disabled extension or add to .gitignore"),
             "backup" => Some("Remove .backup extension or add to .gitignore"),
             "" => {
                 // Check if it's a known file without extension
                 let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                 match filename {
-                    "pre-add" => Some("Consider renaming to pre-add.sh for shell scripts"),
+                    "pre-add" => Some("Convert to .rs for Rust-based scripts"),
                     "CODEOWNERS" => Some("This file should have generated header"),
                     ".gitignore" => Some("This file should have generated header"),
                     ".gitattributes" => Some("This file should have generated header"),

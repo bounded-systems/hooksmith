@@ -17,9 +17,9 @@ pub struct FileTypeConfig {
 
 impl FileTypeConfig {
     pub fn load() -> Result<Self> {
-        let config_path = Path::new("config/file_types.yaml");
+        let config_path = Path::new("config/file_types.yml");
         if !config_path.exists() {
-            bail!("File type configuration not found: config/file_types.yaml");
+            bail!("File type configuration not found: config/file_types.yml");
         }
 
         let content =

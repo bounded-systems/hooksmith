@@ -1,290 +1,241 @@
-//! Pre-Add Hook for Unified Generated File System
-//!
-//! This hook validates that only properly managed files can be staged for commit:
-//! - Files registered in generated-files.jsonc with valid checksums
-//! - Files with allowed extensions (.rs, .jsonc)
-//! - Files explicitly allowed in manual-files.jsonc
-
+#!/usr/bin/env cargo-eval
+//! ```cargo
+//! [dependencies]
+//! anyhow = "1.0"
+//! serde = { version = "1.0", features = ["derive"] }
+//! serde_json = "1.0"
+//! chrono = { version = "0.4", features = ["serde"] }
+//! toml = "0.8"
+//! dirs = "5.0"
+//! json_comments = "0.2"
+//! sha2 = "0.10"
+//! ```
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
-use std::collections::HashSet;
-use std::env;
+use chrono::Utc;
+use serde::Serialize;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
+use std::process::Command;
+use json_comments::StripComments;
+use sha2::{Digest, Sha256};
 
-/// Manual files registry structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct ManualFilesRegistry {
-    #[serde(rename = "$schema")]
-    schema: String,
-    title: String,
-    description: String,
-    manual: Vec<String>,
-    metadata: ManualFilesMetadata,
+#[derive(Serialize)]
+struct PreAddEvent<'a> {
+    timestamp: String,
+    level: &'a str,
+    action: &'a str,
+    message: &'a str,
+    details: Option<&'a str>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct ManualFilesMetadata {
-    last_updated: String,
-    version: String,
-    description: String,
+fn log_event(level: &str, action: &str, message: &str, details: Option<&str>) {
+    let event = PreAddEvent {
+        timestamp: Utc::now().to_rfc3339(),
+        level,
+        action,
+        message,
+        details,
+    };
+    println!("{}", serde_json::to_string(&event).unwrap());
 }
 
-/// Generated files registry entry
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct GeneratedFileEntry {
-    slug: String,
+fn main() {
+    if let Err(e) = run_pre_add_validation() {
+        log_event("error", "pre_add_failed", &format!("Pre-add validation failed: {e}"), None);
+        std::process::exit(1);
+    }
+}
+
+fn run_pre_add_validation() -> Result<()> {
+    log_event("info", "pre_add_start", "Starting pre-add validation", None);
+
+    // Get staged files
+    let staged_files = get_staged_files()?;
+    
+    if staged_files.is_empty() {
+        log_event("info", "pre_add_complete", "No files staged, validation complete", None);
+        return Ok(());
+    }
+
+    log_event("info", "pre_add_files", &format!("Validating {} staged files", staged_files.len()), None);
+
+    // Load checksum registry
+    let registry = load_checksum_registry()?;
+    
+    let mut violations = Vec::new();
+    let mut allowed_files = Vec::new();
+
+    for file_path in staged_files {
+        match validate_file(&file_path, &registry) {
+            Ok(validation_result) => {
+                match validation_result {
+                    ValidationResult::Allowed(reason) => {
+                        allowed_files.push((file_path.clone(), reason));
+                        log_event("info", "file_allowed", &format!("File allowed: {}", file_path), Some(&reason));
+                    }
+                    ValidationResult::Blocked(reason) => {
+                        violations.push((file_path.clone(), reason));
+                        log_event("error", "file_blocked", &format!("File blocked: {}", file_path), Some(&reason));
+                    }
+                }
+            }
+            Err(e) => {
+                violations.push((file_path.clone(), format!("Validation error: {}", e)));
+                log_event("error", "validation_error", &format!("Validation error for {}: {}", file_path, e), None);
+            }
+        }
+    }
+
+    // Report results
+    if violations.is_empty() {
+        log_event("info", "pre_add_success", &format!("All {} files allowed", allowed_files.len()), None);
+        println!("✅ Pre-add validation passed! All {} files are allowed.", allowed_files.len());
+        
+        if !allowed_files.is_empty() {
+            println!("\n📋 Allowed files:");
+            for (file, reason) in allowed_files {
+                println!("   ✅ {} ({})", file, reason);
+            }
+        }
+    } else {
+        log_event("error", "pre_add_violations", &format!("Found {} violations", violations.len()), None);
+        println!("❌ Pre-add validation failed! Found {} violations:", violations.len());
+        
+        for (file, reason) in &violations {
+            println!("   ❌ {} ({})", file, reason);
+        }
+        
+        println!("\n🔧 To fix violations:");
+        println!("   - Convert files to .rs or .jsonc for manual maintenance");
+        println!("   - Add files to generated-files.jsonc registry with proper checksums");
+        println!("   - Run: cargo xtask gen-all --validate");
+        
+        return Err(anyhow::anyhow!("Pre-add validation failed with {} violations", violations.len()));
+    }
+
+    Ok(())
+}
+
+fn get_staged_files() -> Result<Vec<String>> {
+    let output = Command::new("git")
+        .args(["diff", "--cached", "--name-only"])
+        .output()
+        .context("Failed to run git diff --cached --name-only")?;
+
+    if !output.status.success() {
+        anyhow::bail!("git diff --cached --name-only failed");
+    }
+
+    let output_str = String::from_utf8(output.stdout)
+        .context("Failed to parse git output as UTF-8")?;
+
+    let files: Vec<String> = output_str
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|s| s.to_string())
+        .collect();
+
+    Ok(files)
+}
+
+#[derive(Debug)]
+struct ChecksumRegistry {
+    files: Vec<RegistryFile>,
+}
+
+#[derive(Debug)]
+struct RegistryFile {
     path: String,
-    #[serde(alias = "type")]
-    extension: String,
     checksum: String,
-    #[serde(default)]
-    file_type: String,
+    extension: String,
 }
 
-/// Generated files registry structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct GeneratedFilesRegistry {
-    #[serde(rename = "$schema")]
-    schema: String,
-    description: String,
-    files: Vec<GeneratedFileEntry>,
-    ignore: IgnoreRules,
+fn load_checksum_registry() -> Result<ChecksumRegistry> {
+    let registry_path = Path::new("config/generated-files.jsonc");
+    
+    if !registry_path.exists() {
+        return Ok(ChecksumRegistry { files: Vec::new() });
+    }
+
+    let content = fs::read_to_string(registry_path)
+        .context("Failed to read generated-files.jsonc")?;
+
+    // Parse JSONC
+    let stripped = StripComments::new(content.as_bytes());
+    let json_value: serde_json::Value = serde_json::from_reader(stripped)
+        .context("Failed to parse generated-files.jsonc")?;
+
+    let files_array = json_value.get("files")
+        .and_then(|f| f.as_array())
+        .ok_or_else(|| anyhow::anyhow!("Missing 'files' array in generated-files.jsonc"))?;
+
+    let mut files = Vec::new();
+    for file_value in files_array {
+        if let (Some(path), Some(checksum), Some(extension)) = (
+            file_value.get("path").and_then(|p| p.as_str()),
+            file_value.get("checksum").and_then(|c| c.as_str()),
+            file_value.get("extension").and_then(|e| e.as_str()),
+        ) {
+            files.push(RegistryFile {
+                path: path.to_string(),
+                checksum: checksum.to_string(),
+                extension: extension.to_string(),
+            });
+        }
+    }
+
+    Ok(ChecksumRegistry { files })
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct IgnoreRules {
-    dirs: Vec<String>,
-    patterns: Vec<String>,
-}
-
-/// File policy configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct FilePolicy {
-    allowed_extensions: Vec<String>,
-    generated_extensions: Vec<String>,
-}
-
-/// Pre-add hook validator
-struct PreAddValidator {
-    project_root: PathBuf,
-    allowed_extensions: HashSet<String>,
-    generated_extensions: HashSet<String>,
-    manual_files: HashSet<String>,
-    generated_files: Vec<GeneratedFileEntry>,
-}
-
-impl PreAddValidator {
-    /// Create a new pre-add validator
-    fn new() -> Result<Self> {
-        let project_root = env::current_dir()?;
-        
-        // Load file policy
-        let policy_path = project_root.join("config").join("file-policy.jsonc");
-        let policy_content = fs::read_to_string(&policy_path)
-            .with_context(|| format!("Failed to read file policy: {}", policy_path.display()))?;
-        let policy: FilePolicy = serde_json::from_str(&policy_content)
-            .with_context(|| "Failed to parse file policy")?;
-        
-        let allowed_extensions: HashSet<String> = policy.allowed_extensions.into_iter().collect();
-        let generated_extensions: HashSet<String> = policy.generated_extensions.into_iter().collect();
-        
-        // Load manual files registry
-        let manual_files_path = project_root.join("config").join("manual-files.jsonc");
-        let manual_content = fs::read_to_string(&manual_files_path)
-            .with_context(|| format!("Failed to read manual files registry: {}", manual_files_path.display()))?;
-        let manual_registry: ManualFilesRegistry = serde_json::from_str(&manual_content)
-            .with_context(|| "Failed to parse manual files registry")?;
-        let manual_files: HashSet<String> = manual_registry.manual.into_iter().collect();
-        
-        // Load generated files registry
-        let generated_files_path = project_root.join("config").join("generated-files.jsonc");
-        let generated_content = fs::read_to_string(&generated_files_path)
-            .with_context(|| format!("Failed to read generated files registry: {}", generated_files_path.display()))?;
-        let generated_registry: GeneratedFilesRegistry = serde_json::from_str(&generated_content)
-            .with_context(|| "Failed to parse generated files registry")?;
-        
-        Ok(Self {
-            project_root,
-            allowed_extensions,
-            generated_extensions,
-            manual_files,
-            generated_files: generated_registry.files,
-        })
-    }
-    
-    /// Get file extension from path
-    fn get_extension(&self, path: &str) -> Option<String> {
-        Path::new(path)
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .map(|s| s.to_lowercase())
-    }
-    
-    /// Check if file is allowed by extension
-    fn is_allowed_extension(&self, path: &str) -> bool {
-        if let Some(ext) = self.get_extension(path) {
-            self.allowed_extensions.contains(&ext)
-        } else {
-            false
-        }
-    }
-    
-    /// Check if file is in manual files registry
-    fn is_manual_file(&self, path: &str) -> bool {
-        self.manual_files.contains(path)
-    }
-    
-    /// Find generated file entry by path
-    fn find_generated_file(&self, path: &str) -> Option<&GeneratedFileEntry> {
-        self.generated_files.iter().find(|entry| entry.path == path)
-    }
-    
-    /// Compute file checksum
-    fn compute_checksum(&self, path: &str) -> Result<String> {
-        let content = fs::read_to_string(path)
-            .with_context(|| format!("Failed to read file: {}", path))?;
-        
-        let mut hasher = Sha256::new();
-        hasher.update(content.as_bytes());
-        let result = hasher.finalize();
-        
-        Ok(format!("{:x}", result)[..8].to_string())
-    }
-    
-    /// Validate a single file
-    fn validate_file(&self, path: &str) -> Result<ValidationResult> {
-        // Check if file exists
-        if !Path::new(path).exists() {
-            return Ok(ValidationResult::Error(format!("File does not exist: {}", path)));
-        }
-        
-        // Check if it's a manual file
-        if self.is_manual_file(path) {
-            return Ok(ValidationResult::Allowed(format!("Manual file: {}", path)));
-        }
-        
-        // Check if it has an allowed extension
-        if self.is_allowed_extension(path) {
-            return Ok(ValidationResult::Allowed(format!("Allowed extension: {}", path)));
-        }
-        
-        // Check if it's a generated file
-        if let Some(entry) = self.find_generated_file(path) {
-            let current_checksum = self.compute_checksum(path)?;
-            
-            if current_checksum == entry.checksum {
-                return Ok(ValidationResult::Allowed(format!("Valid generated file: {}", path)));
-            } else {
-                return Ok(ValidationResult::Error(format!(
-                    "Generated file checksum mismatch: {} (expected: {}, got: {})\n\
-                     Run 'cargo xtask gen-all-unified' to regenerate files",
-                    path, entry.checksum, current_checksum
-                )));
-            }
-        }
-        
-        // File is not allowed
-        Ok(ValidationResult::Error(format!(
-            "File not allowed: {}\n\
-             This file is not:\n\
-             - A manually allowed file (use 'cargo xtask allow-manual --path {0}')\n\
-             - A file with allowed extension (.rs, .jsonc)\n\
-             - A registered generated file\n\
-             \n\
-             To add this file to manual files:\n\
-             cargo xtask allow-manual --path {0}",
-            path
-        )))
-    }
-    
-    /// Validate all staged files
-    fn validate_staged_files(&self) -> Result<ValidationSummary> {
-        let args: Vec<String> = env::args().collect();
-        
-        if args.len() < 2 {
-            return Err(anyhow::anyhow!("Usage: {} <file1> [file2] ...", args[0]));
-        }
-        
-        let files = &args[1..];
-        let mut summary = ValidationSummary::new();
-        
-        println!("🔍 Pre-add validation for {} file(s)...", files.len());
-        
-        for file in files {
-            match self.validate_file(file)? {
-                ValidationResult::Allowed(reason) => {
-                    summary.allowed.push((file.to_string(), reason.clone()));
-                    println!("✅ {}", reason);
-                }
-                ValidationResult::Error(error) => {
-                    summary.errors.push((file.to_string(), error.clone()));
-                    println!("❌ {}", error);
-                }
-            }
-        }
-        
-        Ok(summary)
-    }
-}
-
-/// Validation result for a single file
 #[derive(Debug)]
 enum ValidationResult {
     Allowed(String),
-    Error(String),
+    Blocked(String),
 }
 
-/// Summary of validation results
-#[derive(Debug)]
-struct ValidationSummary {
-    allowed: Vec<(String, String)>,
-    errors: Vec<(String, String)>,
-}
+fn validate_file(file_path: &str, registry: &ChecksumRegistry) -> Result<ValidationResult> {
+    let path = Path::new(file_path);
+    
+    // Get file extension
+    let extension = path.extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("")
+        .to_lowercase();
 
-impl ValidationSummary {
-    fn new() -> Self {
-        Self {
-            allowed: Vec::new(),
-            errors: Vec::new(),
-        }
+    // Check if it's a manually allowed extension (.rs or .jsonc)
+    if extension == "rs" || extension == "jsonc" {
+        return Ok(ValidationResult::Allowed(format!("Manual file (.{})", extension)));
     }
-    
-    fn is_success(&self) -> bool {
-        self.errors.is_empty()
-    }
-    
-    fn print_summary(&self) {
-        println!("\n📊 Validation Summary:");
-        println!("   ✅ Allowed: {}", self.allowed.len());
-        println!("   ❌ Errors: {}", self.errors.len());
-        
-        if !self.allowed.is_empty() {
-            println!("\n✅ Allowed files:");
-            for (file, reason) in &self.allowed {
-                println!("   - {} ({})", file, reason);
+
+    // Check if file exists in registry
+    let registry_entry = registry.files.iter()
+        .find(|f| f.path == file_path);
+
+    match registry_entry {
+        Some(entry) => {
+            // File is in registry, validate checksum
+            let actual_checksum = compute_file_checksum(file_path)?;
+            
+            if actual_checksum == entry.checksum {
+                Ok(ValidationResult::Allowed(format!("Generated file with valid checksum (.{})", entry.extension)))
+            } else {
+                Ok(ValidationResult::Blocked(format!("Generated file with invalid checksum (.{})", entry.extension)))
             }
         }
-        
-        if !self.errors.is_empty() {
-            println!("\n❌ Blocked files:");
-            for (file, error) in &self.errors {
-                println!("   - {}: {}", file, error);
-            }
+        None => {
+            // File not in registry and not manually allowed
+            Ok(ValidationResult::Blocked(format!("File not in registry and not manually allowed (.{})", extension)))
         }
     }
 }
 
-fn main() -> Result<()> {
-    let validator = PreAddValidator::new()?;
-    let summary = validator.validate_staged_files()?;
+fn compute_file_checksum(file_path: &str) -> Result<String> {
+    let content = fs::read_to_string(file_path)
+        .with_context(|| format!("Failed to read file: {}", file_path))?;
+
+    let mut hasher = Sha256::new();
+    hasher.update(content.as_bytes());
+    let result = hasher.finalize();
     
-    summary.print_summary();
-    
-    if !summary.is_success() {
-        std::process::exit(1);
-    }
-    
-    Ok(())
+    Ok(format!("{:x}", result))
 } 
