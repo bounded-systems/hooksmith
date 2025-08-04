@@ -8,11 +8,10 @@ use serde_json::Value;
 use warp::Filter;
 
 use crate::{
-    GitCommitRequest, GitCommitResult, GitOperationError, GitOperationEvent, GitPullRequest,
-    GitPullResult, GitPushRequest, GitPushResult, GitStatusRequest, GitStatusResult,
-    RepositoryInfo, WorktreeCreateRequest, WorktreeCreateResult, WorktreeListRequest,
-    WorktreeListResult, WorktreeRemoveRequest, WorktreeRemoveResult, WorktreeSwitchRequest,
-    WorktreeSwitchResult,
+    EventMetadata, GitAddRequest, GitAddResult, GitAuthor, GitCommitRequest, GitCommitResult,
+    GitNoteAddRequest, GitNoteAddResult, GitNoteGetRequest, GitNoteGetResult, GitOperationError,
+    GitOperationEvent, GitPullRequest, GitPullResult, GitPushRequest, GitPushResult, GitStatus,
+    GitStatusRequest, GitStatusResult,
 };
 
 /// Generate JSON schema for the main API types
@@ -43,20 +42,16 @@ pub fn generate_api_schema() -> Value {
         serde_json::to_value(schema_for!(GitStatusRequest)).unwrap(),
     );
     schema.insert(
-        "WorktreeCreateRequest".to_string(),
-        serde_json::to_value(schema_for!(WorktreeCreateRequest)).unwrap(),
+        "GitAddRequest".to_string(),
+        serde_json::to_value(schema_for!(GitAddRequest)).unwrap(),
     );
     schema.insert(
-        "WorktreeSwitchRequest".to_string(),
-        serde_json::to_value(schema_for!(WorktreeSwitchRequest)).unwrap(),
+        "GitNoteAddRequest".to_string(),
+        serde_json::to_value(schema_for!(GitNoteAddRequest)).unwrap(),
     );
     schema.insert(
-        "WorktreeRemoveRequest".to_string(),
-        serde_json::to_value(schema_for!(WorktreeRemoveRequest)).unwrap(),
-    );
-    schema.insert(
-        "WorktreeListRequest".to_string(),
-        serde_json::to_value(schema_for!(WorktreeListRequest)).unwrap(),
+        "GitNoteGetRequest".to_string(),
+        serde_json::to_value(schema_for!(GitNoteGetRequest)).unwrap(),
     );
 
     // Add result schemas
@@ -77,26 +72,30 @@ pub fn generate_api_schema() -> Value {
         serde_json::to_value(schema_for!(GitStatusResult)).unwrap(),
     );
     schema.insert(
-        "WorktreeCreateResult".to_string(),
-        serde_json::to_value(schema_for!(WorktreeCreateResult)).unwrap(),
+        "GitAddResult".to_string(),
+        serde_json::to_value(schema_for!(GitAddResult)).unwrap(),
     );
     schema.insert(
-        "WorktreeSwitchResult".to_string(),
-        serde_json::to_value(schema_for!(WorktreeSwitchResult)).unwrap(),
+        "GitNoteAddResult".to_string(),
+        serde_json::to_value(schema_for!(GitNoteAddResult)).unwrap(),
     );
     schema.insert(
-        "WorktreeRemoveResult".to_string(),
-        serde_json::to_value(schema_for!(WorktreeRemoveResult)).unwrap(),
-    );
-    schema.insert(
-        "WorktreeListResult".to_string(),
-        serde_json::to_value(schema_for!(WorktreeListResult)).unwrap(),
+        "GitNoteGetResult".to_string(),
+        serde_json::to_value(schema_for!(GitNoteGetResult)).unwrap(),
     );
 
     // Add supporting types
     schema.insert(
-        "RepositoryInfo".to_string(),
-        serde_json::to_value(schema_for!(RepositoryInfo)).unwrap(),
+        "GitAuthor".to_string(),
+        serde_json::to_value(schema_for!(GitAuthor)).unwrap(),
+    );
+    schema.insert(
+        "GitStatus".to_string(),
+        serde_json::to_value(schema_for!(GitStatus)).unwrap(),
+    );
+    schema.insert(
+        "EventMetadata".to_string(),
+        serde_json::to_value(schema_for!(EventMetadata)).unwrap(),
     );
     schema.insert(
         "GitOperationError".to_string(),
@@ -124,10 +123,9 @@ pub fn generate_api_schema() -> Value {
             "POST /api/git/push",
             "POST /api/git/pull",
             "POST /api/git/status",
-            "POST /api/worktree/create",
-            "POST /api/worktree/switch",
-            "POST /api/worktree/remove",
-            "POST /api/worktree/list"
+            "POST /api/git/add",
+            "POST /api/git/notes/add",
+            "POST /api/git/notes/get"
         ]),
     );
 

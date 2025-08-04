@@ -9,13 +9,14 @@
 //! - Clear separation between system operations and pure computation
 
 use serde::{Deserialize, Serialize};
+use schemars::JsonSchema;
 use std::collections::HashMap;
 
 pub mod schema;
 
 /// System events for operations that require native Rust capabilities
 /// (file I/O, Git operations, process management, etc.)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type", content = "data")]
 pub enum SystemEvent {
     /// Read a file from the filesystem
@@ -128,7 +129,7 @@ pub enum SystemEvent {
 }
 
 /// Options for schema validation
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct SchemaValidationOptions {
     /// Whether to be strict about validation
     pub strict: Option<bool>,
@@ -139,7 +140,7 @@ pub struct SchemaValidationOptions {
 }
 
 /// Computation events for pure logic operations that can be handled by WIT components
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type", content = "data")]
 pub enum ComputationEvent {
     /// Validate a contract
@@ -240,7 +241,7 @@ pub enum ComputationEvent {
 }
 
 /// Validation configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ValidationConfig {
     /// Whether to be strict about validation
     pub strict: Option<bool>,
@@ -253,7 +254,7 @@ pub struct ValidationConfig {
 }
 
 /// Validation result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ValidationResult {
     /// Whether validation was successful
     pub success: bool,
@@ -268,7 +269,7 @@ pub struct ValidationResult {
 }
 
 /// Contract check configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ContractCheckConfig {
     /// Whether to be strict about checking
     pub strict: Option<bool>,
@@ -279,7 +280,7 @@ pub struct ContractCheckConfig {
 }
 
 /// Contract check result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ContractCheckResult {
     /// Whether the contract is valid
     pub valid: bool,
@@ -292,7 +293,7 @@ pub struct ContractCheckResult {
 }
 
 /// Violation information
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Violation {
     /// Rule that was violated
     pub rule: String,
@@ -309,7 +310,7 @@ pub struct Violation {
 }
 
 /// Violation severity levels
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub enum ViolationSeverity {
     /// Error - must be fixed
     Error,
@@ -320,7 +321,7 @@ pub enum ViolationSeverity {
 }
 
 /// Policy evaluation result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct PolicyEvaluationResult {
     /// Whether the policy evaluation passed
     pub passed: bool,
@@ -333,7 +334,7 @@ pub struct PolicyEvaluationResult {
 }
 
 /// Policy decision types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub enum PolicyDecision {
     /// Allow the operation
     Allow,
@@ -346,7 +347,7 @@ pub enum PolicyDecision {
 }
 
 /// Main event type that can be either system or computation
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "category", content = "event")]
 pub enum HooksmithEvent {
     /// System event requiring native Rust capabilities

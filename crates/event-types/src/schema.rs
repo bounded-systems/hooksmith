@@ -7,9 +7,9 @@ use schemars::schema_for;
 use serde_json::Value;
 
 use crate::{
-    ContractValidationEvent, ContractValidationRequest, ContractValidationResult,
-    FileOperationEvent, GitOperationEvent, HookBuilderEvent, ValidationHandlerEvent,
-    WorktreeRunnerEvent,
+    ComputationEvent, ContractCheckConfig, ContractCheckResult, Event, EventMetadata,
+    EventPriority, HooksmithEvent, PolicyDecision, PolicyEvaluationResult, SystemEvent,
+    ValidationConfig, ValidationResult, Violation, ViolationSeverity,
 };
 
 /// Generate JSON schema for all event types
@@ -18,38 +18,62 @@ pub fn generate_event_schemas() -> Value {
 
     // Add event type schemas
     schema.insert(
-        "FileOperationEvent".to_string(),
-        serde_json::to_value(schema_for!(FileOperationEvent)).unwrap(),
+        "SystemEvent".to_string(),
+        serde_json::to_value(schema_for!(SystemEvent)).unwrap(),
     );
     schema.insert(
-        "GitOperationEvent".to_string(),
-        serde_json::to_value(schema_for!(GitOperationEvent)).unwrap(),
+        "ComputationEvent".to_string(),
+        serde_json::to_value(schema_for!(ComputationEvent)).unwrap(),
     );
     schema.insert(
-        "ContractValidationEvent".to_string(),
-        serde_json::to_value(schema_for!(ContractValidationEvent)).unwrap(),
+        "HooksmithEvent".to_string(),
+        serde_json::to_value(schema_for!(HooksmithEvent)).unwrap(),
     );
     schema.insert(
-        "HookBuilderEvent".to_string(),
-        serde_json::to_value(schema_for!(HookBuilderEvent)).unwrap(),
+        "Event".to_string(),
+        serde_json::to_value(schema_for!(Event)).unwrap(),
     );
     schema.insert(
-        "ValidationHandlerEvent".to_string(),
-        serde_json::to_value(schema_for!(ValidationHandlerEvent)).unwrap(),
+        "EventMetadata".to_string(),
+        serde_json::to_value(schema_for!(EventMetadata)).unwrap(),
     );
     schema.insert(
-        "WorktreeRunnerEvent".to_string(),
-        serde_json::to_value(schema_for!(WorktreeRunnerEvent)).unwrap(),
+        "EventPriority".to_string(),
+        serde_json::to_value(schema_for!(EventPriority)).unwrap(),
     );
 
-    // Add request/result schemas
+    // Add validation schemas
     schema.insert(
-        "ContractValidationRequest".to_string(),
-        serde_json::to_value(schema_for!(ContractValidationRequest)).unwrap(),
+        "ValidationConfig".to_string(),
+        serde_json::to_value(schema_for!(ValidationConfig)).unwrap(),
     );
     schema.insert(
-        "ContractValidationResult".to_string(),
-        serde_json::to_value(schema_for!(ContractValidationResult)).unwrap(),
+        "ValidationResult".to_string(),
+        serde_json::to_value(schema_for!(ValidationResult)).unwrap(),
+    );
+    schema.insert(
+        "ContractCheckConfig".to_string(),
+        serde_json::to_value(schema_for!(ContractCheckConfig)).unwrap(),
+    );
+    schema.insert(
+        "ContractCheckResult".to_string(),
+        serde_json::to_value(schema_for!(ContractCheckResult)).unwrap(),
+    );
+    schema.insert(
+        "Violation".to_string(),
+        serde_json::to_value(schema_for!(Violation)).unwrap(),
+    );
+    schema.insert(
+        "ViolationSeverity".to_string(),
+        serde_json::to_value(schema_for!(ViolationSeverity)).unwrap(),
+    );
+    schema.insert(
+        "PolicyEvaluationResult".to_string(),
+        serde_json::to_value(schema_for!(PolicyEvaluationResult)).unwrap(),
+    );
+    schema.insert(
+        "PolicyDecision".to_string(),
+        serde_json::to_value(schema_for!(PolicyDecision)).unwrap(),
     );
 
     // Add API info
@@ -71,12 +95,12 @@ pub fn generate_event_schemas() -> Value {
     api_info.insert(
         "event_types".to_string(),
         serde_json::json!([
-            "FileOperationEvent",
-            "GitOperationEvent",
-            "ContractValidationEvent",
-            "HookBuilderEvent",
-            "ValidationHandlerEvent",
-            "WorktreeRunnerEvent"
+            "SystemEvent",
+            "ComputationEvent",
+            "HooksmithEvent",
+            "Event",
+            "EventMetadata",
+            "EventPriority"
         ]),
     );
 

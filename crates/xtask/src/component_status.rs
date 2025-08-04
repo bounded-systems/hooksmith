@@ -525,7 +525,10 @@ impl ComponentStatusChecker {
         }
 
         // Look for schema in schemas directory
-        let schema_path = self.workspace_root.join("schemas").join(format!("{}.schema.jsonc", component_name));
+        let schema_path = self
+            .workspace_root
+            .join("schemas")
+            .join(format!("{}.schema.jsonc", component_name));
 
         if self.verbose {
             println!("  Looking for schema at: {}", schema_path.display());
@@ -537,8 +540,8 @@ impl ComponentStatusChecker {
 
         // Validate JSON schema format
         let schema_content = tokio::fs::read_to_string(&schema_path).await?;
-        let _schema: serde_json::Value = serde_json::from_str(&schema_content)
-            .context("Invalid JSON schema format")?;
+        let _schema: serde_json::Value =
+            serde_json::from_str(&schema_content).context("Invalid JSON schema format")?;
 
         if self.verbose {
             println!("  Schema validation successful for: {}", component_name);

@@ -81,7 +81,8 @@
       "status": "active",
       "dependencies": ["event-types"],
       "targets": ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin"],
-      "features": ["git-operations", "repository-management"]
+      "features": ["git-operations", "repository-management"],
+      "schema_endpoint": "http://127.0.0.1:3031/schema"
     },
     {
       "name": "lefthook-rs",
@@ -91,7 +92,8 @@
       "status": "active",
       "dependencies": [],
       "targets": ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin"],
-      "features": ["lefthook-integration", "hook-management"]
+      "features": ["lefthook-integration", "hook-management"],
+      "schema_endpoint": "http://127.0.0.1:3032/schema"
     },
     {
       "name": "xtask",

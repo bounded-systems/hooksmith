@@ -8,9 +8,7 @@ use serde_json::Value;
 use warp::Filter;
 
 use crate::{
-    HookConfig, HookDefinition, HookExecutionRequest, HookExecutionResult, HookInstallRequest,
-    HookInstallResult, HookListRequest, HookListResult, HookRemoveRequest, HookRemoveResult,
-    HookUpdateRequest, HookUpdateResult, LefthookConfig, LefthookError,
+    HookConfig, HookSection, JobConfig, GlobalConfig, LefthookError,
 };
 
 /// Generate JSON schema for the main API types
@@ -19,60 +17,20 @@ pub fn generate_api_schema() -> Value {
 
     // Add configuration schemas
     schema.insert(
-        "LefthookConfig".to_string(),
-        serde_json::to_value(schema_for!(LefthookConfig)).unwrap(),
+        "GlobalConfig".to_string(),
+        serde_json::to_value(schema_for!(GlobalConfig)).unwrap(),
     );
     schema.insert(
         "HookConfig".to_string(),
         serde_json::to_value(schema_for!(HookConfig)).unwrap(),
     );
     schema.insert(
-        "HookDefinition".to_string(),
-        serde_json::to_value(schema_for!(HookDefinition)).unwrap(),
-    );
-
-    // Add request schemas
-    schema.insert(
-        "HookInstallRequest".to_string(),
-        serde_json::to_value(schema_for!(HookInstallRequest)).unwrap(),
+        "HookSection".to_string(),
+        serde_json::to_value(schema_for!(HookSection)).unwrap(),
     );
     schema.insert(
-        "HookRemoveRequest".to_string(),
-        serde_json::to_value(schema_for!(HookRemoveRequest)).unwrap(),
-    );
-    schema.insert(
-        "HookUpdateRequest".to_string(),
-        serde_json::to_value(schema_for!(HookUpdateRequest)).unwrap(),
-    );
-    schema.insert(
-        "HookListRequest".to_string(),
-        serde_json::to_value(schema_for!(HookListRequest)).unwrap(),
-    );
-    schema.insert(
-        "HookExecutionRequest".to_string(),
-        serde_json::to_value(schema_for!(HookExecutionRequest)).unwrap(),
-    );
-
-    // Add result schemas
-    schema.insert(
-        "HookInstallResult".to_string(),
-        serde_json::to_value(schema_for!(HookInstallResult)).unwrap(),
-    );
-    schema.insert(
-        "HookRemoveResult".to_string(),
-        serde_json::to_value(schema_for!(HookRemoveResult)).unwrap(),
-    );
-    schema.insert(
-        "HookUpdateResult".to_string(),
-        serde_json::to_value(schema_for!(HookUpdateResult)).unwrap(),
-    );
-    schema.insert(
-        "HookListResult".to_string(),
-        serde_json::to_value(schema_for!(HookListResult)).unwrap(),
-    );
-    schema.insert(
-        "HookExecutionResult".to_string(),
-        serde_json::to_value(schema_for!(HookExecutionResult)).unwrap(),
+        "JobConfig".to_string(),
+        serde_json::to_value(schema_for!(JobConfig)).unwrap(),
     );
 
     // Add error schema
@@ -98,13 +56,11 @@ pub fn generate_api_schema() -> Value {
     api_info.insert(
         "endpoints".to_string(),
         serde_json::json!([
-            "POST /api/hooks/install",
-            "POST /api/hooks/remove",
-            "POST /api/hooks/update",
-            "POST /api/hooks/list",
-            "POST /api/hooks/execute",
             "GET  /api/config/validate",
-            "GET  /api/config/generate"
+            "GET  /api/config/generate",
+            "POST /api/config/write",
+            "GET  /api/binary/version",
+            "POST /api/binary/install"
         ]),
     );
 

@@ -472,6 +472,7 @@ mod workflow;
 mod unified_generator;
 mod repo_structure_validator;
 mod component_status;
+mod schema_registry;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -1263,6 +1264,30 @@ enum Commands {
         #[arg(long, default_value = "table")]
         format: String,
     },
+    /// Manage RPC schema endpoints and registry
+    SchemaRegistry {
+        /// Discover available schema endpoints
+        #[arg(long)]
+        discover: bool,
+        /// Fetch schema from specific endpoint
+        #[arg(long)]
+        fetch: Option<String>,
+        /// Generate combined schema registry
+        #[arg(long)]
+        generate: bool,
+        /// Show endpoint status summary
+        #[arg(long)]
+        status: bool,
+        /// Output file for generated registry
+        #[arg(long)]
+        output: Option<String>,
+        /// Timeout for schema requests (seconds)
+        #[arg(long, default_value = "5")]
+        timeout: u64,
+        /// Retry attempts for failed requests
+        #[arg(long, default_value = "3")]
+        retries: u32,
+    },
 }
 
 /// WIT schema for function definition
@@ -2010,6 +2035,26 @@ async fn main() -> Result<()> {
         }
         Commands::ComponentStatus { verbose, format } => {
             component_status::show_component_status(verbose, Some(&format)).await?;
+        }
+        Commands::SchemaRegistry {
+            discover,
+            fetch,
+            generate,
+            status,
+            output,
+            timeout,
+            retries,
+        } => {
+            run_schema_registry_command(
+                discover,
+                fetch.as_deref(),
+                generate,
+                status,
+                output.as_deref(),
+                timeout,
+                retries,
+            )
+            .await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
@@ -8630,6 +8675,89 @@ async fn run_component_smoke_test(
 
     if all_passed {
         println!("🎉 All component smoke tests passed!");
+    }
+
+    Ok(())
+}
+
+async fn run_schema_registry_command(
+    discover: bool,
+    fetch: Option<&str>,
+    generate: bool,
+    status: bool,
+    output: Option<&str>,
+    timeout: u64,
+    retries: u32,
+) -> Result<()> {
+    use schema_registry::{SchemaRegistry, SchemaRegistryConfig};
+
+    let config = SchemaRegistryConfig {
+        timeout_seconds: timeout,
+        retry_attempts: retries,
+        retry_delay_seconds: 1,
+    };
+
+    let mut registry = SchemaRegistry::new(config);
+
+    if discover {
+        println!("🔍 Discovering schema endpoints...");
+        let endpoints = registry.discover_endpoints().await?;
+
+        println!("📋 Discovered {} endpoints:", endpoints.len());
+        for endpoint in endpoints {
+            let status_icon = if endpoint.accessible { "✅" } else { "❌" };
+            println!("  {} {} ({}) - {}",
+                status_icon,
+                endpoint.name,
+                endpoint.category,
+                endpoint.url
+            );
+        }
+    }
+
+    if let Some(endpoint_name) = fetch {
+        println!("📥 Fetching schema from '{}'...", endpoint_name);
+        match registry.fetch_schema(endpoint_name).await {
+            Ok(schema) => {
+                let schema_json = serde_json::to_string_pretty(&schema)?;
+                if let Some(output_path) = output {
+                    std::fs::write(output_path, schema_json)?;
+                    println!("✅ Schema saved to: {}", output_path);
+                } else {
+                    println!("{}", schema_json);
+                }
+            }
+            Err(e) => {
+                eprintln!("❌ Failed to fetch schema: {}", e);
+                return Err(e);
+            }
+        }
+    }
+
+    if generate {
+        println!("🔧 Generating combined schema registry...");
+        match registry.generate_registry_schema().await {
+            Ok(registry_schema) => {
+                let registry_json = serde_json::to_string_pretty(&registry_schema)?;
+                if let Some(output_path) = output {
+                    std::fs::write(output_path, registry_json)?;
+                    println!("✅ Registry saved to: {}", output_path);
+                } else {
+                    println!("{}", registry_json);
+                }
+            }
+            Err(e) => {
+                eprintln!("❌ Failed to generate registry: {}", e);
+                return Err(e);
+            }
+        }
+    }
+
+    if status {
+        println!("📊 Schema registry status:");
+        let summary = registry.get_status_summary();
+        let summary_json = serde_json::to_string_pretty(&summary)?;
+        println!("{}", summary_json);
     }
 
     Ok(())
