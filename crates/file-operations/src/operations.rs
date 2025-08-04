@@ -7,7 +7,7 @@ use walkdir::WalkDir;
 
 impl FileOperationsHandler {
     /// Handle file read request
-    async fn handle_file_read(&self, req: FileReadRequest) -> Result<FileOperationEvent> {
+    pub async fn handle_file_read(&self, req: FileReadRequest) -> Result<FileOperationEvent> {
         let path = self.resolve_path(&req.path);
         
         match self.read_file(&path, req.encoding.as_deref()).await {
@@ -44,7 +44,7 @@ impl FileOperationsHandler {
     }
 
     /// Handle file write request
-    async fn handle_file_write(&self, req: FileWriteRequest) -> Result<FileOperationEvent> {
+    pub async fn handle_file_write(&self, req: FileWriteRequest) -> Result<FileOperationEvent> {
         let path = self.resolve_path(&req.path);
         
         match self.write_file(&path, &req.content, req.encoding.as_deref(), req.create_parents.unwrap_or(false), req.overwrite.unwrap_or(false)).await {

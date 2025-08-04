@@ -1,9 +1,23 @@
 //! Event handler integration for file operations
 
 use super::*;
-use crate::xtask::event_bus::{EventHandler, HooksmithEvent};
 use anyhow::Result;
 use serde_json::json;
+
+// TODO: Define these types locally until xtask integration is complete
+pub trait EventHandler {
+    fn handle_event(&mut self, event: &HooksmithEvent) -> Result<()>;
+    fn name(&self) -> &str;
+    fn should_handle(&self, event: &HooksmithEvent) -> bool;
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct HooksmithEvent {
+    pub id: String,
+    pub event: String,
+    pub context: serde_json::Value,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+}
 
 /// File operations event handler
 pub struct FileOperationsEventHandler {
@@ -423,7 +437,8 @@ impl EventHandler for FileOperationsEventHandler {
         
         // Convert result back to HooksmithEvent and emit it
         let result_hooksmith_event = self.create_result_event(result_event, event);
-        crate::xtask::event_bus::emit_event(result_hooksmith_event)?;
+        // TODO: Implement event emission when xtask integration is complete
+        // crate::xtask::event_bus::emit_event(result_hooksmith_event)?;
         
         Ok(())
     }
