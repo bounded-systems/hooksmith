@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Manual Files Registry",
+  "description": "Registry of files explicitly allowed to be manually maintained outside the generated file system",
+  "manual": [
+    // Files that are explicitly allowed to be manually maintained
+    // These bypass the generated file validation
+  ],
+  "metadata": {
+    "last_updated": "2024-08-03T20:30:00Z",
+    "version": "1.0.0",
+    "description": "Files in this list are exempt from generated file validation"
+  }
+} 

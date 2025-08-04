@@ -14,7 +14,6 @@
 use anyhow::Result;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Simplified Git workflow states for demonstration
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
