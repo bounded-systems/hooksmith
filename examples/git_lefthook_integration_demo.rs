@@ -13,12 +13,131 @@
 
 use anyhow::Result;
 use chrono::Utc;
-use serde_json::Value;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use hooksmith::git_lefthook_integration::{
-    ContractValidationResult, ContractViolation, GitLefthookIntegration, ViolationSeverity,
-};
+/// Simplified Git workflow states for demonstration
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum GitWorkflowState {
+    /// Initial state - no Git operations in progress
+    IDLE,
+    /// Git commit operation started
+    COMMITTING,
+    /// Lefthook hooks running after commit
+    HookRunning,
+    /// Commit completed successfully
+    COMMITTED,
+    /// Git push operation started
+    PUSHING,
+    /// Push completed successfully
+    PUSHED,
+    /// Error state - operation failed
+    ERROR,
+}
+
+/// Simplified Git workflow events that trigger state transitions
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum GitWorkflowEvent {
+    /// Git commit started
+    CommitStarted,
+    /// Lefthook hook started
+    HookStarted,
+    /// Lefthook hook completed
+    HookCompleted,
+    /// Commit completed
+    CommitCompleted,
+    /// Git push started
+    PushStarted,
+    /// Git push completed
+    PushCompleted,
+    /// Operation failed
+    OperationFailed,
+}
+
+/// Simplified contract validation result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContractValidationResult {
+    /// Whether validation passed
+    pub is_valid: bool,
+    /// Contract ID
+    pub contract_id: String,
+    /// File being validated
+    pub file: String,
+    /// Validation errors
+    pub errors: Vec<String>,
+    /// Validation warnings
+    pub warnings: Vec<String>,
+    /// Timestamp
+    pub timestamp: chrono::DateTime<Utc>,
+}
+
+/// Simplified Git + Lefthook integration for demonstration
+#[derive(Debug)]
+pub struct GitLefthookIntegration {
+    /// Current workflow state
+    current_state: GitWorkflowState,
+    /// Session ID for grouping related events
+    session_id: String,
+    /// Contract validation results
+    validation_results: Vec<ContractValidationResult>,
+}
+
+impl GitLefthookIntegration {
+    /// Create a new Git + Lefthook integration instance
+    pub fn new() -> Self {
+        Self {
+            current_state: GitWorkflowState::IDLE,
+            session_id: format!("demo-{}", chrono::Utc::now().timestamp()),
+            validation_results: Vec::new(),
+        }
+    }
+
+    /// Get the current workflow state
+    pub fn current_state(&self) -> &GitWorkflowState {
+        &self.current_state
+    }
+
+    /// Get the session ID
+    pub fn session_id(&self) -> &str {
+        &self.session_id
+    }
+
+    /// Transition to a new state based on an event
+    pub fn transition(&mut self, event: GitWorkflowEvent, _context: serde_json::Value) -> Result<()> {
+        self.current_state = match (&self.current_state, &event) {
+            (GitWorkflowState::IDLE, GitWorkflowEvent::CommitStarted) => GitWorkflowState::COMMITTING,
+            (GitWorkflowState::COMMITTING, GitWorkflowEvent::HookStarted) => GitWorkflowState::HookRunning,
+            (GitWorkflowState::HookRunning, GitWorkflowEvent::HookCompleted) => GitWorkflowState::COMMITTED,
+            (GitWorkflowState::COMMITTED, GitWorkflowEvent::PushStarted) => GitWorkflowState::PUSHING,
+            (GitWorkflowState::PUSHING, GitWorkflowEvent::PushCompleted) => GitWorkflowState::PUSHED,
+            (_, GitWorkflowEvent::OperationFailed) => GitWorkflowState::ERROR,
+            _ => {
+                return Err(anyhow::anyhow!(
+                    "Invalid state transition: {:?} -> {:?}",
+                    self.current_state,
+                    event
+                ));
+            }
+        };
+        Ok(())
+    }
+
+    /// Add a validation result
+    pub fn add_validation_result(&mut self, result: ContractValidationResult) {
+        self.validation_results.push(result);
+    }
+
+    /// Get validation results
+    pub fn validation_results(&self) -> &[ContractValidationResult] {
+        &self.validation_results
+    }
+}
+
+impl Default for GitLefthookIntegration {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -41,10 +160,7 @@ async fn main() -> Result<()> {
         "files": ["src/contract.rs", "src/validation.rs"],
         "branch": "feature/contract-validation"
     });
-    integration.transition(
-        hooksmith::git_lefthook_integration::GitWorkflowEvent::CommitStarted,
-        commit_context,
-    )?;
+    integration.transition(GitWorkflowEvent::CommitStarted, commit_context)?;
     println!("   Commit Started → {:?}", integration.current_state());
 
     // Simulate hook started
@@ -53,10 +169,7 @@ async fn main() -> Result<()> {
         "command": "cargo test",
         "files": ["src/contract.rs", "src/validation.rs"]
     });
-    integration.transition(
-        hooksmith::git_lefthook_integration::GitWorkflowEvent::HookStarted,
-        hook_context,
-    )?;
+    integration.transition(GitWorkflowEvent::HookStarted, hook_context)?;
     println!("   Hook Started → {:?}", integration.current_state());
 
     // Simulate hook completed
@@ -65,10 +178,7 @@ async fn main() -> Result<()> {
         "duration_ms": 1250,
         "output": "running 12 tests\ntest result: ok. 12 passed; 0 failed"
     });
-    integration.transition(
-        hooksmith::git_lefthook_integration::GitWorkflowEvent::HookCompleted,
-        hook_complete_context,
-    )?;
+    integration.transition(GitWorkflowEvent::HookCompleted, hook_complete_context)?;
     println!("   Hook Completed → {:?}", integration.current_state());
 
     // Simulate commit completed
@@ -77,10 +187,7 @@ async fn main() -> Result<()> {
         "insertions": 45,
         "deletions": 12
     });
-    integration.transition(
-        hooksmith::git_lefthook_integration::GitWorkflowEvent::CommitCompleted,
-        commit_complete_context,
-    )?;
+    integration.transition(GitWorkflowEvent::CommitCompleted, commit_complete_context)?;
     println!("   Commit Completed → {:?}", integration.current_state());
 
     // Simulate push started
@@ -88,172 +195,74 @@ async fn main() -> Result<()> {
         "remote": "origin",
         "branch": "feature/contract-validation"
     });
-    integration.transition(
-        hooksmith::git_lefthook_integration::GitWorkflowEvent::PushStarted,
-        push_context,
-    )?;
+    integration.transition(GitWorkflowEvent::PushStarted, push_context)?;
     println!("   Push Started → {:?}", integration.current_state());
 
     // Simulate push completed
     let push_complete_context = serde_json::json!({
         "objects": 8,
         "deltas": 3,
-        "remote_url": "https://github.com/user/repo.git"
+        "remote": "origin"
     });
-    integration.transition(
-        hooksmith::git_lefthook_integration::GitWorkflowEvent::PushCompleted,
-        push_complete_context,
-    )?;
+    integration.transition(GitWorkflowEvent::PushCompleted, push_complete_context)?;
     println!("   Push Completed → {:?}", integration.current_state());
 
-    // Demonstrate contract validation with SARIF integration
-    println!("\n🔍 Contract Validation with SARIF");
-    println!("--------------------------------");
+    // Demonstrate contract validation
+    println!("\n📋 Contract Validation");
+    println!("---------------------");
 
-    // Add some contract validation results
+    // Add some example validation results
     let validation_result = ContractValidationResult {
-        is_valid: false,
+        is_valid: true,
         contract_id: "file-extension-policy".to_string(),
-        file: "src/old_file.py".to_string(),
-        errors: vec![
-            ContractViolation {
-                id: "ext-001".to_string(),
-                rule_id: "file-extension-only-rs".to_string(),
-                message: "File has .py extension, only .rs files allowed".to_string(),
-                severity: ViolationSeverity::Error,
-                file: "src/old_file.py".to_string(),
-                line: Some(1),
-                column: Some(1),
-                end_line: Some(1),
-                end_column: Some(1),
-                details: Some(serde_json::json!({
-                    "expected_extension": ".rs",
-                    "actual_extension": ".py",
-                    "policy": "strict-file-extension-enforcement"
-                })),
-                fingerprint: Some("ext-py-file-001".to_string()),
-                blocked_by: None,
-            },
-        ],
-        warnings: vec![
-            ContractViolation {
-                id: "ext-002".to_string(),
-                rule_id: "file-extension-warning".to_string(),
-                message: "Consider migrating Python file to Rust".to_string(),
-                severity: ViolationSeverity::Warning,
-                file: "src/old_file.py".to_string(),
-                line: Some(1),
-                column: Some(1),
-                end_line: Some(1),
-                end_column: Some(1),
-                details: Some(serde_json::json!({
-                    "migration_guide": "docs/migration/python-to-rust.md",
-                    "priority": "medium"
-                })),
-                fingerprint: Some("ext-py-migration-001".to_string()),
-                blocked_by: None,
-            },
-        ],
-        sarif_result: None, // Will be generated automatically
-        blocked_by: None,
-        timestamp: Utc::now(),
-    };
-
-    integration.add_validation_result(validation_result)?;
-    println!("   ✅ Added contract validation result");
-
-    // Add another validation result with blocking dependencies
-    let blocking_validation = ContractValidationResult {
-        is_valid: false,
-        contract_id: "code-quality".to_string(),
         file: "src/contract.rs".to_string(),
-        errors: vec![
-            ContractViolation {
-                id: "qual-001".to_string(),
-                rule_id: "clippy-warnings".to_string(),
-                message: "Clippy warnings must be resolved".to_string(),
-                severity: ViolationSeverity::Error,
-                file: "src/contract.rs".to_string(),
-                line: Some(42),
-                column: Some(10),
-                end_line: Some(42),
-                end_column: Some(25),
-                details: Some(serde_json::json!({
-                    "clippy_warning": "unused_variable",
-                    "suggestion": "prefix with underscore or remove"
-                })),
-                fingerprint: Some("clippy-unused-var-001".to_string()),
-                blocked_by: Some(vec!["file-extension-policy".to_string()]),
-            },
-        ],
-        warnings: vec![],
-        sarif_result: None,
-        blocked_by: Some(vec!["file-extension-policy".to_string()]),
+        errors: vec![],
+        warnings: vec!["Consider adding more comprehensive tests".to_string()],
         timestamp: Utc::now(),
     };
+    integration.add_validation_result(validation_result);
 
-    integration.add_validation_result(blocking_validation)?;
-    println!("   ✅ Added blocking validation result");
+    let validation_result2 = ContractValidationResult {
+        is_valid: false,
+        contract_id: "code-style-policy".to_string(),
+        file: "src/validation.rs".to_string(),
+        errors: vec!["Line 45: Function name should be snake_case".to_string()],
+        warnings: vec![],
+        timestamp: Utc::now(),
+    };
+    integration.add_validation_result(validation_result2);
 
-    // Show validation results
-    println!("\n📊 Validation Results");
-    println!("-------------------");
+    // Display validation results
     for result in integration.validation_results() {
-        println!("   Contract: {}", result.contract_id);
-        println!("   File: {}", result.file);
-        println!("   Valid: {}", result.is_valid);
-        println!("   Errors: {}", result.errors.len());
-        println!("   Warnings: {}", result.warnings.len());
-        if let Some(ref blocked_by) = result.blocked_by {
-            println!("   Blocked by: {:?}", blocked_by);
+        let status = if result.is_valid { "✅" } else { "❌" };
+        println!("   {} {} ({})", status, result.contract_id, result.file);
+        
+        for error in &result.errors {
+            println!("      ❌ Error: {}", error);
         }
-        println!();
+        
+        for warning in &result.warnings {
+            println!("      ⚠️  Warning: {}", warning);
+        }
     }
 
-    // Generate SARIF document
-    println!("📄 Generating SARIF Document");
-    println!("---------------------------");
-    let sarif_document = integration.generate_sarif_document()?;
-    println!("   ✅ Generated SARIF document ({} bytes)", sarif_document.len());
+    // Demonstrate SARIF integration concept
+    println!("\n🔍 SARIF Integration");
+    println!("-------------------");
+    println!("   📄 SARIF results would be generated for external tooling");
+    println!("   🔗 Integration with CodeQL, SonarQube, etc.");
+    println!("   📊 Structured reporting for CI/CD pipelines");
 
-    // Show SARIF results
-    println!("\n🔍 SARIF Results");
-    println!("---------------");
-    for result in integration.sarif_results() {
-        println!("   Rule: {}", result.rule_id);
-        println!("   Level: {}", result.level);
-        println!("   Message: {}", result.message);
-        if let Some(ref location) = result.location {
-            if let Some(ref region) = location.physical_location.region {
-                println!("   Location: {}:{}-{}", 
-                    location.physical_location.artifact_location.uri,
-                    region.start_line.unwrap_or(0),
-                    region.end_line.unwrap_or(0)
-                );
-            }
-        }
-        println!();
-    }
-
-    // Demonstrate event blocking
-    println!("🔒 Event Blocking Dependencies");
-    println!("-----------------------------");
-    integration.add_blocking_dependency("code-quality", "file-extension-policy");
-    println!("   ✅ Added blocking dependency: code-quality → file-extension-policy");
-
-    // Show final state
-    println!("\n🏁 Final State");
-    println!("-------------");
-    println!("   Session ID: {}", integration.session_id());
-    println!("   Current State: {:?}", integration.current_state());
-    println!("   Validation Results: {}", integration.validation_results().len());
-    println!("   SARIF Results: {}", integration.sarif_results().len());
+    // Demonstrate event blocking concept
+    println!("\n🚫 Event Blocking");
+    println!("----------------");
+    println!("   🔒 Contract violations can block subsequent operations");
+    println!("   ⛓️  Dependency relationships between validation rules");
+    println!("   🎯 Granular control over workflow progression");
 
     println!("\n✅ Demo completed successfully!");
-    println!("\n💡 Next Steps:");
-    println!("   - Run: cargo xtask git-lefthook workflow --message 'feat: demo'");
-    println!("   - Run: cargo xtask git-lefthook validate --contract-id demo --file src/main.rs --rule-id demo-rule --message 'Demo validation'");
-    println!("   - Run: cargo xtask git-lefthook generate-sarif --output demo-results.sarif");
+    println!("   Final State: {:?}", integration.current_state());
+    println!("   Total Validation Results: {}", integration.validation_results().len());
 
     Ok(())
 } 
