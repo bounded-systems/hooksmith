@@ -349,7 +349,7 @@ async fn show_validation_notes(commit: &str, repo: &Path) -> Result<()> {
         println!("📋 Scope: {}", note.scope);
         println!("   File: {}", note.file);
         if let Some(range) = &note.range {
-            println!("   Range: {}:{}", range.start_line, range.end_line);
+            println!("   Range: {}", range);
         }
         println!("   Hash: {}", note.hash);
         println!("   Validated: {}", note.validated);
@@ -367,7 +367,7 @@ async fn show_validation_notes(commit: &str, repo: &Path) -> Result<()> {
         if !note.child_scopes.is_empty() {
             println!("   Child scopes:");
             for child in &note.child_scopes {
-                println!("     - {}: {}", child.scope, child.hash);
+                println!("     - {}", child);
             }
         }
 

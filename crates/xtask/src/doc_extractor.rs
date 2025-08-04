@@ -10,7 +10,7 @@ use walkdir::WalkDir;
 #[derive(Parser)]
 pub struct DocsCommand {
     #[command(subcommand)]
-    subcommand: DocsSubcommand,
+    pub subcommand: DocsSubcommand,
 }
 
 #[derive(Subcommand)]
