@@ -443,6 +443,7 @@ mod contract;
 mod contract_validation;
 mod dashboard;
 mod docs;
+mod doc_extractor;
 mod emit;
 mod error_deduplication;
 mod event_bus;
@@ -514,6 +515,11 @@ enum Commands {
         /// Whether to open docs in browser
         #[arg(long)]
         open: bool,
+    },
+    /// Extract and generate documentation from Rust source files
+    Docs {
+        #[command(subcommand)]
+        command: doc_extractor::DocsCommand,
     },
     /// Generate comprehensive documentation from Rust code and templates
     GenDocsComprehensive {
@@ -1364,6 +1370,9 @@ async fn main() -> Result<()> {
         }
         Commands::GenDocs { output_dir, open } => {
             generate_documentation(&output_dir, open)?;
+        }
+        Commands::Docs { command } => {
+            doc_extractor::run(command)?;
         }
         Commands::GenDocsComprehensive {
             all,
