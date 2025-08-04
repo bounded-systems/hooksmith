@@ -14,6 +14,14 @@ fi
 TARGET="$1"
 shift  # Remove target from arguments, leaving additional cargo args
 
+# Handle help case
+if [[ "$TARGET" == "--help" || "$TARGET" == "-h" ]]; then
+    echo "Usage: $0 <target-triple> [additional-cargo-args]"
+    echo "Example: $0 aarch64-apple-darwin --release"
+    echo "Example: $0 x86_64-unknown-linux-gnu"
+    exit 0
+fi
+
 echo "🔧 Cross-compiling xtask for target: $TARGET"
 
 # Install target if not already installed
