@@ -465,6 +465,7 @@ mod checksum;
 mod checksum_registry;
 mod registry;
 mod workflow;
+mod unified_generator;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -704,6 +705,33 @@ enum Commands {
         /// Whether to force regeneration
         #[arg(long)]
         force: bool,
+    },
+    /// Generate all files from unified sources
+    GenAllUnified {
+        /// Whether to validate generated files
+        #[arg(long)]
+        validate: bool,
+        /// Whether to force regeneration
+        #[arg(long)]
+        force: bool,
+        /// Whether to clean existing files first
+        #[arg(long)]
+        clean: bool,
+    },
+    /// Clean all generated files
+    CleanGenerated {
+        /// Whether to show detailed output
+        #[arg(long)]
+        verbose: bool,
+    },
+    /// Validate all generated files against registry
+    ValidateGenerated {
+        /// Whether to exit with error on violations
+        #[arg(long)]
+        strict: bool,
+        /// Whether to show detailed output
+        #[arg(long)]
+        verbose: bool,
     },
     /// Bootstrap the project with all generated files
     Bootstrap {
@@ -1397,6 +1425,15 @@ async fn main() -> Result<()> {
         }
         Commands::GenAll { validate, force } => {
             generate_all_files(validate, force).await?;
+        }
+        Commands::GenAllUnified { validate, force, clean } => {
+            run_unified_generator(validate, force, clean).await?;
+        }
+        Commands::CleanGenerated { verbose } => {
+            clean_generated_files(verbose).await?;
+        }
+        Commands::ValidateGenerated { strict, verbose } => {
+            validate_generated_files_unified(strict, verbose).await?;
         }
         Commands::Bootstrap { validate, commit } => {
             bootstrap_project(validate, commit).await?;
