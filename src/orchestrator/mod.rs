@@ -345,6 +345,68 @@ impl HooksmithOrchestrator {
 
         Ok(())
     }
+
+    /// Initialize component linker for direct communication
+    pub async fn init_component_linker(&mut self) -> Result<()> {
+        let engine = &self.runtime.engine;
+        let linker = Linker::new(engine);
+        self.linker = Some(linker);
+        Ok(())
+    }
+
+    /// Load and link components for direct communication
+    pub async fn load_linked_components(&mut self) -> Result<()> {
+        // Initialize linker if not already done
+        if self.linker.is_none() {
+            self.init_component_linker().await?;
+        }
+
+        let engine = &self.runtime.engine;
+        let mut linker = self.linker.as_mut().unwrap();
+
+        // Load validation-handler component (exports validation functions)
+        if let Ok(validation_component) = Component::from_file(engine, "validation-handler.component.wasm") {
+            linker.instantiate(&mut self.runtime.store, &validation_component)?;
+        }
+
+        // Load contract-checker component (imports from validation-handler)
+        if let Ok(checker_component) = Component::from_file(engine, "contract-checker.component.wasm") {
+            // TODO: Create proper typed interface for contract-checker
+            // For now, store as generic component
+            self.linked_components.insert("contract-checker".to_string(), 
+                Box::new(checker_component) as Box<dyn std::any::Any + Send + Sync>);
+        }
+
+        Ok(())
+    }
+
+    /// Direct component call (fast path) for validation
+    pub async fn validate_contract_direct(&self, contract_data: &str) -> Result<ValidationResult> {
+        // Try direct linking first
+        if self.linked_components.contains_key("contract-checker") {
+            // TODO: Implement proper typed interface call
+            // For now, fall back to event-driven approach
+            return self.validate_contract_via_events("contract", "data", contract_data, true, false).await;
+        }
+
+        // Fallback to event-driven approach
+        self.validate_contract_via_events("contract", "data", contract_data, true, false).await
+    }
+
+    /// Check if direct linking is available for a component
+    pub fn has_linked_component(&self, name: &str) -> bool {
+        self.linked_components.contains_key(name)
+    }
+
+    /// Get linked component count
+    pub fn linked_component_count(&self) -> usize {
+        self.linked_components.len()
+    }
+
+    /// List linked components
+    pub fn list_linked_components(&self) -> Vec<String> {
+        self.linked_components.keys().cloned().collect()
+    }
 }
 
 /// Result of a command execution
