@@ -16,6 +16,10 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[package.metadata.component]
+wit = ["wit"]
+bindings = ["hooksmith:worktree-runner"]
+
 [dependencies]
 anyhow.workspace = true
 serde.workspace = true

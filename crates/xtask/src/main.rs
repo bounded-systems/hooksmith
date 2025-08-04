@@ -1223,6 +1223,21 @@ enum Commands {
         #[arg(long)]
         score: bool,
     },
+    /// Component smoke tests using wasmtime --invoke
+    ComponentSmokeTest {
+        /// Component to test (all, hook-builder, worktree-runner, git-filter, validation-handler)
+        #[arg(long, default_value = "all")]
+        component: String,
+        /// Whether to build components first
+        #[arg(long, default_value = "true")]
+        build: bool,
+        /// Whether to exit with error on test failures
+        #[arg(long)]
+        strict: bool,
+        /// Show detailed output
+        #[arg(long)]
+        verbose: bool,
+    },
 }
 
 /// WIT schema for function definition

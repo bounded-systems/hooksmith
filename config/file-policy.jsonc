@@ -4,6 +4,7 @@
   "description": "Strict policy: only .rs and .jsonc may be manual, all other files must be generated.",
 
   // Allowed extensions for manually maintained source files
+  // Note: .rs files are only allowed in CLI crate (src/) and xtask
   "allowedExtensions": ["rs", "jsonc"],
 
   // Generated extensions that must have proper headers
@@ -98,6 +99,7 @@
     "jsonc": "xtask gen-config",
     "jsonl": "xtask gen-schema",
     "jql": "xtask gen-jql",
+    "wasm": "cargo component build",
     "wit": "xtask gen-wit",
     "makefile": "xtask gen-config",
     "editorconfig": "xtask gen-config",
