@@ -14,8 +14,8 @@ COMMAND="${1:-cleanup}"
 echo "🧹 Hooksmith Worktree Management"
 echo "================================"
 
-# Run the Rust script with the specified command
-cargo run --manifest-path "$REPO_ROOT/scripts/ensure-clean-main/Cargo.toml" "$COMMAND"
+# Run the Rust script with all arguments
+cargo run --manifest-path "$REPO_ROOT/scripts/ensure-clean-main/Cargo.toml" "$@"
 
 echo ""
 echo "✅ Workflow completed!" 
