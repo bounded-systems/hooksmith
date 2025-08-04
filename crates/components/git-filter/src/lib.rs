@@ -8,21 +8,21 @@
 #[cfg(feature = "host")]
 wit_bindgen::generate!({
     path: "wit/git-filter.wit",
-    world: "git-filter",
+    world: "git-filter-world",
 });
 
 #[cfg(not(feature = "host"))]
 wit_bindgen::generate!({
     path: "wit/git-filter.wit",
-    world: "git-filter",
+    world: "git-filter-world",
 });
 
 // Export the generated bindings
-pub use git_filter::*;
+pub use git_filter_world::*;
 
 // Re-export the WIT interface for use in other crates
 pub mod wit {
-    pub use super::git_filter::*;
+    pub use super::git_filter_world::*;
 }
 
 pub mod actions;

@@ -80,5 +80,26 @@ itertools = "0.12"
 rayon = "1.8"
 uuid.workspace = true
 
+# TUI and terminal support
+crossterm = "0.29"
+ratatui = { version = "0.26", features = ["crossterm"] }
+termcolor = "1.4"
+
+# File system traversal
+walkdir = "2.4"
+
+# System information
+num_cpus = "1.0"
+
+# JSONC parsing support
+json_comments = "0.2"
+
+# Cargo metadata
+cargo_metadata = "0.18"
+
+# Path utilities
+pathdiff = "0.2"
+glob = "0.3"
+
 # Temporarily disabled due to circular dependency
 # hooksmith = { path = "../.." }
