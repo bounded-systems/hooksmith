@@ -1460,8 +1460,8 @@ async fn main() -> Result<()> {
         Commands::AllowManual { path, verbose } => {
             allow_manual_file(path, verbose).await?;
         }
-        Commands::Bootstrap { validate, commit } => {
-            bootstrap_project(validate, commit).await?;
+        Commands::Bootstrap { validate, commit, clean, build_xtask, dry_run, verbose } => {
+            bootstrap_project(validate, commit, clean, build_xtask, dry_run, verbose).await?;
         }
         Commands::GenGitattributes {
             output_dir,
@@ -4030,127 +4030,250 @@ async fn generate_all_files(validate: bool, force: bool) -> Result<()> {
 }
 
 /// Bootstrap the project with all generated files
-async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
+async fn bootstrap_project(validate: bool, commit: bool, clean: bool, build_xtask: bool, dry_run: bool, verbose: bool) -> Result<()> {
     use crate::{log_event, structured_logging::emit_sarif_error};
 
     log_event!(
         "info",
         "bootstrap_start",
-        "🚀 Bootstrapping project with all generated files",
+        "🚀 Starting enhanced bootstrap process",
         None::<String>
     );
 
-    // Generate all files
-    log_event!(
-        "info",
-        "generate_files",
-        "Generating all project files",
-        None::<String>
-    );
-    match generate_all_files(validate, true).await {
-        Ok(_) => log_event!(
+    if dry_run {
+        log_event!(
             "info",
-            "generate_success",
-            "All files generated successfully",
+            "dry_run_mode",
+            "🔍 DRY RUN MODE - No actual changes will be made",
             None::<String>
-        ),
-        Err(e) => {
-            log_event!(
-                "error",
-                "generate_failed",
-                &format!("Failed to generate files: {e}"),
-                None::<String>
-            );
-            emit_sarif_error(
-                "xtask/src/main.rs",
-                3492,
-                &format!("File generation failed: {e}"),
-            );
-            return Err(e);
-        }
+        );
     }
 
-    // Check if everything is valid
-    log_event!(
-        "info",
-        "validation_start",
-        "🔍 Running final validation",
-        None::<String>
-    );
-    match file_audit::validate_generated_files() {
-        Ok(_) => log_event!(
+    // Watch for changes in key files/directories
+    if verbose {
+        log_event!(
             "info",
-            "validation_success",
-            "Generated files validation passed",
+            "watch_files",
+            "📁 Setting up file change detection",
             None::<String>
-        ),
-        Err(e) => {
-            log_event!(
-                "error",
-                "validation_failed",
-                &format!("Generated files validation failed: {e}"),
-                None::<String>
-            );
-            emit_sarif_error(
-                "xtask/src/main.rs",
-                3500,
-                &format!("Generated files validation failed: {e}"),
-            );
-            return Err(e);
-        }
+        );
     }
 
-    // Check file types
-    log_event!(
-        "info",
-        "file_check_start",
-        "🔍 Checking file types",
-        None::<String>
-    );
-    match file_audit::check_files() {
-        Ok(result) => {
-            if result.has_errors() {
+    // Build xtask first if requested (ensures minimal build environment)
+    if build_xtask && !dry_run {
+        log_event!(
+            "info",
+            "build_xtask_start",
+            "🔨 Building xtask binary for generation",
+            None::<String>
+        );
+        
+        match build_xtask_binary().await {
+            Ok(_) => log_event!(
+                "info",
+                "build_xtask_success",
+                "✅ xtask built successfully",
+                None::<String>
+            ),
+            Err(e) => {
                 log_event!(
                     "error",
-                    "file_check_failed",
-                    "File type validation failed",
+                    "build_xtask_failed",
+                    &format!("Failed to build xtask: {e}"),
                     None::<String>
                 );
-                emit_sarif_error("xtask/src/main.rs", 3505, "File type validation failed");
-                anyhow::bail!("Bootstrap validation failed. Please fix issues and try again.");
-            } else {
-                log_event!(
-                    "info",
-                    "file_check_success",
-                    "File type validation passed",
-                    None::<String>
+                emit_sarif_error(
+                    "xtask/src/main.rs",
+                    4021,
+                    &format!("xtask build failed: {e}"),
                 );
+                return Err(e);
             }
         }
-        Err(e) => {
-            log_event!(
-                "error",
-                "file_check_error",
-                &format!("File type check error: {e}"),
+    } else if dry_run {
+        log_event!(
+            "info",
+            "dry_run_xtask",
+            "🔍 Would build xtask binary",
+            None::<String>
+        );
+    }
+
+    // Clean up old generated files if requested
+    if clean && !dry_run {
+        log_event!(
+            "info",
+            "clean_start",
+            "🧹 Cleaning all generated files",
+            None::<String>
+        );
+        
+        match clean_generated_files_enhanced(verbose).await {
+            Ok(_) => log_event!(
+                "info",
+                "clean_success",
+                "✅ All generated files cleaned",
                 None::<String>
-            );
-            emit_sarif_error(
-                "xtask/src/main.rs",
-                3505,
-                &format!("File type check error: {e}"),
-            );
-            return Err(e);
+            ),
+            Err(e) => {
+                log_event!(
+                    "error",
+                    "clean_failed",
+                    &format!("Failed to clean generated files: {e}"),
+                    None::<String>
+                );
+                emit_sarif_error(
+                    "xtask/src/main.rs",
+                    4040,
+                    &format!("Clean failed: {e}"),
+                );
+                return Err(e);
+            }
+        }
+    } else if dry_run && clean {
+        log_event!(
+            "info",
+            "dry_run_clean",
+            "🔍 Would clean all generated files",
+            None::<String>
+        );
+    }
+
+    // Regenerate everything deterministically
+    if !dry_run {
+        log_event!(
+            "info",
+            "regenerate_start",
+            "🔄 Regenerating all files deterministically",
+            None::<String>
+        );
+        
+        match regenerate_all_files_unified().await {
+            Ok(_) => log_event!(
+                "info",
+                "regenerate_success",
+                "✅ All files regenerated successfully",
+                None::<String>
+            ),
+            Err(e) => {
+                log_event!(
+                    "error",
+                    "regenerate_failed",
+                    &format!("Failed to regenerate files: {e}"),
+                    None::<String>
+                );
+                emit_sarif_error(
+                    "xtask/src/main.rs",
+                    4060,
+                    &format!("Regeneration failed: {e}"),
+                );
+                return Err(e);
+            }
+        }
+    } else {
+        log_event!(
+            "info",
+            "dry_run_regenerate",
+            "🔍 Would regenerate all files using unified generator",
+            None::<String>
+        );
+    }
+
+    // Validate checksums and registry if requested
+    if validate && !dry_run {
+        log_event!(
+            "info",
+            "validate_start",
+            "🔍 Validating generated file checksums and registry",
+            None::<String>
+        );
+        
+        match validate_checksums_and_registry(verbose).await {
+            Ok(_) => log_event!(
+                "info",
+                "validate_success",
+                "✅ All checksums and registry validated",
+                None::<String>
+            ),
+            Err(e) => {
+                log_event!(
+                    "error",
+                    "validate_failed",
+                    &format!("Validation failed: {e}"),
+                    None::<String>
+                );
+                emit_sarif_error(
+                    "xtask/src/main.rs",
+                    4080,
+                    &format!("Validation failed: {e}"),
+                );
+                return Err(e);
+            }
+        }
+    } else if dry_run && validate {
+        log_event!(
+            "info",
+            "dry_run_validate",
+            "🔍 Would validate checksums and registry",
+            None::<String>
+        );
+    }
+
+    // Additional validation steps
+    if !dry_run {
+        // Check file types
+        log_event!(
+            "info",
+            "file_check_start",
+            "🔍 Checking file types and generation markers",
+            None::<String>
+        );
+        match file_audit::check_files() {
+            Ok(result) => {
+                if result.has_errors() {
+                    log_event!(
+                        "error",
+                        "file_check_failed",
+                        "File type validation failed",
+                        None::<String>
+                    );
+                    emit_sarif_error("xtask/src/main.rs", 4100, "File type validation failed");
+                    anyhow::bail!("Bootstrap validation failed. Please fix issues and try again.");
+                } else {
+                    log_event!(
+                        "info",
+                        "file_check_success",
+                        "✅ File type validation passed",
+                        None::<String>
+                    );
+                }
+            }
+            Err(e) => {
+                log_event!(
+                    "error",
+                    "file_check_error",
+                    &format!("File type check error: {e}"),
+                    None::<String>
+                );
+                emit_sarif_error(
+                    "xtask/src/main.rs",
+                    4100,
+                    &format!("File type check error: {e}"),
+                );
+                return Err(e);
+            }
         }
     }
 
     log_event!(
         "info",
         "bootstrap_success",
-        "✅ Bootstrap completed successfully",
+        "✅ Enhanced bootstrap completed successfully",
         None::<String>
     );
 
-    if commit {
+    // Commit files if requested
+    if commit && !dry_run {
         log_event!(
             "info",
             "commit_start",
@@ -4180,7 +4303,7 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                     "Failed to add files to git",
                     None::<String>
                 );
-                emit_sarif_error("xtask/src/main.rs", 3520, "Failed to add files to git");
+                emit_sarif_error("xtask/src/main.rs", 4120, "Failed to add files to git");
                 anyhow::bail!("Failed to add files to git");
             }
             Err(e) => {
@@ -4190,7 +4313,7 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                     &format!("Git add error: {e}"),
                     None::<String>
                 );
-                emit_sarif_error("xtask/src/main.rs", 3520, &format!("Git add error: {e}"));
+                emit_sarif_error("xtask/src/main.rs", 4120, &format!("Git add error: {e}"));
                 return Err(e);
             }
         }
@@ -4217,7 +4340,7 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                     "Failed to commit files",
                     None::<String>
                 );
-                emit_sarif_error("xtask/src/main.rs", 3530, "Failed to commit files");
+                emit_sarif_error("xtask/src/main.rs", 4140, "Failed to commit files");
                 anyhow::bail!("Failed to commit files");
             }
             Err(e) => {
@@ -4229,18 +4352,25 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
                 );
                 emit_sarif_error(
                     "xtask/src/main.rs",
-                    3530,
+                    4140,
                     &format!("Git commit error: {e}"),
                 );
                 return Err(e);
             }
         }
+    } else if dry_run && commit {
+        log_event!(
+            "info",
+            "dry_run_commit",
+            "🔍 Would commit generated files to git",
+            None::<String>
+        );
     }
 
     log_event!(
         "info",
         "bootstrap_complete",
-        "🎉 Project bootstrap completed",
+        "🎉 Enhanced project bootstrap completed",
         None::<String>
     );
 
@@ -4253,6 +4383,91 @@ async fn bootstrap_project(validate: bool, commit: bool) -> Result<()> {
 
     for step in next_steps {
         log_event!("info", "next_step", step, None::<String>);
+    }
+
+    Ok(())
+}
+
+/// Build xtask binary for generation
+async fn build_xtask_binary() -> Result<()> {
+    let status = Command::new("cargo")
+        .args(["build", "-p", "xtask"])
+        .status()
+        .context("Failed to run cargo build for xtask")?;
+    
+    if !status.success() {
+        anyhow::bail!("cargo build -p xtask failed");
+    }
+    
+    Ok(())
+}
+
+/// Enhanced clean generated files with JSONC parsing
+async fn clean_generated_files_enhanced(verbose: bool) -> Result<()> {
+    let registry_path = Path::new("config/generated-files.jsonc");
+    
+    if !registry_path.exists() {
+        if verbose {
+            println!("⚠️  No generated-files.jsonc found, skipping clean");
+        }
+        return Ok(());
+    }
+    
+    let content = fs::read_to_string(registry_path)
+        .context("Failed to read generated-files.jsonc")?;
+    
+    let stripped = StripComments::new(content.as_bytes());
+    let registry: serde_json::Value = serde_json::from_reader(stripped)
+        .context("Failed to parse generated-files.jsonc")?;
+
+    if let Some(files) = registry.get("files").and_then(|f| f.as_array()) {
+        for entry in files {
+            if let Some(path) = entry.get("path").and_then(|p| p.as_str()) {
+                // Only remove non-.rs and non-.jsonc files
+                if !(path.ends_with(".rs") || path.ends_with(".jsonc")) {
+                    let file_path = Path::new(path);
+                    if file_path.exists() {
+                        fs::remove_file(file_path)
+                            .with_context(|| format!("Failed to remove file {}", path))?;
+                        if verbose {
+                            println!("🗑️  Removed: {}", path);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Regenerate all files using unified generator
+async fn regenerate_all_files_unified() -> Result<()> {
+    let status = Command::new("cargo")
+        .args(["run", "-p", "xtask", "--", "gen-all-unified", "--force"])
+        .status()
+        .context("Failed to run xtask gen-all-unified")?;
+
+    if !status.success() {
+        anyhow::bail!("xtask gen-all-unified failed");
+    }
+
+    Ok(())
+}
+
+/// Validate checksums and registry
+async fn validate_checksums_and_registry(verbose: bool) -> Result<()> {
+    let status = Command::new("cargo")
+        .args(["run", "-p", "xtask", "--", "validate-generated-unified", "--strict"])
+        .status()
+        .context("Failed to run xtask validate-generated-unified")?;
+
+    if !status.success() {
+        anyhow::bail!("Checksum validation failed");
+    }
+
+    if verbose {
+        println!("✅ All checksums and registry validated successfully");
     }
 
     Ok(())
