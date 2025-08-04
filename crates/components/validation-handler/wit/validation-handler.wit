@@ -79,6 +79,6 @@ interface validation-handler {
 
 /// Validation handler world
 /// Exports the validation-handler interface as the main entry point for this component
-world validation-handler {
+world validation-handler-world {
   export validation-handler;
 }

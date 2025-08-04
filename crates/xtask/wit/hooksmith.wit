@@ -29,6 +29,18 @@ record build-result {
   error: option<string>;
 }
 
+/// Information about a hook
+record hook-info {
+  /// Hook name
+  name: string;
+  /// Hook description
+  description: string;
+  /// Hook version
+  version: string;
+  /// Whether the hook is installed
+  installed: bool;
+}
+
 /// Main CLI interface for Hooksmith
 interface hooksmith-cli {
   /// Build a hook from source
@@ -39,4 +51,8 @@ interface hooksmith-cli {
   install-hooks: func(hook-names: list<string>) -> result<unit, string>;
 }
 
-export hooksmith-cli;
+/// Hooksmith CLI world
+/// Exports the hooksmith-cli interface as the main entry point for this component
+world hooksmith-cli-world {
+  export hooksmith-cli;
+}

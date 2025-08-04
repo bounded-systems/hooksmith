@@ -217,5 +217,8 @@ interface hook-builder {
   is-target-supported: func(target: string) -> result<bool, string>;
 }
 
-/// Export the hook builder interface
-export hook-builder; 
+/// Hook builder world
+/// Exports the hook-builder interface as the main entry point for this component
+world hook-builder-world {
+  export hook-builder;
+} 

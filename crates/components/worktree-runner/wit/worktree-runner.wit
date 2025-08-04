@@ -43,4 +43,8 @@ interface worktree-runner {
   list-worktrees: func() -> result<worktree-result, string>;
 }
 
-export worktree-runner;
+/// Worktree runner world
+/// Exports the worktree-runner interface as the main entry point for this component
+world worktree-runner-world {
+  export worktree-runner;
+}
