@@ -4244,44 +4244,47 @@ async fn bootstrap_project(validate: bool, commit: bool, clean: bool, build_xtas
 
     // Additional validation steps
     if !dry_run {
-        // Check file types
+        // Validate generated files using unified generator
         log_event!(
             "info",
-            "file_check_start",
-            "🔍 Checking file types and generation markers",
+            "unified_validation_start",
+            "🔍 Validating generated files using unified generator",
             None::<String>
         );
-        match file_audit::check_files() {
-            Ok(result) => {
-                if result.has_errors() {
-                    log_event!(
-                        "error",
-                        "file_check_failed",
-                        "File type validation failed",
-                        None::<String>
-                    );
-                    emit_sarif_error("xtask/src/main.rs", 4100, "File type validation failed");
-                    anyhow::bail!("Bootstrap validation failed. Please fix issues and try again.");
-                } else {
-                    log_event!(
-                        "info",
-                        "file_check_success",
-                        "✅ File type validation passed",
-                        None::<String>
-                    );
-                }
+        
+        let project_root = std::env::current_dir()?;
+        let generator = unified_generator::UnifiedGenerator::new(project_root);
+        
+        match generator.validate_all() {
+            Ok(true) => {
+                log_event!(
+                    "info",
+                    "unified_validation_success",
+                    "✅ Unified generator validation passed",
+                    None::<String>
+                );
+            }
+            Ok(false) => {
+                log_event!(
+                    "error",
+                    "unified_validation_failed",
+                    "Unified generator validation failed",
+                    None::<String>
+                );
+                emit_sarif_error("xtask/src/main.rs", 4100, "Unified generator validation failed");
+                anyhow::bail!("Bootstrap validation failed. Please fix issues and try again.");
             }
             Err(e) => {
                 log_event!(
                     "error",
-                    "file_check_error",
-                    &format!("File type check error: {e}"),
+                    "unified_validation_error",
+                    &format!("Unified generator validation error: {e}"),
                     None::<String>
                 );
                 emit_sarif_error(
                     "xtask/src/main.rs",
                     4100,
-                    &format!("File type check error: {e}"),
+                    &format!("Unified generator validation error: {e}"),
                 );
                 return Err(e);
             }
@@ -8278,9 +8281,11 @@ async fn run_regen_check(strict: bool, verbose: bool) -> Result<()> {
 
 /// Get the current state of all generated files
 fn get_generated_files_state() -> Result<HashMap<String, String>> {
-    use checksum_registry::ChecksumRegistry;
+    use unified_generator::UnifiedGenerator;
     
-    let registry = ChecksumRegistry::load()?;
+    let project_root = std::env::current_dir()?;
+    let generator = UnifiedGenerator::new(project_root);
+    let registry = generator.load_registry()?;
     let mut state = HashMap::new();
     
     for file in &registry.files {
