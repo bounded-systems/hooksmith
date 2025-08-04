@@ -14,6 +14,7 @@ use std::time::Instant;
 
 pub mod operations;
 pub mod event_handler;
+pub mod schema;
 
 /// Git operation event types
 #[derive(Debug, Clone, Serialize, Deserialize)]

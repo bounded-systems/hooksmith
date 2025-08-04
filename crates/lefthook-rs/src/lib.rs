@@ -53,6 +53,7 @@ pub mod binary;
 pub mod cli;
 pub mod config;
 pub mod error;
+pub mod schema;
 
 pub use config::{GlobalConfig, HookConfig, HookSection, JobConfig};
 pub use error::{LefthookError, Result};

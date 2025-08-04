@@ -11,6 +11,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+pub mod schema;
+
 /// System events for operations that require native Rust capabilities
 /// (file I/O, Git operations, process management, etc.)
 #[derive(Debug, Clone, Serialize, Deserialize)]
