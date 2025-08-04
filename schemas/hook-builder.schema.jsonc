@@ -5,41 +5,33 @@
     "build-config": {
       "additionalProperties": false,
       "properties": {
-        "all-features": {
-          "$ref": "#/definitions/bool,"
-        },
-        "debug-symbols": {
-          "$ref": "#/definitions/bool,"
-        },
+        "all-features": "boolean",
+        "debug-symbols": "boolean",
         "env-vars": {
-          "$ref": "#/definitions/list<env-var>,"
+          "items": {
+            "$ref": "#/definitions/env-var"
+          },
+          "type": "array"
         },
         "features": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
-        "optimization-level": {
-          "$ref": "#/definitions/u8,"
-        },
-        "output-path": {
-          "$ref": "#/definitions/string,"
-        },
-        "run-clippy": {
-          "$ref": "#/definitions/bool,"
-        },
-        "run-tests": {
-          "$ref": "#/definitions/bool,"
-        },
-        "source-path": {
-          "$ref": "#/definitions/string,"
-        },
+        "optimization-level": "integer",
+        "output-path": "string",
+        "run-clippy": "boolean",
+        "run-tests": "boolean",
+        "source-path": "string",
         "target-triple": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
         "source-path",
         "output-path",
-        "target-triple",
         "optimization-level",
         "debug-symbols",
         "features",
@@ -53,21 +45,11 @@
     "build-metadata": {
       "additionalProperties": false,
       "properties": {
-        "build-hash": {
-          "$ref": "#/definitions/string,"
-        },
-        "cargo-version": {
-          "$ref": "#/definitions/string,"
-        },
-        "rust-version": {
-          "$ref": "#/definitions/string,"
-        },
-        "target-triple": {
-          "$ref": "#/definitions/string,"
-        },
-        "timestamp": {
-          "$ref": "#/definitions/string,"
-        }
+        "build-hash": "string",
+        "cargo-version": "string",
+        "rust-version": "string",
+        "target-triple": "string",
+        "timestamp": "string"
       },
       "required": [
         "rust-version",
@@ -82,38 +64,39 @@
       "additionalProperties": false,
       "properties": {
         "artifacts": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
         "binary-path": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "binary-size": {
-          "$ref": "#/definitions/option<u64>,"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
-        "build-logs": {
-          "$ref": "#/definitions/string,"
-        },
-        "duration-ms": {
-          "$ref": "#/definitions/u64,"
-        },
+        "build-logs": "string",
+        "duration-ms": "integer",
         "error": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "metadata": {
-          "$ref": "#/definitions/build-metadata,"
+          "$ref": "#/definitions/build-metadata"
         },
-        "success": {
-          "$ref": "#/definitions/bool,"
-        }
+        "success": "boolean"
       },
       "required": [
         "success",
-        "binary-path",
         "artifacts",
         "build-logs",
-        "error",
         "duration-ms",
-        "binary-size",
         "metadata"
       ],
       "type": "object"
@@ -121,12 +104,8 @@
     "env-var": {
       "additionalProperties": false,
       "properties": {
-        "name": {
-          "$ref": "#/definitions/string,"
-        },
-        "value": {
-          "$ref": "#/definitions/string,"
-        }
+        "name": "string",
+        "value": "string"
       },
       "required": [
         "name",
@@ -137,23 +116,16 @@
     "optimization-config": {
       "additionalProperties": false,
       "properties": {
-        "binary-path": {
-          "$ref": "#/definitions/string,"
-        },
-        "compress": {
-          "$ref": "#/definitions/bool,"
-        },
-        "level": {
-          "$ref": "#/definitions/u8,"
-        },
-        "strip-debug": {
-          "$ref": "#/definitions/bool,"
-        },
-        "strip-symbols": {
-          "$ref": "#/definitions/bool,"
-        },
+        "binary-path": "string",
+        "compress": "boolean",
+        "level": "integer",
+        "strip-debug": "boolean",
+        "strip-symbols": "boolean",
         "target-size": {
-          "$ref": "#/definitions/option<u64>,"
+          "type": [
+            "integer",
+            "null"
+          ]
         }
       },
       "required": [
@@ -161,34 +133,27 @@
         "level",
         "strip-debug",
         "strip-symbols",
-        "compress",
-        "target-size"
+        "compress"
       ],
       "type": "object"
     },
     "optimization-result": {
       "additionalProperties": false,
       "properties": {
-        "duration-ms": {
-          "$ref": "#/definitions/u64,"
-        },
+        "duration-ms": "integer",
         "error": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "optimized-size": {
-          "$ref": "#/definitions/u64,"
-        },
-        "original-size": {
-          "$ref": "#/definitions/u64,"
-        },
-        "reduction-percentage": {
-          "$ref": "#/definitions/f64,"
-        },
-        "success": {
-          "$ref": "#/definitions/bool,"
-        },
+        "optimized-size": "integer",
+        "original-size": "integer",
+        "reduction-percentage": "number",
+        "success": "boolean",
         "techniques-applied": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         }
       },
       "required": [
@@ -197,7 +162,6 @@
         "optimized-size",
         "reduction-percentage",
         "techniques-applied",
-        "error",
         "duration-ms"
       ],
       "type": "object"
@@ -213,18 +177,15 @@
     "validation-config": {
       "additionalProperties": false,
       "properties": {
-        "check-common-issues": {
-          "$ref": "#/definitions/bool,"
-        },
+        "check-common-issues": "boolean",
         "rules": {
-          "$ref": "#/definitions/list<validation-rule>,"
+          "items": {
+            "$ref": "#/definitions/validation-rule"
+          },
+          "type": "array"
         },
-        "source-path": {
-          "$ref": "#/definitions/string,"
-        },
-        "validate-dependencies": {
-          "$ref": "#/definitions/bool,"
-        }
+        "source-path": "string",
+        "validate-dependencies": "boolean"
       },
       "required": [
         "source-path",
@@ -238,23 +199,27 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "location": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "message": {
-          "$ref": "#/definitions/string,"
-        },
+        "message": "string",
         "suggestion": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
-        "message",
-        "location",
-        "code",
-        "suggestion"
+        "message"
       ],
       "type": "object"
     },
@@ -262,39 +227,46 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "location": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "message": {
-          "$ref": "#/definitions/string,"
-        }
+        "message": "string"
       },
       "required": [
-        "message",
-        "location",
-        "code"
+        "message"
       ],
       "type": "object"
     },
     "validation-result": {
       "additionalProperties": false,
       "properties": {
-        "duration-ms": {
-          "$ref": "#/definitions/u64,"
-        },
+        "duration-ms": "integer",
         "errors": {
-          "$ref": "#/definitions/list<validation-error>,"
+          "items": {
+            "$ref": "#/definitions/validation-error"
+          },
+          "type": "array"
         },
         "info": {
-          "$ref": "#/definitions/list<validation-info>,"
+          "items": {
+            "$ref": "#/definitions/validation-info"
+          },
+          "type": "array"
         },
-        "success": {
-          "$ref": "#/definitions/bool,"
-        },
+        "success": "boolean",
         "warnings": {
-          "$ref": "#/definitions/list<validation-warning>,"
+          "items": {
+            "$ref": "#/definitions/validation-warning"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -309,17 +281,11 @@
     "validation-rule": {
       "additionalProperties": false,
       "properties": {
-        "description": {
-          "$ref": "#/definitions/string,"
-        },
-        "enabled": {
-          "$ref": "#/definitions/bool,"
-        },
-        "name": {
-          "$ref": "#/definitions/string,"
-        },
+        "description": "string",
+        "enabled": "boolean",
+        "name": "string",
         "severity": {
-          "$ref": "#/definitions/rule-severity,"
+          "$ref": "#/definitions/rule-severity"
         }
       },
       "required": [
@@ -334,23 +300,27 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "location": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "message": {
-          "$ref": "#/definitions/string,"
-        },
+        "message": "string",
         "suggestion": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
-        "message",
-        "location",
-        "code",
-        "suggestion"
+        "message"
       ],
       "type": "object"
     }

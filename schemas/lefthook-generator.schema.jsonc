@@ -5,12 +5,8 @@
     "env-var": {
       "additionalProperties": false,
       "properties": {
-        "name": {
-          "$ref": "#/definitions/string,"
-        },
-        "value": {
-          "$ref": "#/definitions/string,"
-        }
+        "name": "string",
+        "value": "string"
       },
       "required": [
         "name",
@@ -22,183 +18,298 @@
       "additionalProperties": false,
       "properties": {
         "current-branch": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "default-branch": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "git-version": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "is-bare": {
-          "$ref": "#/definitions/option<bool>,"
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "is-shallow": {
-          "$ref": "#/definitions/option<bool>,"
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "repo-name": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "repo-root": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "repo-url": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
-      "required": [
-        "repo-url",
-        "repo-name",
-        "default-branch",
-        "current-branch",
-        "repo-root",
-        "git-version",
-        "is-bare",
-        "is-shallow"
-      ],
       "type": "object"
     },
     "global-settings": {
       "additionalProperties": false,
       "properties": {
         "colors": {
-          "$ref": "#/definitions/option<bool>,"
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "git-hooks-dir": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "max-parallel": {
-          "$ref": "#/definitions/option<u32>,"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "only-authors": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-branches": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-changed": {
-          "$ref": "#/definitions/option<bool>,"
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "only-commits": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-dirs": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-dirs-changed": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-emails": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-extensions": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-extensions-changed": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-files": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-files-changed": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-messages": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-patterns": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-patterns-changed": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "only-staged": {
-          "$ref": "#/definitions/option<bool>,"
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "only-tags": {
-          "$ref": "#/definitions/option<list<string>>,"
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
         },
         "parallel": {
-          "$ref": "#/definitions/option<bool>,"
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "skip-output": {
-          "$ref": "#/definitions/option<bool>,"
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "stop-on-failure": {
-          "$ref": "#/definitions/option<bool>,"
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "version": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
-      "required": [
-        "version",
-        "git-hooks-dir",
-        "skip-output",
-        "colors",
-        "parallel",
-        "max-parallel",
-        "stop-on-failure",
-        "only-staged",
-        "only-changed",
-        "only-files",
-        "only-dirs",
-        "only-extensions",
-        "only-patterns",
-        "only-branches",
-        "only-tags",
-        "only-commits",
-        "only-authors",
-        "only-emails",
-        "only-messages",
-        "only-files-changed",
-        "only-dirs-changed",
-        "only-extensions-changed",
-        "only-patterns-changed"
-      ],
       "type": "object"
     },
     "hook-config": {
       "additionalProperties": false,
       "properties": {
-        "command": {
-          "$ref": "#/definitions/string,"
-        },
+        "command": "string",
         "depends-on": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
         "description": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "enabled": {
-          "$ref": "#/definitions/bool,"
-        },
+        "enabled": "boolean",
         "env": {
-          "$ref": "#/definitions/list<env-var>,"
+          "items": {
+            "$ref": "#/definitions/env-var"
+          },
+          "type": "array"
         },
-        "hook-type": {
-          "$ref": "#/definitions/string,"
-        },
-        "name": {
-          "$ref": "#/definitions/string,"
-        },
+        "hook-type": "string",
+        "name": "string",
         "priority": {
-          "$ref": "#/definitions/option<u32>,"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "skip": {
-          "$ref": "#/definitions/list<skip-condition>,"
+          "items": {
+            "$ref": "#/definitions/skip-condition"
+          },
+          "type": "array"
         },
         "stage": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "tags": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
         "timeout": {
-          "$ref": "#/definitions/option<u32>,"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "working-dir": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
@@ -206,12 +317,7 @@
         "hook-type",
         "command",
         "enabled",
-        "description",
         "tags",
-        "stage",
-        "priority",
-        "timeout",
-        "working-dir",
         "env",
         "depends-on",
         "skip"
@@ -221,23 +327,22 @@
     "hook-type-info": {
       "additionalProperties": false,
       "properties": {
-        "description": {
-          "$ref": "#/definitions/string,"
-        },
+        "description": "string",
         "documentation": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "examples": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
-        "name": {
-          "$ref": "#/definitions/string,"
-        },
-        "stage": {
-          "$ref": "#/definitions/string,"
-        },
+        "name": "string",
+        "stage": "string",
         "triggers": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         }
       },
       "required": [
@@ -245,8 +350,7 @@
         "description",
         "stage",
         "triggers",
-        "examples",
-        "documentation"
+        "examples"
       ],
       "type": "object"
     },
@@ -254,26 +358,21 @@
       "additionalProperties": false,
       "properties": {
         "git-info": {
-          "$ref": "#/definitions/git-info,"
+          "$ref": "#/definitions/git-info"
         },
         "global-settings": {
-          "$ref": "#/definitions/global-settings,"
+          "$ref": "#/definitions/global-settings"
         },
         "hooks": {
-          "$ref": "#/definitions/list<hook-config>,"
+          "items": {
+            "$ref": "#/definitions/hook-config"
+          },
+          "type": "array"
         },
-        "include-comments": {
-          "$ref": "#/definitions/bool,"
-        },
-        "output-path": {
-          "$ref": "#/definitions/string,"
-        },
-        "strict-mode": {
-          "$ref": "#/definitions/bool,"
-        },
-        "validate-schema": {
-          "$ref": "#/definitions/bool,"
-        }
+        "include-comments": "boolean",
+        "output-path": "string",
+        "strict-mode": "boolean",
+        "validate-schema": "boolean"
       },
       "required": [
         "output-path",
@@ -290,38 +389,40 @@
       "additionalProperties": false,
       "properties": {
         "config-content": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "duration-ms": {
-          "$ref": "#/definitions/u64,"
-        },
+        "duration-ms": "integer",
         "error": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "hooks-count": {
-          "$ref": "#/definitions/u32,"
-        },
+        "hooks-count": "integer",
         "output-path": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "success": {
-          "$ref": "#/definitions/bool,"
-        },
+        "success": "boolean",
         "validation-errors": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
         "validation-warnings": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         }
       },
       "required": [
         "success",
-        "config-content",
-        "output-path",
         "hooks-count",
         "validation-errors",
         "validation-warnings",
-        "error",
         "duration-ms"
       ],
       "type": "object"
@@ -330,19 +431,19 @@
       "additionalProperties": false,
       "properties": {
         "condition-type": {
-          "$ref": "#/definitions/skip-condition-type,"
+          "$ref": "#/definitions/skip-condition-type"
         },
         "description": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "value": {
-          "$ref": "#/definitions/string,"
-        }
+        "value": "string"
       },
       "required": [
         "condition-type",
-        "value",
-        "description"
+        "value"
       ],
       "type": "object"
     },
@@ -362,28 +463,20 @@
     "validation-config": {
       "additionalProperties": false,
       "properties": {
-        "config-content": {
-          "$ref": "#/definitions/string,"
-        },
+        "config-content": "string",
         "schema": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "validate-commands": {
-          "$ref": "#/definitions/bool,"
-        },
-        "validate-hooks": {
-          "$ref": "#/definitions/bool,"
-        },
-        "validate-schema": {
-          "$ref": "#/definitions/bool,"
-        },
-        "validate-syntax": {
-          "$ref": "#/definitions/bool,"
-        }
+        "validate-commands": "boolean",
+        "validate-hooks": "boolean",
+        "validate-schema": "boolean",
+        "validate-syntax": "boolean"
       },
       "required": [
         "config-content",
-        "schema",
         "validate-syntax",
         "validate-schema",
         "validate-hooks",
@@ -395,23 +488,27 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "location": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "message": {
-          "$ref": "#/definitions/string,"
-        },
+        "message": "string",
         "suggestion": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
-        "message",
-        "location",
-        "code",
-        "suggestion"
+        "message"
       ],
       "type": "object"
     },
@@ -419,39 +516,46 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "location": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "message": {
-          "$ref": "#/definitions/string,"
-        }
+        "message": "string"
       },
       "required": [
-        "message",
-        "location",
-        "code"
+        "message"
       ],
       "type": "object"
     },
     "validation-result": {
       "additionalProperties": false,
       "properties": {
-        "duration-ms": {
-          "$ref": "#/definitions/u64,"
-        },
+        "duration-ms": "integer",
         "errors": {
-          "$ref": "#/definitions/list<validation-error>,"
+          "items": {
+            "$ref": "#/definitions/validation-error"
+          },
+          "type": "array"
         },
         "info": {
-          "$ref": "#/definitions/list<validation-info>,"
+          "items": {
+            "$ref": "#/definitions/validation-info"
+          },
+          "type": "array"
         },
-        "success": {
-          "$ref": "#/definitions/bool,"
-        },
+        "success": "boolean",
         "warnings": {
-          "$ref": "#/definitions/list<validation-warning>,"
+          "items": {
+            "$ref": "#/definitions/validation-warning"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -467,23 +571,27 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "location": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "message": {
-          "$ref": "#/definitions/string,"
-        },
+        "message": "string",
         "suggestion": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
-        "message",
-        "location",
-        "code",
-        "suggestion"
+        "message"
       ],
       "type": "object"
     }

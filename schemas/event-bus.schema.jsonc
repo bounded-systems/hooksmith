@@ -5,12 +5,8 @@
     "actor-stats": {
       "additionalProperties": false,
       "properties": {
-        "actor": {
-          "$ref": "#/definitions/string,"
-        },
-        "count": {
-          "$ref": "#/definitions/u64,"
-        }
+        "actor": "string",
+        "count": "integer"
       },
       "required": [
         "actor",
@@ -22,11 +18,9 @@
       "additionalProperties": false,
       "properties": {
         "category": {
-          "$ref": "#/definitions/event-category,"
+          "$ref": "#/definitions/event-category"
         },
-        "count": {
-          "$ref": "#/definitions/u64,"
-        }
+        "count": "integer"
       },
       "required": [
         "category",
@@ -37,21 +31,19 @@
     "component-metadata": {
       "additionalProperties": false,
       "properties": {
-        "description": {
-          "$ref": "#/definitions/string,"
-        },
-        "name": {
-          "$ref": "#/definitions/string,"
-        },
+        "description": "string",
+        "name": "string",
         "supported-categories": {
-          "$ref": "#/definitions/list<event-category>,"
+          "items": {
+            "$ref": "#/definitions/event-category"
+          },
+          "type": "array"
         },
         "supported-events": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
-        "version": {
-          "$ref": "#/definitions/string,"
-        }
+        "version": "string"
       },
       "required": [
         "name",
@@ -65,28 +57,20 @@
     "event-bus-config": {
       "additionalProperties": false,
       "properties": {
-        "batch-size": {
-          "$ref": "#/definitions/u32,"
-        },
-        "broadcast-capacity": {
-          "$ref": "#/definitions/u32,"
-        },
-        "console-output": {
-          "$ref": "#/definitions/bool,"
-        },
-        "enable-persistence": {
-          "$ref": "#/definitions/bool,"
-        },
-        "flush-interval-ms": {
-          "$ref": "#/definitions/u64,"
-        },
+        "batch-size": "integer",
+        "broadcast-capacity": "integer",
+        "console-output": "boolean",
+        "enable-persistence": "boolean",
+        "flush-interval-ms": "integer",
         "jsonl-file": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
         "enable-persistence",
-        "jsonl-file",
         "batch-size",
         "flush-interval-ms",
         "broadcast-capacity",
@@ -97,24 +81,27 @@
     "event-bus-stats": {
       "additionalProperties": false,
       "properties": {
-        "active-handlers": {
-          "$ref": "#/definitions/u32,"
-        },
-        "active-subscriptions": {
-          "$ref": "#/definitions/u32,"
-        },
+        "active-handlers": "integer",
+        "active-subscriptions": "integer",
         "events-by-actor": {
-          "$ref": "#/definitions/list<actor-stats>,"
+          "items": {
+            "$ref": "#/definitions/actor-stats"
+          },
+          "type": "array"
         },
         "events-by-category": {
-          "$ref": "#/definitions/list<category-stats>,"
+          "items": {
+            "$ref": "#/definitions/category-stats"
+          },
+          "type": "array"
         },
         "events-by-type": {
-          "$ref": "#/definitions/list<event-type-stats>,"
+          "items": {
+            "$ref": "#/definitions/event-type-stats"
+          },
+          "type": "array"
         },
-        "total-events": {
-          "$ref": "#/definitions/u64,"
-        }
+        "total-events": "integer"
       },
       "required": [
         "total-events",
@@ -145,19 +132,21 @@
       "additionalProperties": false,
       "properties": {
         "error": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "response": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "success": {
-          "$ref": "#/definitions/bool,"
-        }
+        "success": "boolean"
       },
       "required": [
-        "success",
-        "error",
-        "response"
+        "success"
       ],
       "type": "object"
     },
@@ -176,17 +165,17 @@
       "additionalProperties": false,
       "properties": {
         "categories": {
-          "$ref": "#/definitions/list<event-category>,"
+          "items": {
+            "$ref": "#/definitions/event-category"
+          },
+          "type": "array"
         },
-        "component": {
-          "$ref": "#/definitions/string,"
-        },
+        "component": "string",
         "event-types": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
-        "receive-all": {
-          "$ref": "#/definitions/bool,"
-        }
+        "receive-all": "boolean"
       },
       "required": [
         "component",
@@ -199,12 +188,8 @@
     "event-type-stats": {
       "additionalProperties": false,
       "properties": {
-        "count": {
-          "$ref": "#/definitions/u64,"
-        },
-        "event-type": {
-          "$ref": "#/definitions/string,"
-        }
+        "count": "integer",
+        "event-type": "string"
       },
       "required": [
         "event-type",
@@ -215,48 +200,48 @@
     "hooksmith-event": {
       "additionalProperties": false,
       "properties": {
-        "actor": {
-          "$ref": "#/definitions/string,"
-        },
-        "context": {
-          "$ref": "#/definitions/string,"
-        },
+        "actor": "string",
+        "context": "string",
         "duration-ms": {
-          "$ref": "#/definitions/option<u64>,"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "error": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "event": {
-          "$ref": "#/definitions/string,"
-        },
+        "event": "string",
         "hook": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "id": {
-          "$ref": "#/definitions/string,"
-        },
+        "id": "string",
         "session-id": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "state": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "ts": {
-          "$ref": "#/definitions/string,"
-        }
+        "ts": "string"
       },
       "required": [
         "id",
         "ts",
         "actor",
         "event",
-        "hook",
-        "state",
-        "context",
-        "error",
-        "session-id",
-        "duration-ms"
+        "context"
       ],
       "type": "object"
     }

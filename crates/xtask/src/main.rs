@@ -2539,7 +2539,7 @@ fn parse_wit_record(lines: &[&str], index: &mut usize) -> Result<(String, serde_
             let parts: Vec<&str> = line.split(':').collect();
             if parts.len() >= 2 {
                 let field_name = parts[0].trim();
-                let field_type = parts[1].trim().strip_suffix(';').unwrap_or(parts[1].trim());
+                let field_type = parts[1].trim().strip_suffix(';').unwrap_or(parts[1].trim()).strip_suffix(',').unwrap_or(parts[1].trim().strip_suffix(';').unwrap_or(parts[1].trim()));
                 
                 let (schema_type, is_optional) = convert_wit_type_to_json_schema(field_type);
                 properties.insert(field_name.to_string(), schema_type);

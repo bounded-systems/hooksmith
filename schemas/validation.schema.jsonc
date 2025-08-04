@@ -5,18 +5,10 @@
     "format-validator": {
       "additionalProperties": false,
       "properties": {
-        "description": {
-          "$ref": "#/definitions/string,"
-        },
-        "example": {
-          "$ref": "#/definitions/string,"
-        },
-        "name": {
-          "$ref": "#/definitions/string,"
-        },
-        "pattern": {
-          "$ref": "#/definitions/string,"
-        }
+        "description": "string",
+        "example": "string",
+        "name": "string",
+        "pattern": "string"
       },
       "required": [
         "name",
@@ -45,18 +37,12 @@
     "rule-parameter": {
       "additionalProperties": false,
       "properties": {
-        "name": {
-          "$ref": "#/definitions/string,"
-        },
+        "name": "string",
         "parameter-type": {
-          "$ref": "#/definitions/parameter-type,"
+          "$ref": "#/definitions/parameter-type"
         },
-        "required": {
-          "$ref": "#/definitions/bool,"
-        },
-        "value": {
-          "$ref": "#/definitions/string,"
-        }
+        "required": "boolean",
+        "value": "string"
       },
       "required": [
         "name",
@@ -90,31 +76,37 @@
       "additionalProperties": false,
       "properties": {
         "description": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "examples": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
         "format": {
-          "$ref": "#/definitions/schema-format,"
+          "$ref": "#/definitions/schema-format"
         },
-        "properties-count": {
-          "$ref": "#/definitions/u32,"
-        },
+        "properties-count": "integer",
         "required-properties": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
         "title": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "version": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
-        "title",
-        "description",
-        "version",
         "format",
         "properties-count",
         "required-properties",
@@ -125,27 +117,20 @@
     "schema-validation-config": {
       "additionalProperties": false,
       "properties": {
-        "allow-additional-properties": {
-          "$ref": "#/definitions/bool,"
-        },
-        "allow-unknown-formats": {
-          "$ref": "#/definitions/bool,"
-        },
-        "data": {
-          "$ref": "#/definitions/string,"
-        },
+        "allow-additional-properties": "boolean",
+        "allow-unknown-formats": "boolean",
+        "data": "string",
         "format-validators": {
-          "$ref": "#/definitions/list<format-validator>,"
+          "items": {
+            "$ref": "#/definitions/format-validator"
+          },
+          "type": "array"
         },
-        "schema": {
-          "$ref": "#/definitions/string,"
-        },
+        "schema": "string",
         "schema-format": {
-          "$ref": "#/definitions/schema-format,"
+          "$ref": "#/definitions/schema-format"
         },
-        "strict-mode": {
-          "$ref": "#/definitions/bool,"
-        }
+        "strict-mode": "boolean"
       },
       "required": [
         "schema",
@@ -162,51 +147,61 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "details": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "message": {
-          "$ref": "#/definitions/string,"
-        },
+        "message": "string",
         "path": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "schema-path": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "suggestion": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
-        "message",
-        "path",
-        "schema-path",
-        "code",
-        "suggestion",
-        "details"
+        "message"
       ],
       "type": "object"
     },
     "schema-validation-result": {
       "additionalProperties": false,
       "properties": {
-        "duration-ms": {
-          "$ref": "#/definitions/u64,"
-        },
+        "duration-ms": "integer",
         "errors": {
-          "$ref": "#/definitions/list<schema-validation-error>,"
+          "items": {
+            "$ref": "#/definitions/schema-validation-error"
+          },
+          "type": "array"
         },
         "schema-info": {
-          "$ref": "#/definitions/schema-info,"
+          "$ref": "#/definitions/schema-info"
         },
-        "success": {
-          "$ref": "#/definitions/bool,"
-        },
+        "success": "boolean",
         "warnings": {
-          "$ref": "#/definitions/list<schema-validation-warning>,"
+          "items": {
+            "$ref": "#/definitions/schema-validation-warning"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -222,75 +217,84 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "details": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "message": {
-          "$ref": "#/definitions/string,"
-        },
+        "message": "string",
         "path": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "schema-path": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "suggestion": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
-        "message",
-        "path",
-        "schema-path",
-        "code",
-        "suggestion",
-        "details"
+        "message"
       ],
       "type": "object"
     },
     "validation-config": {
       "additionalProperties": false,
       "properties": {
-        "data": {
-          "$ref": "#/definitions/string,"
-        },
-        "include-suggestions": {
-          "$ref": "#/definitions/bool,"
-        },
-        "include-warnings": {
-          "$ref": "#/definitions/bool,"
-        },
+        "data": "string",
+        "include-suggestions": "boolean",
+        "include-warnings": "boolean",
         "max-errors": {
-          "$ref": "#/definitions/option<u32>,"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "max-warnings": {
-          "$ref": "#/definitions/option<u32>,"
+          "type": [
+            "integer",
+            "null"
+          ]
         },
         "rules": {
-          "$ref": "#/definitions/list<validation-rule>,"
+          "items": {
+            "$ref": "#/definitions/validation-rule"
+          },
+          "type": "array"
         },
         "schema": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "strict-mode": {
-          "$ref": "#/definitions/bool,"
-        },
+        "strict-mode": "boolean",
         "validation-type": {
-          "$ref": "#/definitions/validation-type,"
+          "$ref": "#/definitions/validation-type"
         }
       },
       "required": [
         "validation-type",
         "data",
-        "schema",
         "rules",
         "strict-mode",
         "include-warnings",
-        "include-suggestions",
-        "max-errors",
-        "max-warnings"
+        "include-suggestions"
       ],
       "type": "object"
     },
@@ -298,20 +302,13 @@
       "additionalProperties": false,
       "properties": {
         "available-validators": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
-        "engine": {
-          "$ref": "#/definitions/string,"
-        },
-        "engine-version": {
-          "$ref": "#/definitions/string,"
-        },
-        "platform": {
-          "$ref": "#/definitions/string,"
-        },
-        "tool-version": {
-          "$ref": "#/definitions/string,"
-        }
+        "engine": "string",
+        "engine-version": "string",
+        "platform": "string",
+        "tool-version": "string"
       },
       "required": [
         "tool-version",
@@ -326,35 +323,43 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "context": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "location": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "message": {
-          "$ref": "#/definitions/string,"
-        },
+        "message": "string",
         "rule": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "severity": {
-          "$ref": "#/definitions/rule-severity,"
+          "$ref": "#/definitions/rule-severity"
         },
         "suggestion": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
         "message",
-        "location",
-        "code",
-        "suggestion",
-        "context",
-        "severity",
-        "rule"
+        "severity"
       ],
       "type": "object"
     },
@@ -362,57 +367,62 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "context": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "location": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "message": {
-          "$ref": "#/definitions/string,"
-        },
+        "message": "string",
         "rule": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
-        "message",
-        "location",
-        "code",
-        "context",
-        "rule"
+        "message"
       ],
       "type": "object"
     },
     "validation-metadata": {
       "additionalProperties": false,
       "properties": {
-        "duration": {
-          "$ref": "#/definitions/string,"
-        },
+        "duration": "string",
         "environment": {
-          "$ref": "#/definitions/validation-environment,"
+          "$ref": "#/definitions/validation-environment"
         },
         "rules-applied": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
         "schema-used": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "timestamp": {
-          "$ref": "#/definitions/string,"
-        },
+        "timestamp": "string",
         "validation-type": {
-          "$ref": "#/definitions/validation-type,"
+          "$ref": "#/definitions/validation-type"
         }
       },
       "required": [
         "timestamp",
         "duration",
         "validation-type",
-        "schema-used",
         "rules-applied",
         "environment"
       ],
@@ -421,26 +431,31 @@
     "validation-result": {
       "additionalProperties": false,
       "properties": {
-        "duration-ms": {
-          "$ref": "#/definitions/u64,"
-        },
+        "duration-ms": "integer",
         "errors": {
-          "$ref": "#/definitions/list<validation-error>,"
+          "items": {
+            "$ref": "#/definitions/validation-error"
+          },
+          "type": "array"
         },
         "info": {
-          "$ref": "#/definitions/list<validation-info>,"
+          "items": {
+            "$ref": "#/definitions/validation-info"
+          },
+          "type": "array"
         },
         "metadata": {
-          "$ref": "#/definitions/validation-metadata,"
+          "$ref": "#/definitions/validation-metadata"
         },
         "statistics": {
-          "$ref": "#/definitions/validation-statistics,"
+          "$ref": "#/definitions/validation-statistics"
         },
-        "success": {
-          "$ref": "#/definitions/bool,"
-        },
+        "success": "boolean",
         "warnings": {
-          "$ref": "#/definitions/list<validation-warning>,"
+          "items": {
+            "$ref": "#/definitions/validation-warning"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -458,25 +473,26 @@
       "additionalProperties": false,
       "properties": {
         "dependencies": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
-        "description": {
-          "$ref": "#/definitions/string,"
-        },
-        "enabled": {
-          "$ref": "#/definitions/bool,"
-        },
-        "name": {
-          "$ref": "#/definitions/string,"
-        },
+        "description": "string",
+        "enabled": "boolean",
+        "name": "string",
         "parameters": {
-          "$ref": "#/definitions/list<rule-parameter>,"
+          "items": {
+            "$ref": "#/definitions/rule-parameter"
+          },
+          "type": "array"
         },
         "pattern": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "severity": {
-          "$ref": "#/definitions/rule-severity,"
+          "$ref": "#/definitions/rule-severity"
         }
       },
       "required": [
@@ -484,7 +500,6 @@
         "description",
         "enabled",
         "severity",
-        "pattern",
         "parameters",
         "dependencies"
       ],
@@ -493,27 +508,13 @@
     "validation-statistics": {
       "additionalProperties": false,
       "properties": {
-        "coverage-percentage": {
-          "$ref": "#/definitions/f64,"
-        },
-        "error-count": {
-          "$ref": "#/definitions/u32,"
-        },
-        "info-count": {
-          "$ref": "#/definitions/u32,"
-        },
-        "invalid-items": {
-          "$ref": "#/definitions/u32,"
-        },
-        "total-items": {
-          "$ref": "#/definitions/u32,"
-        },
-        "valid-items": {
-          "$ref": "#/definitions/u32,"
-        },
-        "warning-count": {
-          "$ref": "#/definitions/u32,"
-        }
+        "coverage-percentage": "number",
+        "error-count": "integer",
+        "info-count": "integer",
+        "invalid-items": "integer",
+        "total-items": "integer",
+        "valid-items": "integer",
+        "warning-count": "integer"
       },
       "required": [
         "total-items",
@@ -549,29 +550,30 @@
     "validation-type-info": {
       "additionalProperties": false,
       "properties": {
-        "category": {
-          "$ref": "#/definitions/string,"
-        },
-        "description": {
-          "$ref": "#/definitions/string,"
-        },
+        "category": "string",
+        "description": "string",
         "documentation": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "examples": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
-        "name": {
-          "$ref": "#/definitions/string,"
-        },
+        "name": "string",
         "optional-parameters": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
         "required-parameters": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         },
         "supported-formats": {
-          "$ref": "#/definitions/list<string>,"
+          "items": "string",
+          "type": "array"
         }
       },
       "required": [
@@ -581,8 +583,7 @@
         "supported-formats",
         "required-parameters",
         "optional-parameters",
-        "examples",
-        "documentation"
+        "examples"
       ],
       "type": "object"
     },
@@ -590,35 +591,43 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "context": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "location": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "message": {
-          "$ref": "#/definitions/string,"
-        },
+        "message": "string",
         "rule": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "severity": {
-          "$ref": "#/definitions/rule-severity,"
+          "$ref": "#/definitions/rule-severity"
         },
         "suggestion": {
-          "$ref": "#/definitions/option<string>,"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
         "message",
-        "location",
-        "code",
-        "suggestion",
-        "context",
-        "severity",
-        "rule"
+        "severity"
       ],
       "type": "object"
     }
