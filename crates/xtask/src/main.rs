@@ -1997,17 +1997,17 @@ async fn main() -> Result<()> {
             strict,
             verbose,
         } => {
-            run_component_smoke_test(component, *build, *strict, *verbose).await?;
+            run_component_smoke_test(component, build, strict, verbose).await?;
         }
         Commands::ValidateStructure {
             strict,
             verbose,
             format,
         } => {
-            run_validate_structure(*strict, *verbose, format).await?;
+            run_validate_structure(strict, verbose, format).await?;
         }
         Commands::ComponentStatus { verbose, format } => {
-            component_status::show_component_status(*verbose, Some(format)).await?;
+            component_status::show_component_status(verbose, Some(&format)).await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {

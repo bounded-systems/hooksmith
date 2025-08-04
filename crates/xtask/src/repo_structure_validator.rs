@@ -449,6 +449,7 @@ impl RepoStructureValidator {
                 });
             }
         }
+        Ok(())
     }
 
     fn validate_component_wit(&self, crate_path: &Path, crate_name: &str, result: &mut ValidationResult) -> Result<()> {
@@ -482,6 +483,7 @@ impl RepoStructureValidator {
                 category: "component_crates".to_string(),
             });
         }
+        Ok(())
     }
 
     fn validate_cli_crates(&self, result: &mut ValidationResult) -> Result<()> {
@@ -719,7 +721,7 @@ impl RepoStructureValidator {
         let hooks_dir = self.workspace_root.join(&self.schema.hooks.location);
         
         if !hooks_dir.exists() {
-            return Ok(); // Hooks directory is optional
+            return Ok(()); // Hooks directory is optional
         }
 
         for entry in fs::read_dir(&hooks_dir)? {
@@ -773,7 +775,7 @@ impl RepoStructureValidator {
         let scripts_dir = self.workspace_root.join(&self.schema.scripts.location);
         
         if !scripts_dir.exists() {
-            return Ok(); // Scripts directory is optional
+            return Ok(()); // Scripts directory is optional
         }
 
         for entry in fs::read_dir(&scripts_dir)? {
