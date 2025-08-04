@@ -136,7 +136,7 @@ impl WorktreeTool {
         match self {
             WorktreeTool::Wtp => "Git worktree management with hooks and automation",
             WorktreeTool::Gwtr => "Rust-based Git worktree manager with configuration layers",
-            WorktreeTool::Workbloom => "Git worktree management with automatic file copying",
+            WorktreeTool::Workbloom => "Rust-based CLI with automatic file copying and port allocation",
             WorktreeTool::Git => "Native Git worktree commands",
         }
     }
@@ -146,7 +146,7 @@ impl WorktreeTool {
         match self {
             WorktreeTool::Wtp => ".wtp.yml",
             WorktreeTool::Gwtr => ".gwtr.toml",
-            WorktreeTool::Workbloom => ".workbloom.yml",
+            WorktreeTool::Workbloom => ".workbloom",
             WorktreeTool::Git => ".git/config",
         }
     }
@@ -212,6 +212,16 @@ impl WorktreeManager {
             }
         }
 
+        // Try to load project-specific workbloom config
+        let workbloom_config = PathBuf::from(".workbloom");
+        if workbloom_config.exists() {
+            if let Ok(content) = fs::read_to_string(&workbloom_config).await {
+                println!("{}", style("✓ Loaded .workbloom configuration").green());
+                // Parse workbloom configuration (line-based file list)
+                self.parse_workbloom_config(&content)?;
+            }
+        }
+
         // Load Hooksmith-specific config
         if config_path.exists() {
             let content = fs::read_to_string(config_path).await?;
@@ -268,6 +278,27 @@ impl WorktreeManager {
                     self.config.worktree_template = Some(value.to_string());
                 }
             }
+        }
+
+        Ok(())
+    }
+
+    /// Parse workbloom configuration
+    fn parse_workbloom_config(&mut self, content: &str) -> Result<()> {
+        // Workbloom uses a simple line-based format for files to copy
+        let mut env_files = Vec::new();
+
+        for line in content.lines() {
+            let line = line.trim();
+            if !line.is_empty() && !line.starts_with('#') {
+                // Add to environment files list for copying
+                env_files.push(line.to_string());
+            }
+        }
+
+        // Update the config with workbloom-specific files
+        if !env_files.is_empty() {
+            self.config.env_files.extend(env_files);
         }
 
         Ok(())
