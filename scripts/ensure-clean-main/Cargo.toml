@@ -1,0 +1,17 @@
+[package]
+name = "ensure-clean-main"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+
+[[bin]]
+name = "ensure-clean-main"
+path = "src/main.rs" 

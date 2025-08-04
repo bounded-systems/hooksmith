@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Pre-commit hook to ensure main stays clean
+# This hook runs the main cleanup workflow before commits on main branch
+
+set -e
+
+# Get the current branch
+CURRENT_BRANCH=$(git branch --show-current)
+
+# Only run on main branch
+if [ "$CURRENT_BRANCH" = "main" ]; then
+    echo "🔍 Pre-commit: Checking main branch status..."
+    
+    # Check if main is ahead of origin/main
+    AHEAD_COMMITS=$(git log --oneline origin/main..HEAD | wc -l)
+    
+    if [ "$AHEAD_COMMITS" -gt 0 ]; then
+        echo "⚠️  Pre-commit: Main is ahead of origin/main by $AHEAD_COMMITS commit(s)"
+        echo "🔄 Running main cleanup workflow..."
+        
+        # Run the cleanup script
+        ./scripts/ensure-clean-main.sh
+        
+        echo "✅ Pre-commit: Main cleanup completed"
+    else
+        echo "✅ Pre-commit: Main is clean"
+    fi
+fi
+
+exit 0 
