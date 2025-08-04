@@ -1,0 +1,16 @@
+{
+  "type": "ValidationRequest",
+  "data": {
+    "contract_name": "test-contract",
+    "content": "{\"name\": \"test\", \"version\": \"1.0.0\", \"rules\": [\"no-secrets\", \"valid-json\"]}",
+    "config": {
+      "strict": true,
+      "store_proof": false,
+      "max_errors": 10,
+      "custom_rules": {
+        "no_passwords": true,
+        "require_version": true
+      }
+    }
+  }
+} 

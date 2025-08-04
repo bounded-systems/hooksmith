@@ -1,0 +1,145 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Hooksmith Component and Crate Registry",
+    "last_updated": "2024-01-01T00:00:00Z",
+    "schema_version": "1.0"
+  },
+  "wit_components": [
+    {
+      "name": "git-filter",
+      "path": "crates/components/git-filter",
+      "wit": "wit/git-filter.wit",
+      "description": "Git filter component for blob and tree contract validation",
+      "category": "validation",
+      "status": "active",
+      "dependencies": ["cli-core"],
+      "targets": ["wasm32-wasip2"],
+      "features": ["contract-validation", "git-integration"]
+    },
+    {
+      "name": "hook-builder",
+      "path": "crates/components/hook-builder",
+      "wit": "wit/hook-builder.wit",
+      "description": "Hook building and compilation component",
+      "category": "build",
+      "status": "active",
+      "dependencies": ["cli-core"],
+      "targets": ["wasm32-wasip2"],
+      "features": ["hook-compilation", "optimization"]
+    },
+    {
+      "name": "validation-handler",
+      "path": "crates/components/validation-handler",
+      "wit": "wit/validation-handler.wit",
+      "description": "Contract validation and policy evaluation component",
+      "category": "validation",
+      "status": "active",
+      "dependencies": ["cli-core"],
+      "targets": ["wasm32-wasip2"],
+      "features": ["contract-validation", "policy-evaluation"]
+    },
+    {
+      "name": "worktree-runner",
+      "path": "crates/components/worktree-runner",
+      "wit": "wit/worktree-runner.wit",
+      "description": "Git worktree management and execution component",
+      "category": "git",
+      "status": "active",
+      "dependencies": ["cli-core"],
+      "targets": ["wasm32-wasip2"],
+      "features": ["worktree-management", "git-operations"]
+    }
+  ],
+  "native_crates": [
+    {
+      "name": "cli-core",
+      "path": "crates/components/cli-core",
+      "description": "Core CLI framework and utilities",
+      "category": "core",
+      "status": "active",
+      "dependencies": [],
+      "targets": ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin"],
+      "features": ["cli-framework", "utilities"]
+    },
+    {
+      "name": "file-operations",
+      "path": "crates/file-operations",
+      "description": "File system operations and event handlers",
+      "category": "system",
+      "status": "active",
+      "dependencies": ["event-types"],
+      "targets": ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin"],
+      "features": ["file-io", "event-handling"]
+    },
+    {
+      "name": "git-operations",
+      "path": "crates/git-operations",
+      "description": "Git operations and repository management",
+      "category": "git",
+      "status": "active",
+      "dependencies": ["event-types"],
+      "targets": ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin"],
+      "features": ["git-operations", "repository-management"]
+    },
+    {
+      "name": "lefthook-rs",
+      "path": "crates/lefthook-rs",
+      "description": "Lefthook integration and configuration",
+      "category": "integration",
+      "status": "active",
+      "dependencies": [],
+      "targets": ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin"],
+      "features": ["lefthook-integration", "hook-management"]
+    },
+    {
+      "name": "xtask",
+      "path": "crates/xtask",
+      "description": "Build system and development tools",
+      "category": "build",
+      "status": "active",
+      "dependencies": ["event-types", "file-operations", "git-operations"],
+      "targets": ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin"],
+      "features": ["build-system", "development-tools", "tui-dashboard"]
+    },
+    {
+      "name": "event-types",
+      "path": "crates/event-types",
+      "description": "Shared event types for hybrid WIT + native architecture",
+      "category": "core",
+      "status": "active",
+      "dependencies": [],
+      "targets": ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin"],
+      "features": ["event-system", "serialization"]
+    },
+    {
+      "name": "file-system-handler",
+      "path": "crates/file-system-handler",
+      "description": "Native file system handler for event-driven operations",
+      "category": "system",
+      "status": "active",
+      "dependencies": ["event-types"],
+      "targets": ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin"],
+      "features": ["file-handling", "security-validation"]
+    }
+  ],
+  "categories": {
+    "core": "Core framework and utilities",
+    "validation": "Contract validation and policy evaluation",
+    "build": "Build system and compilation",
+    "git": "Git operations and integration",
+    "system": "System operations and file handling",
+    "integration": "External tool integration"
+  },
+  "targets": {
+    "wasm32-wasip2": "WebAssembly System Interface (WASI) Preview 2",
+    "x86_64-unknown-linux-gnu": "Linux x86_64",
+    "x86_64-apple-darwin": "macOS x86_64"
+  },
+  "status_definitions": {
+    "active": "Fully functional and maintained",
+    "deprecated": "Still works but not recommended for new use",
+    "experimental": "Under development, may be unstable",
+    "archived": "No longer maintained"
+  }
+} 
