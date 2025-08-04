@@ -46,7 +46,7 @@ license = "MIT"
 [workspace.dependencies]
 # CLI framework
 clap = { version = "4.0", features = ["derive"] }
-tokio = { version = "1.0", features = ["sync", "macros", "io-util", "rt", "time"] }
+tokio = { version = "1.0", features = ["sync", "macros", "io-util", "rt", "time", "fs"] }
 anyhow = "1.0"
 console = "0.15"
 indicatif = "0.17"
