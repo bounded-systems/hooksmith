@@ -1,0 +1,484 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hooksmith Computation Events Schema",
+  "description": "Schema for computation events that can be handled by WIT components",
+  "type": "object",
+  "oneOf": [
+    {
+      "title": "Validation Request Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ValidationRequest",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "contract_name": {
+              "type": "string",
+              "description": "Contract name",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "content": {
+              "type": "string",
+              "description": "Contract content to validate",
+              "minLength": 1
+            },
+            "config": {
+              "type": "object",
+              "properties": {
+                "strict": {
+                  "type": "boolean",
+                  "description": "Whether to be strict about validation",
+                  "default": false
+                },
+                "store_proof": {
+                  "type": "boolean",
+                  "description": "Whether to store proof of validation",
+                  "default": false
+                },
+                "max_errors": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000,
+                  "description": "Maximum number of errors to report",
+                  "default": 100
+                },
+                "custom_rules": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "Custom validation rules"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["contract_name", "content"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Validation Result Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ValidationResult",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "contract_name": {
+              "type": "string",
+              "description": "Contract name that was validated",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "result": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "description": "Whether validation was successful"
+                },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "description": "Validation errors"
+                },
+                "warnings": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "description": "Validation warnings"
+                },
+                "details": {
+                  "type": "string",
+                  "description": "Additional details"
+                },
+                "metadata": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "Validation metadata"
+                }
+              },
+              "required": ["success", "errors", "warnings"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["contract_name", "result"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Contract Check Request Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ContractCheckRequest",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "string",
+              "description": "Contract data to check",
+              "minLength": 1
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "Rules to check against",
+              "minItems": 1
+            },
+            "config": {
+              "type": "object",
+              "properties": {
+                "strict": {
+                  "type": "boolean",
+                  "description": "Whether to be strict about checking",
+                  "default": false
+                },
+                "include_line_numbers": {
+                  "type": "boolean",
+                  "description": "Whether to include line numbers in violations",
+                  "default": true
+                },
+                "custom_rules": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "Custom check rules"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["data", "rules"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Contract Check Result Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ContractCheckResult",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "string",
+              "description": "Contract data that was checked",
+              "minLength": 1
+            },
+            "result": {
+              "type": "object",
+              "properties": {
+                "valid": {
+                  "type": "boolean",
+                  "description": "Whether the contract is valid"
+                },
+                "violations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "rule": {
+                        "type": "string",
+                        "description": "Rule that was violated"
+                      },
+                      "severity": {
+                        "type": "string",
+                        "enum": ["Error", "Warning", "Info"],
+                        "description": "Severity of the violation"
+                      },
+                      "message": {
+                        "type": "string",
+                        "description": "Violation message"
+                      },
+                      "line": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Line number where violation occurred"
+                      },
+                      "column": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Column number where violation occurred"
+                      },
+                      "context": {
+                        "type": "string",
+                        "description": "Additional context"
+                      }
+                    },
+                    "required": ["rule", "severity", "message"],
+                    "additionalProperties": false
+                  },
+                  "description": "Violations found"
+                },
+                "score": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0,
+                  "description": "Overall score (0.0 to 1.0)"
+                },
+                "metadata": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "Check metadata"
+                }
+              },
+              "required": ["valid", "violations", "score"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["data", "result"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Checksum Calculate Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ChecksumCalculate",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "string",
+              "description": "Data to calculate checksum for",
+              "minLength": 1
+            },
+            "algorithm": {
+              "type": "string",
+              "enum": ["md5", "sha1", "sha256", "sha512", "blake2b", "blake3"],
+              "description": "Checksum algorithm"
+            }
+          },
+          "required": ["data", "algorithm"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Checksum Result Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ChecksumResult",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "string",
+              "description": "Original data",
+              "minLength": 1
+            },
+            "checksum": {
+              "type": "string",
+              "description": "Calculated checksum",
+              "minLength": 1
+            },
+            "algorithm": {
+              "type": "string",
+              "enum": ["md5", "sha1", "sha256", "sha512", "blake2b", "blake3"],
+              "description": "Algorithm used"
+            }
+          },
+          "required": ["data", "checksum", "algorithm"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Data Transform Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "DataTransform",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "input": {
+              "type": "string",
+              "description": "Input data",
+              "minLength": 1
+            },
+            "input_format": {
+              "type": "string",
+              "enum": ["json", "yaml", "toml", "xml", "csv", "text"],
+              "description": "Input format"
+            },
+            "output_format": {
+              "type": "string",
+              "enum": ["json", "yaml", "toml", "xml", "csv", "text"],
+              "description": "Output format"
+            },
+            "options": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Transformation options"
+            }
+          },
+          "required": ["input", "input_format", "output_format"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Transform Result Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "TransformResult",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "input": {
+              "type": "string",
+              "description": "Original input",
+              "minLength": 1
+            },
+            "output": {
+              "type": "string",
+              "description": "Transformed output",
+              "minLength": 1
+            },
+            "input_format": {
+              "type": "string",
+              "enum": ["json", "yaml", "toml", "xml", "csv", "text"],
+              "description": "Input format"
+            },
+            "output_format": {
+              "type": "string",
+              "enum": ["json", "yaml", "toml", "xml", "csv", "text"],
+              "description": "Output format"
+            }
+          },
+          "required": ["input", "output", "input_format", "output_format"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Policy Evaluate Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "PolicyEvaluate",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "policy": {
+              "type": "string",
+              "description": "Policy to evaluate",
+              "minLength": 1
+            },
+            "data": {
+              "type": "string",
+              "description": "Data to evaluate against",
+              "minLength": 1
+            },
+            "context": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Evaluation context"
+            }
+          },
+          "required": ["policy", "data"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Policy Result Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "PolicyResult",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "policy": {
+              "type": "string",
+              "description": "Policy that was evaluated",
+              "minLength": 1
+            },
+            "result": {
+              "type": "object",
+              "properties": {
+                "passed": {
+                  "type": "boolean",
+                  "description": "Whether the policy evaluation passed"
+                },
+                "decision": {
+                  "type": "string",
+                  "enum": ["Allow", "Deny", "Review", "Conditional"],
+                  "description": "Policy decision"
+                },
+                "reasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "description": "Reasons for the decision"
+                },
+                "metadata": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "Evaluation metadata"
+                }
+              },
+              "required": ["passed", "decision", "reasons"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["policy", "result"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    }
+  ],
+  "additionalProperties": false
+} 
