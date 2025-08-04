@@ -2,6 +2,7 @@
 
 use super::*;
 use anyhow::{Context, Result};
+use base64::Engine;
 use std::io::{Read, Write};
 use walkdir::WalkDir;
 
@@ -313,7 +314,7 @@ impl FileOperationsHandler {
             .with_context(|| format!("Failed to read file: {}", path.display()))?;
         
         let content_str = match encoding {
-            Some("base64") => base64::engine::general_purpose::STANDARD.encode(&content),
+            Some("base64") => base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &content),
             Some("binary") => format!("{:?}", content),
             _ => String::from_utf8(content)
                 .with_context(|| format!("Failed to decode UTF-8 content from: {}", path.display()))?,
@@ -338,7 +339,7 @@ impl FileOperationsHandler {
         }
         
         let content_bytes = match encoding {
-            Some("base64") => base64::engine::general_purpose::STANDARD.decode(content)
+            Some("base64") => base64::Engine::decode(&base64::engine::general_purpose::STANDARD, content)
                 .with_context(|| "Failed to decode base64 content")?,
             Some("binary") => {
                 // Parse binary string like "[1, 2, 3]"
