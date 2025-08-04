@@ -11,32 +11,32 @@
 
 package hooksmith:worktree-runner;
 
-/// Configuration for worktree tools
-record tool-config {
-  /// Preferred tool to use
-  preferred-tool: option<string>;
-  /// Base directory for worktrees
-  worktree-base: option<string>;
-}
-
-/// Result of a worktree operation
-record worktree-result {
-  /// Whether the operation was successful
-  success: bool;
-  /// Output from the command
-  output: string;
-}
-
-/// Available worktree tools
-enum worktree-tool {
-  wtp,
-  wt,
-  treekanga,
-  git,
-}
-
 /// Worktree management interface
 interface worktree-runner {
+  /// Configuration for worktree tools
+  record tool-config {
+    /// Preferred tool to use
+    preferred-tool: option<string>,
+    /// Base directory for worktrees
+    worktree-base: option<string>,
+  }
+
+  /// Result of a worktree operation
+  record worktree-result {
+    /// Whether the operation was successful
+    success: bool,
+    /// Output from the command
+    output: string,
+  }
+
+  /// Available worktree tools
+  enum worktree-tool {
+    wtp,
+    wt,
+    treekanga,
+    git,
+  }
+
   /// Create a new worktree
   create-worktree: func(branch-name: string) -> result<worktree-result, string>;
   /// List all worktrees
