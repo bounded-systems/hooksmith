@@ -1,5 +1,15 @@
 package hooksmith:cli;
 
+/// Hook information record
+record hook-info {
+  /// Name of the hook
+  name: string;
+  /// Description of the hook
+  description: string;
+  /// Whether the hook is installed
+  installed: bool;
+}
+
 /// Configuration for hook building
 record hook-config {
   /// Name of the hook to build
@@ -29,7 +39,14 @@ interface hooksmith-cli {
   /// List all available hooks
   list-hooks: func() -> result<list<hook-info>, string>;
   /// Install hooks into Git repository
-  install-hooks: func(hook-names: list<string>) -> result<unit, string>;
+  install-hooks: func(hook-names: list<string>) -> result<(), string>;
 }
 
-export hooksmith-cli;
+/**
+ * Hooksmith CLI World
+ * 
+ * Exports the hooksmith-cli interface as the main entry point for CLI operations.
+ */
+world hooksmith-cli {
+  export hooksmith-cli;
+}

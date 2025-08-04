@@ -169,7 +169,7 @@ tracing-subscriber.workspace = true
 
 # Internal component dependencies
 cli-core = { path = "crates/components/cli-core" }
-# git-filter = { path = "crates/components/git-filter" }  # Temporarily disabled due to WIT issues
+git-filter = { path = "crates/components/git-filter" }
 
 # WASM dependencies
 wasmtime.workspace = true

@@ -17,8 +17,6 @@ authors.workspace = true
 license.workspace = true
 
 [package.metadata.component]
-wit = ["wit"]
-bindings = ["hooksmith:git-filter"]
 
 [dependencies]
 anyhow.workspace = true
@@ -37,4 +35,4 @@ once_cell.workspace = true
 regex.workspace = true
 futures-io.workspace = true
 wit-bindgen.workspace = true
-[workspace]
+# [workspace]  # Removed - component is now part of main workspace
