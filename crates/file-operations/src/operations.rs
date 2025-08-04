@@ -577,15 +577,7 @@ impl FileOperationsHandler {
                 format!("{:x}", hasher.finalize())
             }
             "md5" => {
-                use md5::{Md5, Digest as _};
-                let mut hasher = Md5::new();
-                let mut buffer = [0; 4096];
-                loop {
-                    let n = file.read(&mut buffer)?;
-                    if n == 0 { break; }
-                    hasher.update(&buffer[..n]);
-                }
-                format!("{:x}", hasher.finalize())
+                return Err(anyhow::anyhow!("MD5 not supported - use SHA256 or SHA1 instead"));
             }
             _ => return Err(anyhow::anyhow!("Unsupported checksum algorithm: {}", algorithm)),
         };

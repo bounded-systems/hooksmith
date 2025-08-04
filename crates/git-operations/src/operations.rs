@@ -1,10 +1,8 @@
 //! Git operations implementation for Hooksmith
 
 use super::*;
-use anyhow::{Context, Result};
-use git2::{Commit, Repository, Signature};
-use serde_json::json;
-use std::path::Path;
+use anyhow::Result;
+use git2::{Repository, Signature};
 
 impl GitOperationsHandler {
     /// Handle Git commit request
@@ -12,7 +10,7 @@ impl GitOperationsHandler {
         let repo = self.open_repository()?;
         let signature = req.author
             .map(|author| Signature::now(&author.name, &author.email))
-            .unwrap_or_else(|| self.get_default_signature())?;
+            .unwrap_or_else(|| self.get_default_signature().unwrap())?;
         
         // Add files to index if specified
         if let Some(files) = req.files {
