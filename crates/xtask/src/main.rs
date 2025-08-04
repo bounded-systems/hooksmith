@@ -521,7 +521,7 @@ enum Commands {
     /// Extract and generate documentation from Rust source files
     Docs {
         #[command(subcommand)]
-        command: doc_extractor::DocsCommand,
+        command: doc_extractor::DocsSubcommand,
     },
     /// Generate comprehensive documentation from Rust code and templates
     GenDocsComprehensive {

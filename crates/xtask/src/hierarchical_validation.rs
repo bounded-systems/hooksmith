@@ -12,6 +12,33 @@ use tokio::fs;
 // Temporarily disabled due to circular dependency
 // use hooksmith::modules::hierarchical_validation::HierarchicalValidator;
 
+// Stub types for compilation
+#[derive(Debug)]
+struct ChangeScope {
+    file: PathBuf,
+    scope: String,
+}
+
+#[derive(Debug)]
+struct ValidationResult {
+    validated: bool,
+    scope: String,
+    duration_ms: u64,
+    errors: Vec<ValidationError>,
+}
+
+#[derive(Debug)]
+struct ValidationError {
+    severity: String,
+    message: String,
+}
+
+#[derive(Debug)]
+struct ValidationNote {
+    scope: String,
+    message: String,
+}
+
 /// CLI for hierarchical contract validation
 #[derive(Parser)]
 #[command(name = "xtask-contract-validate")]
@@ -209,7 +236,7 @@ async fn validate_changes(range: &str, repo: &Path) -> Result<()> {
     //     .await
     //     .context("Failed to detect changes")?;
     println!("Validation temporarily disabled due to circular dependency");
-    let changes = vec![];
+    let changes: Vec<ChangeScope> = vec![];
 
     if changes.is_empty() {
         println!("✅ No changes detected in range: {range}");
@@ -227,7 +254,7 @@ async fn validate_changes(range: &str, repo: &Path) -> Result<()> {
     //     .validate_hierarchically(changes)
     //     .await
     //     .context("Failed to validate changes")?;
-    let results = vec![];
+    let results: Vec<ValidationResult> = vec![];
 
     // Report results
     let mut total_validated = 0;
@@ -299,7 +326,7 @@ async fn show_validation_notes(commit: &str, repo: &Path) -> Result<()> {
     //     .await
     //     .context("Failed to get validation notes")?;
     println!("Validation notes temporarily disabled due to circular dependency");
-    let notes = vec![];
+    let notes: Vec<ValidationNote> = vec![];
 
     if notes.is_empty() {
         println!("ℹ️  No validation notes found for commit: {commit}");
@@ -485,7 +512,7 @@ async fn validate_extensions(repo: &Path, _staged_only: bool) -> Result<()> {
     // let changes = validator
     //     .detect_changes(None)
     println!("File extension validation temporarily disabled due to circular dependency");
-    let changes = vec![];
+    let changes: Vec<ChangeScope> = vec![];
 
     if changes.is_empty() {
         println!("✅ No changes detected for extension validation.");
