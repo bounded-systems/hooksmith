@@ -4,35 +4,38 @@ This document describes how to set up and use the worktree management system in 
 
 ## Overview
 
-The worktree management system provides a unified interface for creating, managing, and switching between Git worktrees. It supports multiple worktree management tools with automatic fallback and integrates seamlessly with the existing Hooksmith architecture.
+The worktree management system provides a unified interface for creating, managing, and switching between Git worktrees using **Workbloom** as the primary tool. Workbloom offers superior features for automatic file copying, port allocation, smart cleanup, and shell integration.
 
 ## Available Tools
 
-The system supports multiple worktree management tools in order of preference:
+The system supports two worktree management tools in order of preference:
 
-1. **gwtr** - Rust-based Git worktree manager with configuration layers (primary)
-2. **workbloom** - Rust-based CLI with automatic file copying and port allocation
-3. **wtp** - Git worktree management with hooks and automation
-4. **git** - Native Git worktree commands (fallback)
+1. **workbloom** - Rust-based CLI with automatic file copying and port allocation (primary)
+2. **git** - Native Git worktree commands (fallback)
 
-### Tool Comparison
+### Why Workbloom?
 
-| Feature | gwtr | workbloom | wtp | git |
-|---------|------|-----------|-----|-----|
-| Language | Rust | Rust | Go | Native |
-| Configuration | TOML layers | Line-based | YAML | Git config |
-| File copying | ❌ | ✅ Automatic | ✅ Hooks | ❌ |
-| Port allocation | ❌ | ✅ Automatic | ❌ | ❌ |
-| Interactive cleanup | ❌ | ✅ Smart | ✅ Yes | ❌ |
-| Shell auto-cd | ❌ | ✅ Built-in | ✅ Via alias | ❌ |
-| Setup automation | ✅ Hooks | ✅ Built-in | ✅ Hooks | ❌ |
+Workbloom is the superior choice for Hooksmith because it provides:
+
+| Feature | Workbloom ✅ | git ❌ |
+|---------|-------------|--------|
+| Worktree creation | ✅ yes | ✅ yes |
+| Interactive shell after setup | ✅ built-in | ❌ |
+| Auto .env / .envrc sync | ✅ yes | ❌ manual |
+| Port assignment for local dev | ✅ automatic | ❌ |
+| Cleanup of old worktrees | ✅ smart + batch | ❌ manual |
+| Config file support | .workbloom | ad hoc |
+| Component reuse / ecosystem | 🔄 better | limited |
 
 ## Quick Setup
 
-### 1. Install Tools
+### 1. Install Workbloom
 
 ```bash
-# Install all recommended worktree management tools
+# Install Workbloom (primary tool)
+cargo install workbloom
+
+# Or use the setup command to install automatically
 cargo xtask worktree setup --install-tools
 ```
 
@@ -44,9 +47,7 @@ cargo xtask worktree setup --config
 ```
 
 This creates:
-- `.gwtr.toml` - Configuration for gwtr with TOML schema
-- `.workbloom` - Workbloom configuration for file copying
-- `.wtp.yml` - Worktree tool configuration with hooks
+- `.workbloom` - Workbloom configuration for file copying and port allocation
 - `.worktree-config.jsonc` - Hooksmith-specific worktree configuration
 
 ### 3. Setup Git Aliases (Optional)
@@ -57,44 +58,6 @@ cargo xtask worktree setup --aliases
 ```
 
 ## Configuration
-
-### .gwtr.toml
-
-The `.gwtr.toml` file configures gwtr with comprehensive TOML schema:
-
-```toml
-# .gwtr.toml
-[general]
-worktree_storage = "../"
-default_branch_pattern = "feature/* => {repo}-{branch}"
-ignore_glob = ["target/", ".cache/", "node_modules/", "dist/"]
-
-[storage]
-lru_limit = 15
-use_named_subdirs = true
-auto_cleanup = true
-
-[named_worktrees]
-"feature/spin-integration" = "hooksmith-spin"
-"feature/spin-integration-v2" = "hooksmith-spin-integration"
-
-[hooks]
-post_create = [
-    "echo 'Setting up worktree: {worktree_path}'",
-    "cd {worktree_path} && cargo build",
-    "cd {worktree_path} && cargo xtask gen-all --validate",
-    "cd {worktree_path} && spin build || true"
-]
-
-[patterns]
-[patterns.feature]
-glob = "feature/*"
-template = "{repo}-{branch}"
-hooks = [
-    "cd {worktree_path} && cargo build",
-    "cd {worktree_path} && cargo xtask gen-all"
-]
-```
 
 ### .workbloom
 
@@ -147,45 +110,12 @@ secrets/
 local/
 ```
 
-### .wtp.yml
-
-The `.wtp.yml` file configures worktree tools with hooks:
-
-```yaml
-# .wtp.yml
-wtp_version: 1
-
-defaults:
-  base_path: ../
-  template: '{repo}-{branch}'
-  post_create:
-    - echo "Setting up worktree: {worktree_path}"
-    - cd {worktree_path} && cargo build
-    - cd {worktree_path} && cargo xtask gen-all --validate
-    - cd {worktree_path} && spin build || true
-
-branches:
-  feature/spin-integration:
-    path: ../hooksmith-spin
-    post_create:
-      - cd {worktree_path} && spin up
-      - cd {worktree_path} && cargo xtask bootstrap --validate
-
-patterns:
-  feature/*:
-    template: '{repo}-{branch}'
-    post_create:
-      - cd {worktree_path} && cargo build
-      - cd {worktree_path} && cargo xtask gen-all
-```
-
 ### .worktree-config.jsonc
 
 The `.worktree-config.jsonc` file provides Hooksmith-specific configuration:
 
 ```jsonc
 {
-  "preferred_tool": "workbloom",
   "worktree_base": "../",
   "worktree_template": "{repo}-{branch}",
   "run_setup": true,
@@ -233,14 +163,11 @@ cargo xtask worktree list --format json
 ### Create Worktrees
 
 ```bash
-# Create a new worktree (uses best available tool)
+# Create a new worktree with Workbloom (automatic file copying and port allocation)
 cargo xtask worktree create --branch feature/new-feature
 
 # Create and switch to the new worktree
 cargo xtask worktree create --branch feature/new-feature --switch
-
-# Create with specific tool
-cargo xtask worktree create --branch feature/new-feature --tool workbloom
 
 # Create with setup commands
 cargo xtask worktree create --branch feature/new-feature --setup
@@ -249,17 +176,14 @@ cargo xtask worktree create --branch feature/new-feature --setup
 ### Switch Between Worktrees
 
 ```bash
-# Switch to an existing worktree
+# Switch to an existing worktree with environment synchronization
 cargo xtask worktree switch --worktree feature/spin-integration
-
-# Switch with specific tool
-cargo xtask worktree switch --worktree feature/spin-integration --tool workbloom
 ```
 
 ### Remove Worktrees
 
 ```bash
-# Remove a worktree
+# Remove a worktree with smart cleanup
 cargo xtask worktree remove --worktree feature/test
 
 # Remove worktree and branch
@@ -279,60 +203,85 @@ cargo xtask worktree status
 cargo xtask worktree status --detailed
 ```
 
-## Tool-Specific Features
-
-### Workbloom Features
+## Workbloom Features
 
 Workbloom provides unique features that enhance the worktree experience:
 
-#### Automatic File Copying
+### Automatic File Copying
 - Copies configuration files automatically to new worktrees
 - Configurable via `.workbloom` file
 - Includes environment files, tool configs, and development settings
 
-#### Port Allocation
+### Port Allocation
 - Automatically assigns unique ports based on branch names
 - Consistent port assignment for same branch names
 - Injects ports into `.env` files
 
-#### Smart Cleanup
+### Smart Cleanup
 - Interactive cleanup with `workbloom cleanup`
 - Pattern-based cleanup with `workbloom cleanup --pattern`
 - Status reporting with `workbloom cleanup --status`
 
-#### Shell Integration
+### Shell Integration
 - Automatic shell opening with `workbloom setup`
 - Environment synchronization on worktree switching
 - Built-in `cd` command for worktree navigation
 
-### gwtr Features
+## Workflow Examples
 
-gwtr provides configuration layers and advanced management:
+### Feature Development with Workbloom
 
-#### Configuration Layers
-- Project-specific override files
-- User/global configuration support
-- Environment variable support
-- XDG configuration patterns
+```bash
+# 1. Create a new feature branch worktree with Workbloom
+cargo xtask worktree create --branch feature/new-feature --switch
 
-#### Named Worktrees
-- Map long branch names to friendly directory names
-- Pattern-based configuration
-- Comprehensive hook system
+# 2. Workbloom automatically:
+#    - Creates the worktree
+#    - Copies configuration files
+#    - Allocates unique ports
+#    - Opens shell in the new worktree
+#    - Runs setup commands
 
-### wtp Features
+# 3. Switch between worktrees with environment sync
+cargo xtask worktree switch --worktree feature/spin-integration
 
-wtp provides hook-based automation:
+# 4. Remove worktree with smart cleanup
+cargo xtask worktree remove --worktree feature/new-feature
+```
 
-#### Hook System
-- Post-create hooks for setup automation
-- Post-switch hooks for environment validation
-- Pre-remove hooks for cleanup
+### Multi-Branch Development
 
-#### YAML Configuration
-- Declarative configuration in YAML format
-- Branch-specific and pattern-based configuration
-- Project-specific settings
+```bash
+# List all worktrees to see current state
+cargo xtask worktree list --detailed
+
+# Create worktrees for different features
+cargo xtask worktree create --branch feature/ui-improvements
+cargo xtask worktree create --branch bugfix/critical-fix
+cargo xtask worktree create --branch hotfix/security-patch
+
+# Switch between them as needed
+cargo xtask worktree switch --worktree feature/ui-improvements
+```
+
+### Direct Workbloom Commands
+
+You can also use Workbloom directly for advanced features:
+
+```bash
+# Create with automatic setup
+workbloom setup feature/new-feature
+
+# List with status
+workbloom list
+
+# Smart cleanup
+workbloom cleanup --status
+workbloom cleanup --pattern "feature/spin-old"
+
+# Switch to worktree
+workbloom cd feature/spin-integration
+```
 
 ## Integration Points
 
@@ -372,94 +321,18 @@ The worktree management system can be used in CI/CD pipelines:
   run: cargo xtask worktree list --format json
 ```
 
-## Workflow Examples
-
-### Feature Development with Workbloom
-
-```bash
-# 1. Create a new feature branch worktree with Workbloom
-cargo xtask worktree create --branch feature/new-feature --tool workbloom --switch
-
-# 2. Workbloom automatically:
-#    - Creates the worktree
-#    - Copies configuration files
-#    - Allocates unique ports
-#    - Opens shell in the new worktree
-#    - Runs setup commands
-
-# 3. Switch between worktrees with environment sync
-cargo xtask worktree switch --worktree feature/spin-integration --tool workbloom
-
-# 4. Remove worktree with smart cleanup
-cargo xtask worktree remove --worktree feature/new-feature --tool workbloom
-```
-
-### Multi-Branch Development
-
-```bash
-# List all worktrees to see current state
-cargo xtask worktree list --detailed
-
-# Create worktrees for different features
-cargo xtask worktree create --branch feature/ui-improvements --tool workbloom
-cargo xtask worktree create --branch bugfix/critical-fix --tool gwtr
-cargo xtask worktree create --branch hotfix/security-patch --tool wtp
-
-# Switch between them as needed
-cargo xtask worktree switch --worktree feature/ui-improvements
-```
-
-### Tool-Specific Workflows
-
-#### Workbloom Workflow
-```bash
-# Create with automatic setup
-workbloom setup feature/new-feature
-
-# List with status
-workbloom list
-
-# Smart cleanup
-workbloom cleanup --status
-workbloom cleanup --pattern "feature/spin-old"
-```
-
-#### gwtr Workflow
-```bash
-# Create with configuration
-gwtr add feature/new-feature
-
-# List worktrees
-gwtr list
-
-# Switch to worktree
-gwtr cd feature/new-feature
-```
-
-#### wtp Workflow
-```bash
-# Create with hooks
-wtp add feature/new-feature
-
-# List worktrees
-wtp list
-
-# Switch to worktree
-wtp cd feature/new-feature
-```
-
 ## Troubleshooting
 
 ### Tool Not Found
 
-If a worktree management tool is not found:
+If Workbloom is not found:
 
 ```bash
 # Check available tools
 cargo xtask worktree status
 
-# Install missing tools
-cargo xtask worktree setup --install-tools
+# Install Workbloom
+cargo install workbloom
 ```
 
 ### Configuration Issues
@@ -498,26 +371,29 @@ ls -la ../hooksmith-test/
 
 # Check port allocation
 workbloom list
+
+# Smart cleanup
+workbloom cleanup --status
 ```
 
 ## Best Practices
 
 1. **Use Descriptive Branch Names**: Use clear, descriptive branch names that indicate the purpose (e.g., `feature/user-authentication`, `bugfix/login-error`)
 
-2. **Leverage Tool Strengths**: 
-   - Use Workbloom for automatic file copying and port allocation
-   - Use gwtr for configuration layers and named worktrees
-   - Use wtp for hook-based automation
+2. **Leverage Workbloom's Features**: 
+   - Use automatic file copying for consistent environments
+   - Take advantage of port allocation for local development
+   - Use smart cleanup for maintenance
 
 3. **Regular Cleanup**: Periodically remove worktrees that are no longer needed to keep your workspace organized
 
 4. **Consistent Setup**: Use the `--setup` flag when creating worktrees to ensure consistent environment setup
 
-5. **Tool Preference**: Configure your preferred tool in `.worktree-config.jsonc` for consistent behavior
+5. **Configuration Management**: Keep `.workbloom` configuration in version control for team consistency
 
 6. **Integration**: Leverage the integration points with Lefthook and WASM components for automated workflows
 
-7. **Configuration Management**: Keep configuration files in version control for team consistency
+7. **Direct Workbloom Usage**: For advanced features, use Workbloom commands directly when needed
 
 ## Related Documentation
 
