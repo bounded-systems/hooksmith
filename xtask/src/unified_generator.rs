@@ -8,7 +8,7 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::HashMap;
+// use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -37,10 +37,12 @@ pub struct GeneratedFileEntry {
     /// File path relative to project root
     pub path: String,
     /// File extension
+    #[serde(alias = "type")]
     pub extension: String,
     /// SHA256 checksum of the file content (excluding header)
     pub checksum: String,
     /// File type for generation commands
+    #[serde(default)]
     pub file_type: String,
 }
 
@@ -105,6 +107,12 @@ impl UnifiedGenerator {
             let path = entry.path();
             
             if path.extension().and_then(|s| s.to_str()) == Some("jsonc") {
+                // Skip schema files
+                let filename = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+                if filename == "schema.jsonc" {
+                    continue;
+                }
+                
                 let content = fs::read_to_string(&path)?;
                 let source: GeneratedSource = serde_json::from_str(&content)
                     .with_context(|| format!("Failed to parse source file: {}", path.display()))?;

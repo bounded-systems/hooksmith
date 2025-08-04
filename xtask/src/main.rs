@@ -725,7 +725,7 @@ enum Commands {
         verbose: bool,
     },
     /// Validate all generated files against registry
-    ValidateGenerated {
+    ValidateGeneratedUnified {
         /// Whether to exit with error on violations
         #[arg(long)]
         strict: bool,
@@ -1432,7 +1432,7 @@ async fn main() -> Result<()> {
         Commands::CleanGenerated { verbose } => {
             clean_generated_files(verbose).await?;
         }
-        Commands::ValidateGenerated { strict, verbose } => {
+        Commands::ValidateGeneratedUnified { strict, verbose } => {
             validate_generated_files_unified(strict, verbose).await?;
         }
         Commands::Bootstrap { validate, commit } => {
@@ -7826,5 +7826,68 @@ async fn run_check_all(strict: bool, staged_only: bool, verbose: bool) -> Result
     run_contract_check(staged_only, strict, false, "status-trends", verbose).await?;
 
     println!("✅ Comprehensive check completed");
+    Ok(())
+}
+
+/// Run the unified generator for all generated files
+async fn run_unified_generator(validate: bool, _force: bool, clean: bool) -> Result<()> {
+    println!("🚀 Running unified generator...");
+    
+    let project_root = std::env::current_dir()?;
+    let generator = unified_generator::UnifiedGenerator::new(project_root);
+    
+    if clean {
+        generator.clean_all()?;
+    }
+    
+    let _registry = generator.generate_all()?;
+    
+    if validate {
+        let is_valid = generator.validate_all()?;
+        if !is_valid {
+            return Err(anyhow::anyhow!("Generated files validation failed"));
+        }
+    }
+    
+    println!("✅ Unified generation completed successfully");
+    Ok(())
+}
+
+/// Clean all generated files
+async fn clean_generated_files(verbose: bool) -> Result<()> {
+    println!("🧹 Cleaning all generated files...");
+    
+    let project_root = std::env::current_dir()?;
+    let generator = unified_generator::UnifiedGenerator::new(project_root);
+    
+    generator.clean_all()?;
+    
+    if verbose {
+        println!("✅ All generated files cleaned");
+    }
+    
+    Ok(())
+}
+
+/// Validate all generated files against registry
+async fn validate_generated_files_unified(strict: bool, _verbose: bool) -> Result<()> {
+    println!("🔍 Validating generated files against registry...");
+    
+    let project_root = std::env::current_dir()?;
+    let generator = unified_generator::UnifiedGenerator::new(project_root);
+    
+    let is_valid = generator.validate_all()?;
+    
+    if !is_valid {
+        let error_msg = "❌ Generated files validation failed";
+        if strict {
+            return Err(anyhow::anyhow!(error_msg));
+        } else {
+            println!("{error_msg}");
+        }
+    } else {
+        println!("✅ All generated files are valid");
+    }
+    
     Ok(())
 }
