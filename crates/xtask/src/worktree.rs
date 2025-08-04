@@ -677,8 +677,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
 
         if output.status.success() {
             let output_str = String::from_utf8_lossy(&output.stdout);
-            self.parse_workbloom_status_output(&output_str, detailed)
-                .await
+            self.parse_workbloom_status_output(&output_str, detailed).await
         } else {
             // Fall back to git worktree list if workbloom status fails
             self.list_with_git(detailed).await
@@ -1062,16 +1061,26 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 // Run setup commands
                 for cmd in &manager.config.setup_commands {
                     println!("Running: {}", cmd);
-                    let output = Command::new("sh")
-                        .arg("-c")
-                        .arg(cmd)
+
+                    // Parse the command and arguments
+                    let parts: Vec<&str> = cmd.split_whitespace().collect();
+                    if parts.is_empty() {
+                        continue;
+                    }
+
+                    let command_name = parts[0];
+                    let args = &parts[1..];
+
+                    let output = Command::new(command_name)
+                        .args(args)
                         .output()
                         .context(format!("Failed to run setup command: {}", cmd))?;
 
                     if output.status.success() {
                         println!("{}", style("✓ Setup command completed").green());
                     } else {
-                        println!("{}", style("✗ Setup command failed").red());
+                        let error = String::from_utf8_lossy(&output.stderr);
+                        println!("{}", style(&format!("✗ Setup command failed: {}", error)).red());
                     }
                 }
             }
@@ -1082,11 +1091,29 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 for env_file in &manager.config.env_files {
                     if Path::new(env_file).exists() {
                         let target = env_file.replace(".example", "");
-                        let _ = Command::new("cp").arg(env_file).arg(&target).output();
-                        println!(
-                            "{}",
-                            style(&format!("✓ Copied {} to {}", env_file, target)).green()
-                        );
+                        let output = Command::new("cp")
+                            .arg(env_file)
+                            .arg(&target)
+                            .output();
+
+                        if let Ok(output) = output {
+                            if output.status.success() {
+                                println!(
+                                    "{}",
+                                    style(&format!("✓ Copied {} to {}", env_file, target)).green()
+                                );
+                            } else {
+                                println!(
+                                    "{}",
+                                    style(&format!("✗ Failed to copy {} to {}", env_file, target)).red()
+                                );
+                            }
+                        } else {
+                            println!(
+                                "{}",
+                                style(&format!("✗ Failed to copy {} to {}", env_file, target)).red()
+                            );
+                        }
                     }
                 }
             }
