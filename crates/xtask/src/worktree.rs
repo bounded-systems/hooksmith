@@ -590,6 +590,59 @@ project:
         fs::write(".wtp.yml", wtp_config).await?;
         println!("{}", style("✓ Created .wtp.yml").green());
 
+        // Create .workbloom configuration
+        let workbloom_config = r#"# .workbloom
+# Hooksmith Workbloom Configuration
+# Automatically copies these files/directories to new worktrees
+
+# Environment files
+.env
+.envrc
+.env.local
+.env.example
+
+# Configuration files
+hooksmith.toml
+.worktree-config.jsonc
+.worktree-config.json
+
+# Development configuration
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+
+# Tool configuration
+.claude/settings.json
+.config/my-settings.json
+
+# Spin configuration
+spin.toml
+spin.toml.example
+
+# Cargo configuration
+.cargo/config.toml
+.cargo/config
+
+# Git configuration
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+docs/
+
+# Scripts and utilities
+scripts/
+tools/
+
+# Secrets and local config (if they exist)
+secrets/
+local/
+"#;
+
+        fs::write(".workbloom", workbloom_config).await?;
+        println!("{}", style("✓ Created .workbloom").green());
+
         // Create Hooksmith-specific config
         let hooksmith_config = serde_json::to_string_pretty(&self.config)?;
         fs::write(".worktree-config.jsonc", hooksmith_config).await?;
