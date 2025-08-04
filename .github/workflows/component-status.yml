@@ -149,11 +149,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: wasm32-wasip2
-          override: true
+          targets: wasm32-wasip2
 
       - name: Install cargo-component
         run: |
@@ -182,10 +180,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Check native crate
         run: |
@@ -208,15 +203,22 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: wasm32-wasip2
-          override: true
+          targets: wasm32-wasip2
 
       - name: Install cargo-component
         run: |
           cargo install cargo-component --git https://github.com/bytecodealliance/cargo-component --tag v0.5.0
+
+      - name: Download xtask artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: xtask-ubuntu-latest-x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/debug/
+
+      - name: Make xtask executable
+        run: chmod +x target/x86_64-unknown-linux-gnu/debug/xtask
 
       - name: Generate final status report
         run: |
@@ -228,7 +230,7 @@ jobs:
           echo "Status Check: ${{ needs.check-component-status.result }}"
           
           # Generate detailed report
-          cargo run -p xtask -- component-status --format table
+          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --format table
 
       - name: Comment on PR
         if: github.event_name == 'pull_request'

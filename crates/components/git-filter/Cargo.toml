@@ -37,3 +37,4 @@ once_cell.workspace = true
 regex.workspace = true
 futures-io.workspace = true
 wit-bindgen.workspace = true
+[workspace]
