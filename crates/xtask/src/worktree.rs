@@ -64,7 +64,7 @@ pub struct IntegrationConfig {
 impl Default for WorktreeConfig {
     fn default() -> Self {
         Self {
-            preferred_tool: Some("gwtr".to_string()),
+            preferred_tool: Some("workbloom".to_string()),
             worktree_base: Some("../".to_string()),
             worktree_template: Some("{repo}-{branch}".to_string()),
             run_setup: true,
@@ -74,7 +74,13 @@ impl Default for WorktreeConfig {
                 "spin build || true".to_string(),
             ],
             copy_env: true,
-            env_files: vec![".env.example".to_string()],
+            env_files: vec![
+                ".env.example".to_string(),
+                ".env".to_string(),
+                ".envrc".to_string(),
+                "hooksmith.toml".to_string(),
+                ".worktree-config.jsonc".to_string(),
+            ],
             git_aliases: HashMap::new(),
             existing_worktrees: Some(HashMap::from([
                 ("feature/spin-integration".to_string(), "../hooksmith-spin".to_string()),
@@ -313,7 +319,7 @@ impl WorktreeManager {
 
     /// Get available worktree tools
     pub fn get_available_tools(&self) -> Vec<WorktreeTool> {
-        let tools = vec![WorktreeTool::Gwtr, WorktreeTool::Wtp, WorktreeTool::Workbloom, WorktreeTool::Git];
+        let tools = vec![WorktreeTool::Gwtr, WorktreeTool::Workbloom, WorktreeTool::Wtp, WorktreeTool::Git];
         tools
             .into_iter()
             .filter(|tool| tool.is_available())
@@ -336,10 +342,10 @@ impl WorktreeManager {
         // Fall back to best available tool
         if WorktreeTool::Gwtr.is_available() {
             Ok(WorktreeTool::Gwtr)
-        } else if WorktreeTool::Wtp.is_available() {
-            Ok(WorktreeTool::Wtp)
         } else if WorktreeTool::Workbloom.is_available() {
             Ok(WorktreeTool::Workbloom)
+        } else if WorktreeTool::Wtp.is_available() {
+            Ok(WorktreeTool::Wtp)
         } else if WorktreeTool::Git.is_available() {
             Ok(WorktreeTool::Git)
         } else {
@@ -800,22 +806,28 @@ local/
         _base_dir: Option<&str>,
         switch: bool,
     ) -> Result<()> {
-        let mut args = vec!["add", branch];
-        if switch {
-            args.push("--switch");
+        // Use workbloom's setup command which includes file copying and port allocation
+        let mut args = vec!["setup", branch];
+        if !switch {
+            args.push("--no-shell");
         }
 
         let output = Command::new("workbloom")
             .args(&args)
             .output()
-            .context("Failed to run workbloom add")?;
+            .context("Failed to run workbloom setup")?;
 
         if output.status.success() {
-            println!("{}", style("✓ Worktree created successfully").green());
+            println!("{}", style("✓ Worktree created successfully with Workbloom").green());
+            println!("{}", style("  - Automatic file copying enabled").dim());
+            println!("{}", style("  - Port allocation configured").dim());
+            if switch {
+                println!("{}", style("  - Shell opened in new worktree").dim());
+            }
             Ok(())
         } else {
             let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("workbloom add failed: {}", error))
+            Err(anyhow::anyhow!("workbloom setup failed: {}", error))
         }
     }
 
@@ -892,6 +904,7 @@ local/
 
         if output.status.success() {
             println!("{}", style("✓ Switched to worktree successfully").green());
+            println!("{}", style("  - Environment files synchronized").dim());
             Ok(())
         } else {
             let error = String::from_utf8_lossy(&output.stderr);
@@ -951,17 +964,30 @@ local/
     }
 
     async fn remove_with_workbloom(&self, worktree: &str) -> Result<()> {
+        // Use workbloom's cleanup command for better cleanup
         let output = Command::new("workbloom")
-            .args(["remove", worktree])
+            .args(["cleanup", "--pattern", worktree])
             .output()
-            .context("Failed to run workbloom remove")?;
+            .context("Failed to run workbloom cleanup")?;
 
         if output.status.success() {
-            println!("{}", style("✓ Worktree removed successfully").green());
+            println!("{}", style("✓ Worktree removed successfully with Workbloom cleanup").green());
+            println!("{}", style("  - Smart cleanup completed").dim());
             Ok(())
         } else {
-            let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("workbloom remove failed: {}", error))
+            // Fall back to remove command if cleanup fails
+            let output = Command::new("workbloom")
+                .args(["remove", worktree])
+                .output()
+                .context("Failed to run workbloom remove")?;
+
+            if output.status.success() {
+                println!("{}", style("✓ Worktree removed successfully").green());
+                Ok(())
+            } else {
+                let error = String::from_utf8_lossy(&output.stderr);
+                Err(anyhow::anyhow!("workbloom remove failed: {}", error))
+            }
         }
     }
 
