@@ -55,6 +55,7 @@ impl Default for WorktreeConfig {
 /// Available worktree tools
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WorktreeTool {
+    Wtp,
     Gwtr,
     Workbloom,
     Git,
@@ -64,6 +65,7 @@ impl WorktreeTool {
     /// Get the command name for this tool
     pub fn command_name(&self) -> &'static str {
         match self {
+            WorktreeTool::Wtp => "wtp",
             WorktreeTool::Gwtr => "gwtr",
             WorktreeTool::Workbloom => "workbloom",
             WorktreeTool::Git => "git",
@@ -81,6 +83,7 @@ impl WorktreeTool {
     /// Get tool description
     pub fn description(&self) -> &'static str {
         match self {
+            WorktreeTool::Wtp => "Git worktree management with hooks and automation",
             WorktreeTool::Gwtr => "Simple Git worktree manager",
             WorktreeTool::Workbloom => "Git worktree management with automatic file copying",
             WorktreeTool::Git => "Native Git worktree commands",
@@ -139,7 +142,12 @@ impl WorktreeManager {
 
     /// Get available worktree tools
     pub fn get_available_tools(&self) -> Vec<WorktreeTool> {
-        let tools = vec![WorktreeTool::Gwtr, WorktreeTool::Workbloom, WorktreeTool::Git];
+        let tools = vec![
+            WorktreeTool::Wtp,
+            WorktreeTool::Gwtr,
+            WorktreeTool::Workbloom,
+            WorktreeTool::Git,
+        ];
         tools
             .into_iter()
             .filter(|tool| tool.is_available())
@@ -151,15 +159,20 @@ impl WorktreeManager {
         // Check if preferred tool is available
         if let Some(ref preferred) = self.config.preferred_tool {
             match preferred.as_str() {
+                "wtp" if WorktreeTool::Wtp.is_available() => return Ok(WorktreeTool::Wtp),
                 "gwtr" if WorktreeTool::Gwtr.is_available() => return Ok(WorktreeTool::Gwtr),
-                "workbloom" if WorktreeTool::Workbloom.is_available() => return Ok(WorktreeTool::Workbloom),
+                "workbloom" if WorktreeTool::Workbloom.is_available() => {
+                    return Ok(WorktreeTool::Workbloom)
+                }
                 "git" if WorktreeTool::Git.is_available() => return Ok(WorktreeTool::Git),
                 _ => {}
             }
         }
 
         // Fall back to best available tool
-        if WorktreeTool::Gwtr.is_available() {
+        if WorktreeTool::Wtp.is_available() {
+            Ok(WorktreeTool::Wtp)
+        } else if WorktreeTool::Gwtr.is_available() {
             Ok(WorktreeTool::Gwtr)
         } else if WorktreeTool::Workbloom.is_available() {
             Ok(WorktreeTool::Workbloom)
@@ -175,6 +188,7 @@ impl WorktreeManager {
         let tool = self.select_best_tool()?;
 
         match tool {
+            WorktreeTool::Wtp => self.list_with_wtp().await,
             WorktreeTool::Gwtr => self.list_with_gwtr().await,
             WorktreeTool::Workbloom => self.list_with_workbloom().await,
             WorktreeTool::Git => self.list_with_git().await,
@@ -226,6 +240,21 @@ impl WorktreeManager {
             style("Installing worktree management tools...").bold()
         );
 
+        // Try to install wtp
+        if !WorktreeTool::Wtp.is_available() {
+            println!("Installing wtp...");
+            let output = Command::new("cargo")
+                .args(["install", "wtp"])
+                .output()
+                .context("Failed to install wtp")?;
+
+            if output.status.success() {
+                println!("{}", style("✓ wtp installed successfully").green());
+            } else {
+                println!("{}", style("✗ Failed to install wtp").red());
+            }
+        }
+
         // Try to install gwtr
         if !WorktreeTool::Gwtr.is_available() {
             println!("Installing gwtr...");
@@ -267,9 +296,15 @@ impl WorktreeManager {
         );
 
         // Create .wtp.yml
-        let wtp_config = r#"version: "1.0"
+        let wtp_config = r#"# .wtp.yml
+# Located in your base repo: /Users/bobby/dev/repos/hooksmith
+# Configures worktree management for Hooksmith project
+
+wtp_version: 1
+
 defaults:
-  base_dir: "worktrees"
+  base_path: ../
+  template: '{repo}-{branch}'
   post_create:
     - type: copy
       from: ".env.example"
@@ -315,6 +350,21 @@ defaults:
     }
 
     // Tool-specific implementations
+
+    async fn list_with_wtp(&self) -> Result<Vec<WorktreeInfo>> {
+        let output = Command::new("wtp")
+            .args(["list"])
+            .output()
+            .context("Failed to run wtp list")?;
+
+        if output.status.success() {
+            let output_str = String::from_utf8_lossy(&output.stdout);
+            self.parse_wtp_list_output(&output_str)
+        } else {
+            let error = String::from_utf8_lossy(&output.stderr);
+            Err(anyhow::anyhow!("wtp list failed: {}", error))
+        }
+    }
 
     async fn list_with_gwtr(&self) -> Result<Vec<WorktreeInfo>> {
         let output = Command::new("gwtr")
@@ -517,7 +567,10 @@ defaults:
             "{}",
             style(&format!("✓ Switched to worktree: {}", worktree)).green()
         );
-        println!("{}", style(&format!("Please run: cd {}", worktree)).yellow());
+        println!(
+            "{}",
+            style(&format!("Please run: cd {}", worktree)).yellow()
+        );
         Ok(())
     }
 
@@ -591,15 +644,40 @@ defaults:
 
     // Output parsing methods
 
-        fn parse_gwtr_list_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
-        // Simple parsing for gwtr output
+    fn parse_wtp_list_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
+        // Parse wtp list output format
         let mut worktrees = Vec::new();
-        
+
         for line in output.lines() {
             if line.trim().is_empty() {
                 continue;
             }
-            
+
+            // Basic parsing - adjust based on actual wtp output format
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 2 {
+                worktrees.push(WorktreeInfo {
+                    path: parts[0].to_string(),
+                    branch: parts[1].to_string(),
+                    commit: parts.get(2).unwrap_or(&"").to_string(),
+                    current: false, // Would need to detect current
+                    dirty: false,   // Would need to detect dirty state
+                });
+            }
+        }
+
+        Ok(worktrees)
+    }
+
+    fn parse_gwtr_list_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
+        // Simple parsing for gwtr output
+        let mut worktrees = Vec::new();
+
+        for line in output.lines() {
+            if line.trim().is_empty() {
+                continue;
+            }
+
             // Basic parsing - adjust based on actual gwtr output format
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 2 {
@@ -612,19 +690,19 @@ defaults:
                 });
             }
         }
-        
+
         Ok(worktrees)
     }
 
-        fn parse_workbloom_list_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
+    fn parse_workbloom_list_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
         // Simple parsing for workbloom output
         let mut worktrees = Vec::new();
-        
+
         for line in output.lines() {
             if line.trim().is_empty() {
                 continue;
             }
-            
+
             // Basic parsing - adjust based on actual workbloom output format
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 2 {
@@ -637,7 +715,7 @@ defaults:
                 });
             }
         }
-        
+
         Ok(worktrees)
     }
 

@@ -1,9 +1,80 @@
-version: "1.0"
+# .wtp.yml
+# Located in your base repo: /Users/bobby/dev/repos/hooksmith
+# Configures worktree management for Hooksmith project
+
+wtp_version: 1
+
 defaults:
-  base_dir: "worktrees"
+  base_path: ../
+  template: '{repo}-{branch}'
   post_create:
-    - type: copy
-      from: ".env.example"
-      to: ".env"
-    - type: command
-      command: "cargo build"
+    - echo "Setting up worktree: {worktree_path}"
+    - cd {worktree_path} && cargo build
+    - cd {worktree_path} && cargo xtask gen-all --validate
+    - cd {worktree_path} && spin build || true
+  post_switch:
+    - echo "Switching to worktree: {worktree_path}"
+    - cd {worktree_path} && cargo check
+  pre_remove:
+    - echo "Cleaning up worktree: {worktree_path}"
+    - cd {worktree_path} && cargo clean
+
+# Existing worktrees - mapped to current layout
+branches:
+  feature/spin-integration:
+    path: ../hooksmith-spin
+    post_create:
+      - cd {worktree_path} && spin up
+      - cd {worktree_path} && cargo xtask bootstrap --validate
+    post_switch:
+      - cd {worktree_path} && spin status || true
+
+  feature/spin-integration-v2:
+    path: ../hooksmith-spin-integration
+    post_create:
+      - cd {worktree_path} && spin build
+      - cd {worktree_path} && cargo xtask gen-config
+    post_switch:
+      - cd {worktree_path} && spin status || true
+
+# Common branch patterns for future worktrees
+patterns:
+  feature/*:
+    template: '{repo}-{branch}'
+    post_create:
+      - cd {worktree_path} && cargo build
+      - cd {worktree_path} && cargo xtask gen-all
+    post_switch:
+      - cd {worktree_path} && cargo check
+
+  bugfix/*:
+    template: "{repo}-{branch}"
+    post_create:
+      - cd {worktree_path} && cargo build
+      - cd {worktree_path} && cargo test
+    post_switch:
+      - cd {worktree_path} && cargo check
+
+  hotfix/*:
+    template: "{repo}-{branch}"
+    post_create:
+      - cd {worktree_path} && cargo build
+      - cd {worktree_path} && cargo xtask check-all
+    post_switch:
+      - cd {worktree_path} && cargo check
+
+# Project-specific settings
+project:
+  name: hooksmith
+  repo: hooksmith
+  preserve_branches: [main, develop, master]
+  auto_cleanup: true
+  hooks:
+    pre_create:
+      - echo "Creating worktree for branch: {branch}"
+    post_create:
+      - echo "Worktree created successfully: {worktree_path}"
+    pre_remove:
+      - echo "Removing worktree: {worktree_path}"
+    post_remove:
+      - echo "Worktree removed successfully"
