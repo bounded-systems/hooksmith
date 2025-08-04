@@ -530,7 +530,7 @@ impl FileOperationsHandler {
                     modified: fs::metadata(&path)
                         .ok()
                         .and_then(|m| m.modified().ok())
-                        .map(|t| DateTime::from(t)),
+                        .map(|t| DateTimeUtc::from(DateTime::from(t))),
                 };
                 
                 files.push(file_info);

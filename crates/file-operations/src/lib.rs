@@ -6,12 +6,13 @@
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
-use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::fs::{self, File};
 use std::io::{Read, Write};
+use base64::Engine;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
