@@ -1096,9 +1096,9 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 let mut config = WorktreeConfig::default();
                 config.preferred_tool = Some(tool_name.clone());
                 let manager = WorktreeManager::with_config(config);
-                manager.switch_worktree(worktree).await?;
+                manager.switch_worktree(&worktree).await?;
             } else {
-                manager.switch_worktree(worktree).await?;
+                manager.switch_worktree(&worktree).await?;
             }
         }
         WorktreeCommands::Remove {
@@ -1122,9 +1122,9 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 let mut config = WorktreeConfig::default();
                 config.preferred_tool = Some(tool_name.clone());
                 let manager = WorktreeManager::with_config(config);
-                manager.remove_worktree(worktree, with_branch).await?;
+                manager.remove_worktree(&worktree, with_branch).await?;
             } else {
-                manager.remove_worktree(worktree, with_branch).await?;
+                manager.remove_worktree(&worktree, with_branch).await?;
             }
         }
         WorktreeCommands::Setup {
