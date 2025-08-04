@@ -14,7 +14,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use wasmtime::{Engine, Linker, Store, Component};
+use wasmtime::{Engine, Linker, Store, component::Component};
 
 use self::components::ComponentHandle;
 use self::config::OrchestratorConfig;
