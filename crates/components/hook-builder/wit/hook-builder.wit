@@ -208,7 +208,7 @@ interface hook-builder {
   get-build-info: func() -> result<build-metadata, string>;
   
   /// Clean build artifacts
-  clean-build: func(build-path: string) -> result<unit, string>;
+  clean-build: func(build-path: string) -> result<bool, string>;
   
   /// Get available targets
   get-available-targets: func() -> result<list<string>, string>;
