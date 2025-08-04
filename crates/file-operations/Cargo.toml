@@ -24,6 +24,11 @@ base64 = "0.21"
 walkdir = "2.4"
 pathdiff = "0.2"
 warp = "0.3"
+clap = { version = "4.0", features = ["derive"] }
+
+[[bin]]
+name = "file-operations-server"
+path = "src/bin/server.rs"
 
 [dev-dependencies]
 tempfile = "3.8"

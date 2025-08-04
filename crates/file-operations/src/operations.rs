@@ -77,7 +77,7 @@ impl FileOperationsHandler {
     }
 
     /// Handle file delete request
-    async fn handle_file_delete(&self, req: FileDeleteRequest) -> Result<FileOperationEvent> {
+    pub async fn handle_file_delete(&self, req: FileDeleteRequest) -> Result<FileOperationEvent> {
         let path = self.resolve_path(&req.path);
         
         match self.delete_file(&path, req.recursive.unwrap_or(false)).await {
@@ -106,7 +106,7 @@ impl FileOperationsHandler {
     }
 
     /// Handle file exists request
-    async fn handle_file_exists(&self, req: FileExistsRequest) -> Result<FileOperationEvent> {
+    pub async fn handle_file_exists(&self, req: FileExistsRequest) -> Result<FileOperationEvent> {
         let path = self.resolve_path(&req.path);
         
         match self.file_exists(&path).await {
@@ -139,7 +139,7 @@ impl FileOperationsHandler {
     }
 
     /// Handle file copy request
-    async fn handle_file_copy(&self, req: FileCopyRequest) -> Result<FileOperationEvent> {
+    pub async fn handle_file_copy(&self, req: FileCopyRequest) -> Result<FileOperationEvent> {
         let source = self.resolve_path(&req.source);
         let destination = self.resolve_path(&req.destination);
         
