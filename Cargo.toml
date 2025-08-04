@@ -139,6 +139,10 @@ name = "run-component"
 path = "scripts/run_component.rs"
 
 [[bin]]
+name = "migrate-structure"
+path = "scripts/migrate_structure.rs"
+
+[[bin]]
 name = "pre-add"
 path = "hooks/pre-add.rs"
 
