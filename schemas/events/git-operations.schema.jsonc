@@ -1,0 +1,278 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Git Operations Event Schema",
+  "description": "Schema for Git operations events in the hybrid WIT + native Rust architecture",
+  "type": "object",
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "git_commit_request",
+        "git_commit_result",
+        "git_push_request",
+        "git_push_result",
+        "git_pull_request",
+        "git_pull_result",
+        "git_status_request",
+        "git_status_result",
+        "git_add_request",
+        "git_add_result",
+        "git_note_add_request",
+        "git_note_add_result",
+        "git_note_get_request",
+        "git_note_get_result"
+      ],
+      "description": "Type of Git operation event"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the Git operation request"
+    },
+    "operation": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "enum": ["commit", "push", "pull", "status", "add", "note-add", "note-get"],
+          "description": "Git command to execute"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Command line arguments"
+        },
+        "options": {
+          "type": "object",
+          "description": "Command-specific options",
+          "additionalProperties": true
+        }
+      },
+      "required": ["command"]
+    },
+    "commit": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Commit message"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Files to commit"
+        },
+        "author": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            }
+          }
+        },
+        "allow_empty": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": ["message"]
+    },
+    "push": {
+      "type": "object",
+      "properties": {
+        "remote": {
+          "type": "string",
+          "default": "origin",
+          "description": "Remote name"
+        },
+        "branch": {
+          "type": "string",
+          "description": "Branch to push"
+        },
+        "force": {
+          "type": "boolean",
+          "default": false
+        },
+        "tags": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "note": {
+      "type": "object",
+      "properties": {
+        "object": {
+          "type": "string",
+          "description": "Git object to attach note to"
+        },
+        "message": {
+          "type": "string",
+          "description": "Note message"
+        },
+        "file": {
+          "type": "string",
+          "description": "File path for note content"
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether operation succeeded"
+        },
+        "output": {
+          "type": "string",
+          "description": "Command output"
+        },
+        "commit_hash": {
+          "type": "string",
+          "description": "Commit hash (for commit operations)"
+        },
+        "files_changed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Files that were changed"
+        },
+        "branch": {
+          "type": "string",
+          "description": "Current branch"
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "staged": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "unstaged": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "untracked": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "duration_ms": {
+          "type": "integer",
+          "description": "Operation duration in milliseconds"
+        }
+      },
+      "required": ["success"]
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error message"
+        },
+        "stderr": {
+          "type": "string",
+          "description": "Git command stderr output"
+        },
+        "exit_code": {
+          "type": "integer",
+          "description": "Git command exit code"
+        }
+      },
+      "required": ["code", "message"]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "working_directory": {
+          "type": "string",
+          "description": "Git working directory"
+        },
+        "repository": {
+          "type": "string",
+          "description": "Repository path"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Event timestamp"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Session identifier"
+        }
+      }
+    }
+  },
+  "required": ["event_type", "request_id"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["git_commit_request"]
+          }
+        }
+      },
+      "then": {
+        "required": ["commit"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["git_push_request"]
+          }
+        }
+      },
+      "then": {
+        "required": ["push"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["git_note_add_request", "git_note_get_request"]
+          }
+        }
+      },
+      "then": {
+        "required": ["note"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "pattern": ".*_result$"
+          }
+        }
+      },
+      "then": {
+        "required": ["result"]
+      }
+    }
+  ]
+} 

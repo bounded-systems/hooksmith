@@ -1,0 +1,48 @@
+{
+  "$id": "https://hooksmith.dev/schemas/worktree-runner.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "tool-config": {
+      "additionalProperties": false,
+      "properties": {
+        "preferred-tool": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "worktree-base": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "worktree-result": {
+      "additionalProperties": false,
+      "properties": {
+        "output": "string",
+        "success": "boolean"
+      },
+      "required": [
+        "success",
+        "output"
+      ],
+      "type": "object"
+    },
+    "worktree-tool": {
+      "enum": [
+        "wtp",
+        "wt",
+        "treekanga",
+        "git"
+      ],
+      "type": "string"
+    }
+  },
+  "description": "Schema for the worktree-runner WIT component interface",
+  "title": "Worktree Runner Component Schema",
+  "type": "object"
+}

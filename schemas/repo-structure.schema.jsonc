@@ -1,0 +1,500 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/repo-structure.schema.jsonc",
+  "title": "Hooksmith Repository Structure Schema",
+  "description": "Schema defining the expected structure and validation rules for the Hooksmith repository",
+  "type": "object",
+  "properties": {
+    "workspace": {
+      "type": "object",
+      "description": "Top-level workspace structure and requirements",
+      "properties": {
+        "requiredFiles": {
+          "type": "array",
+          "description": "Critical files that must be present at the workspace root",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "Cargo.toml",
+            "rust-toolchain.toml",
+            "lefthook.yml",
+            ".cargo/config.toml",
+            "clippy.toml",
+            "deny.toml",
+            "CODEOWNERS"
+          ]
+        },
+        "requiredDirectories": {
+          "type": "array",
+          "description": "Directories that must be present at the workspace root",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "crates/",
+            "docs/",
+            "schemas/",
+            "generated-sources/",
+            "config/",
+            "src/",
+            "examples/",
+            "tests/",
+            "hooks/",
+            "scripts/",
+            "wit/"
+          ]
+        },
+        "namingPatterns": {
+          "type": "object",
+          "description": "File naming patterns and restrictions",
+          "properties": {
+            "configFiles": {
+              "type": "array",
+              "description": "Files that should only be in config/ directory",
+              "items": {
+                "type": "string"
+              },
+              "default": ["*.jsonc", "*.yml", "*.yaml"]
+            },
+            "schemaFiles": {
+              "type": "array",
+              "description": "Files that should only be in schemas/ directory",
+              "items": {
+                "type": "string"
+              },
+              "default": ["*.schema.json", "*.schema.jsonc"]
+            },
+            "generatedFiles": {
+              "type": "array",
+              "description": "Files that should only be in generated-sources/ directory",
+              "items": {
+                "type": "string"
+              },
+              "default": ["*.jsonc", "*.json", "*.md", "*.yml", "*.yaml"]
+            }
+          }
+        }
+      },
+      "required": ["requiredFiles", "requiredDirectories", "namingPatterns"]
+    },
+    "componentCrates": {
+      "type": "object",
+      "description": "Structure requirements for WIT component crates",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "Where component crates should be located",
+          "default": "crates/components/"
+        },
+        "requiredFiles": {
+          "type": "array",
+          "description": "Files that must be present in each component crate",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "Cargo.toml",
+            "src/lib.rs"
+          ]
+        },
+        "requiredDirectories": {
+          "type": "array",
+          "description": "Directories that must be present in each component crate",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "src/",
+            "wit/"
+          ]
+        },
+        "optionalFiles": {
+          "type": "array",
+          "description": "Optional files that may be present in component crates",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "README.md",
+            "src/bin/*.rs"
+          ]
+        },
+        "cargoTomlRequirements": {
+          "type": "object",
+          "description": "Requirements for Cargo.toml in component crates",
+          "properties": {
+            "requiredMetadata": {
+              "type": "array",
+              "description": "Required metadata sections in Cargo.toml",
+              "items": {
+                "type": "string"
+              },
+              "default": ["package.metadata.component"]
+            },
+            "componentMetadata": {
+              "type": "object",
+              "description": "Required structure for package.metadata.component",
+              "properties": {
+                "wit": {
+                  "type": "array",
+                  "description": "WIT directories",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": ["wit"]
+                },
+                "bindings": {
+                  "type": "array",
+                  "description": "Component bindings",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": ["wit", "bindings"]
+            }
+          },
+          "required": ["requiredMetadata", "componentMetadata"]
+        },
+        "witRequirements": {
+          "type": "object",
+          "description": "Requirements for WIT files",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "Where WIT files should be located",
+              "default": "wit/"
+            },
+            "naming": {
+              "type": "string",
+              "description": "Naming pattern for WIT files",
+              "default": "{crate-name}.wit"
+            },
+            "required": {
+              "type": "boolean",
+              "description": "Whether WIT files are required",
+              "default": true
+            }
+          },
+          "required": ["location", "naming", "required"]
+        }
+      },
+      "required": ["location", "requiredFiles", "requiredDirectories", "cargoTomlRequirements", "witRequirements"]
+    },
+    "cliCrates": {
+      "type": "object",
+      "description": "Structure requirements for CLI crates",
+      "properties": {
+        "locations": {
+          "type": "array",
+          "description": "Where CLI crates can be located",
+          "items": {
+            "type": "string"
+          },
+          "default": ["src/", "crates/lefthook-rs/"]
+        },
+        "requiredFiles": {
+          "type": "array",
+          "description": "Files that must be present in CLI crates",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "Cargo.toml",
+            "src/main.rs"
+          ]
+        },
+        "optionalFiles": {
+          "type": "array",
+          "description": "Optional files that may be present in CLI crates",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "src/.cargo/config.toml",
+            "README.md",
+            "src/bin/*.rs"
+          ]
+        },
+        "forbiddenDirectories": {
+          "type": "array",
+          "description": "Directories that should not be present in CLI crates",
+          "items": {
+            "type": "string"
+          },
+          "default": ["wit/"]
+        }
+      },
+      "required": ["locations", "requiredFiles", "forbiddenDirectories"]
+    },
+    "documentation": {
+      "type": "object",
+      "description": "Structure requirements for documentation",
+      "properties": {
+        "requiredFiles": {
+          "type": "array",
+          "description": "Required documentation files",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "docs/README.md",
+            "docs/ARCHITECTURE.md",
+            "docs/PROJECT_STRUCTURE.md"
+          ]
+        },
+        "componentDocs": {
+          "type": "object",
+          "description": "Requirements for component documentation",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "Where component docs should be located",
+              "default": "docs/components/"
+            },
+            "requiredFiles": {
+              "type": "array",
+              "description": "Required files for each component",
+              "items": {
+                "type": "string"
+              },
+              "default": ["README.md"]
+            },
+            "naming": {
+              "type": "string",
+              "description": "Naming pattern for component doc directories",
+              "default": "{component-name}/"
+            }
+          },
+          "required": ["location", "requiredFiles", "naming"]
+        },
+        "designDocs": {
+          "type": "object",
+          "description": "Requirements for design documentation",
+          "properties": {
+            "location": {
+              "type": "string",
+              "description": "Where design docs should be located",
+              "default": "docs/design/"
+            },
+            "requiredFiles": {
+              "type": "array",
+              "description": "Required design documentation files",
+              "items": {
+                "type": "string"
+              },
+              "default": ["README.md", "ARCHITECTURE.md"]
+            }
+          },
+          "required": ["location", "requiredFiles"]
+        }
+      },
+      "required": ["requiredFiles", "componentDocs", "designDocs"]
+    },
+    "generatedSources": {
+      "type": "object",
+      "description": "Structure requirements for generated sources",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "Where generated sources should be located",
+          "default": "generated-sources/"
+        },
+        "registryFile": {
+          "type": "string",
+          "description": "File that tracks generated sources",
+          "default": "config/generated-files.jsonc"
+        },
+        "checksumFile": {
+          "type": "string",
+          "description": "File that tracks checksums",
+          "default": "config/manual-files.jsonc"
+        },
+        "allowedExtensions": {
+          "type": "array",
+          "description": "Allowed file extensions in generated sources",
+          "items": {
+            "type": "string"
+          },
+          "default": [".jsonc", ".json", ".md", ".yml", ".yaml", ".toml"]
+        },
+        "validation": {
+          "type": "object",
+          "description": "Validation requirements for generated sources",
+          "properties": {
+            "mustBeTracked": {
+              "type": "boolean",
+              "description": "Whether all files must be tracked in registry",
+              "default": true
+            },
+            "mustHaveChecksums": {
+              "type": "boolean",
+              "description": "Whether all files must have checksums",
+              "default": true
+            }
+          },
+          "required": ["mustBeTracked", "mustHaveChecksums"]
+        }
+      },
+      "required": ["location", "registryFile", "checksumFile", "allowedExtensions", "validation"]
+    },
+    "examples": {
+      "type": "object",
+      "description": "Structure requirements for examples",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "Where examples should be located",
+          "default": "examples/"
+        },
+        "requiredExtensions": {
+          "type": "array",
+          "description": "Required file extensions for examples",
+          "items": {
+            "type": "string"
+          },
+          "default": [".rs"]
+        },
+        "naming": {
+          "type": "string",
+          "description": "Naming pattern for example files",
+          "default": "*.rs"
+        },
+        "compilation": {
+          "type": "object",
+          "description": "Compilation requirements for examples",
+          "properties": {
+            "mustCompile": {
+              "type": "boolean",
+              "description": "Whether examples must compile",
+              "default": true
+            },
+            "command": {
+              "type": "string",
+              "description": "Command to compile examples",
+              "default": "cargo run --example {name}"
+            }
+          },
+          "required": ["mustCompile", "command"]
+        }
+      },
+      "required": ["location", "requiredExtensions", "naming", "compilation"]
+    },
+    "tests": {
+      "type": "object",
+      "description": "Structure requirements for tests",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "Where tests should be located",
+          "default": "tests/"
+        },
+        "allowedExtensions": {
+          "type": "array",
+          "description": "Allowed file extensions for tests",
+          "items": {
+            "type": "string"
+          },
+          "default": [".rs"]
+        },
+        "naming": {
+          "type": "object",
+          "description": "Naming patterns for test files",
+          "properties": {
+            "integrationTests": {
+              "type": "string",
+              "description": "Naming pattern for integration tests",
+              "default": "*_test.rs"
+            },
+            "unitTests": {
+              "type": "string",
+              "description": "Naming pattern for unit tests",
+              "default": "integration.rs"
+            }
+          },
+          "required": ["integrationTests", "unitTests"]
+        }
+      },
+      "required": ["location", "allowedExtensions", "naming"]
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Structure requirements for Git hooks",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "Where hooks should be located",
+          "default": "hooks/"
+        },
+        "requiredExtensions": {
+          "type": "array",
+          "description": "Required file extensions for hooks",
+          "items": {
+            "type": "string"
+          },
+          "default": [".rs"]
+        },
+        "naming": {
+          "type": "string",
+          "description": "Naming pattern for hook files",
+          "default": "*.rs"
+        },
+        "executable": {
+          "type": "boolean",
+          "description": "Whether hook files must be executable",
+          "default": true
+        }
+      },
+      "required": ["location", "requiredExtensions", "naming", "executable"]
+    },
+    "scripts": {
+      "type": "object",
+      "description": "Structure requirements for scripts",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": "Where scripts should be located",
+          "default": "scripts/"
+        },
+        "allowedExtensions": {
+          "type": "array",
+          "description": "Allowed file extensions for scripts",
+          "items": {
+            "type": "string"
+          },
+          "default": [".rs"]
+        },
+        "naming": {
+          "type": "object",
+          "description": "Naming patterns for script files",
+          "properties": {
+            "simpleScripts": {
+              "type": "string",
+              "description": "Naming pattern for simple scripts",
+              "default": "*_simple.rs"
+            },
+            "fullBinaries": {
+              "type": "string",
+              "description": "Naming pattern for full binaries",
+              "default": "*.rs"
+            }
+          },
+          "required": ["simpleScripts", "fullBinaries"]
+        }
+      },
+      "required": ["location", "allowedExtensions", "naming"]
+    }
+  },
+  "required": [
+    "workspace",
+    "componentCrates",
+    "cliCrates",
+    "documentation",
+    "generatedSources",
+    "examples",
+    "tests",
+    "hooks",
+    "scripts"
+  ]
+} 

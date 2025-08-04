@@ -1,0 +1,331 @@
+{
+  "$id": "https://hooksmith.dev/schemas/hook-builder.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "build-config": {
+      "additionalProperties": false,
+      "properties": {
+        "all-features": "boolean",
+        "debug-symbols": "boolean",
+        "env-vars": {
+          "items": {
+            "$ref": "#/definitions/env-var"
+          },
+          "type": "array"
+        },
+        "features": {
+          "items": "string",
+          "type": "array"
+        },
+        "optimization-level": "integer",
+        "output-path": "string",
+        "run-clippy": "boolean",
+        "run-tests": "boolean",
+        "source-path": "string",
+        "target-triple": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "source-path",
+        "output-path",
+        "optimization-level",
+        "debug-symbols",
+        "features",
+        "all-features",
+        "env-vars",
+        "run-tests",
+        "run-clippy"
+      ],
+      "type": "object"
+    },
+    "build-metadata": {
+      "additionalProperties": false,
+      "properties": {
+        "build-hash": "string",
+        "cargo-version": "string",
+        "rust-version": "string",
+        "target-triple": "string",
+        "timestamp": "string"
+      },
+      "required": [
+        "rust-version",
+        "cargo-version",
+        "target-triple",
+        "timestamp",
+        "build-hash"
+      ],
+      "type": "object"
+    },
+    "build-result": {
+      "additionalProperties": false,
+      "properties": {
+        "artifacts": {
+          "items": "string",
+          "type": "array"
+        },
+        "binary-path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "binary-size": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "build-logs": "string",
+        "duration-ms": "integer",
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "metadata": {
+          "$ref": "#/definitions/build-metadata"
+        },
+        "success": "boolean"
+      },
+      "required": [
+        "success",
+        "artifacts",
+        "build-logs",
+        "duration-ms",
+        "metadata"
+      ],
+      "type": "object"
+    },
+    "env-var": {
+      "additionalProperties": false,
+      "properties": {
+        "name": "string",
+        "value": "string"
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "type": "object"
+    },
+    "optimization-config": {
+      "additionalProperties": false,
+      "properties": {
+        "binary-path": "string",
+        "compress": "boolean",
+        "level": "integer",
+        "strip-debug": "boolean",
+        "strip-symbols": "boolean",
+        "target-size": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "binary-path",
+        "level",
+        "strip-debug",
+        "strip-symbols",
+        "compress"
+      ],
+      "type": "object"
+    },
+    "optimization-result": {
+      "additionalProperties": false,
+      "properties": {
+        "duration-ms": "integer",
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "optimized-size": "integer",
+        "original-size": "integer",
+        "reduction-percentage": "number",
+        "success": "boolean",
+        "techniques-applied": {
+          "items": "string",
+          "type": "array"
+        }
+      },
+      "required": [
+        "success",
+        "original-size",
+        "optimized-size",
+        "reduction-percentage",
+        "techniques-applied",
+        "duration-ms"
+      ],
+      "type": "object"
+    },
+    "rule-severity": {
+      "enum": [
+        "info",
+        "warning",
+        "error"
+      ],
+      "type": "string"
+    },
+    "validation-config": {
+      "additionalProperties": false,
+      "properties": {
+        "check-common-issues": "boolean",
+        "rules": {
+          "items": {
+            "$ref": "#/definitions/validation-rule"
+          },
+          "type": "array"
+        },
+        "source-path": "string",
+        "validate-dependencies": "boolean"
+      },
+      "required": [
+        "source-path",
+        "rules",
+        "check-common-issues",
+        "validate-dependencies"
+      ],
+      "type": "object"
+    },
+    "validation-error": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": "string",
+        "suggestion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    },
+    "validation-info": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": "string"
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    },
+    "validation-result": {
+      "additionalProperties": false,
+      "properties": {
+        "duration-ms": "integer",
+        "errors": {
+          "items": {
+            "$ref": "#/definitions/validation-error"
+          },
+          "type": "array"
+        },
+        "info": {
+          "items": {
+            "$ref": "#/definitions/validation-info"
+          },
+          "type": "array"
+        },
+        "success": "boolean",
+        "warnings": {
+          "items": {
+            "$ref": "#/definitions/validation-warning"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "success",
+        "errors",
+        "warnings",
+        "info",
+        "duration-ms"
+      ],
+      "type": "object"
+    },
+    "validation-rule": {
+      "additionalProperties": false,
+      "properties": {
+        "description": "string",
+        "enabled": "boolean",
+        "name": "string",
+        "severity": {
+          "$ref": "#/definitions/rule-severity"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "enabled",
+        "severity"
+      ],
+      "type": "object"
+    },
+    "validation-warning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": "string",
+        "suggestion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "Schema for the hook-builder WIT component interface",
+  "title": "Hook Builder Component Schema",
+  "type": "object"
+}

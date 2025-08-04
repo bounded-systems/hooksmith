@@ -1,0 +1,293 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "File Operations Event Schema",
+  "description": "Schema for file operations events in the hybrid WIT + native Rust architecture",
+  "type": "object",
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "file_read_request",
+        "file_read_result",
+        "file_write_request",
+        "file_write_result",
+        "file_delete_request",
+        "file_delete_result",
+        "file_exists_request",
+        "file_exists_result",
+        "file_copy_request",
+        "file_copy_result",
+        "file_move_request",
+        "file_move_result",
+        "directory_create_request",
+        "directory_create_result",
+        "directory_list_request",
+        "directory_list_result",
+        "file_checksum_request",
+        "file_checksum_result"
+      ],
+      "description": "Type of file operation event"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the file operation request"
+    },
+    "operation": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "enum": ["read", "write", "delete", "exists", "copy", "move", "mkdir", "list", "checksum"],
+          "description": "File operation command"
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "encoding": {
+              "type": "string",
+              "enum": ["utf8", "binary", "base64"],
+              "default": "utf8",
+              "description": "File encoding for read/write operations"
+            },
+            "create_parents": {
+              "type": "boolean",
+              "default": false,
+              "description": "Create parent directories if they don't exist"
+            },
+            "overwrite": {
+              "type": "boolean",
+              "default": false,
+              "description": "Overwrite existing files"
+            },
+            "recursive": {
+              "type": "boolean",
+              "default": false,
+              "description": "Perform operation recursively"
+            },
+            "algorithm": {
+              "type": "string",
+              "enum": ["sha256", "sha1", "md5"],
+              "default": "sha256",
+              "description": "Checksum algorithm"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "required": ["command"]
+    },
+    "paths": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Source file path"
+        },
+        "destination": {
+          "type": "string",
+          "description": "Destination file path"
+        },
+        "directory": {
+          "type": "string",
+          "description": "Directory path for list/create operations"
+        }
+      }
+    },
+    "content": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string",
+          "description": "File content (for write operations)"
+        },
+        "size": {
+          "type": "integer",
+          "description": "File size in bytes"
+        },
+        "encoding": {
+          "type": "string",
+          "description": "Content encoding"
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether operation succeeded"
+        },
+        "exists": {
+          "type": "boolean",
+          "description": "Whether file exists (for exists operations)"
+        },
+        "content": {
+          "type": "string",
+          "description": "File content (for read operations)"
+        },
+        "size": {
+          "type": "integer",
+          "description": "File size in bytes"
+        },
+        "checksum": {
+          "type": "string",
+          "description": "File checksum (for checksum operations)"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "is_directory": {
+                "type": "boolean"
+              },
+              "size": {
+                "type": "integer"
+              },
+              "modified": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": ["name", "path", "is_directory"]
+          },
+          "description": "Directory contents (for list operations)"
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "created": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "modified": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "permissions": {
+              "type": "string"
+            },
+            "owner": {
+              "type": "string"
+            }
+          }
+        },
+        "duration_ms": {
+          "type": "integer",
+          "description": "Operation duration in milliseconds"
+        }
+      },
+      "required": ["success"]
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error message"
+        },
+        "details": {
+          "type": "object",
+          "description": "Additional error details"
+        },
+        "io_error": {
+          "type": "string",
+          "description": "IO error kind"
+        }
+      },
+      "required": ["code", "message"]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "working_directory": {
+          "type": "string",
+          "description": "Working directory for relative paths"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Event timestamp"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Session identifier"
+        }
+      }
+    }
+  },
+  "required": ["event_type", "request_id"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["file_read_request", "file_exists_request", "file_delete_request", "file_checksum_request"]
+          }
+        }
+      },
+      "then": {
+        "required": ["paths"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["file_write_request"]
+          }
+        }
+      },
+      "then": {
+        "required": ["paths", "content"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["file_copy_request", "file_move_request"]
+          }
+        }
+      },
+      "then": {
+        "required": ["paths"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["directory_create_request", "directory_list_request"]
+          }
+        }
+      },
+      "then": {
+        "required": ["paths"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "pattern": ".*_result$"
+          }
+        }
+      },
+      "then": {
+        "required": ["result"]
+      }
+    }
+  ]
+} 

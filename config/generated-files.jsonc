@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Hooksmith Generated Files",
+  "description": "Registry of generated files with stable slugs and checksums for validation and regeneration.",
+  "files": [
+    {
+      "slug": "lefthook-config",
+      "path": "lefthook.yml",
+      "extension": "yml",
+      "checksum": "b9638ea0",
+      "file_type": "yaml"
+    },
+    {
+      "slug": "readme",
+      "path": "README.md",
+      "extension": "md",
+      "checksum": "0bd1f277",
+      "file_type": "md"
+    }
+  ],
+  "ignore": {
+    "dirs": [
+      "target/",
+      "dist/",
+      "node_modules/",
+      "logs/",
+      "status-trends/",
+      "generated_file_demo/",
+      ".cargo/",
+      ".trunk/",
+      ".hooks/",
+      ".git/"
+    ],
+    "patterns": [
+      "*.lock",
+      "*.jsonl"
+    ]
+  }
+}

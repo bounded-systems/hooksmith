@@ -1,0 +1,7 @@
+{
+  "type": "FileRead",
+  "data": {
+    "path": "test-data/contract.json",
+    "binary": false
+  }
+} 

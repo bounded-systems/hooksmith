@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Hooksmith File Extension Policy",
+  "description": "Strict policy: only .rs and .jsonc may be manual, all other files must be generated.",
+
+  // Allowed extensions for manually maintained source files
+  // Note: .rs files are only allowed in CLI crate (src/), xtask, and scripts/
+  "allowedExtensions": ["rs", "jsonc"],
+
+  // Generated extensions that must have proper headers
+  "generatedExtensions": [
+    "toml",
+    "md",
+    "yml",
+    "gitignore",
+    "gitattributes",
+    "CODEOWNERS",
+    "json",
+    "jql",
+    "jsonl",
+    "wit",
+    "makefile",
+    "editorconfig",
+    "envrc"
+  ],
+
+  // Use .gitignore for ignoring files instead of manual list
+  "useGitignore": true,
+
+  // Define comment syntax for each file type
+  "generatedMarkers": {
+    "md": {
+      "prefix": "<!--",
+      "suffix": "-->"
+    },
+    "toml": {
+      "prefix": "#",
+      "suffix": ""
+    },
+    "yml": {
+      "prefix": "#",
+      "suffix": ""
+    },
+    "gitignore": {
+      "prefix": "#",
+      "suffix": ""
+    },
+    "gitattributes": {
+      "prefix": "#",
+      "suffix": ""
+    },
+    "CODEOWNERS": {
+      "prefix": "#",
+      "suffix": ""
+    },
+    "json": {
+      "prefix": "//",
+      "suffix": ""
+    },
+    "jsonc": {
+      "prefix": "//",
+      "suffix": ""
+    },
+    "jsonl": {
+      "prefix": "//",
+      "suffix": ""
+    },
+    "jql": {
+      "prefix": "//",
+      "suffix": ""
+    },
+    "wit": {
+      "prefix": "//",
+      "suffix": ""
+    },
+    "makefile": {
+      "prefix": "#",
+      "suffix": ""
+    },
+    "editorconfig": {
+      "prefix": "#",
+      "suffix": ""
+    },
+    "envrc": {
+      "prefix": "#",
+      "suffix": ""
+    }
+  },
+
+  // Generation commands for each file type
+  "generationCommands": {
+    "md": "xtask gen-docs",
+    "toml": "xtask gen-config",
+    "yml": "xtask gen-config",
+    "gitignore": "xtask gen-gitattributes",
+    "gitattributes": "xtask gen-gitattributes",
+    "CODEOWNERS": "xtask gen-config",
+    "json": "xtask gen-schema",
+    "jsonc": "xtask gen-config",
+    "jsonl": "xtask gen-schema",
+    "jql": "xtask gen-jql",
+    "wasm": "cargo component build",
+    "wit": "xtask gen-wit",
+    "makefile": "xtask gen-config",
+    "editorconfig": "xtask gen-config",
+    "envrc": "xtask gen-config"
+  }
+} 

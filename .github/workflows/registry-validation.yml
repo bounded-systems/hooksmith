@@ -1,0 +1,219 @@
+name: Registry Validation & Management
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'config/generated-files.jsonc'
+      - 'scripts/**'
+      - 'xtask/**'
+      - '**/*.md'
+      - '**/*.toml'
+      - '**/*.sh'
+      - '**/*.json'
+      - '**/*.wit'
+      - '**/*.hbs'
+      - '**/*.css'
+      - '**/*.sed'
+      - '**/*.yml'
+      - '**/*.yaml'
+      - 'CODEOWNERS'
+      - 'Makefile'
+      - '.editorconfig'
+      - '.gitignore'
+      - '.gitattributes'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'config/generated-files.jsonc'
+      - 'scripts/**'
+      - 'xtask/**'
+      - '**/*.md'
+      - '**/*.toml'
+      - '**/*.sh'
+      - '**/*.json'
+      - '**/*.wit'
+      - '**/*.hbs'
+      - '**/*.css'
+      - '**/*.sed'
+      - '**/*.yml'
+      - '**/*.yaml'
+      - 'CODEOWNERS'
+      - 'Makefile'
+      - '.editorconfig'
+      - '.gitignore'
+      - '.gitattributes'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Registry action to perform'
+        required: true
+        default: 'validate'
+        type: choice
+        options:
+          - validate
+          - update
+          - fix
+          - cleanup
+          - status
+
+jobs:
+  registry-management:
+    name: Registry Management
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git operations
+      
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+      
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
+      - name: Build xtask
+        run: |
+          cd xtask
+          cargo build --release
+      
+      - name: Run registry validation
+        id: validate
+        run: |
+          echo "=== REGISTRY VALIDATION ==="
+          ./xtask/target/release/xtask registry validate
+          echo "validation_exit_code=$?" >> $GITHUB_OUTPUT
+      
+      - name: Check validation result
+        if: steps.validate.outputs.validation_exit_code != '0'
+        run: |
+          echo "❌ Registry validation failed!"
+          echo "Running registry status for details..."
+          ./xtask/target/release/xtask registry status
+          exit 1
+      
+      - name: Run registry status
+        if: steps.validate.outputs.validation_exit_code == '0'
+        run: |
+          echo "✅ Registry validation passed!"
+          echo "=== REGISTRY STATUS ==="
+          ./xtask/target/release/xtask registry status
+      
+      - name: Auto-fix registry issues (if any)
+        if: |
+          steps.validate.outputs.validation_exit_code != '0' && 
+          github.event_name == 'workflow_dispatch' && 
+          github.event.inputs.action == 'fix'
+        run: |
+          echo "🔧 Auto-fixing registry issues..."
+          ./xtask/target/release/xtask registry fix
+      
+      - name: Update all checksums
+        if: |
+          github.event_name == 'workflow_dispatch' && 
+          github.event.inputs.action == 'update'
+        run: |
+          echo "🔄 Updating all checksums..."
+          ./xtask/target/release/xtask registry update
+      
+      - name: Cleanup ignored files
+        if: |
+          github.event_name == 'workflow_dispatch' && 
+          github.event.inputs.action == 'cleanup'
+        run: |
+          echo "🧹 Cleaning up ignored files..."
+          ./xtask/target/release/xtask registry cleanup
+      
+      - name: Commit registry changes
+        if: |
+          github.event_name == 'workflow_dispatch' && 
+          (github.event.inputs.action == 'fix' || 
+           github.event.inputs.action == 'update' || 
+           github.event.inputs.action == 'cleanup')
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          if git diff --quiet config/generated-files.jsonc; then
+            echo "No changes to commit"
+          else
+            git add config/generated-files.jsonc
+            git commit -m "chore: update generated files registry [skip ci]"
+            git push
+          fi
+      
+      - name: Generate registry report
+        if: always()
+        run: |
+          echo "=== REGISTRY REPORT ==="
+          ./xtask/target/release/xtask registry status
+          
+          echo "=== REGISTRY SUMMARY ==="
+          echo "Total entries: $(jq '.files | length' config/generated-files.jsonc)"
+          echo "File types: $(jq -r '.files[].type' config/generated-files.jsonc | sort | uniq | tr '\n' ', ')"
+          echo "Last updated: $(date -u)"
+      
+      - name: Upload registry report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: registry-report
+          path: |
+            config/generated-files.jsonc
+            config/generated-files.jsonc.backup.*
+          retention-days: 30
+
+  pre-commit-validation:
+    name: Pre-commit Registry Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Build xtask
+        run: |
+          cd xtask
+          cargo build --release
+      
+      - name: Validate registry integrity
+        run: |
+          echo "🔍 Validating registry integrity..."
+          ./xtask/target/release/xtask registry validate
+      
+      - name: Check for missing files
+        run: |
+          echo "📋 Checking for missing files..."
+          ./xtask/target/release/xtask registry status | grep -q "Missing files: 0" || {
+            echo "❌ Found files missing from registry!"
+            ./xtask/target/release/xtask registry status
+            exit 1
+          }
+      
+      - name: Registry validation passed
+        run: |
+          echo "✅ Registry validation passed!"
+          echo "All generated files are properly tracked and validated." 

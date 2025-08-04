@@ -1,0 +1,638 @@
+{
+  "$id": "https://hooksmith.dev/schemas/validation.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "format-validator": {
+      "additionalProperties": false,
+      "properties": {
+        "description": "string",
+        "example": "string",
+        "name": "string",
+        "pattern": "string"
+      },
+      "required": [
+        "name",
+        "pattern",
+        "description",
+        "example"
+      ],
+      "type": "object"
+    },
+    "parameter-type": {
+      "enum": [
+        "string",
+        "number",
+        "boolean",
+        "array",
+        "object",
+        "regex",
+        "glob",
+        "path",
+        "url",
+        "email",
+        "version"
+      ],
+      "type": "string"
+    },
+    "rule-parameter": {
+      "additionalProperties": false,
+      "properties": {
+        "name": "string",
+        "parameter-type": {
+          "$ref": "#/definitions/parameter-type"
+        },
+        "required": "boolean",
+        "value": "string"
+      },
+      "required": [
+        "name",
+        "value",
+        "parameter-type",
+        "required"
+      ],
+      "type": "object"
+    },
+    "rule-severity": {
+      "enum": [
+        "info",
+        "warning",
+        "error",
+        "critical"
+      ],
+      "type": "string"
+    },
+    "schema-format": {
+      "enum": [
+        "json-schema",
+        "openapi",
+        "graphql",
+        "protobuf",
+        "xml-schema",
+        "custom"
+      ],
+      "type": "string"
+    },
+    "schema-info": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "examples": {
+          "items": "string",
+          "type": "array"
+        },
+        "format": {
+          "$ref": "#/definitions/schema-format"
+        },
+        "properties-count": "integer",
+        "required-properties": {
+          "items": "string",
+          "type": "array"
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "format",
+        "properties-count",
+        "required-properties",
+        "examples"
+      ],
+      "type": "object"
+    },
+    "schema-validation-config": {
+      "additionalProperties": false,
+      "properties": {
+        "allow-additional-properties": "boolean",
+        "allow-unknown-formats": "boolean",
+        "data": "string",
+        "format-validators": {
+          "items": {
+            "$ref": "#/definitions/format-validator"
+          },
+          "type": "array"
+        },
+        "schema": "string",
+        "schema-format": {
+          "$ref": "#/definitions/schema-format"
+        },
+        "strict-mode": "boolean"
+      },
+      "required": [
+        "schema",
+        "data",
+        "schema-format",
+        "strict-mode",
+        "allow-additional-properties",
+        "allow-unknown-formats",
+        "format-validators"
+      ],
+      "type": "object"
+    },
+    "schema-validation-error": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "details": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": "string",
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "schema-path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "suggestion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    },
+    "schema-validation-result": {
+      "additionalProperties": false,
+      "properties": {
+        "duration-ms": "integer",
+        "errors": {
+          "items": {
+            "$ref": "#/definitions/schema-validation-error"
+          },
+          "type": "array"
+        },
+        "schema-info": {
+          "$ref": "#/definitions/schema-info"
+        },
+        "success": "boolean",
+        "warnings": {
+          "items": {
+            "$ref": "#/definitions/schema-validation-warning"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "success",
+        "errors",
+        "warnings",
+        "duration-ms",
+        "schema-info"
+      ],
+      "type": "object"
+    },
+    "schema-validation-warning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "details": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": "string",
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "schema-path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "suggestion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    },
+    "validation-config": {
+      "additionalProperties": false,
+      "properties": {
+        "data": "string",
+        "include-suggestions": "boolean",
+        "include-warnings": "boolean",
+        "max-errors": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "max-warnings": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "rules": {
+          "items": {
+            "$ref": "#/definitions/validation-rule"
+          },
+          "type": "array"
+        },
+        "schema": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "strict-mode": "boolean",
+        "validation-type": {
+          "$ref": "#/definitions/validation-type"
+        }
+      },
+      "required": [
+        "validation-type",
+        "data",
+        "rules",
+        "strict-mode",
+        "include-warnings",
+        "include-suggestions"
+      ],
+      "type": "object"
+    },
+    "validation-environment": {
+      "additionalProperties": false,
+      "properties": {
+        "available-validators": {
+          "items": "string",
+          "type": "array"
+        },
+        "engine": "string",
+        "engine-version": "string",
+        "platform": "string",
+        "tool-version": "string"
+      },
+      "required": [
+        "tool-version",
+        "platform",
+        "engine",
+        "engine-version",
+        "available-validators"
+      ],
+      "type": "object"
+    },
+    "validation-error": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "context": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": "string",
+        "rule": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "severity": {
+          "$ref": "#/definitions/rule-severity"
+        },
+        "suggestion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message",
+        "severity"
+      ],
+      "type": "object"
+    },
+    "validation-info": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "context": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": "string",
+        "rule": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    },
+    "validation-metadata": {
+      "additionalProperties": false,
+      "properties": {
+        "duration": "string",
+        "environment": {
+          "$ref": "#/definitions/validation-environment"
+        },
+        "rules-applied": {
+          "items": "string",
+          "type": "array"
+        },
+        "schema-used": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "timestamp": "string",
+        "validation-type": {
+          "$ref": "#/definitions/validation-type"
+        }
+      },
+      "required": [
+        "timestamp",
+        "duration",
+        "validation-type",
+        "rules-applied",
+        "environment"
+      ],
+      "type": "object"
+    },
+    "validation-result": {
+      "additionalProperties": false,
+      "properties": {
+        "duration-ms": "integer",
+        "errors": {
+          "items": {
+            "$ref": "#/definitions/validation-error"
+          },
+          "type": "array"
+        },
+        "info": {
+          "items": {
+            "$ref": "#/definitions/validation-info"
+          },
+          "type": "array"
+        },
+        "metadata": {
+          "$ref": "#/definitions/validation-metadata"
+        },
+        "statistics": {
+          "$ref": "#/definitions/validation-statistics"
+        },
+        "success": "boolean",
+        "warnings": {
+          "items": {
+            "$ref": "#/definitions/validation-warning"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "success",
+        "errors",
+        "warnings",
+        "info",
+        "duration-ms",
+        "statistics",
+        "metadata"
+      ],
+      "type": "object"
+    },
+    "validation-rule": {
+      "additionalProperties": false,
+      "properties": {
+        "dependencies": {
+          "items": "string",
+          "type": "array"
+        },
+        "description": "string",
+        "enabled": "boolean",
+        "name": "string",
+        "parameters": {
+          "items": {
+            "$ref": "#/definitions/rule-parameter"
+          },
+          "type": "array"
+        },
+        "pattern": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "severity": {
+          "$ref": "#/definitions/rule-severity"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "enabled",
+        "severity",
+        "parameters",
+        "dependencies"
+      ],
+      "type": "object"
+    },
+    "validation-statistics": {
+      "additionalProperties": false,
+      "properties": {
+        "coverage-percentage": "number",
+        "error-count": "integer",
+        "info-count": "integer",
+        "invalid-items": "integer",
+        "total-items": "integer",
+        "valid-items": "integer",
+        "warning-count": "integer"
+      },
+      "required": [
+        "total-items",
+        "valid-items",
+        "invalid-items",
+        "error-count",
+        "warning-count",
+        "info-count",
+        "coverage-percentage"
+      ],
+      "type": "object"
+    },
+    "validation-type": {
+      "enum": [
+        "lefthook-config",
+        "hook-config",
+        "wit-interface",
+        "build-config",
+        "json-data",
+        "yaml-data",
+        "toml-data",
+        "rust-code",
+        "shell-script",
+        "file-path",
+        "url",
+        "email",
+        "version",
+        "semver",
+        "custom"
+      ],
+      "type": "string"
+    },
+    "validation-type-info": {
+      "additionalProperties": false,
+      "properties": {
+        "category": "string",
+        "description": "string",
+        "documentation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "examples": {
+          "items": "string",
+          "type": "array"
+        },
+        "name": "string",
+        "optional-parameters": {
+          "items": "string",
+          "type": "array"
+        },
+        "required-parameters": {
+          "items": "string",
+          "type": "array"
+        },
+        "supported-formats": {
+          "items": "string",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "category",
+        "supported-formats",
+        "required-parameters",
+        "optional-parameters",
+        "examples"
+      ],
+      "type": "object"
+    },
+    "validation-warning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "context": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": "string",
+        "rule": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "severity": {
+          "$ref": "#/definitions/rule-severity"
+        },
+        "suggestion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message",
+        "severity"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "Schema for the validation WIT component interface",
+  "title": "Validation Component Schema",
+  "type": "object"
+}

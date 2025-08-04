@@ -1,0 +1,12 @@
+{
+  "type": "ValidationRequest",
+  "data": {
+    "contract_name": "",
+    "content": "invalid json content",
+    "config": {
+      "strict": true,
+      "store_proof": false,
+      "max_errors": 10
+    }
+  }
+} 

@@ -1,0 +1,112 @@
+package hooksmith:git-filter;
+
+/**
+ * Git Filter Component Interface
+ * 
+ * This WIT interface defines the contract for Git object filtering and validation
+ * operations. It provides a standardized way to process Git objects (blobs, trees,
+ * commits, tags) according to configurable rules and contracts.
+ */
+interface git-filter {
+  /// Git object type enumeration
+  /// Defines the different types of Git objects that can be processed
+  enum git-object-type {
+    /// Git blob object (file content)
+    blob,
+    /// Git tree object (directory structure)
+    tree,
+    /// Git commit object (version history)
+    commit,
+    /// Git tag object (annotated references)
+    tag,
+  }
+
+  /// Filter operation type enumeration
+  /// Defines the different operations that can be performed on Git objects
+  enum filter-operation {
+    /// Validate object content against rules
+    validate,
+    /// Transform object content according to rules
+    transform,
+    /// Filter object content (include/exclude)
+    filter,
+    /// Check object content for compliance
+    check,
+  }
+
+  /**
+   * Git object filter configuration
+   * 
+   * Contains all the parameters needed to configure a filtering operation
+   * on a Git object.
+   */
+  record filter-config {
+    /// The type of Git object to process
+    object-type: git-object-type,
+    /// The operation to perform on the object
+    operation: filter-operation,
+    /// Whether to apply strict validation (fails on any violation)
+    strict: bool,
+    /// Additional filter parameters as key-value pairs
+    params: list<string>,
+  }
+
+  /**
+   * Filter operation result
+   * 
+   * Contains the outcome of a filtering operation, including success status,
+   * processed content, error messages, and validation details.
+   */
+  record filter-result {
+    /// Whether the filter operation completed successfully
+    success: bool,
+    /// The processed/filtered content (if successful)
+    content: option<string>,
+    /// Error message if the operation failed
+    error: option<string>,
+    /// Detailed validation or processing information
+    details: list<string>,
+  }
+
+  /**
+   * Validate a Git blob object
+   * 
+   * Performs validation on blob content according to the specified configuration.
+   * Returns a result indicating whether the blob passes validation.
+   */
+  validate-blob: func(blob-content: string, config: filter-config) -> result<filter-result, string>;
+  
+  /**
+   * Filter Git objects based on contracts
+   * 
+   * Applies filtering rules to Git object content and returns the filtered result.
+   * Can be used to include/exclude content based on contract requirements.
+   */
+  filter-object: func(object-content: string, config: filter-config) -> result<filter-result, string>;
+  
+  /**
+   * Check if content matches contract requirements
+   * 
+   * Performs a boolean check to determine if content complies with the specified
+   * contract. Returns true if content matches contract requirements.
+   */
+  check-contract: func(content: string, contract-name: string) -> result<bool, string>;
+  
+  /**
+   * Transform content according to contract rules
+   * 
+   * Applies transformation rules to content based on the specified contract.
+   * Returns the transformed content or an error if transformation fails.
+   */
+  transform-content: func(content: string, contract-name: string) -> result<string, string>;
+}
+
+/**
+ * Git Filter World
+ * 
+ * Exports the git-filter interface as the main entry point for this component.
+ * This world definition makes the git-filter interface available to host applications.
+ */
+world git-filter-world {
+  export git-filter;
+} 

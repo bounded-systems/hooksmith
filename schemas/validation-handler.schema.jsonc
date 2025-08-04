@@ -1,0 +1,168 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/validation-handler.schema.json",
+  "title": "Validation Handler Component Schema",
+  "description": "Schema for the validation-handler WIT component interface",
+  "type": "object",
+  "definitions": {
+    "ValidationSeverity": {
+      "type": "string",
+      "enum": ["info", "warning", "error", "critical"],
+      "description": "Validation severity level"
+    },
+    "ValidationRule": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Rule name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Rule description"
+        },
+        "severity": {
+          "$ref": "#/definitions/ValidationSeverity"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether the rule is enabled"
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Rule parameters"
+        }
+      },
+      "required": ["name", "description", "severity", "enabled"],
+      "additionalProperties": false
+    },
+    "ValidationConfig": {
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ValidationRule"
+          },
+          "description": "Rules to apply"
+        },
+        "strict": {
+          "type": "boolean",
+          "description": "Whether to stop on first error"
+        },
+        "max-errors": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Maximum number of errors to report"
+        },
+        "include-warnings": {
+          "type": "boolean",
+          "description": "Whether to include warnings"
+        }
+      },
+      "required": ["rules", "strict", "include-warnings"],
+      "additionalProperties": false
+    },
+    "ValidationResult": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether validation passed"
+        },
+        "error-count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of errors found"
+        },
+        "warning-count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of warnings found"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Validation messages"
+        },
+        "details": {
+          "type": ["string", "null"],
+          "description": "Detailed validation report"
+        }
+      },
+      "required": ["success", "error-count", "warning-count", "messages"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "validate": {
+      "type": "object",
+      "description": "Validate content against rules",
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "The content to validate"
+        },
+        "config": {
+          "$ref": "#/definitions/ValidationConfig"
+        }
+      },
+      "required": ["content", "config"],
+      "additionalProperties": false
+    },
+    "validate-file": {
+      "type": "object",
+      "description": "Validate file content",
+      "properties": {
+        "file-path": {
+          "type": "string",
+          "description": "The file path to validate"
+        },
+        "config": {
+          "$ref": "#/definitions/ValidationConfig"
+        }
+      },
+      "required": ["file-path", "config"],
+      "additionalProperties": false
+    },
+    "is-valid": {
+      "type": "object",
+      "description": "Check if content is valid",
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "The content to check"
+        },
+        "rule-name": {
+          "type": "string",
+          "description": "The rule name to check against"
+        }
+      },
+      "required": ["content", "rule-name"],
+      "additionalProperties": false
+    },
+    "get-rules": {
+      "type": "object",
+      "description": "Get validation rules",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "add-rule": {
+      "type": "object",
+      "description": "Add custom validation rule",
+      "properties": {
+        "rule": {
+          "$ref": "#/definitions/ValidationRule"
+        }
+      },
+      "required": ["rule"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+} 

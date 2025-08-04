@@ -1,0 +1,22 @@
+[package]
+name = "file-system-handler"
+version = "0.1.0"
+edition = "2021"
+description = "Native file system handler for Hooksmith's event-driven architecture"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/hooksmith/hooksmith"
+keywords = ["filesystem", "events", "handler", "io"]
+categories = ["filesystem", "api-bindings"]
+
+[dependencies]
+event-types = { path = "../event-types" }
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+tracing = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+base64 = "0.21"
+
+[dev-dependencies]
+tempfile = "3.0" 

@@ -1,0 +1,397 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hooksmith System Events Schema",
+  "description": "Schema for system events that require native Rust capabilities",
+  "type": "object",
+  "oneOf": [
+    {
+      "title": "File Read Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "FileRead",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Path to the file to read",
+              "pattern": "^[^\\0]+$"
+            },
+            "binary": {
+              "type": "boolean",
+              "description": "Whether to read as binary",
+              "default": false
+            }
+          },
+          "required": ["path"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "File Write Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "FileWrite",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Path to the file to write",
+              "pattern": "^[^\\0]+$"
+            },
+            "content": {
+              "type": "string",
+              "description": "Content to write to the file"
+            },
+            "create_dirs": {
+              "type": "boolean",
+              "description": "Whether to create parent directories",
+              "default": false
+            }
+          },
+          "required": ["path", "content"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "File Delete Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "FileDelete",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Path to delete",
+              "pattern": "^[^\\0]+$"
+            },
+            "recursive": {
+              "type": "boolean",
+              "description": "Whether to recursively delete directories",
+              "default": false
+            }
+          },
+          "required": ["path"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Git Commit Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "GitCommit",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "description": "Commit message",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[^\\0]+$"
+              },
+              "description": "Files to include in commit"
+            },
+            "all": {
+              "type": "boolean",
+              "description": "Whether to stage all changes",
+              "default": false
+            }
+          },
+          "required": ["message"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Git Push Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "GitPush",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "remote": {
+              "type": "string",
+              "description": "Remote name",
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "branch": {
+              "type": "string",
+              "description": "Branch name",
+              "pattern": "^[a-zA-Z0-9/_-]+$"
+            },
+            "set_upstream": {
+              "type": "boolean",
+              "description": "Whether to set upstream",
+              "default": false
+            }
+          },
+          "required": ["remote", "branch"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Git Pull Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "GitPull",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "remote": {
+              "type": "string",
+              "description": "Remote name",
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "branch": {
+              "type": "string",
+              "description": "Branch name",
+              "pattern": "^[a-zA-Z0-9/_-]+$"
+            }
+          },
+          "required": ["remote", "branch"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Process Execute Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "ProcessExecute",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "Command to execute",
+              "minLength": 1
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Command arguments"
+            },
+            "cwd": {
+              "type": "string",
+              "description": "Working directory",
+              "pattern": "^[^\\0]+$"
+            },
+            "env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Environment variables"
+            }
+          },
+          "required": ["command"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Worktree Create Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "WorktreeCreate",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "branch": {
+              "type": "string",
+              "description": "Branch name for the worktree",
+              "pattern": "^[a-zA-Z0-9/_-]+$"
+            },
+            "base_path": {
+              "type": "string",
+              "description": "Base path for the worktree",
+              "pattern": "^[^\\0]+$"
+            }
+          },
+          "required": ["branch"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Worktree Switch Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "WorktreeSwitch",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "worktree": {
+              "type": "string",
+              "description": "Worktree name",
+              "pattern": "^[a-zA-Z0-9/_-]+$"
+            }
+          },
+          "required": ["worktree"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Worktree Remove Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "WorktreeRemove",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "worktree": {
+              "type": "string",
+              "description": "Worktree name",
+              "pattern": "^[a-zA-Z0-9/_-]+$"
+            },
+            "with_branch": {
+              "type": "boolean",
+              "description": "Whether to also remove the branch",
+              "default": false
+            }
+          },
+          "required": ["worktree"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Schema Validate Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "SchemaValidate",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "file_path": {
+              "type": "string",
+              "description": "File path to validate",
+              "pattern": "^[^\\0]+$"
+            },
+            "schema_path": {
+              "type": "string",
+              "description": "Schema to validate against",
+              "pattern": "^[^\\0]+$"
+            },
+            "options": {
+              "type": "object",
+              "properties": {
+                "strict": {
+                  "type": "boolean",
+                  "description": "Whether to be strict about validation"
+                },
+                "additional_properties": {
+                  "type": "boolean",
+                  "description": "Whether to allow additional properties"
+                },
+                "custom_rules": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "Custom validation rules"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["file_path", "schema_path"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    },
+    {
+      "title": "Docs Generate Event",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "DocsGenerate",
+          "description": "Event type identifier"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "output_dir": {
+              "type": "string",
+              "description": "Output directory",
+              "pattern": "^[^\\0]+$"
+            },
+            "format": {
+              "type": "string",
+              "enum": ["markdown", "html", "json", "yaml"],
+              "description": "Documentation format",
+              "default": "markdown"
+            },
+            "include_examples": {
+              "type": "boolean",
+              "description": "Whether to include examples",
+              "default": true
+            }
+          },
+          "required": ["output_dir"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["type", "data"]
+    }
+  ],
+  "additionalProperties": false
+} 

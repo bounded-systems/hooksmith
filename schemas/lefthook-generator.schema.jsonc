@@ -1,0 +1,602 @@
+{
+  "$id": "https://hooksmith.dev/schemas/lefthook-generator.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "env-var": {
+      "additionalProperties": false,
+      "properties": {
+        "name": "string",
+        "value": "string"
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "type": "object"
+    },
+    "git-info": {
+      "additionalProperties": false,
+      "properties": {
+        "current-branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "default-branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "git-version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "is-bare": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "is-shallow": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "repo-name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "repo-root": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "repo-url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "global-settings": {
+      "additionalProperties": false,
+      "properties": {
+        "colors": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "git-hooks-dir": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "max-parallel": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "only-authors": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-branches": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-changed": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "only-commits": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-dirs": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-dirs-changed": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-emails": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-extensions": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-extensions-changed": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-files": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-files-changed": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-messages": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-patterns": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-patterns-changed": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "only-staged": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "only-tags": {
+          "type": [
+            {
+              "items": "string",
+              "type": "array"
+            },
+            "null"
+          ]
+        },
+        "parallel": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "skip-output": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "stop-on-failure": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "hook-config": {
+      "additionalProperties": false,
+      "properties": {
+        "command": "string",
+        "depends-on": {
+          "items": "string",
+          "type": "array"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "enabled": "boolean",
+        "env": {
+          "items": {
+            "$ref": "#/definitions/env-var"
+          },
+          "type": "array"
+        },
+        "hook-type": "string",
+        "name": "string",
+        "priority": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "skip": {
+          "items": {
+            "$ref": "#/definitions/skip-condition"
+          },
+          "type": "array"
+        },
+        "stage": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tags": {
+          "items": "string",
+          "type": "array"
+        },
+        "timeout": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "working-dir": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "hook-type",
+        "command",
+        "enabled",
+        "tags",
+        "env",
+        "depends-on",
+        "skip"
+      ],
+      "type": "object"
+    },
+    "hook-type-info": {
+      "additionalProperties": false,
+      "properties": {
+        "description": "string",
+        "documentation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "examples": {
+          "items": "string",
+          "type": "array"
+        },
+        "name": "string",
+        "stage": "string",
+        "triggers": {
+          "items": "string",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "stage",
+        "triggers",
+        "examples"
+      ],
+      "type": "object"
+    },
+    "lefthook-config": {
+      "additionalProperties": false,
+      "properties": {
+        "git-info": {
+          "$ref": "#/definitions/git-info"
+        },
+        "global-settings": {
+          "$ref": "#/definitions/global-settings"
+        },
+        "hooks": {
+          "items": {
+            "$ref": "#/definitions/hook-config"
+          },
+          "type": "array"
+        },
+        "include-comments": "boolean",
+        "output-path": "string",
+        "strict-mode": "boolean",
+        "validate-schema": "boolean"
+      },
+      "required": [
+        "output-path",
+        "hooks",
+        "validate-schema",
+        "global-settings",
+        "git-info",
+        "include-comments",
+        "strict-mode"
+      ],
+      "type": "object"
+    },
+    "lefthook-result": {
+      "additionalProperties": false,
+      "properties": {
+        "config-content": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "duration-ms": "integer",
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hooks-count": "integer",
+        "output-path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "success": "boolean",
+        "validation-errors": {
+          "items": "string",
+          "type": "array"
+        },
+        "validation-warnings": {
+          "items": "string",
+          "type": "array"
+        }
+      },
+      "required": [
+        "success",
+        "hooks-count",
+        "validation-errors",
+        "validation-warnings",
+        "duration-ms"
+      ],
+      "type": "object"
+    },
+    "skip-condition": {
+      "additionalProperties": false,
+      "properties": {
+        "condition-type": {
+          "$ref": "#/definitions/skip-condition-type"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "value": "string"
+      },
+      "required": [
+        "condition-type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "skip-condition-type": {
+      "enum": [
+        "file-pattern",
+        "branch-pattern",
+        "commit-message",
+        "merge-commit",
+        "no-files-changed",
+        "files-changed",
+        "env-var",
+        "command"
+      ],
+      "type": "string"
+    },
+    "validation-config": {
+      "additionalProperties": false,
+      "properties": {
+        "config-content": "string",
+        "schema": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validate-commands": "boolean",
+        "validate-hooks": "boolean",
+        "validate-schema": "boolean",
+        "validate-syntax": "boolean"
+      },
+      "required": [
+        "config-content",
+        "validate-syntax",
+        "validate-schema",
+        "validate-hooks",
+        "validate-commands"
+      ],
+      "type": "object"
+    },
+    "validation-error": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": "string",
+        "suggestion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    },
+    "validation-info": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": "string"
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    },
+    "validation-result": {
+      "additionalProperties": false,
+      "properties": {
+        "duration-ms": "integer",
+        "errors": {
+          "items": {
+            "$ref": "#/definitions/validation-error"
+          },
+          "type": "array"
+        },
+        "info": {
+          "items": {
+            "$ref": "#/definitions/validation-info"
+          },
+          "type": "array"
+        },
+        "success": "boolean",
+        "warnings": {
+          "items": {
+            "$ref": "#/definitions/validation-warning"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "success",
+        "errors",
+        "warnings",
+        "info",
+        "duration-ms"
+      ],
+      "type": "object"
+    },
+    "validation-warning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "message": "string",
+        "suggestion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "message"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "Schema for the lefthook-generator WIT component interface",
+  "title": "Lefthook Generator Component Schema",
+  "type": "object"
+}

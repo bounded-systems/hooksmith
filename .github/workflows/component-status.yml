@@ -1,0 +1,237 @@
+name: Component Status Check
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-xtask:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      
+      - name: Cache xtask build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: xtask-${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            xtask-${{ runner.os }}-${{ matrix.target }}-
+            xtask-${{ runner.os }}-
+      
+      - name: Build xtask
+        run: |
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            cargo build -p xtask --target ${{ matrix.target }}
+          else
+            cargo build -p xtask
+          fi
+      
+      - name: Upload xtask artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xtask-${{ runner.os }}-${{ matrix.target }}
+          path: target/${{ matrix.target }}/debug/xtask
+          retention-days: 1
+
+  check-component-status:
+    runs-on: ubuntu-latest
+    needs: build-xtask
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+      
+      - name: Download xtask artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: xtask-ubuntu-latest-x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/debug/
+      
+      - name: Make xtask executable
+        run: chmod +x target/x86_64-unknown-linux-gnu/debug/xtask
+      
+      - name: Cache cargo component builds
+        uses: actions/cache@v4
+        with:
+          path: |
+            target/wasm32-wasip2
+            ~/.cargo/bin
+          key: component-builds-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            component-builds-
+      
+      - name: Install cargo-component
+        run: |
+          cargo install cargo-component --version 0.12.0
+      
+      - name: Check component status
+        run: |
+          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --format json > component-status.json
+      
+      - name: Upload component status
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-status
+          path: component-status.json
+          retention-days: 7
+
+  build-components:
+    runs-on: ubuntu-latest
+    needs: build-xtask
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+      
+      - name: Download xtask artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: xtask-ubuntu-latest-x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/debug/
+      
+      - name: Make xtask executable
+        run: chmod +x target/x86_64-unknown-linux-gnu/debug/xtask
+      
+      - name: Cache cargo component builds
+        uses: actions/cache@v4
+        with:
+          path: |
+            target/wasm32-wasip2
+            ~/.cargo/bin
+          key: component-builds-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            component-builds-
+      
+      - name: Install cargo-component
+        run: |
+          cargo install cargo-component --version 0.12.0
+      
+      - name: Build WIT components
+        run: |
+          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --build-components --format json > component-builds.json
+      
+      - name: Upload component builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-builds
+          path: component-builds.json
+          retention-days: 7
+
+  test-native-crates:
+    runs-on: ubuntu-latest
+    needs: build-xtask
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Download xtask artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: xtask-ubuntu-latest-x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/debug/
+      
+      - name: Make xtask executable
+        run: chmod +x target/x86_64-unknown-linux-gnu/debug/xtask
+      
+      - name: Cache native builds
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: native-builds-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            native-builds-
+      
+      - name: Test native crates
+        run: |
+          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --test-native --format json > native-tests.json
+      
+      - name: Upload native tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-tests
+          path: native-tests.json
+          retention-days: 7
+
+  status-summary:
+    runs-on: ubuntu-latest
+    needs: [check-component-status, build-components, test-native-crates]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Download xtask artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: xtask-ubuntu-latest-x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/debug/
+      
+      - name: Make xtask executable
+        run: chmod +x target/x86_64-unknown-linux-gnu/debug/xtask
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      
+      - name: Generate status summary
+        run: |
+          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --summary --format markdown > status-summary.md
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('status-summary.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Component Status Summary\n\n${summary}`
+            });
+      
+      - name: Update status badge
+        run: |
+          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --badge > gen/status-badge.json
+      
+      - name: Commit status badge
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add gen/status-badge.json
+          git commit -m "Update component status badge" || echo "No changes to commit"
+          git push 
