@@ -5,6 +5,8 @@
 
 A powerful Rust-based tool for building and managing Git hooks with WASM components.
 
+[![Component Status](https://img.shields.io/badge/component--status-checking-blue?style=flat-square)](https://github.com/hooksmith/hooksmith/actions/workflows/component-status.yml)
+
 ## Features
 
 - **WASM Integration**: Build hooks as WebAssembly components
@@ -12,12 +14,16 @@ A powerful Rust-based tool for building and managing Git hooks with WASM compone
 - **Lefthook Integration**: Seamless integration with Lefthook
 - **Structured Logging**: Comprehensive event-driven logging
 - **Code Generation**: Automated file generation and validation
+- **Component Status**: Real-time monitoring of WIT components and native crates
 
 ## Quick Start
 
 ```bash
 # Install
 cargo install hooksmith
+
+# Check component status
+cargo run -p xtask -- component-status
 
 # Generate all files
 cargo xtask gen-all
@@ -29,6 +35,18 @@ lefthook run pre-commit
 ## Development
 
 This project uses a unified generated file system where all generated files come from JSONC source files in `generated-sources/`. This ensures deterministic regeneration and consistent checksums.
+
+### Component Architecture
+
+Hooksmith follows a hybrid architecture with:
+- **WIT Components**: Pure computation components compiled to WebAssembly
+- **Native Crates**: System operations and orchestration
+- **Event-Driven Communication**: Host-mediated messaging between components
+
+Check component status with:
+```bash
+cargo run -p xtask -- component-status --format table
+```
 
 ## License
 

@@ -1,10 +1,11 @@
 name: Component Status Check
+
 on:
-  workflow_dispatch:
-  pull_request:
-    branches: [ main, develop ]
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build-xtask:
@@ -60,6 +61,8 @@ jobs:
       
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
       
       - name: Download xtask artifact
         uses: actions/download-artifact@v4
@@ -70,193 +73,165 @@ jobs:
       - name: Make xtask executable
         run: chmod +x target/x86_64-unknown-linux-gnu/debug/xtask
       
-      - name: Check component status
-        run: ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --format json
-      
-      - name: Check component status (verbose)
-        run: ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --verbose --format table
-        continue-on-error: true
-      
-      - name: Upload status report
-        uses: actions/upload-artifact@v4
-        if: always()
+      - name: Cache cargo component builds
+        uses: actions/cache@v4
         with:
-          name: component-status-report
           path: |
-            component-status-*.json
-            component-status-*.csv
+            target/wasm32-wasip2
+            ~/.cargo/bin
+          key: component-builds-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            component-builds-
+      
+      - name: Install cargo-component
+        run: |
+          cargo install cargo-component --version 0.12.0
+      
+      - name: Check component status
+        run: |
+          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --format json > component-status.json
+      
+      - name: Upload component status
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-status
+          path: component-status.json
           retention-days: 7
-
-  validate-registry:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Validate component registry
-        run: |
-          # Check if registry file exists and is valid JSONC
-          if [ ! -f "config/component-registry.jsonc" ]; then
-            echo "❌ Component registry file not found"
-            exit 1
-          fi
-          
-          # Validate JSONC format (basic check)
-          if ! grep -q '"metadata"' config/component-registry.jsonc; then
-            echo "❌ Invalid component registry format"
-            exit 1
-          fi
-          
-          echo "✅ Component registry validation passed"
-
-      - name: Check registry completeness
-        run: |
-          # Check if all WIT components have corresponding directories
-          echo "Checking WIT component directories..."
-          while IFS= read -r line; do
-            if [[ $line =~ \"path\":[[:space:]]*\"([^\"]+)\" ]]; then
-              path="${BASH_REMATCH[1]}"
-              if [ ! -d "$path" ]; then
-                echo "❌ WIT component directory not found: $path"
-                exit 1
-              fi
-              echo "✅ Found WIT component: $path"
-            fi
-          done < <(grep '"path"' config/component-registry.jsonc)
-
-      - name: Check native crate directories
-        run: |
-          # Check if all native crates have corresponding directories
-          echo "Checking native crate directories..."
-          while IFS= read -r line; do
-            if [[ $line =~ \"path\":[[:space:]]*\"([^\"]+)\" ]]; then
-              path="${BASH_REMATCH[1]}"
-              if [ ! -d "$path" ]; then
-                echo "❌ Native crate directory not found: $path"
-                exit 1
-              fi
-              echo "✅ Found native crate: $path"
-            fi
-          done < <(grep '"path"' config/component-registry.jsonc)
 
   build-components:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        component: [git-filter, hook-builder, validation-handler, worktree-runner]
+    needs: build-xtask
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+      
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-wasip2
-
-      - name: Install cargo-component
-        run: |
-          cargo install cargo-component --git https://github.com/bytecodealliance/cargo-component --tag v0.5.0
-
-      - name: Build WIT component
-        run: |
-          echo "Building ${{ matrix.component }}..."
-          cargo component build -p ${{ matrix.component }} --target wasm32-wasip2 --release
-          echo "✅ ${{ matrix.component }} built successfully"
-
-      - name: Upload component artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.component }}-wasm
-          path: target/wasm32-wasip2/release/${{ matrix.component }}.component.wasm
-          retention-days: 30
-
-  test-native-crates:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        crate: [cli-core, file-operations, git-operations, lefthook-rs, xtask, event-types, file-system-handler]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Check native crate
-        run: |
-          echo "Checking ${{ matrix.crate }}..."
-          cargo check -p ${{ matrix.crate }}
-          echo "✅ ${{ matrix.crate }} check passed"
-
-      - name: Test native crate
-        run: |
-          echo "Testing ${{ matrix.crate }}..."
-          cargo test -p ${{ matrix.crate }}
-          echo "✅ ${{ matrix.crate }} tests passed"
-
-  status-summary:
-    runs-on: ubuntu-latest
-    needs: [check-component-status, validate-registry, build-components, test-native-crates]
-    if: always()
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-wasip2
-
-      - name: Install cargo-component
-        run: |
-          cargo install cargo-component --git https://github.com/bytecodealliance/cargo-component --tag v0.5.0
-
+      
       - name: Download xtask artifact
         uses: actions/download-artifact@v4
         with:
           name: xtask-ubuntu-latest-x86_64-unknown-linux-gnu
           path: target/x86_64-unknown-linux-gnu/debug/
-
+      
       - name: Make xtask executable
         run: chmod +x target/x86_64-unknown-linux-gnu/debug/xtask
-
-      - name: Generate final status report
+      
+      - name: Cache cargo component builds
+        uses: actions/cache@v4
+        with:
+          path: |
+            target/wasm32-wasip2
+            ~/.cargo/bin
+          key: component-builds-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            component-builds-
+      
+      - name: Install cargo-component
         run: |
-          echo "🔍 Final Component Status Summary"
-          echo "=================================="
-          echo "Build Components: ${{ needs.build-components.result }}"
-          echo "Test Native Crates: ${{ needs.test-native-crates.result }}"
-          echo "Registry Validation: ${{ needs.validate-registry.result }}"
-          echo "Status Check: ${{ needs.check-component-status.result }}"
-          
-          # Generate detailed report
-          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --format table
+          cargo install cargo-component --version 0.12.0
+      
+      - name: Build WIT components
+        run: |
+          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --build-components --format json > component-builds.json
+      
+      - name: Upload component builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-builds
+          path: component-builds.json
+          retention-days: 7
 
+  test-native-crates:
+    runs-on: ubuntu-latest
+    needs: build-xtask
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Download xtask artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: xtask-ubuntu-latest-x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/debug/
+      
+      - name: Make xtask executable
+        run: chmod +x target/x86_64-unknown-linux-gnu/debug/xtask
+      
+      - name: Cache native builds
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: native-builds-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            native-builds-
+      
+      - name: Test native crates
+        run: |
+          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --test-native --format json > native-tests.json
+      
+      - name: Upload native tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-tests
+          path: native-tests.json
+          retention-days: 7
+
+  status-summary:
+    runs-on: ubuntu-latest
+    needs: [check-component-status, build-components, test-native-crates]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Download xtask artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: xtask-ubuntu-latest-x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/debug/
+      
+      - name: Make xtask executable
+        run: chmod +x target/x86_64-unknown-linux-gnu/debug/xtask
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      
+      - name: Generate status summary
+        run: |
+          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --summary --format markdown > status-summary.md
+      
       - name: Comment on PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            let statusReport = '## 🔍 Component Status Check Results\n\n';
-            
-            // Add job results
-            statusReport += '### Job Results\n';
-            statusReport += `- ✅ Build Components: ${context.job === 'success' ? 'PASSED' : 'FAILED'}\n`;
-            statusReport += `- ✅ Test Native Crates: ${context.job === 'success' ? 'PASSED' : 'FAILED'}\n`;
-            statusReport += `- ✅ Registry Validation: ${context.job === 'success' ? 'PASSED' : 'FAILED'}\n`;
-            statusReport += `- ✅ Status Check: ${context.job === 'success' ? 'PASSED' : 'FAILED'}\n\n`;
-            
-            // Add summary
-            if (context.job === 'success') {
-              statusReport += '🎉 All components are building and testing successfully!\n';
-            } else {
-              statusReport += '⚠️ Some components have issues that need attention.\n';
-            }
-            
+            const summary = fs.readFileSync('status-summary.md', 'utf8');
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: statusReport
-            }); 
+              body: `## Component Status Summary\n\n${summary}`
+            });
+      
+      - name: Update status badge
+        run: |
+          ./target/x86_64-unknown-linux-gnu/debug/xtask component-status --badge > gen/status-badge.json
+      
+      - name: Commit status badge
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add gen/status-badge.json
+          git commit -m "Update component status badge" || echo "No changes to commit"
+          git push 

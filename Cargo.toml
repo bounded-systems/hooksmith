@@ -28,8 +28,13 @@ members = [
     "crates/components/worktree-runner",
     "crates/components/git-filter",
     "crates/components/hook-builder",
+    "crates/components/validation-handler",
     "crates/lefthook-rs",
     "crates/xtask",
+    "crates/event-types",
+    "crates/file-system-handler",
+    "crates/git-operations",
+    "crates/file-operations",
 ]
 
 [workspace.package]
