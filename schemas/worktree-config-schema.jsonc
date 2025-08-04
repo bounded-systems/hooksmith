@@ -1,0 +1,312 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/worktree-config-schema.json",
+  "title": "Worktree Configuration Schema",
+  "description": "Schema for .worktree-config.jsonc configuration files used in Hooksmith worktree management",
+  "type": "object",
+  "properties": {
+    "worktree_base": {
+      "type": "string",
+      "description": "Base directory for worktrees relative to the root repository",
+      "default": "../",
+      "pattern": "^(../|./|[a-zA-Z0-9/_-]+)$"
+    },
+    "worktree_template": {
+      "type": "string",
+      "description": "Template pattern for worktree directory naming",
+      "default": "{repo}-{branch}",
+      "pattern": "^\\{[a-zA-Z_]+\\}(-[a-zA-Z_]+)*$"
+    },
+    "run_setup": {
+      "type": "boolean",
+      "description": "Whether to run setup commands after worktree creation",
+      "default": true
+    },
+    "setup_commands": {
+      "type": "array",
+      "description": "Commands to run after worktree creation",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "cargo build",
+        "cargo xtask gen-all --validate",
+        "spin build || true"
+      ]
+    },
+    "copy_env": {
+      "type": "boolean",
+      "description": "Whether to copy environment files to new worktrees",
+      "default": true
+    },
+    "env_files": {
+      "type": "array",
+      "description": "Environment files to copy to new worktrees",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        ".env.example",
+        ".env",
+        ".envrc",
+        "hooksmith.toml",
+        ".worktree-config.jsonc"
+      ]
+    },
+    "git_aliases": {
+      "type": "object",
+      "description": "Git aliases to create for worktree management",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {
+        "wtr": "worktree remove",
+        "wtl": "worktree list",
+        "wtc": "worktree create",
+        "wt": "worktree"
+      }
+    },
+    "existing_worktrees": {
+      "type": "object",
+      "description": "Mapping of existing worktree branches to their paths",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "branch_patterns": {
+      "type": "object",
+      "description": "Configuration for different branch patterns",
+      "additionalProperties": {
+        "$ref": "#/definitions/branchPattern"
+      },
+      "default": {
+        "feature/*": {
+          "template": "{repo}-{branch}",
+          "setup": ["cargo build", "cargo xtask gen-all"],
+          "labels": ["feature", "development"]
+        },
+        "bugfix/*": {
+          "template": "{repo}-{branch}",
+          "setup": ["cargo build"],
+          "labels": ["bugfix", "maintenance"]
+        },
+        "hotfix/*": {
+          "template": "{repo}-{branch}",
+          "setup": ["cargo build"],
+          "labels": ["hotfix", "urgent"]
+        }
+      }
+    },
+    "integration": {
+      "$ref": "#/definitions/integrationConfig"
+    },
+    "cursor_integration": {
+      "$ref": "#/definitions/cursorIntegrationConfig"
+    },
+    "workbloom_metadata": {
+      "$ref": "#/definitions/workbloomMetadataConfig"
+    }
+  },
+  "definitions": {
+    "branchPattern": {
+      "type": "object",
+      "properties": {
+        "template": {
+          "type": "string",
+          "description": "Template for worktree naming",
+          "pattern": "^\\{[a-zA-Z_]+\\}(-[a-zA-Z_]+)*$"
+        },
+        "setup": {
+          "type": "array",
+          "description": "Setup commands for this pattern",
+          "items": {
+            "type": "string"
+          }
+        },
+        "labels": {
+          "type": "array",
+          "description": "Semantic labels for this pattern",
+          "items": {
+            "type": "string",
+            "enum": [
+              "feature",
+              "bugfix",
+              "hotfix",
+              "development",
+              "maintenance",
+              "urgent",
+              "spin",
+              "integration",
+              "testing",
+              "documentation",
+              "refactoring",
+              "performance",
+              "security"
+            ]
+          }
+        }
+      },
+      "required": ["template", "setup", "labels"]
+    },
+    "integrationConfig": {
+      "type": "object",
+      "properties": {
+        "lefthook": {
+          "type": "boolean",
+          "description": "Enable Lefthook integration",
+          "default": true
+        },
+        "xtask": {
+          "type": "boolean",
+          "description": "Enable xtask integration",
+          "default": true
+        },
+        "wasm_components": {
+          "type": "boolean",
+          "description": "Enable WASM components integration",
+          "default": true
+        }
+      },
+      "default": {
+        "lefthook": true,
+        "xtask": true,
+        "wasm_components": true
+      }
+    },
+    "cursorIntegrationConfig": {
+      "type": "object",
+      "properties": {
+        "auto_open_cursor": {
+          "type": "boolean",
+          "description": "Automatically open worktrees in Cursor",
+          "default": true
+        },
+        "cursor_config_template": {
+          "type": "string",
+          "description": "Cursor project configuration template",
+          "default": "worktree_integration"
+        },
+        "shell_aliases": {
+          "type": "object",
+          "description": "Shell aliases for Cursor integration",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {
+            "cbloom": "wb bloom $1 && cursor ./$1",
+            "cswitch": "wb switch $1 && cursor ."
+          }
+        },
+        "env_vars": {
+          "type": "object",
+          "description": "Environment variables for Cursor integration",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {
+            "WORKTREE_MANAGER": "workbloom",
+            "CURSOR_INTEGRATION": "enabled"
+          }
+        }
+      },
+      "default": {
+        "auto_open_cursor": true,
+        "cursor_config_template": "worktree_integration",
+        "shell_aliases": {
+          "cbloom": "wb bloom $1 && cursor ./$1",
+          "cswitch": "wb switch $1 && cursor ."
+        },
+        "env_vars": {
+          "WORKTREE_MANAGER": "workbloom",
+          "CURSOR_INTEGRATION": "enabled"
+        }
+      }
+    },
+    "workbloomMetadataConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable metadata tracking",
+          "default": true
+        },
+        "metadata_dir": {
+          "type": "string",
+          "description": "Directory for metadata storage",
+          "default": ".wb"
+        },
+        "labels_config": {
+          "type": "string",
+          "description": "Configuration file for semantic labels",
+          "default": "labels.toml"
+        },
+        "status_tracking": {
+          "type": "boolean",
+          "description": "Enable status tracking",
+          "default": true
+        }
+      },
+      "default": {
+        "enabled": true,
+        "metadata_dir": ".wb",
+        "labels_config": "labels.toml",
+        "status_tracking": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "worktree_base": "../",
+      "worktree_template": "{repo}-{branch}",
+      "run_setup": true,
+      "setup_commands": [
+        "cargo build",
+        "cargo xtask gen-all --validate",
+        "spin build || true"
+      ],
+      "copy_env": true,
+      "env_files": [
+        ".env.example",
+        ".env",
+        ".envrc",
+        "hooksmith.toml",
+        ".worktree-config.jsonc"
+      ],
+      "existing_worktrees": {
+        "feature/spin-integration": "../hooksmith-spin",
+        "feature/spin-integration-v2": "../hooksmith-spin-integration"
+      },
+      "branch_patterns": {
+        "feature/*": {
+          "template": "{repo}-{branch}",
+          "setup": ["cargo build", "cargo xtask gen-all"],
+          "labels": ["feature", "development"]
+        }
+      },
+      "integration": {
+        "lefthook": true,
+        "xtask": true,
+        "wasm_components": true
+      },
+      "cursor_integration": {
+        "auto_open_cursor": true,
+        "cursor_config_template": "worktree_integration",
+        "shell_aliases": {
+          "cbloom": "wb bloom $1 && cursor ./$1",
+          "cswitch": "wb switch $1 && cursor ."
+        },
+        "env_vars": {
+          "WORKTREE_MANAGER": "workbloom",
+          "CURSOR_INTEGRATION": "enabled"
+        }
+      },
+      "workbloom_metadata": {
+        "enabled": true,
+        "metadata_dir": ".wb",
+        "labels_config": "labels.toml",
+        "status_tracking": true
+      }
+    }
+  ]
+} 
