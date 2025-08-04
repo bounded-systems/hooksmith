@@ -565,7 +565,7 @@ impl FileOperationsHandler {
                 format!("{:x}", hasher.finalize())
             }
             "sha1" => {
-                use sha1::{Sha1, Digest as _};
+                use sha1::{Sha1, Digest};
                 let mut hasher = Sha1::new();
                 let mut buffer = [0; 4096];
                 loop {
@@ -576,7 +576,7 @@ impl FileOperationsHandler {
                 format!("{:x}", hasher.finalize())
             }
             "md5" => {
-                use md5::{Md5, Digest as _};
+                use md5::{Md5, Digest};
                 let mut hasher = Md5::new();
                 let mut buffer = [0; 4096];
                 loop {

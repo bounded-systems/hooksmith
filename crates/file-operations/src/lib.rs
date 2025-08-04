@@ -257,14 +257,14 @@ pub struct FileInfo {
     pub path: String,
     pub is_directory: bool,
     pub size: Option<u64>,
-    pub modified: Option<DateTime<Utc>>,
+    pub modified: Option<DateTimeUtc>,
 }
 
 /// Event metadata
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct EventMetadata {
     pub working_directory: Option<String>,
-    pub timestamp: Option<DateTime<Utc>>,
+    pub timestamp: Option<DateTimeUtc>,
     pub session_id: Option<String>,
 }
 
