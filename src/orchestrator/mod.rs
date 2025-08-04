@@ -8,6 +8,7 @@ pub mod components;
 pub mod config;
 pub mod router;
 pub mod runtime;
+pub mod event_bus;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -18,6 +19,7 @@ use self::components::ComponentHandle;
 use self::config::OrchestratorConfig;
 use self::router::CommandRouter;
 use self::runtime::WasmRuntime;
+use self::event_bus::{EventBusManager, EventBusManagerBuilder};
 
 // Import types from components for now (in a real implementation, these would come from WIT)
 /// Metadata about a build operation
