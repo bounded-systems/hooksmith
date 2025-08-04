@@ -76,3 +76,4 @@ tests/*.disabled
 
 # Worktree directories
 worktree-*/
+worktrees/
