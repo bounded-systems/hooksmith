@@ -18,17 +18,19 @@ use std::time::Instant;
 
 // Newtype wrapper for DateTime<Utc> to implement JsonSchema
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct DateTimeUtc(DateTime<Utc>);
+pub struct DateTimeUtc(String);
 
 impl From<DateTime<Utc>> for DateTimeUtc {
     fn from(dt: DateTime<Utc>) -> Self {
-        DateTimeUtc(Some(dt))
+        DateTimeUtc(dt.to_rfc3339())
     }
 }
 
 impl From<DateTimeUtc> for DateTime<Utc> {
     fn from(dt: DateTimeUtc) -> Self {
-        dt.0.unwrap_or_else(|| Utc::now())
+        DateTime::parse_from_rfc3339(&dt.0)
+            .unwrap_or_else(|_| Utc::now().into())
+            .with_timezone(&Utc)
     }
 }
 

@@ -407,6 +407,7 @@ impl GitOperationsEventHandler {
 
 impl EventHandler for GitOperationsEventHandler {
     fn handle_event(&mut self, event: &HooksmithEvent) -> Result<()> {
+        let runtime = tokio::runtime::Runtime::new()?;
         if !self.should_handle(event) {
             return Ok(());
         }

@@ -51,7 +51,7 @@ impl GitOperationsHandler {
     pub async fn handle_git_push(&mut self, req: GitPushRequest) -> Result<GitOperationEvent> {
         let repo = self.open_repository()?;
         let remote_name = req.remote.unwrap_or_else(|| "origin".to_string());
-        let branch_name = req.branch.unwrap_or_else(|| self.get_current_branch()?);
+        let branch_name = req.branch.unwrap_or_else(|| self.get_current_branch().unwrap());
         
         let mut remote = repo.find_remote(&remote_name)?;
         let mut callbacks = git2::RemoteCallbacks::new();
@@ -85,7 +85,7 @@ impl GitOperationsHandler {
     pub async fn handle_git_pull(&mut self, req: GitPullRequest) -> Result<GitOperationEvent> {
         let repo = self.open_repository()?;
         let remote_name = req.remote.unwrap_or_else(|| "origin".to_string());
-        let branch_name = req.branch.unwrap_or_else(|| self.get_current_branch()?);
+        let branch_name = req.branch.unwrap_or_else(|| self.get_current_branch().unwrap());
         
         let mut remote = repo.find_remote(&remote_name)?;
         remote.fetch(&[&branch_name], None, None)?;
@@ -105,7 +105,7 @@ impl GitOperationsHandler {
                 duration_ms: None,
                 error: None,
             }))
-        } else if analysis.0.is_fastforward() {
+        } else if analysis.0.is_fast_forward() {
             let refname = format!("refs/heads/{}", branch_name);
             let mut reference = repo.find_reference(&refname)?;
             reference.set_target(fetch_commit.id(), "Fast-forward")?;
@@ -207,7 +207,7 @@ impl GitOperationsHandler {
         let message = req.message.unwrap_or_else(|| "Note added by Hooksmith".to_string());
         let signature = self.get_default_signature()?;
         
-        let note_id = repo.note(&signature, &signature, &obj, &message, false)?;
+        let note_id = repo.note(&signature, &signature, None, obj.id(), &message, false)?;
         
         Ok(GitOperationEvent::GitNoteAddResult(GitNoteAddResult {
             request_id: req.request_id,
@@ -224,7 +224,7 @@ impl GitOperationsHandler {
         let oid = git2::Oid::from_str(&req.object)?;
         let obj = repo.find_object(oid, None)?;
         
-        let note = repo.find_note(&obj, None)?;
+        let note = repo.find_note(None, obj.id())?;
         let content = note.message().unwrap_or("").to_string();
         
         Ok(GitOperationEvent::GitNoteGetResult(GitNoteGetResult {
