@@ -387,10 +387,11 @@ fn get_worktree_list() -> Result<Vec<WorktreeInfo>> {
                 branch: String::new(),
             });
         } else if line.starts_with("branch ") && current_worktree.is_some() {
-            // Extract branch name
+            // Extract branch name and clean it up
             let branch = line[8..].to_string(); // Remove "branch " prefix
+            let clean_branch = branch.replace("refs/heads/", "").replace("efs/heads/", "");
             if let Some(worktree) = &mut current_worktree {
-                worktree.branch = branch;
+                worktree.branch = clean_branch;
             }
         }
     }
@@ -404,6 +405,12 @@ fn get_worktree_list() -> Result<Vec<WorktreeInfo>> {
 }
 
 fn check_worktree_changes(worktree_path: &str) -> Result<bool> {
+    // Check if worktree directory exists
+    if !std::path::Path::new(worktree_path).exists() {
+        println!("   ⚠️  Worktree directory does not exist: {}", worktree_path);
+        return Ok(false);
+    }
+
     let output = Command::new("git")
         .args(["status", "--porcelain"])
         .current_dir(worktree_path)
