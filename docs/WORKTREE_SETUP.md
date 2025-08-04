@@ -1,138 +1,124 @@
-# Worktree Management Setup for Hooksmith
+# Worktree Management Setup
 
-This document describes the worktree management setup for the Hooksmith project, including tool installation, configuration, and usage.
+This document describes how to set up and use the worktree management system in Hooksmith.
 
 ## Overview
 
-Hooksmith uses a comprehensive worktree management system that integrates multiple tools and provides a unified interface through the `xtask` command-line tool. This setup enables efficient development workflows with isolated environments for different features and branches.
+The worktree management system provides a unified interface for creating, managing, and switching between Git worktrees. It supports multiple worktree management tools with automatic fallback and integrates seamlessly with the existing Hooksmith architecture.
 
 ## Available Tools
 
-### 1. wtp (Recommended)
-- **Description**: Go-based CLI with hooks and automation
-- **Features**: Post-create hooks, configuration files, templating
-- **Installation**: `cargo install wtp`
-- **Configuration**: `.wtp.yml`
+The system supports multiple worktree management tools in order of preference:
 
-### 2. wt (git-wt)
-- **Description**: Minimalist CLI for short aliases
-- **Features**: Simple commands, fast startup
-- **Installation**: `cargo install git-wt`
-- **Configuration**: Built-in defaults
-
-### 3. Git Native
-- **Description**: Native Git worktree commands
-- **Features**: Always available, full Git integration
-- **Installation**: Included with Git
-- **Configuration**: Git configuration
+1. **wtp** - Git worktree management with hooks and automation (primary)
+2. **gwtr** - Simple Git worktree manager
+3. **workbloom** - Git worktree management with automatic file copying
+4. **git** - Native Git worktree commands (fallback)
 
 ## Quick Setup
 
 ### 1. Install Tools
 
 ```bash
-# Install recommended tools
+# Install all recommended worktree management tools
 cargo xtask worktree setup --install-tools
-
-# Or install manually
-cargo install wtp
-cargo install git-wt
 ```
 
-### 2. Create Configuration
+### 2. Create Configuration Files
 
 ```bash
-# Create all configuration files
+# Create configuration files for worktree management
 cargo xtask worktree setup --config
-
-# Or create manually
-cargo xtask worktree setup --all
 ```
 
-### 3. Setup Git Aliases
+This creates:
+- `.wtp.yml` - Configuration for worktree tools with hooks
+- `.worktree-config.jsonc` - Hooksmith-specific worktree configuration
+
+### 3. Setup Git Aliases (Optional)
 
 ```bash
-# Setup Git aliases for convenience
+# Setup Git aliases for worktree commands
 cargo xtask worktree setup --aliases
 ```
 
-## Configuration Files
+## Configuration
 
 ### .wtp.yml
-Main configuration file for wtp tool:
+
+The `.wtp.yml` file configures worktree management with declarative settings:
 
 ```yaml
-version: 1.0
+# .wtp.yml
+wtp_version: 1
 
 defaults:
-  base_dir: worktrees
+  base_path: ../
+  template: '{repo}-{branch}'
   post_create:
-    - type: copy
-      from: .env.example
-      to: .env
-    - type: command
-      command: cargo build
-    - type: command
-      command: cargo xtask gen-all
+    - echo "Setting up worktree: {worktree_path}"
+    - cd {worktree_path} && cargo build
+    - cd {worktree_path} && cargo xtask gen-all --validate
+    - cd {worktree_path} && spin build || true
 
-hooks:
-  post_create:
-    - name: setup-hooksmith
-      commands:
-        - cargo xtask bootstrap --validate
-        - cargo xtask gen-config
-        - cargo xtask gen-docs
+# Existing worktrees - mapped to current layout
+branches:
+  feature/spin-integration:
+    path: ../hooksmith-spin
+    post_create:
+      - cd {worktree_path} && spin up
+      - cd {worktree_path} && cargo xtask bootstrap --validate
+
+  feature/spin-integration-v2:
+    path: ../hooksmith-spin-integration
+    post_create:
+      - cd {worktree_path} && spin build
+      - cd {worktree_path} && cargo xtask gen-config
+
+# Common branch patterns for future worktrees
+patterns:
+  feature/*:
+    template: '{repo}-{branch}'
+    post_create:
+      - cd {worktree_path} && cargo build
+      - cd {worktree_path} && cargo xtask gen-all
 ```
 
 ### .worktree-config.jsonc
-Hooksmith-specific configuration:
+
+The `.worktree-config.jsonc` file provides Hooksmith-specific configuration:
 
 ```jsonc
 {
   "preferred_tool": "wtp",
-  "worktree_base": "worktrees",
+  "worktree_base": "../",
+  "worktree_template": "{repo}-{branch}",
   "run_setup": true,
   "setup_commands": [
     "cargo build",
-    "cargo xtask gen-all --validate"
+    "cargo xtask gen-all --validate",
+    "spin build || true"
   ],
-  "git_aliases": {
-    "wt": "worktree",
-    "wtl": "worktree list",
-    "wtc": "worktree create"
+  "existing_worktrees": {
+    "feature/spin-integration": "../hooksmith-spin",
+    "feature/spin-integration-v2": "../hooksmith-spin-integration"
+  },
+  "branch_patterns": {
+    "feature/*": {
+      "template": "{repo}-{branch}",
+      "setup": ["cargo build", "cargo xtask gen-all"]
+    }
   }
 }
 ```
 
 ## Usage
 
-### Basic Commands
+### List Worktrees
 
 ```bash
 # List all worktrees
 cargo xtask worktree list
-
-# Create a new worktree
-cargo xtask worktree create --branch feature/new-feature
-
-# Switch to a worktree
-cargo xtask worktree switch --worktree feature/new-feature
-
-# Remove a worktree
-cargo xtask worktree remove --worktree feature/new-feature --with-branch
-
-# Show tool status
-cargo xtask worktree status
-```
-
-### Advanced Usage
-
-```bash
-# Create worktree with custom base directory
-cargo xtask worktree create --branch feature/test --base-dir ../worktrees
-
-# Create and switch to worktree
-cargo xtask worktree create --branch feature/test --switch
 
 # List with detailed information
 cargo xtask worktree list --detailed
@@ -141,63 +127,85 @@ cargo xtask worktree list --detailed
 cargo xtask worktree list --format json
 ```
 
-### Git Aliases
-
-After setup, you can use convenient Git aliases:
+### Create Worktrees
 
 ```bash
-# List worktrees
-git wtl
+# Create a new worktree
+cargo xtask worktree create --branch feature/new-feature
 
-# Create worktree
-git wtc feature/new-feature
+# Create and switch to the new worktree
+cargo xtask worktree create --branch feature/new-feature --switch
 
-# Remove worktree
-git wtr feature/new-feature
-
-# Switch worktree
-git wts feature/new-feature
+# Create with setup commands
+cargo xtask worktree create --branch feature/new-feature --setup
 ```
 
-## Integration with Hooksmith
+### Switch Between Worktrees
+
+```bash
+# Switch to an existing worktree
+cargo xtask worktree switch --worktree feature/spin-integration
+```
+
+### Remove Worktrees
+
+```bash
+# Remove a worktree
+cargo xtask worktree remove --worktree feature/test
+
+# Remove worktree and branch
+cargo xtask worktree remove --worktree feature/test --with-branch
+
+# Force removal without confirmation
+cargo xtask worktree remove --worktree feature/test --force
+```
+
+### Status and Information
+
+```bash
+# Show worktree tool status
+cargo xtask worktree status
+
+# Show detailed tool information
+cargo xtask worktree status --detailed
+```
+
+## Integration Points
 
 ### Lefthook Integration
 
-The worktree system integrates with Lefthook for automated workflows:
+The worktree management system can be integrated with Lefthook for automated workflows:
 
 ```yaml
 # lefthook.yml
 pre-commit:
-  worktree-check:
-    run: cargo xtask worktree status --format json
-    stage_fixed: all
+  commands:
+    worktree-check:
+      glob: "*.{rs,toml,yml}"
+      run: cargo xtask worktree status
 ```
 
-### WASM Component Integration
+### WASM Components
 
-The worktree-runner component provides WASM interface for worktree management:
+The system integrates with the existing `worktree-runner` WASM component:
 
 ```rust
-use hooksmith::WorktreeOperation;
-
-let operation = WorktreeOperation::Create {
-    branch_name: "feature/test".to_string(),
-    base_path: Some("worktrees".to_string()),
-};
-
-let result = orchestrator.manage_worktree(operation).await?;
+// Use the worktree-runner component for advanced operations
+let worktree_runner = WorktreeRunner::new();
+let result = worktree_runner.list_worktrees().await?;
 ```
 
-### Xtask Integration
+### CI/CD Integration
 
-All worktree operations are available through xtask:
+The worktree management system can be used in CI/CD pipelines:
 
-```bash
-# Bootstrap with worktree setup
-cargo xtask bootstrap --worktree-setup
+```yaml
+# GitHub Actions
+- name: Setup worktrees
+  run: cargo xtask worktree setup --all
 
-# Development workflow with worktree management
-cargo xtask dev-workflow --worktree feature/test
+- name: List worktrees
+  run: cargo xtask worktree list --format json
 ```
 
 ## Workflow Examples
@@ -205,142 +213,87 @@ cargo xtask dev-workflow --worktree feature/test
 ### Feature Development
 
 ```bash
-# 1. Create feature worktree
-cargo xtask worktree create --branch feature/new-component --switch
+# 1. Create a new feature branch worktree
+cargo xtask worktree create --branch feature/new-feature --switch
 
-# 2. Develop in isolated environment
-# ... make changes ...
+# 2. The system automatically runs setup commands:
+#    - cargo build
+#    - cargo xtask gen-all --validate
+#    - spin build (if available)
 
-# 3. Run validation
-cargo xtask check-all
+# 3. Switch between worktrees as needed
+cargo xtask worktree switch --worktree feature/spin-integration
 
-# 4. Commit and push
-git add .
-git commit -m "feat: add new component"
-git push origin feature/new-component
-
-# 5. Clean up when done
-cargo xtask worktree remove --worktree feature/new-component --with-branch
+# 4. Remove worktree when done
+cargo xtask worktree remove --worktree feature/new-feature --with-branch
 ```
 
 ### Multi-Branch Development
 
 ```bash
-# Create multiple worktrees for different features
+# List all worktrees to see current state
+cargo xtask worktree list --detailed
+
+# Create worktrees for different features
 cargo xtask worktree create --branch feature/ui-improvements
-cargo xtask worktree create --branch feature/api-enhancements
 cargo xtask worktree create --branch bugfix/critical-fix
+cargo xtask worktree create --branch hotfix/security-patch
 
-# Switch between them
+# Switch between them as needed
 cargo xtask worktree switch --worktree feature/ui-improvements
-# ... work on UI ...
-
-cargo xtask worktree switch --worktree feature/api-enhancements
-# ... work on API ...
-
-cargo xtask worktree switch --worktree bugfix/critical-fix
-# ... fix bug ...
-```
-
-### CI/CD Integration
-
-```yaml
-# .github/workflows/worktree-test.yml
-name: Worktree Tests
-
-on:
-  pull_request:
-    branches: [main]
-
-jobs:
-  test-worktrees:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup worktree environment
-        run: |
-          cargo xtask worktree setup --all
-          cargo xtask worktree create --branch test-branch
-      
-      - name: Run tests in worktree
-        run: |
-          cargo xtask worktree switch --worktree test-branch
-          cargo test
 ```
 
 ## Troubleshooting
 
-### Common Issues
+### Tool Not Found
 
-1. **Tool not found**
-   ```bash
-   # Check tool availability
-   cargo xtask worktree status
-   
-   # Install missing tools
-   cargo xtask worktree setup --install-tools
-   ```
-
-2. **Permission issues**
-   ```bash
-   # Check Git configuration
-   git config --list | grep worktree
-   
-   # Reset Git aliases
-   cargo xtask worktree setup --aliases
-   ```
-
-3. **Configuration conflicts**
-   ```bash
-   # Validate configuration
-   cargo xtask worktree status --detailed
-   
-   # Reset configuration
-   rm .worktree-config.json
-   cargo xtask worktree setup --config
-   ```
-
-### Debug Mode
+If a worktree management tool is not found:
 
 ```bash
-# Enable verbose output
-RUST_LOG=debug cargo xtask worktree list --detailed
+# Check available tools
+cargo xtask worktree status
 
-# Check tool availability
-cargo xtask worktree status --format json
+# Install missing tools
+cargo xtask worktree setup --install-tools
+```
+
+### Configuration Issues
+
+If configuration files are missing or incorrect:
+
+```bash
+# Recreate configuration files
+cargo xtask worktree setup --config
+```
+
+### Permission Issues
+
+If you encounter permission issues with Git aliases:
+
+```bash
+# Check existing Git aliases
+git config --global --list | grep alias
+
+# Setup aliases manually if needed
+git config --global alias.wt worktree
+git config --global alias.wtl "worktree list"
 ```
 
 ## Best Practices
 
-1. **Use descriptive branch names**: `feature/user-authentication`, `bugfix/login-crash`
-2. **Clean up worktrees**: Remove worktrees when features are merged
-3. **Preserve important branches**: Don't remove `main`, `develop`, or `master`
-4. **Use hooks**: Leverage post-create and pre-remove hooks for automation
-5. **Validate environments**: Run `cargo xtask check-all` after switching worktrees
+1. **Use Descriptive Branch Names**: Use clear, descriptive branch names that indicate the purpose (e.g., `feature/user-authentication`, `bugfix/login-error`)
 
-## Migration from Manual Worktrees
+2. **Regular Cleanup**: Periodically remove worktrees that are no longer needed to keep your workspace organized
 
-If you have existing worktrees created manually:
+3. **Consistent Setup**: Use the `--setup` flag when creating worktrees to ensure consistent environment setup
 
-```bash
-# 1. List existing worktrees
-git worktree list
+4. **Tool Preference**: Configure your preferred tool in `.worktree-config.jsonc` for consistent behavior
 
-# 2. Setup the new system
-cargo xtask worktree setup --all
+5. **Integration**: Leverage the integration points with Lefthook and WASM components for automated workflows
 
-# 3. Migrate existing worktrees (optional)
-# The system will detect and work with existing worktrees
+## Related Documentation
 
-# 4. Use the new commands going forward
-cargo xtask worktree create --branch new-feature
-```
-
-## References
-
-- [wtp Documentation](https://github.com/satococoa/wtp)
-- [git-wt Documentation](https://github.com/branchvincent/git-wt)
-- [Git Worktree Documentation](https://git-scm.com/docs/git-worktree)
 - [Hooksmith Architecture](../ARCHITECTURE.md)
-- [Xtask Commands](../CLI_HELP.md) 
+- [Xtask Commands](../CLI_HELP.md)
+- [Lefthook Integration](../GIT_LEFTHOOK_INTEGRATION.md)
+- [WASM Components](../COMPONENT_RUNNER_GUIDE.md) 
