@@ -135,6 +135,10 @@ name = "add-registry-checksums"
 path = "scripts/add-registry-checksums.rs"
 
 [[bin]]
+name = "run-component"
+path = "scripts/run_component.rs"
+
+[[bin]]
 name = "pre-add"
 path = "hooks/pre-add.rs"
 

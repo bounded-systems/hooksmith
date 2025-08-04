@@ -4,7 +4,7 @@
   "description": "Strict policy: only .rs and .jsonc may be manual, all other files must be generated.",
 
   // Allowed extensions for manually maintained source files
-  // Note: .rs files are only allowed in CLI crate (src/) and xtask
+  // Note: .rs files are only allowed in CLI crate (src/), xtask, and scripts/
   "allowedExtensions": ["rs", "jsonc"],
 
   // Generated extensions that must have proper headers
