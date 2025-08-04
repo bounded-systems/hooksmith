@@ -1,0 +1,267 @@
+{
+  "$id": "https://hooksmith.dev/schemas/event-bus.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "actor-stats": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "$ref": "#/definitions/string,"
+        },
+        "count": {
+          "$ref": "#/definitions/u64,"
+        }
+      },
+      "required": [
+        "actor",
+        "count"
+      ],
+      "type": "object"
+    },
+    "category-stats": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "$ref": "#/definitions/event-category,"
+        },
+        "count": {
+          "$ref": "#/definitions/u64,"
+        }
+      },
+      "required": [
+        "category",
+        "count"
+      ],
+      "type": "object"
+    },
+    "component-metadata": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "$ref": "#/definitions/string,"
+        },
+        "name": {
+          "$ref": "#/definitions/string,"
+        },
+        "supported-categories": {
+          "$ref": "#/definitions/list<event-category>,"
+        },
+        "supported-events": {
+          "$ref": "#/definitions/list<string>,"
+        },
+        "version": {
+          "$ref": "#/definitions/string,"
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "description",
+        "supported-events",
+        "supported-categories"
+      ],
+      "type": "object"
+    },
+    "event-bus-config": {
+      "additionalProperties": false,
+      "properties": {
+        "batch-size": {
+          "$ref": "#/definitions/u32,"
+        },
+        "broadcast-capacity": {
+          "$ref": "#/definitions/u32,"
+        },
+        "console-output": {
+          "$ref": "#/definitions/bool,"
+        },
+        "enable-persistence": {
+          "$ref": "#/definitions/bool,"
+        },
+        "flush-interval-ms": {
+          "$ref": "#/definitions/u64,"
+        },
+        "jsonl-file": {
+          "$ref": "#/definitions/option<string>,"
+        }
+      },
+      "required": [
+        "enable-persistence",
+        "jsonl-file",
+        "batch-size",
+        "flush-interval-ms",
+        "broadcast-capacity",
+        "console-output"
+      ],
+      "type": "object"
+    },
+    "event-bus-stats": {
+      "additionalProperties": false,
+      "properties": {
+        "active-handlers": {
+          "$ref": "#/definitions/u32,"
+        },
+        "active-subscriptions": {
+          "$ref": "#/definitions/u32,"
+        },
+        "events-by-actor": {
+          "$ref": "#/definitions/list<actor-stats>,"
+        },
+        "events-by-category": {
+          "$ref": "#/definitions/list<category-stats>,"
+        },
+        "events-by-type": {
+          "$ref": "#/definitions/list<event-type-stats>,"
+        },
+        "total-events": {
+          "$ref": "#/definitions/u64,"
+        }
+      },
+      "required": [
+        "total-events",
+        "events-by-actor",
+        "events-by-type",
+        "events-by-category",
+        "active-subscriptions",
+        "active-handlers"
+      ],
+      "type": "object"
+    },
+    "event-category": {
+      "enum": [
+        "hook-state-machine",
+        "git",
+        "validation",
+        "build",
+        "contract",
+        "file",
+        "system",
+        "user",
+        "performance",
+        "security"
+      ],
+      "type": "string"
+    },
+    "event-handler-result": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "response": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "success": {
+          "$ref": "#/definitions/bool,"
+        }
+      },
+      "required": [
+        "success",
+        "error",
+        "response"
+      ],
+      "type": "object"
+    },
+    "event-severity": {
+      "enum": [
+        "trace",
+        "debug",
+        "info",
+        "warn",
+        "error",
+        "critical"
+      ],
+      "type": "string"
+    },
+    "event-subscription": {
+      "additionalProperties": false,
+      "properties": {
+        "categories": {
+          "$ref": "#/definitions/list<event-category>,"
+        },
+        "component": {
+          "$ref": "#/definitions/string,"
+        },
+        "event-types": {
+          "$ref": "#/definitions/list<string>,"
+        },
+        "receive-all": {
+          "$ref": "#/definitions/bool,"
+        }
+      },
+      "required": [
+        "component",
+        "event-types",
+        "categories",
+        "receive-all"
+      ],
+      "type": "object"
+    },
+    "event-type-stats": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "$ref": "#/definitions/u64,"
+        },
+        "event-type": {
+          "$ref": "#/definitions/string,"
+        }
+      },
+      "required": [
+        "event-type",
+        "count"
+      ],
+      "type": "object"
+    },
+    "hooksmith-event": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "$ref": "#/definitions/string,"
+        },
+        "context": {
+          "$ref": "#/definitions/string,"
+        },
+        "duration-ms": {
+          "$ref": "#/definitions/option<u64>,"
+        },
+        "error": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "event": {
+          "$ref": "#/definitions/string,"
+        },
+        "hook": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "id": {
+          "$ref": "#/definitions/string,"
+        },
+        "session-id": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "state": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "ts": {
+          "$ref": "#/definitions/string,"
+        }
+      },
+      "required": [
+        "id",
+        "ts",
+        "actor",
+        "event",
+        "hook",
+        "state",
+        "context",
+        "error",
+        "session-id",
+        "duration-ms"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "Schema for the event-bus WIT component interface",
+  "title": "Event Bus Component Schema",
+  "type": "object"
+}

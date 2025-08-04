@@ -1,451 +1,361 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://hooksmith.dev/schemas/hook-builder.schema.json",
-  "title": "Hook Builder Component Schema",
-  "description": "Schema for the hook-builder WIT component interface",
-  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "RuleSeverity": {
-      "type": "string",
-      "enum": ["info", "warning", "error"],
-      "description": "Severity of a validation rule"
-    },
-    "BuildConfig": {
-      "type": "object",
+    "build-config": {
+      "additionalProperties": false,
       "properties": {
-        "source-path": {
-          "type": "string",
-          "description": "Source path for the hook"
-        },
-        "output-path": {
-          "type": "string",
-          "description": "Output path for the built binary"
-        },
-        "target-triple": {
-          "type": ["string", "null"],
-          "description": "Target triple for compilation (e.g., \"x86_64-unknown-linux-gnu\")"
-        },
-        "optimization-level": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 3,
-          "description": "Optimization level (0-3)"
+        "all-features": {
+          "$ref": "#/definitions/bool,"
         },
         "debug-symbols": {
-          "type": "boolean",
-          "description": "Whether to include debug symbols"
-        },
-        "features": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Additional cargo features to enable"
-        },
-        "all-features": {
-          "type": "boolean",
-          "description": "Whether to enable all features"
+          "$ref": "#/definitions/bool,"
         },
         "env-vars": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/EnvVar"
-          },
-          "description": "Additional environment variables"
+          "$ref": "#/definitions/list<env-var>,"
         },
-        "run-tests": {
-          "type": "boolean",
-          "description": "Whether to run tests after building"
+        "features": {
+          "$ref": "#/definitions/list<string>,"
+        },
+        "optimization-level": {
+          "$ref": "#/definitions/u8,"
+        },
+        "output-path": {
+          "$ref": "#/definitions/string,"
         },
         "run-clippy": {
-          "type": "boolean",
-          "description": "Whether to run clippy checks"
-        }
-      },
-      "required": ["source-path", "output-path", "optimization-level", "debug-symbols", "all-features", "run-tests", "run-clippy"],
-      "additionalProperties": false
-    },
-    "EnvVar": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Variable name"
+          "$ref": "#/definitions/bool,"
         },
-        "value": {
-          "type": "string",
-          "description": "Variable value"
-        }
-      },
-      "required": ["name", "value"],
-      "additionalProperties": false
-    },
-    "BuildResult": {
-      "type": "object",
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Whether the build was successful"
+        "run-tests": {
+          "$ref": "#/definitions/bool,"
         },
-        "binary-path": {
-          "type": ["string", "null"],
-          "description": "Path to the built binary"
-        },
-        "artifacts": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Build artifacts (additional files)"
-        },
-        "build-logs": {
-          "type": "string",
-          "description": "Build logs"
-        },
-        "error": {
-          "type": ["string", "null"],
-          "description": "Error message if build failed"
-        },
-        "duration-ms": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Build duration in milliseconds"
-        },
-        "binary-size": {
-          "type": ["integer", "null"],
-          "minimum": 0,
-          "description": "Binary size in bytes"
-        },
-        "metadata": {
-          "$ref": "#/definitions/BuildMetadata"
-        }
-      },
-      "required": ["success", "artifacts", "build-logs", "duration-ms", "metadata"],
-      "additionalProperties": false
-    },
-    "BuildMetadata": {
-      "type": "object",
-      "properties": {
-        "rust-version": {
-          "type": "string",
-          "description": "Rust version used"
-        },
-        "cargo-version": {
-          "type": "string",
-          "description": "Cargo version used"
+        "source-path": {
+          "$ref": "#/definitions/string,"
         },
         "target-triple": {
-          "type": "string",
-          "description": "Target triple used"
+          "$ref": "#/definitions/option<string>,"
+        }
+      },
+      "required": [
+        "source-path",
+        "output-path",
+        "target-triple",
+        "optimization-level",
+        "debug-symbols",
+        "features",
+        "all-features",
+        "env-vars",
+        "run-tests",
+        "run-clippy"
+      ],
+      "type": "object"
+    },
+    "build-metadata": {
+      "additionalProperties": false,
+      "properties": {
+        "build-hash": {
+          "$ref": "#/definitions/string,"
+        },
+        "cargo-version": {
+          "$ref": "#/definitions/string,"
+        },
+        "rust-version": {
+          "$ref": "#/definitions/string,"
+        },
+        "target-triple": {
+          "$ref": "#/definitions/string,"
         },
         "timestamp": {
-          "type": "string",
-          "description": "Build timestamp"
-        },
-        "build-hash": {
-          "type": "string",
-          "description": "Build hash for caching"
+          "$ref": "#/definitions/string,"
         }
       },
-      "required": ["rust-version", "cargo-version", "target-triple", "timestamp", "build-hash"],
-      "additionalProperties": false
+      "required": [
+        "rust-version",
+        "cargo-version",
+        "target-triple",
+        "timestamp",
+        "build-hash"
+      ],
+      "type": "object"
     },
-    "ValidationConfig": {
-      "type": "object",
+    "build-result": {
+      "additionalProperties": false,
       "properties": {
-        "source-path": {
-          "type": "string",
-          "description": "Source path to validate"
+        "artifacts": {
+          "$ref": "#/definitions/list<string>,"
         },
-        "rules": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ValidationRule"
-          },
-          "description": "Validation rules to apply"
+        "binary-path": {
+          "$ref": "#/definitions/option<string>,"
         },
-        "check-common-issues": {
-          "type": "boolean",
-          "description": "Whether to check for common issues"
+        "binary-size": {
+          "$ref": "#/definitions/option<u64>,"
         },
-        "validate-dependencies": {
-          "type": "boolean",
-          "description": "Whether to validate dependencies"
-        }
-      },
-      "required": ["source-path", "rules", "check-common-issues", "validate-dependencies"],
-      "additionalProperties": false
-    },
-    "ValidationRule": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Rule name"
-        },
-        "description": {
-          "type": "string",
-          "description": "Rule description"
-        },
-        "enabled": {
-          "type": "boolean",
-          "description": "Whether the rule is enabled"
-        },
-        "severity": {
-          "$ref": "#/definitions/RuleSeverity"
-        }
-      },
-      "required": ["name", "description", "enabled", "severity"],
-      "additionalProperties": false
-    },
-    "ValidationResult": {
-      "type": "object",
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Whether validation was successful"
-        },
-        "errors": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ValidationError"
-          },
-          "description": "Validation errors"
-        },
-        "warnings": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ValidationWarning"
-          },
-          "description": "Validation warnings"
-        },
-        "info": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ValidationInfo"
-          },
-          "description": "Validation information"
+        "build-logs": {
+          "$ref": "#/definitions/string,"
         },
         "duration-ms": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Validation duration in milliseconds"
-        }
-      },
-      "required": ["success", "errors", "warnings", "info", "duration-ms"],
-      "additionalProperties": false
-    },
-    "ValidationError": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string",
-          "description": "Error message"
-        },
-        "location": {
-          "type": ["string", "null"],
-          "description": "Error location (file:line:column)"
-        },
-        "code": {
-          "type": ["string", "null"],
-          "description": "Error code"
-        },
-        "suggestion": {
-          "type": ["string", "null"],
-          "description": "Suggested fix"
-        }
-      },
-      "required": ["message"],
-      "additionalProperties": false
-    },
-    "ValidationWarning": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string",
-          "description": "Warning message"
-        },
-        "location": {
-          "type": ["string", "null"],
-          "description": "Warning location (file:line:column)"
-        },
-        "code": {
-          "type": ["string", "null"],
-          "description": "Warning code"
-        },
-        "suggestion": {
-          "type": ["string", "null"],
-          "description": "Suggested fix"
-        }
-      },
-      "required": ["message"],
-      "additionalProperties": false
-    },
-    "ValidationInfo": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string",
-          "description": "Information message"
-        },
-        "location": {
-          "type": ["string", "null"],
-          "description": "Information location (file:line:column)"
-        },
-        "code": {
-          "type": ["string", "null"],
-          "description": "Information code"
-        }
-      },
-      "required": ["message"],
-      "additionalProperties": false
-    },
-    "OptimizationConfig": {
-      "type": "object",
-      "properties": {
-        "binary-path": {
-          "type": "string",
-          "description": "Binary path to optimize"
-        },
-        "level": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 3,
-          "description": "Optimization level (0-3)"
-        },
-        "strip-debug": {
-          "type": "boolean",
-          "description": "Whether to strip debug symbols"
-        },
-        "strip-symbols": {
-          "type": "boolean",
-          "description": "Whether to strip symbols"
-        },
-        "compress": {
-          "type": "boolean",
-          "description": "Whether to compress the binary"
-        },
-        "target-size": {
-          "type": ["integer", "null"],
-          "minimum": 0,
-          "description": "Target file size (in bytes)"
-        }
-      },
-      "required": ["binary-path", "level", "strip-debug", "strip-symbols", "compress"],
-      "additionalProperties": false
-    },
-    "OptimizationResult": {
-      "type": "object",
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Whether optimization was successful"
-        },
-        "original-size": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Original binary size"
-        },
-        "optimized-size": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Optimized binary size"
-        },
-        "reduction-percentage": {
-          "type": "number",
-          "description": "Size reduction percentage"
-        },
-        "techniques-applied": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Optimization techniques applied"
+          "$ref": "#/definitions/u64,"
         },
         "error": {
-          "type": ["string", "null"],
-          "description": "Error message if optimization failed"
+          "$ref": "#/definitions/option<string>,"
         },
+        "metadata": {
+          "$ref": "#/definitions/build-metadata,"
+        },
+        "success": {
+          "$ref": "#/definitions/bool,"
+        }
+      },
+      "required": [
+        "success",
+        "binary-path",
+        "artifacts",
+        "build-logs",
+        "error",
+        "duration-ms",
+        "binary-size",
+        "metadata"
+      ],
+      "type": "object"
+    },
+    "env-var": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/string,"
+        },
+        "value": {
+          "$ref": "#/definitions/string,"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "type": "object"
+    },
+    "optimization-config": {
+      "additionalProperties": false,
+      "properties": {
+        "binary-path": {
+          "$ref": "#/definitions/string,"
+        },
+        "compress": {
+          "$ref": "#/definitions/bool,"
+        },
+        "level": {
+          "$ref": "#/definitions/u8,"
+        },
+        "strip-debug": {
+          "$ref": "#/definitions/bool,"
+        },
+        "strip-symbols": {
+          "$ref": "#/definitions/bool,"
+        },
+        "target-size": {
+          "$ref": "#/definitions/option<u64>,"
+        }
+      },
+      "required": [
+        "binary-path",
+        "level",
+        "strip-debug",
+        "strip-symbols",
+        "compress",
+        "target-size"
+      ],
+      "type": "object"
+    },
+    "optimization-result": {
+      "additionalProperties": false,
+      "properties": {
         "duration-ms": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Optimization duration in milliseconds"
+          "$ref": "#/definitions/u64,"
+        },
+        "error": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "optimized-size": {
+          "$ref": "#/definitions/u64,"
+        },
+        "original-size": {
+          "$ref": "#/definitions/u64,"
+        },
+        "reduction-percentage": {
+          "$ref": "#/definitions/f64,"
+        },
+        "success": {
+          "$ref": "#/definitions/bool,"
+        },
+        "techniques-applied": {
+          "$ref": "#/definitions/list<string>,"
         }
       },
-      "required": ["success", "original-size", "optimized-size", "reduction-percentage", "techniques-applied", "duration-ms"],
-      "additionalProperties": false
+      "required": [
+        "success",
+        "original-size",
+        "optimized-size",
+        "reduction-percentage",
+        "techniques-applied",
+        "error",
+        "duration-ms"
+      ],
+      "type": "object"
+    },
+    "rule-severity": {
+      "enum": [
+        "info",
+        "warning",
+        "error"
+      ],
+      "type": "string"
+    },
+    "validation-config": {
+      "additionalProperties": false,
+      "properties": {
+        "check-common-issues": {
+          "$ref": "#/definitions/bool,"
+        },
+        "rules": {
+          "$ref": "#/definitions/list<validation-rule>,"
+        },
+        "source-path": {
+          "$ref": "#/definitions/string,"
+        },
+        "validate-dependencies": {
+          "$ref": "#/definitions/bool,"
+        }
+      },
+      "required": [
+        "source-path",
+        "rules",
+        "check-common-issues",
+        "validate-dependencies"
+      ],
+      "type": "object"
+    },
+    "validation-error": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "location": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "message": {
+          "$ref": "#/definitions/string,"
+        },
+        "suggestion": {
+          "$ref": "#/definitions/option<string>,"
+        }
+      },
+      "required": [
+        "message",
+        "location",
+        "code",
+        "suggestion"
+      ],
+      "type": "object"
+    },
+    "validation-info": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "location": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "message": {
+          "$ref": "#/definitions/string,"
+        }
+      },
+      "required": [
+        "message",
+        "location",
+        "code"
+      ],
+      "type": "object"
+    },
+    "validation-result": {
+      "additionalProperties": false,
+      "properties": {
+        "duration-ms": {
+          "$ref": "#/definitions/u64,"
+        },
+        "errors": {
+          "$ref": "#/definitions/list<validation-error>,"
+        },
+        "info": {
+          "$ref": "#/definitions/list<validation-info>,"
+        },
+        "success": {
+          "$ref": "#/definitions/bool,"
+        },
+        "warnings": {
+          "$ref": "#/definitions/list<validation-warning>,"
+        }
+      },
+      "required": [
+        "success",
+        "errors",
+        "warnings",
+        "info",
+        "duration-ms"
+      ],
+      "type": "object"
+    },
+    "validation-rule": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "$ref": "#/definitions/string,"
+        },
+        "enabled": {
+          "$ref": "#/definitions/bool,"
+        },
+        "name": {
+          "$ref": "#/definitions/string,"
+        },
+        "severity": {
+          "$ref": "#/definitions/rule-severity,"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "enabled",
+        "severity"
+      ],
+      "type": "object"
+    },
+    "validation-warning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "location": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "message": {
+          "$ref": "#/definitions/string,"
+        },
+        "suggestion": {
+          "$ref": "#/definitions/option<string>,"
+        }
+      },
+      "required": [
+        "message",
+        "location",
+        "code",
+        "suggestion"
+      ],
+      "type": "object"
     }
   },
-  "properties": {
-    "build-hook": {
-      "type": "object",
-      "description": "Build a hook from source",
-      "properties": {
-        "config": {
-          "$ref": "#/definitions/BuildConfig"
-        }
-      },
-      "required": ["config"],
-      "additionalProperties": false
-    },
-    "validate-source": {
-      "type": "object",
-      "description": "Validate hook source code",
-      "properties": {
-        "config": {
-          "$ref": "#/definitions/ValidationConfig"
-        }
-      },
-      "required": ["config"],
-      "additionalProperties": false
-    },
-    "optimize-binary": {
-      "type": "object",
-      "description": "Optimize a built binary",
-      "properties": {
-        "config": {
-          "$ref": "#/definitions/OptimizationConfig"
-        }
-      },
-      "required": ["config"],
-      "additionalProperties": false
-    },
-    "get-build-info": {
-      "type": "object",
-      "description": "Get build information",
-      "properties": {},
-      "additionalProperties": false
-    },
-    "clean-build": {
-      "type": "object",
-      "description": "Clean build artifacts",
-      "properties": {
-        "build-path": {
-          "type": "string",
-          "description": "Path to clean"
-        }
-      },
-      "required": ["build-path"],
-      "additionalProperties": false
-    },
-    "get-available-targets": {
-      "type": "object",
-      "description": "Get available targets",
-      "properties": {},
-      "additionalProperties": false
-    },
-    "is-target-supported": {
-      "type": "object",
-      "description": "Check if target is supported",
-      "properties": {
-        "target": {
-          "type": "string",
-          "description": "Target to check"
-        }
-      },
-      "required": ["target"],
-      "additionalProperties": false
-    }
-  },
-  "additionalProperties": false
-} 
+  "description": "Schema for the hook-builder WIT component interface",
+  "title": "Hook Builder Component Schema",
+  "type": "object"
+}

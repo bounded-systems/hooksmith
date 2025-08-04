@@ -1,0 +1,494 @@
+{
+  "$id": "https://hooksmith.dev/schemas/lefthook-generator.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "env-var": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/string,"
+        },
+        "value": {
+          "$ref": "#/definitions/string,"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "type": "object"
+    },
+    "git-info": {
+      "additionalProperties": false,
+      "properties": {
+        "current-branch": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "default-branch": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "git-version": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "is-bare": {
+          "$ref": "#/definitions/option<bool>,"
+        },
+        "is-shallow": {
+          "$ref": "#/definitions/option<bool>,"
+        },
+        "repo-name": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "repo-root": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "repo-url": {
+          "$ref": "#/definitions/option<string>,"
+        }
+      },
+      "required": [
+        "repo-url",
+        "repo-name",
+        "default-branch",
+        "current-branch",
+        "repo-root",
+        "git-version",
+        "is-bare",
+        "is-shallow"
+      ],
+      "type": "object"
+    },
+    "global-settings": {
+      "additionalProperties": false,
+      "properties": {
+        "colors": {
+          "$ref": "#/definitions/option<bool>,"
+        },
+        "git-hooks-dir": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "max-parallel": {
+          "$ref": "#/definitions/option<u32>,"
+        },
+        "only-authors": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-branches": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-changed": {
+          "$ref": "#/definitions/option<bool>,"
+        },
+        "only-commits": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-dirs": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-dirs-changed": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-emails": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-extensions": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-extensions-changed": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-files": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-files-changed": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-messages": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-patterns": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-patterns-changed": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "only-staged": {
+          "$ref": "#/definitions/option<bool>,"
+        },
+        "only-tags": {
+          "$ref": "#/definitions/option<list<string>>,"
+        },
+        "parallel": {
+          "$ref": "#/definitions/option<bool>,"
+        },
+        "skip-output": {
+          "$ref": "#/definitions/option<bool>,"
+        },
+        "stop-on-failure": {
+          "$ref": "#/definitions/option<bool>,"
+        },
+        "version": {
+          "$ref": "#/definitions/option<string>,"
+        }
+      },
+      "required": [
+        "version",
+        "git-hooks-dir",
+        "skip-output",
+        "colors",
+        "parallel",
+        "max-parallel",
+        "stop-on-failure",
+        "only-staged",
+        "only-changed",
+        "only-files",
+        "only-dirs",
+        "only-extensions",
+        "only-patterns",
+        "only-branches",
+        "only-tags",
+        "only-commits",
+        "only-authors",
+        "only-emails",
+        "only-messages",
+        "only-files-changed",
+        "only-dirs-changed",
+        "only-extensions-changed",
+        "only-patterns-changed"
+      ],
+      "type": "object"
+    },
+    "hook-config": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "$ref": "#/definitions/string,"
+        },
+        "depends-on": {
+          "$ref": "#/definitions/list<string>,"
+        },
+        "description": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "enabled": {
+          "$ref": "#/definitions/bool,"
+        },
+        "env": {
+          "$ref": "#/definitions/list<env-var>,"
+        },
+        "hook-type": {
+          "$ref": "#/definitions/string,"
+        },
+        "name": {
+          "$ref": "#/definitions/string,"
+        },
+        "priority": {
+          "$ref": "#/definitions/option<u32>,"
+        },
+        "skip": {
+          "$ref": "#/definitions/list<skip-condition>,"
+        },
+        "stage": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "tags": {
+          "$ref": "#/definitions/list<string>,"
+        },
+        "timeout": {
+          "$ref": "#/definitions/option<u32>,"
+        },
+        "working-dir": {
+          "$ref": "#/definitions/option<string>,"
+        }
+      },
+      "required": [
+        "name",
+        "hook-type",
+        "command",
+        "enabled",
+        "description",
+        "tags",
+        "stage",
+        "priority",
+        "timeout",
+        "working-dir",
+        "env",
+        "depends-on",
+        "skip"
+      ],
+      "type": "object"
+    },
+    "hook-type-info": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "$ref": "#/definitions/string,"
+        },
+        "documentation": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "examples": {
+          "$ref": "#/definitions/list<string>,"
+        },
+        "name": {
+          "$ref": "#/definitions/string,"
+        },
+        "stage": {
+          "$ref": "#/definitions/string,"
+        },
+        "triggers": {
+          "$ref": "#/definitions/list<string>,"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "stage",
+        "triggers",
+        "examples",
+        "documentation"
+      ],
+      "type": "object"
+    },
+    "lefthook-config": {
+      "additionalProperties": false,
+      "properties": {
+        "git-info": {
+          "$ref": "#/definitions/git-info,"
+        },
+        "global-settings": {
+          "$ref": "#/definitions/global-settings,"
+        },
+        "hooks": {
+          "$ref": "#/definitions/list<hook-config>,"
+        },
+        "include-comments": {
+          "$ref": "#/definitions/bool,"
+        },
+        "output-path": {
+          "$ref": "#/definitions/string,"
+        },
+        "strict-mode": {
+          "$ref": "#/definitions/bool,"
+        },
+        "validate-schema": {
+          "$ref": "#/definitions/bool,"
+        }
+      },
+      "required": [
+        "output-path",
+        "hooks",
+        "validate-schema",
+        "global-settings",
+        "git-info",
+        "include-comments",
+        "strict-mode"
+      ],
+      "type": "object"
+    },
+    "lefthook-result": {
+      "additionalProperties": false,
+      "properties": {
+        "config-content": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "duration-ms": {
+          "$ref": "#/definitions/u64,"
+        },
+        "error": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "hooks-count": {
+          "$ref": "#/definitions/u32,"
+        },
+        "output-path": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "success": {
+          "$ref": "#/definitions/bool,"
+        },
+        "validation-errors": {
+          "$ref": "#/definitions/list<string>,"
+        },
+        "validation-warnings": {
+          "$ref": "#/definitions/list<string>,"
+        }
+      },
+      "required": [
+        "success",
+        "config-content",
+        "output-path",
+        "hooks-count",
+        "validation-errors",
+        "validation-warnings",
+        "error",
+        "duration-ms"
+      ],
+      "type": "object"
+    },
+    "skip-condition": {
+      "additionalProperties": false,
+      "properties": {
+        "condition-type": {
+          "$ref": "#/definitions/skip-condition-type,"
+        },
+        "description": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "value": {
+          "$ref": "#/definitions/string,"
+        }
+      },
+      "required": [
+        "condition-type",
+        "value",
+        "description"
+      ],
+      "type": "object"
+    },
+    "skip-condition-type": {
+      "enum": [
+        "file-pattern",
+        "branch-pattern",
+        "commit-message",
+        "merge-commit",
+        "no-files-changed",
+        "files-changed",
+        "env-var",
+        "command"
+      ],
+      "type": "string"
+    },
+    "validation-config": {
+      "additionalProperties": false,
+      "properties": {
+        "config-content": {
+          "$ref": "#/definitions/string,"
+        },
+        "schema": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "validate-commands": {
+          "$ref": "#/definitions/bool,"
+        },
+        "validate-hooks": {
+          "$ref": "#/definitions/bool,"
+        },
+        "validate-schema": {
+          "$ref": "#/definitions/bool,"
+        },
+        "validate-syntax": {
+          "$ref": "#/definitions/bool,"
+        }
+      },
+      "required": [
+        "config-content",
+        "schema",
+        "validate-syntax",
+        "validate-schema",
+        "validate-hooks",
+        "validate-commands"
+      ],
+      "type": "object"
+    },
+    "validation-error": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "location": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "message": {
+          "$ref": "#/definitions/string,"
+        },
+        "suggestion": {
+          "$ref": "#/definitions/option<string>,"
+        }
+      },
+      "required": [
+        "message",
+        "location",
+        "code",
+        "suggestion"
+      ],
+      "type": "object"
+    },
+    "validation-info": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "location": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "message": {
+          "$ref": "#/definitions/string,"
+        }
+      },
+      "required": [
+        "message",
+        "location",
+        "code"
+      ],
+      "type": "object"
+    },
+    "validation-result": {
+      "additionalProperties": false,
+      "properties": {
+        "duration-ms": {
+          "$ref": "#/definitions/u64,"
+        },
+        "errors": {
+          "$ref": "#/definitions/list<validation-error>,"
+        },
+        "info": {
+          "$ref": "#/definitions/list<validation-info>,"
+        },
+        "success": {
+          "$ref": "#/definitions/bool,"
+        },
+        "warnings": {
+          "$ref": "#/definitions/list<validation-warning>,"
+        }
+      },
+      "required": [
+        "success",
+        "errors",
+        "warnings",
+        "info",
+        "duration-ms"
+      ],
+      "type": "object"
+    },
+    "validation-warning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "location": {
+          "$ref": "#/definitions/option<string>,"
+        },
+        "message": {
+          "$ref": "#/definitions/string,"
+        },
+        "suggestion": {
+          "$ref": "#/definitions/option<string>,"
+        }
+      },
+      "required": [
+        "message",
+        "location",
+        "code",
+        "suggestion"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "Schema for the lefthook-generator WIT component interface",
+  "title": "Lefthook Generator Component Schema",
+  "type": "object"
+}

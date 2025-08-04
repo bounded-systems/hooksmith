@@ -98,6 +98,7 @@ json_comments = "0.2"
 cargo_metadata = "0.18"
 
 # Path utilities
+heck = "0.4"
 pathdiff = "0.2"
 glob = "0.3"
 

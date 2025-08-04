@@ -1,0 +1,61 @@
+{
+  "$id": "https://hooksmith.dev/schemas/hooksmith.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "build-result": {
+      "additionalProperties": false,
+      "properties": {
+        "binary-path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "success": "boolean"
+      },
+      "required": [
+        "success"
+      ],
+      "type": "object"
+    },
+    "hook-config": {
+      "additionalProperties": false,
+      "properties": {
+        "include-wasm": "boolean",
+        "name": "string",
+        "output-dir": "string",
+        "source-dir": "string"
+      },
+      "required": [
+        "name",
+        "source-dir",
+        "output-dir",
+        "include-wasm"
+      ],
+      "type": "object"
+    },
+    "hook-info": {
+      "additionalProperties": false,
+      "properties": {
+        "description": "string",
+        "installed": "boolean",
+        "name": "string"
+      },
+      "required": [
+        "name",
+        "description",
+        "installed"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "Schema for the hooksmith WIT component interface",
+  "title": "Hooksmith Component Schema",
+  "type": "object"
+}

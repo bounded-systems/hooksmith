@@ -1,64 +1,48 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://hooksmith.dev/schemas/worktree-runner.schema.json",
-  "title": "Worktree Runner Component Schema",
-  "description": "Schema for the worktree-runner WIT component interface",
-  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "WorktreeTool": {
-      "type": "string",
-      "enum": ["wtp", "wt", "treekanga", "git"],
-      "description": "Available worktree tools"
-    },
-    "ToolConfig": {
-      "type": "object",
+    "tool-config": {
+      "additionalProperties": false,
       "properties": {
         "preferred-tool": {
-          "type": ["string", "null"],
-          "description": "Preferred tool to use"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "worktree-base": {
-          "type": ["string", "null"],
-          "description": "Base directory for worktrees"
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
-      "additionalProperties": false
+      "type": "object"
     },
-    "WorktreeResult": {
-      "type": "object",
+    "worktree-result": {
+      "additionalProperties": false,
       "properties": {
-        "success": {
-          "type": "boolean",
-          "description": "Whether the operation was successful"
-        },
-        "output": {
-          "type": "string",
-          "description": "Output from the command"
-        }
+        "output": "string",
+        "success": "boolean"
       },
-      "required": ["success", "output"],
-      "additionalProperties": false
+      "required": [
+        "success",
+        "output"
+      ],
+      "type": "object"
+    },
+    "worktree-tool": {
+      "enum": [
+        "wtp",
+        "wt",
+        "treekanga",
+        "git"
+      ],
+      "type": "string"
     }
   },
-  "properties": {
-    "create-worktree": {
-      "type": "object",
-      "description": "Create a new worktree",
-      "properties": {
-        "branch-name": {
-          "type": "string",
-          "description": "Name of the branch to create worktree for"
-        }
-      },
-      "required": ["branch-name"],
-      "additionalProperties": false
-    },
-    "list-worktrees": {
-      "type": "object",
-      "description": "List all worktrees",
-      "properties": {},
-      "additionalProperties": false
-    }
-  },
-  "additionalProperties": false
-} 
+  "description": "Schema for the worktree-runner WIT component interface",
+  "title": "Worktree Runner Component Schema",
+  "type": "object"
+}

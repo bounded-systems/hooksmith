@@ -12,6 +12,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use heck::ToTitleCase;
 use std::time::Duration;
 use tokio::time::sleep;
 use json_comments::StripComments;
@@ -2401,6 +2402,240 @@ fn generate_wit_interfaces(output_dir: &str, overwrite: bool) -> Result<()> {
 
     println!("✅ WIT interfaces generated successfully");
     Ok(())
+}
+
+/// Generate JSON schemas for WIT components
+fn generate_wit_schemas(output_dir: &str, overwrite: bool, specific_wit_file: Option<&str>) -> Result<()> {
+    println!("📋 Generating JSON schemas for WIT components...");
+    println!("   Output directory: {output_dir}");
+
+    let output_path = Path::new(output_dir);
+    if !output_path.exists() {
+        fs::create_dir_all(output_path).context("Failed to create output directory")?;
+    }
+
+    let wit_dir = Path::new("wit");
+    if !wit_dir.exists() {
+        anyhow::bail!("WIT directory not found: {}", wit_dir.display());
+    }
+
+    let wit_files = if let Some(specific_file) = specific_wit_file {
+        vec![wit_dir.join(specific_file)]
+    } else {
+        fs::read_dir(wit_dir)?
+            .filter_map(|entry| {
+                let entry = entry.ok()?;
+                let path = entry.path();
+                if path.extension()?.to_str()? == "wit" {
+                    Some(path)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    };
+
+    for wit_path in wit_files {
+        let filename = wit_path.file_name().unwrap().to_str().unwrap();
+        let schema_filename = filename.replace(".wit", ".schema.jsonc");
+        let schema_path = output_path.join(&schema_filename);
+
+        if schema_path.exists() && !overwrite {
+            println!("   Skipping {schema_filename} (already exists)");
+            continue;
+        }
+
+        println!("   Generating schema for {filename}...");
+
+        let wit_content = fs::read_to_string(&wit_path)
+            .context(format!("Failed to read WIT file: {}", wit_path.display()))?;
+
+        let schema = generate_schema_from_wit(&wit_content, filename)?;
+
+        fs::write(&schema_path, schema)
+            .context(format!("Failed to write schema file: {}", schema_path.display()))?;
+
+        println!("   Generated {schema_filename}");
+    }
+
+    println!("✅ WIT schemas generated successfully");
+    Ok(())
+}
+
+/// Generate JSON schema from WIT content
+fn generate_schema_from_wit(wit_content: &str, filename: &str) -> Result<String> {
+    let mut schema = serde_json::Map::new();
+
+    // Add schema metadata
+    schema.insert("$schema".to_string(), serde_json::Value::String("http://json-schema.org/draft-07/schema#".to_string()));
+    schema.insert("$id".to_string(), serde_json::Value::String(format!("https://hooksmith.dev/schemas/{}.schema.json", filename.replace(".wit", ""))));
+    schema.insert("title".to_string(), serde_json::Value::String(format!("{} Component Schema", filename.replace(".wit", "").replace("-", " ").to_title_case())));
+    schema.insert("description".to_string(), serde_json::Value::String(format!("Schema for the {} WIT component interface", filename.replace(".wit", ""))));
+    schema.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+
+    let mut definitions = serde_json::Map::new();
+
+    // Parse WIT content and generate schema definitions
+    let lines: Vec<&str> = wit_content.lines().collect();
+    let mut i = 0;
+
+    while i < lines.len() {
+        let line = lines[i].trim();
+
+        // Skip empty lines and comments
+        if line.is_empty() || line.starts_with("//") || line.starts_with(";;") {
+            i += 1;
+            continue;
+        }
+
+        // Parse records
+        if line.starts_with("record ") {
+            let (record_name, record_schema) = parse_wit_record(&lines, &mut i)?;
+            definitions.insert(record_name, serde_json::Value::Object(record_schema));
+        }
+        // Parse enums
+        else if line.starts_with("enum ") {
+            let (enum_name, enum_schema) = parse_wit_enum(&lines, &mut i)?;
+            definitions.insert(enum_name, serde_json::Value::Object(enum_schema));
+        }
+        else {
+            i += 1;
+        }
+    }
+
+    schema.insert("definitions".to_string(), serde_json::Value::Object(definitions));
+
+    serde_json::to_string_pretty(&serde_json::Value::Object(schema))
+        .context("Failed to serialize schema to JSON")
+}
+
+/// Parse WIT record and generate JSON schema
+fn parse_wit_record(lines: &[&str], index: &mut usize) -> Result<(String, serde_json::Map<String, serde_json::Value>)> {
+    let line = lines[*index].trim();
+    let record_name = line.strip_prefix("record ").unwrap().strip_suffix(" {").unwrap();
+    
+    let mut schema = serde_json::Map::new();
+    schema.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+    
+    let mut properties = serde_json::Map::new();
+    let mut required = Vec::new();
+    
+    *index += 1;
+    
+    while *index < lines.len() {
+        let line = lines[*index].trim();
+        
+        if line == "}" {
+            break;
+        }
+        
+        if line.starts_with("///") {
+            // Skip documentation comments for now
+            *index += 1;
+            continue;
+        }
+        
+        if line.contains(':') {
+            let parts: Vec<&str> = line.split(':').collect();
+            if parts.len() >= 2 {
+                let field_name = parts[0].trim();
+                let field_type = parts[1].trim().strip_suffix(';').unwrap_or(parts[1].trim());
+                
+                let (schema_type, is_optional) = convert_wit_type_to_json_schema(field_type);
+                properties.insert(field_name.to_string(), schema_type);
+                
+                if !is_optional {
+                    required.push(field_name.to_string());
+                }
+            }
+        }
+        
+        *index += 1;
+    }
+    
+    schema.insert("properties".to_string(), serde_json::Value::Object(properties));
+    if !required.is_empty() {
+        schema.insert("required".to_string(), serde_json::Value::Array(required.into_iter().map(serde_json::Value::String).collect()));
+    }
+    schema.insert("additionalProperties".to_string(), serde_json::Value::Bool(false));
+    
+    *index += 1;
+    Ok((record_name.to_string(), schema))
+}
+
+/// Parse WIT enum and generate JSON schema
+fn parse_wit_enum(lines: &[&str], index: &mut usize) -> Result<(String, serde_json::Map<String, serde_json::Value>)> {
+    let line = lines[*index].trim();
+    let enum_name = line.strip_prefix("enum ").unwrap().strip_suffix(" {").unwrap();
+    
+    let mut schema = serde_json::Map::new();
+    schema.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+    
+    let mut enum_values = Vec::new();
+    
+    *index += 1;
+    
+    while *index < lines.len() {
+        let line = lines[*index].trim();
+        
+        if line == "}" {
+            break;
+        }
+        
+        if line.starts_with("///") {
+            // Skip documentation comments for now
+            *index += 1;
+            continue;
+        }
+        
+        if line.ends_with(',') {
+            let variant = line.strip_suffix(',').unwrap().trim();
+            enum_values.push(serde_json::Value::String(variant.to_string()));
+        }
+        
+        *index += 1;
+    }
+    
+    schema.insert("enum".to_string(), serde_json::Value::Array(enum_values));
+    
+    *index += 1;
+    Ok((enum_name.to_string(), schema))
+}
+
+/// Convert WIT type to JSON schema type
+fn convert_wit_type_to_json_schema(wit_type: &str) -> (serde_json::Value, bool) {
+    match wit_type {
+        "string" => (serde_json::Value::String("string".to_string()), false),
+        "u8" | "u16" | "u32" | "u64" | "s8" | "s16" | "s32" | "s64" => {
+            (serde_json::Value::String("integer".to_string()), false)
+        },
+        "f32" | "f64" => (serde_json::Value::String("number".to_string()), false),
+        "bool" => (serde_json::Value::String("boolean".to_string()), false),
+        _ => {
+            if wit_type.starts_with("option<") && wit_type.ends_with(">") {
+                let inner_type = &wit_type[7..wit_type.len()-1];
+                let (inner_schema, _) = convert_wit_type_to_json_schema(inner_type);
+                let mut schema = serde_json::Map::new();
+                schema.insert("type".to_string(), serde_json::Value::Array(vec![
+                    inner_schema,
+                    serde_json::Value::String("null".to_string())
+                ]));
+                (serde_json::Value::Object(schema), true)
+            } else if wit_type.starts_with("list<") && wit_type.ends_with(">") {
+                let inner_type = &wit_type[5..wit_type.len()-1];
+                let (inner_schema, _) = convert_wit_type_to_json_schema(inner_type);
+                let mut schema = serde_json::Map::new();
+                schema.insert("type".to_string(), serde_json::Value::String("array".to_string()));
+                schema.insert("items".to_string(), inner_schema);
+                (serde_json::Value::Object(schema), false)
+            } else {
+                // Assume it's a reference to another type
+                let mut schema = serde_json::Map::new();
+                schema.insert("$ref".to_string(), serde_json::Value::String(format!("#/definitions/{}", wit_type)));
+                (serde_json::Value::Object(schema), false)
+            }
+        }
+    }
 }
 
 /// Generate WIT content from interface definition
