@@ -1,0 +1,17 @@
+# WASM-specific build configuration
+# This file is used when building for wasm32-wasip2 target
+# Usage: cargo build --config .cargo/config.wasm.toml
+
+[build]
+# Target for WASM component builds
+target = "wasm32-wasip2"
+
+# Use nightly toolchain for wasm32-wasip2 support
+[unstable]
+# Enable component build by default for WASM
+build-std = ["std", "panic_abort"]
+
+# WASM-specific build settings
+[target.wasm32-wasip2]
+# Optimize for size in WASM builds
+rustflags = ["-C", "opt-level=s"] 
