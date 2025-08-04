@@ -1,0 +1,26 @@
+[package]
+name = "file-operations"
+version = "0.1.0"
+edition = "2021"
+description = "Native file operations handler for Hooksmith hybrid architecture"
+license = "MIT OR Apache-2.0"
+authors = ["Hooksmith Contributors"]
+repository = "https://github.com/hooksmith/hooksmith"
+keywords = ["file", "operations", "system", "io"]
+categories = ["filesystem", "system-programming"]
+
+[dependencies]
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+uuid = { version = "1.0", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+sha2 = "0.10"
+base64 = "0.21"
+walkdir = "2.4"
+pathdiff = "0.2"
+
+[dev-dependencies]
+tempfile = "3.8"
+tokio-test = "0.4" 

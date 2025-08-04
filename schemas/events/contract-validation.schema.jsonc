@@ -1,0 +1,194 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Contract Validation Event Schema",
+  "description": "Schema for contract validation events in the hybrid WIT + native Rust architecture",
+  "type": "object",
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "validation_request",
+        "validation_result",
+        "contract_check_request",
+        "contract_check_result",
+        "validation_started",
+        "validation_completed",
+        "validation_failed"
+      ],
+      "description": "Type of validation event"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the validation request"
+    },
+    "contract_name": {
+      "type": "string",
+      "description": "Name of the contract to validate against"
+    },
+    "file_path": {
+      "type": "string",
+      "description": "Path to the file being validated"
+    },
+    "content": {
+      "type": "string",
+      "description": "File content to validate (for validation_request)"
+    },
+    "validation_config": {
+      "type": "object",
+      "properties": {
+        "strict": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to use strict validation"
+        },
+        "store_proof": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to store validation proof"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Specific validation rules to apply"
+        }
+      },
+      "additionalProperties": true
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "valid": {
+          "type": "boolean",
+          "description": "Whether validation passed"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rule": {
+                "type": "string",
+                "description": "Name of the rule that failed"
+              },
+              "message": {
+                "type": "string",
+                "description": "Error message"
+              },
+              "line": {
+                "type": "integer",
+                "description": "Line number where error occurred"
+              },
+              "column": {
+                "type": "integer",
+                "description": "Column number where error occurred"
+              }
+            },
+            "required": ["rule", "message"]
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "rule": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": ["rule", "message"]
+          }
+        },
+        "proof_hash": {
+          "type": "string",
+          "description": "Hash of the validation proof"
+        },
+        "duration_ms": {
+          "type": "integer",
+          "description": "Validation duration in milliseconds"
+        }
+      },
+      "required": ["valid"]
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error message"
+        },
+        "details": {
+          "type": "object",
+          "description": "Additional error details"
+        }
+      },
+      "required": ["code", "message"]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "component": {
+          "type": "string",
+          "description": "WIT component that processed the event"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Event timestamp"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Session identifier"
+        }
+      }
+    }
+  },
+  "required": ["event_type", "request_id"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["validation_request", "contract_check_request"]
+          }
+        }
+      },
+      "then": {
+        "required": ["contract_name", "file_path", "validation_config"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["validation_result", "contract_check_result"]
+          }
+        }
+      },
+      "then": {
+        "required": ["result"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "enum": ["validation_failed"]
+          }
+        }
+      },
+      "then": {
+        "required": ["error"]
+      }
+    }
+  ]
+} 
