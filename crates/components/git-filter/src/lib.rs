@@ -183,6 +183,7 @@ pub mod unified_contracts {
     pub struct UnifiedValidator;
 }
 
+#[cfg(feature = "host")]
 // Implement the WIT interface
 impl git_filter_world::GitFilter for GitFilterComponent {
     fn filter_file(&self, path: String, content: Vec<u8>) -> Result<Vec<u8>, String> {
@@ -196,5 +197,6 @@ impl git_filter_world::GitFilter for GitFilterComponent {
     }
 }
 
+#[cfg(feature = "host")]
 // Export the component implementation
 export_git_filter!(GitFilterComponent);
