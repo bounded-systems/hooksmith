@@ -376,7 +376,7 @@ pub struct EventMetadata {
 }
 
 /// Event priority levels
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub enum EventPriority {
     /// Low priority - can be processed asynchronously
     Low,
@@ -389,7 +389,7 @@ pub enum EventPriority {
 }
 
 /// Complete event with metadata
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Event {
     /// Event metadata
     pub metadata: EventMetadata,
