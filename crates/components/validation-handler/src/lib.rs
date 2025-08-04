@@ -6,6 +6,7 @@
 //!
 //! This component implements the WIT interface for validation operations.
 
+#[cfg(feature = "host")]
 wit_bindgen::generate!({
     path: "../wit/validation-handler.wit",
     world: "validation-handler",
@@ -159,7 +160,8 @@ impl ValidationHandler {
         self.stats.passed_validations += 1;
 
         let context: Value = serde_json::from_str(&event.context).unwrap_or_default();
-        let files = context.get("files").and_then(|f| f.as_array()).unwrap_or(&Vec::new());
+        let empty_vec = Vec::new();
+        let files = context.get("files").and_then(|f| f.as_array()).unwrap_or(&empty_vec);
 
         let response = serde_json::json!({
             "component": "validation-handler",
@@ -427,8 +429,10 @@ mod tests {
 }
 
 /// Validation Handler Component Implementation
+#[cfg(feature = "host")]
 struct ValidationHandlerComponent;
 
+#[cfg(feature = "host")]
 impl validation_handler::ValidationHandler for ValidationHandlerComponent {
     fn validate(
         content: String,
@@ -512,4 +516,5 @@ impl validation_handler::ValidationHandler for ValidationHandlerComponent {
     }
 }
 
+#[cfg(feature = "host")]
 export_validation_handler!(ValidationHandlerComponent); 
