@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 //! Xtask CLI for Hooksmith
 //!
 //! This binary provides structured build and code generation tasks
