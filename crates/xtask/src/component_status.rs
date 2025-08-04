@@ -431,7 +431,7 @@ impl ComponentStatusChecker {
                 let content = tokio::fs::read(&path).await?;
                 hasher.update(&content);
             } else if metadata.is_dir() {
-                self.hash_directory(&path, hasher).await?;
+                Box::pin(self.hash_directory(&path, hasher)).await?;
             }
         }
         Ok(())
