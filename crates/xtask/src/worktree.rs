@@ -205,6 +205,7 @@ impl WorktreeManager {
         let tool = self.select_best_tool()?;
 
         match tool {
+            WorktreeTool::Wtp => self.create_with_wtp(branch, base_dir, switch).await,
             WorktreeTool::Gwtr => self.create_with_gwtr(branch, base_dir, switch).await,
             WorktreeTool::Workbloom => self.create_with_workbloom(branch, base_dir, switch).await,
             WorktreeTool::Git => self.create_with_git(branch, base_dir, switch).await,
@@ -216,6 +217,7 @@ impl WorktreeManager {
         let tool = self.select_best_tool()?;
 
         match tool {
+            WorktreeTool::Wtp => self.switch_with_wtp(worktree).await,
             WorktreeTool::Gwtr => self.switch_with_gwtr(worktree).await,
             WorktreeTool::Workbloom => self.switch_with_workbloom(worktree).await,
             WorktreeTool::Git => self.switch_with_git(worktree).await,
@@ -227,6 +229,7 @@ impl WorktreeManager {
         let tool = self.select_best_tool()?;
 
         match tool {
+            WorktreeTool::Wtp => self.remove_with_wtp(worktree, with_branch).await,
             WorktreeTool::Gwtr => self.remove_with_gwtr(worktree, with_branch).await,
             WorktreeTool::Workbloom => self.remove_with_workbloom(worktree).await,
             WorktreeTool::Git => self.remove_with_git(worktree, with_branch).await,
@@ -363,6 +366,66 @@ defaults:
         } else {
             let error = String::from_utf8_lossy(&output.stderr);
             Err(anyhow::anyhow!("wtp list failed: {}", error))
+        }
+    }
+
+    async fn create_with_wtp(
+        &self,
+        branch: &str,
+        _base_dir: Option<&str>,
+        switch: bool,
+    ) -> Result<()> {
+        let mut args = vec!["add", branch];
+        if switch {
+            args.push("--switch");
+        }
+
+        let output = Command::new("wtp")
+            .args(&args)
+            .output()
+            .context("Failed to run wtp add")?;
+
+        if output.status.success() {
+            println!("{}", style("✓ Worktree created successfully").green());
+            Ok(())
+        } else {
+            let error = String::from_utf8_lossy(&output.stderr);
+            Err(anyhow::anyhow!("wtp add failed: {}", error))
+        }
+    }
+
+    async fn switch_with_wtp(&self, worktree: &str) -> Result<()> {
+        let output = Command::new("wtp")
+            .args(["cd", worktree])
+            .output()
+            .context("Failed to run wtp cd")?;
+
+        if output.status.success() {
+            println!("{}", style("✓ Switched to worktree successfully").green());
+            Ok(())
+        } else {
+            let error = String::from_utf8_lossy(&output.stderr);
+            Err(anyhow::anyhow!("wtp cd failed: {}", error))
+        }
+    }
+
+    async fn remove_with_wtp(&self, worktree: &str, with_branch: bool) -> Result<()> {
+        let mut args = vec!["remove", worktree];
+        if with_branch {
+            args.push("--with-branch");
+        }
+
+        let output = Command::new("wtp")
+            .args(&args)
+            .output()
+            .context("Failed to run wtp remove")?;
+
+        if output.status.success() {
+            println!("{}", style("✓ Worktree removed successfully").green());
+            Ok(())
+        } else {
+            let error = String::from_utf8_lossy(&output.stderr);
+            Err(anyhow::anyhow!("wtp remove failed: {}", error))
         }
     }
 
