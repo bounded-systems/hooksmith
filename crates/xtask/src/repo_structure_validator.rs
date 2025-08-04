@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -181,14 +181,14 @@ pub struct RepoStructureValidator {
 impl RepoStructureValidator {
     pub fn new(workspace_root: PathBuf) -> Result<Self> {
         let schema_path = workspace_root.join("schemas/repo-structure.schema.jsonc");
-        let schema_content = fs::read_to_string(&schema_path)
-            .context("Failed to read repo structure schema")?;
-        
+        let schema_content =
+            fs::read_to_string(&schema_path).context("Failed to read repo structure schema")?;
+
         // Parse JSONC (remove comments)
         let schema_content = Self::remove_jsonc_comments(&schema_content);
         let schema: RepoStructureSchema = serde_json::from_str(&schema_content)
             .context("Failed to parse repo structure schema")?;
-        
+
         Ok(Self {
             schema,
             workspace_root,
@@ -201,31 +201,31 @@ impl RepoStructureValidator {
         let mut escaped = false;
         let mut i = 0;
         let chars: Vec<char> = content.chars().collect();
-        
+
         while i < chars.len() {
             let ch = chars[i];
-            
+
             if escaped {
                 result.push(ch);
                 escaped = false;
                 i += 1;
                 continue;
             }
-            
+
             if ch == '\\' {
                 escaped = true;
                 result.push(ch);
                 i += 1;
                 continue;
             }
-            
+
             if ch == '"' {
                 in_string = !in_string;
                 result.push(ch);
                 i += 1;
                 continue;
             }
-            
+
             if !in_string {
                 // Check for single-line comment
                 if ch == '/' && i + 1 < chars.len() && chars[i + 1] == '/' {
@@ -238,7 +238,7 @@ impl RepoStructureValidator {
                     }
                     continue;
                 }
-                
+
                 // Check for multi-line comment
                 if ch == '/' && i + 1 < chars.len() && chars[i + 1] == '*' {
                     // Skip to end of comment
@@ -252,11 +252,11 @@ impl RepoStructureValidator {
                     continue;
                 }
             }
-            
+
             result.push(ch);
             i += 1;
         }
-        
+
         result
     }
 
@@ -269,28 +269,28 @@ impl RepoStructureValidator {
 
         // Validate workspace structure
         self.validate_workspace(&mut result)?;
-        
+
         // Validate component crates
         self.validate_component_crates(&mut result)?;
-        
+
         // Validate CLI crates
         self.validate_cli_crates(&mut result)?;
-        
+
         // Validate documentation
         self.validate_documentation(&mut result)?;
-        
+
         // Validate generated sources
         self.validate_generated_sources(&mut result)?;
-        
+
         // Validate examples
         self.validate_examples(&mut result)?;
-        
+
         // Validate tests
         self.validate_tests(&mut result)?;
-        
+
         // Validate hooks
         self.validate_hooks(&mut result)?;
-        
+
         // Validate scripts
         self.validate_scripts(&mut result)?;
 
@@ -338,24 +338,30 @@ impl RepoStructureValidator {
         {
             let relative_path = entry.path().strip_prefix(&self.workspace_root)?;
             let path_str = relative_path.to_string_lossy();
-            
+
             // Check if file matches config pattern but is not in config/
             for pattern in &self.schema.workspace.naming_patterns.config_files {
                 if Self::matches_pattern(&path_str, pattern) && !path_str.starts_with("config/") {
                     result.warnings.push(ValidationWarning {
                         path: path_str.to_string(),
-                        message: format!("Config file found outside config/ directory: {}", path_str),
+                        message: format!(
+                            "Config file found outside config/ directory: {}",
+                            path_str
+                        ),
                         category: "naming_patterns".to_string(),
                     });
                 }
             }
-            
+
             // Check if file matches schema pattern but is not in schemas/
             for pattern in &self.schema.workspace.naming_patterns.schema_files {
                 if Self::matches_pattern(&path_str, pattern) && !path_str.starts_with("schemas/") {
                     result.warnings.push(ValidationWarning {
                         path: path_str.to_string(),
-                        message: format!("Schema file found outside schemas/ directory: {}", path_str),
+                        message: format!(
+                            "Schema file found outside schemas/ directory: {}",
+                            path_str
+                        ),
                         category: "naming_patterns".to_string(),
                     });
                 }
@@ -376,8 +382,10 @@ impl RepoStructureValidator {
     }
 
     fn validate_component_crates(&self, result: &mut ValidationResult) -> Result<()> {
-        let components_dir = self.workspace_root.join(&self.schema.component_crates.location);
-        
+        let components_dir = self
+            .workspace_root
+            .join(&self.schema.component_crates.location);
+
         if !components_dir.exists() {
             result.errors.push(ValidationError {
                 path: self.schema.component_crates.location.clone(),
@@ -390,13 +398,13 @@ impl RepoStructureValidator {
         for entry in fs::read_dir(&components_dir)? {
             let entry = entry?;
             let crate_path = entry.path();
-            
+
             if !crate_path.is_dir() {
                 continue;
             }
 
             let crate_name = crate_path.file_name().unwrap().to_string_lossy();
-            
+
             // Check required files
             for file in &self.schema.component_crates.required_files {
                 let file_path = crate_path.join(file);
@@ -415,7 +423,10 @@ impl RepoStructureValidator {
                 if !dir_path.exists() || !dir_path.is_dir() {
                     result.errors.push(ValidationError {
                         path: format!("{}/{}", crate_name, dir),
-                        message: format!("Required directory not found in component crate: {}", dir),
+                        message: format!(
+                            "Required directory not found in component crate: {}",
+                            dir
+                        ),
                         category: "component_crates".to_string(),
                     });
                 }
@@ -431,16 +442,26 @@ impl RepoStructureValidator {
         Ok(())
     }
 
-    fn validate_component_cargo_toml(&self, crate_path: &Path, crate_name: &str, result: &mut ValidationResult) -> Result<()> {
+    fn validate_component_cargo_toml(
+        &self,
+        crate_path: &Path,
+        crate_name: &str,
+        result: &mut ValidationResult,
+    ) -> Result<()> {
         let cargo_toml_path = crate_path.join("Cargo.toml");
         if !cargo_toml_path.exists() {
             return Ok(()); // Already reported as missing required file
         }
 
         let cargo_content = fs::read_to_string(&cargo_toml_path)?;
-        
+
         // Simple check for required metadata sections
-        for metadata in &self.schema.component_crates.cargo_toml_requirements.required_metadata {
+        for metadata in &self
+            .schema
+            .component_crates
+            .cargo_toml_requirements
+            .required_metadata
+        {
             if !cargo_content.contains(&format!("[{}]", metadata)) {
                 result.errors.push(ValidationError {
                     path: format!("{}/Cargo.toml", crate_name),
@@ -452,13 +473,21 @@ impl RepoStructureValidator {
         Ok(())
     }
 
-    fn validate_component_wit(&self, crate_path: &Path, crate_name: &str, result: &mut ValidationResult) -> Result<()> {
+    fn validate_component_wit(
+        &self,
+        crate_path: &Path,
+        crate_name: &str,
+        result: &mut ValidationResult,
+    ) -> Result<()> {
         let wit_dir = crate_path.join(&self.schema.component_crates.wit_requirements.location);
-        
+
         if !wit_dir.exists() {
             if self.schema.component_crates.wit_requirements.required {
                 result.errors.push(ValidationError {
-                    path: format!("{}/{}", crate_name, self.schema.component_crates.wit_requirements.location),
+                    path: format!(
+                        "{}/{}",
+                        crate_name, self.schema.component_crates.wit_requirements.location
+                    ),
                     message: "WIT directory not found in component crate".to_string(),
                     category: "component_crates".to_string(),
                 });
@@ -478,7 +507,10 @@ impl RepoStructureValidator {
 
         if !found_wit_files {
             result.warnings.push(ValidationWarning {
-                path: format!("{}/{}", crate_name, self.schema.component_crates.wit_requirements.location),
+                path: format!(
+                    "{}/{}",
+                    crate_name, self.schema.component_crates.wit_requirements.location
+                ),
                 message: "No WIT files found in WIT directory".to_string(),
                 category: "component_crates".to_string(),
             });
@@ -489,7 +521,7 @@ impl RepoStructureValidator {
     fn validate_cli_crates(&self, result: &mut ValidationResult) -> Result<()> {
         for location in &self.schema.cli_crates.locations {
             let cli_path = self.workspace_root.join(location);
-            
+
             if !cli_path.exists() {
                 continue; // CLI crates are optional
             }
@@ -536,23 +568,30 @@ impl RepoStructureValidator {
         }
 
         // Check component documentation
-        let component_docs_dir = self.workspace_root.join(&self.schema.documentation.component_docs.location);
+        let component_docs_dir = self
+            .workspace_root
+            .join(&self.schema.documentation.component_docs.location);
         if component_docs_dir.exists() {
             for entry in fs::read_dir(&component_docs_dir)? {
                 let entry = entry?;
                 let doc_path = entry.path();
-                
+
                 if !doc_path.is_dir() {
                     continue;
                 }
 
                 let component_name = doc_path.file_name().unwrap().to_string_lossy();
-                
+
                 for file in &self.schema.documentation.component_docs.required_files {
                     let file_path = doc_path.join(file);
                     if !file_path.exists() {
                         result.warnings.push(ValidationWarning {
-                            path: format!("{}/{}/{}", self.schema.documentation.component_docs.location, component_name, file),
+                            path: format!(
+                                "{}/{}/{}",
+                                self.schema.documentation.component_docs.location,
+                                component_name,
+                                file
+                            ),
                             message: format!("Component documentation file not found: {}", file),
                             category: "documentation".to_string(),
                         });
@@ -562,13 +601,18 @@ impl RepoStructureValidator {
         }
 
         // Check design documentation
-        let design_docs_dir = self.workspace_root.join(&self.schema.documentation.design_docs.location);
+        let design_docs_dir = self
+            .workspace_root
+            .join(&self.schema.documentation.design_docs.location);
         if design_docs_dir.exists() {
             for file in &self.schema.documentation.design_docs.required_files {
                 let file_path = design_docs_dir.join(file);
                 if !file_path.exists() {
                     result.warnings.push(ValidationWarning {
-                        path: format!("{}/{}", self.schema.documentation.design_docs.location, file),
+                        path: format!(
+                            "{}/{}",
+                            self.schema.documentation.design_docs.location, file
+                        ),
                         message: format!("Design documentation file not found: {}", file),
                         category: "documentation".to_string(),
                     });
@@ -580,14 +624,18 @@ impl RepoStructureValidator {
     }
 
     fn validate_generated_sources(&self, result: &mut ValidationResult) -> Result<()> {
-        let generated_dir = self.workspace_root.join(&self.schema.generated_sources.location);
-        
+        let generated_dir = self
+            .workspace_root
+            .join(&self.schema.generated_sources.location);
+
         if !generated_dir.exists() {
             return Ok(()); // Generated sources directory is optional
         }
 
         // Check registry file exists
-        let registry_path = self.workspace_root.join(&self.schema.generated_sources.registry_file);
+        let registry_path = self
+            .workspace_root
+            .join(&self.schema.generated_sources.registry_file);
         if !registry_path.exists() && self.schema.generated_sources.validation.must_be_tracked {
             result.errors.push(ValidationError {
                 path: self.schema.generated_sources.registry_file.clone(),
@@ -597,7 +645,9 @@ impl RepoStructureValidator {
         }
 
         // Check checksum file exists
-        let checksum_path = self.workspace_root.join(&self.schema.generated_sources.checksum_file);
+        let checksum_path = self
+            .workspace_root
+            .join(&self.schema.generated_sources.checksum_file);
         if !checksum_path.exists() && self.schema.generated_sources.validation.must_have_checksums {
             result.errors.push(ValidationError {
                 path: self.schema.generated_sources.checksum_file.clone(),
@@ -614,13 +664,21 @@ impl RepoStructureValidator {
         {
             let relative_path = entry.path().strip_prefix(&self.workspace_root)?;
             let path_str = relative_path.to_string_lossy();
-            
+
             if let Some(extension) = entry.path().extension() {
                 let ext_str = format!(".{}", extension.to_string_lossy());
-                if !self.schema.generated_sources.allowed_extensions.contains(&ext_str) {
+                if !self
+                    .schema
+                    .generated_sources
+                    .allowed_extensions
+                    .contains(&ext_str)
+                {
                     result.warnings.push(ValidationWarning {
                         path: path_str.to_string(),
-                        message: format!("Unexpected file extension in generated sources: {}", ext_str),
+                        message: format!(
+                            "Unexpected file extension in generated sources: {}",
+                            ext_str
+                        ),
                         category: "generated_sources".to_string(),
                     });
                 }
@@ -632,7 +690,7 @@ impl RepoStructureValidator {
 
     fn validate_examples(&self, result: &mut ValidationResult) -> Result<()> {
         let examples_dir = self.workspace_root.join(&self.schema.examples.location);
-        
+
         if !examples_dir.exists() {
             return Ok(()); // Examples directory is optional
         }
@@ -640,13 +698,13 @@ impl RepoStructureValidator {
         for entry in fs::read_dir(&examples_dir)? {
             let entry = entry?;
             let example_path = entry.path();
-            
+
             if !example_path.is_file() {
                 continue;
             }
 
             let example_name = example_path.file_name().unwrap().to_string_lossy();
-            
+
             // Check file extension
             if let Some(extension) = example_path.extension() {
                 let ext_str = format!(".{}", extension.to_string_lossy());
@@ -663,7 +721,10 @@ impl RepoStructureValidator {
             if !Self::matches_pattern(&example_name, &self.schema.examples.naming) {
                 result.warnings.push(ValidationWarning {
                     path: format!("{}/{}", self.schema.examples.location, example_name),
-                    message: format!("Example file does not match naming pattern: {}", self.schema.examples.naming),
+                    message: format!(
+                        "Example file does not match naming pattern: {}",
+                        self.schema.examples.naming
+                    ),
                     category: "examples".to_string(),
                 });
             }
@@ -674,7 +735,7 @@ impl RepoStructureValidator {
 
     fn validate_tests(&self, result: &mut ValidationResult) -> Result<()> {
         let tests_dir = self.workspace_root.join(&self.schema.tests.location);
-        
+
         if !tests_dir.exists() {
             return Ok(()); // Tests directory is optional
         }
@@ -682,13 +743,13 @@ impl RepoStructureValidator {
         for entry in fs::read_dir(&tests_dir)? {
             let entry = entry?;
             let test_path = entry.path();
-            
+
             if !test_path.is_file() {
                 continue;
             }
 
             let test_name = test_path.file_name().unwrap().to_string_lossy();
-            
+
             // Check file extension
             if let Some(extension) = test_path.extension() {
                 let ext_str = format!(".{}", extension.to_string_lossy());
@@ -702,9 +763,11 @@ impl RepoStructureValidator {
             }
 
             // Check naming patterns
-            let matches_integration = Self::matches_pattern(&test_name, &self.schema.tests.naming.integration_tests);
-            let matches_unit = Self::matches_pattern(&test_name, &self.schema.tests.naming.unit_tests);
-            
+            let matches_integration =
+                Self::matches_pattern(&test_name, &self.schema.tests.naming.integration_tests);
+            let matches_unit =
+                Self::matches_pattern(&test_name, &self.schema.tests.naming.unit_tests);
+
             if !matches_integration && !matches_unit {
                 result.warnings.push(ValidationWarning {
                     path: format!("{}/{}", self.schema.tests.location, test_name),
@@ -719,7 +782,7 @@ impl RepoStructureValidator {
 
     fn validate_hooks(&self, result: &mut ValidationResult) -> Result<()> {
         let hooks_dir = self.workspace_root.join(&self.schema.hooks.location);
-        
+
         if !hooks_dir.exists() {
             return Ok(()); // Hooks directory is optional
         }
@@ -727,13 +790,13 @@ impl RepoStructureValidator {
         for entry in fs::read_dir(&hooks_dir)? {
             let entry = entry?;
             let hook_path = entry.path();
-            
+
             if !hook_path.is_file() {
                 continue;
             }
 
             let hook_name = hook_path.file_name().unwrap().to_string_lossy();
-            
+
             // Check file extension
             if let Some(extension) = hook_path.extension() {
                 let ext_str = format!(".{}", extension.to_string_lossy());
@@ -750,7 +813,10 @@ impl RepoStructureValidator {
             if !Self::matches_pattern(&hook_name, &self.schema.hooks.naming) {
                 result.warnings.push(ValidationWarning {
                     path: format!("{}/{}", self.schema.hooks.location, hook_name),
-                    message: format!("Hook file does not match naming pattern: {}", self.schema.hooks.naming),
+                    message: format!(
+                        "Hook file does not match naming pattern: {}",
+                        self.schema.hooks.naming
+                    ),
                     category: "hooks".to_string(),
                 });
             }
@@ -773,7 +839,7 @@ impl RepoStructureValidator {
 
     fn validate_scripts(&self, result: &mut ValidationResult) -> Result<()> {
         let scripts_dir = self.workspace_root.join(&self.schema.scripts.location);
-        
+
         if !scripts_dir.exists() {
             return Ok(()); // Scripts directory is optional
         }
@@ -781,13 +847,13 @@ impl RepoStructureValidator {
         for entry in fs::read_dir(&scripts_dir)? {
             let entry = entry?;
             let script_path = entry.path();
-            
+
             if !script_path.is_file() {
                 continue;
             }
 
             let script_name = script_path.file_name().unwrap().to_string_lossy();
-            
+
             // Check file extension
             if let Some(extension) = script_path.extension() {
                 let ext_str = format!(".{}", extension.to_string_lossy());
@@ -801,9 +867,11 @@ impl RepoStructureValidator {
             }
 
             // Check naming patterns
-            let matches_simple = Self::matches_pattern(&script_name, &self.schema.scripts.naming.simple_scripts);
-            let matches_full = Self::matches_pattern(&script_name, &self.schema.scripts.naming.full_binaries);
-            
+            let matches_simple =
+                Self::matches_pattern(&script_name, &self.schema.scripts.naming.simple_scripts);
+            let matches_full =
+                Self::matches_pattern(&script_name, &self.schema.scripts.naming.full_binaries);
+
             if !matches_simple && !matches_full {
                 result.warnings.push(ValidationWarning {
                     path: format!("{}/{}", self.schema.scripts.location, script_name),
@@ -831,4 +899,4 @@ impl RepoStructureValidator {
 pub fn validate_repo_structure(workspace_root: PathBuf) -> Result<ValidationResult> {
     let validator = RepoStructureValidator::new(workspace_root)?;
     validator.validate()
-} 
+}

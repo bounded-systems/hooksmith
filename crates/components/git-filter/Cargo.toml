@@ -28,16 +28,19 @@ anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true
-git2.workspace = true
-gix-filter.workspace = true
+# Remove git2 dependency for WASM compatibility
+# git2.workspace = true
+# Remove gix-filter dependency for WASM compatibility
+# gix-filter.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
-jsonschema.workspace = true
+# Remove jsonschema dependency for WASM compatibility
+# jsonschema.workspace = true
 sha2.workspace = true
 chrono.workspace = true
 thiserror.workspace = true
 once_cell.workspace = true
 regex.workspace = true
 futures-io.workspace = true
-# wit-bindgen is optional and only used for host builds
-wit-bindgen = { version = "0.20", optional = true }
+# Add wit-bindgen for WIT interface generation
+wit-bindgen = { workspace = true, optional = true }

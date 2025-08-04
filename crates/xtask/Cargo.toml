@@ -19,7 +19,7 @@ license.workspace = true
 [dependencies]
 # CLI framework
 clap.workspace = true
-tokio.workspace = true
+tokio = { version = "1.0", features = ["full"] }
 anyhow.workspace = true
 console.workspace = true
 indicatif.workspace = true

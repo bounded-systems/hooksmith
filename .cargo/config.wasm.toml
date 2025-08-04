@@ -14,4 +14,11 @@ build-std = ["std", "panic_abort"]
 # WASM-specific build settings
 [target.wasm32-wasip2]
 # Optimize for size in WASM builds
-rustflags = ["-C", "opt-level=s"] 
+rustflags = ["-C", "opt-level=s"]
+
+# Environment variables for WASM builds
+[env]
+# Disable sccache for WASM builds to avoid compatibility issues
+RUSTC_WRAPPER = ""
+# Set WASM-specific environment variables
+WASM_PACK_TARGET = "wasm32-wasip2"

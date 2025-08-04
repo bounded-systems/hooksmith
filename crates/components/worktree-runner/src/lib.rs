@@ -61,7 +61,9 @@ impl WorktreeTool {
 
     /// Check if this tool is available on the system
     pub fn is_available(&self) -> bool {
-        which::which(self.command_name()).is_ok()
+        // In WASM environment, we can't check for external tools
+        // For now, assume git is always available
+        matches!(self, WorktreeTool::Git)
     }
 }
 

@@ -29,7 +29,8 @@ serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
-tokio.workspace = true
+# Remove tokio dependency for WASM compatibility
+# tokio.workspace = true
 which.workspace = true
 chrono.workspace = true
 # wit-bindgen is optional and only used for host builds

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Command;
-use tokio::fs;
+use std::fs;
 use which::which;
 
 /// Configuration for building a hook
@@ -167,7 +167,7 @@ impl HookBuilder {
         let output_dir = output_path
             .parent()
             .ok_or_else(|| anyhow::anyhow!("Invalid output path"))?;
-        fs::create_dir_all(output_dir).await?;
+        fs::create_dir_all(output_dir)?;
 
         // Build the hook
         let result = self.execute_build(&config).await?;
@@ -178,7 +178,7 @@ impl HookBuilder {
         // Get binary size if build was successful
         let binary_size = if result.success {
             if let Some(ref binary_path) = result.binary_path {
-                fs::metadata(binary_path).await.map(|m| m.len()).ok()
+                fs::metadata(binary_path).map(|m| m.len()).ok()
             } else {
                 None
             }

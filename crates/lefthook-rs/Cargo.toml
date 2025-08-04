@@ -23,7 +23,7 @@ download = []
 anyhow.workspace = true
 serde.workspace = true
 serde_yaml.workspace = true
-tokio.workspace = true
+tokio = { version = "1.0", features = ["full"] }
 which.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true

@@ -29,6 +29,7 @@ serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
-which.workspace = true
+# Remove which dependency for WASM compatibility
+# which.workspace = true
 # wit-bindgen is optional and only used for host builds
 wit-bindgen = { version = "0.20", optional = true }

@@ -152,13 +152,23 @@ impl ComponentStatusChecker {
         }
 
         let build_time = start_time.elapsed();
-        let all_statuses: Vec<&ComponentStatus> = wit_statuses.iter().chain(native_statuses.iter()).collect();
+        let all_statuses: Vec<&ComponentStatus> =
+            wit_statuses.iter().chain(native_statuses.iter()).collect();
 
         let summary = StatusSummary {
             total_components: all_statuses.len(),
-            successful_builds: all_statuses.iter().filter(|s| matches!(s.build_status, BuildStatus::Success)).count(),
-            failed_builds: all_statuses.iter().filter(|s| matches!(s.build_status, BuildStatus::Failed)).count(),
-            not_built: all_statuses.iter().filter(|s| matches!(s.build_status, BuildStatus::NotBuilt)).count(),
+            successful_builds: all_statuses
+                .iter()
+                .filter(|s| matches!(s.build_status, BuildStatus::Success))
+                .count(),
+            failed_builds: all_statuses
+                .iter()
+                .filter(|s| matches!(s.build_status, BuildStatus::Failed))
+                .count(),
+            not_built: all_statuses
+                .iter()
+                .filter(|s| matches!(s.build_status, BuildStatus::NotBuilt))
+                .count(),
             wit_components: wit_statuses,
             native_crates: native_statuses,
             build_time,
@@ -251,7 +261,10 @@ impl ComponentStatusChecker {
     /// Check status of a native crate
     async fn check_native_crate(&self, crate_item: &RegistryItem) -> Result<ComponentStatus> {
         let start_time = std::time::Instant::now();
-        let manifest_path = self.workspace_root.join(&crate_item.path).join("Cargo.toml");
+        let manifest_path = self
+            .workspace_root
+            .join(&crate_item.path)
+            .join("Cargo.toml");
 
         if self.verbose {
             println!("Checking native crate: {}", crate_item.name);
@@ -336,8 +349,11 @@ impl ComponentStatusChecker {
 
     /// Build a WIT component
     async fn build_wit_component(&self, component_path: &str) -> Result<()> {
-        let output = Command::new("cargo")
+        let output = Command::new("rustup")
             .args([
+                "run",
+                "nightly",
+                "cargo",
                 "component",
                 "build",
                 "--manifest-path",
@@ -345,10 +361,20 @@ impl ComponentStatusChecker {
                 "--target",
                 "wasm32-wasip2",
                 "--release",
+                "--config",
+                ".cargo/config.wasm.toml",
             ])
             .current_dir(&self.workspace_root)
-            .stdout(if self.verbose { std::process::Stdio::inherit() } else { std::process::Stdio::piped() })
-            .stderr(if self.verbose { std::process::Stdio::inherit() } else { std::process::Stdio::piped() })
+            .stdout(if self.verbose {
+                std::process::Stdio::inherit()
+            } else {
+                std::process::Stdio::piped()
+            })
+            .stderr(if self.verbose {
+                std::process::Stdio::inherit()
+            } else {
+                std::process::Stdio::piped()
+            })
             .output()
             .context("Failed to execute cargo component build")?;
 
@@ -369,8 +395,16 @@ impl ComponentStatusChecker {
                 &format!("{}/Cargo.toml", crate_path),
             ])
             .current_dir(&self.workspace_root)
-            .stdout(if self.verbose { std::process::Stdio::inherit() } else { std::process::Stdio::piped() })
-            .stderr(if self.verbose { std::process::Stdio::inherit() } else { std::process::Stdio::piped() })
+            .stdout(if self.verbose {
+                std::process::Stdio::inherit()
+            } else {
+                std::process::Stdio::piped()
+            })
+            .stderr(if self.verbose {
+                std::process::Stdio::inherit()
+            } else {
+                std::process::Stdio::piped()
+            })
             .output()
             .context("Failed to execute cargo check")?;
 
@@ -401,8 +435,8 @@ impl ComponentStatusChecker {
             anyhow::bail!("Failed to get crate metadata");
         }
 
-        let metadata: serde_json::Value = serde_json::from_slice(&output.stdout)
-            .context("Failed to parse cargo metadata")?;
+        let metadata: serde_json::Value =
+            serde_json::from_slice(&output.stdout).context("Failed to parse cargo metadata")?;
 
         let version = metadata["packages"][0]["version"]
             .as_str()
@@ -413,9 +447,13 @@ impl ComponentStatusChecker {
 
     /// Get component checksum
     async fn get_component_checksum(&self, component_name: &str) -> Result<String> {
-        let wasm_path = self.workspace_root
+        let wasm_path = self
+            .workspace_root
             .join("target/wasm32-wasip2/release")
-            .join(format!("{}.component.wasm", component_name.replace('-', "_")));
+            .join(format!(
+                "{}.component.wasm",
+                component_name.replace('-', "_")
+            ));
 
         if !wasm_path.exists() {
             anyhow::bail!("Component WASM file not found");
@@ -466,7 +504,7 @@ impl ComponentStatusChecker {
 
         // Basic WIT validation (in production, you might use wit-parser)
         let content = tokio::fs::read_to_string(wit_path).await?;
-        
+
         // Check for basic WIT syntax
         if !content.contains("package") || !content.contains("interface") {
             anyhow::bail!("Invalid WIT file format");
@@ -479,7 +517,7 @@ impl ComponentStatusChecker {
     async fn check_rpc_schema(&self, endpoint: &str) -> Result<bool> {
         let client = Client::new();
         let timeout = Duration::from_secs(5);
-        
+
         // Try to fetch the schema endpoint
         let response = client
             .get(endpoint)
@@ -504,13 +542,13 @@ impl ComponentStatusChecker {
         }
 
         let obj = json.as_object().unwrap();
-        
+
         // Check for common schema fields or API info
-        let has_schema_content = obj.contains_key("api_info") || 
-                                obj.contains_key("FileOperationEvent") ||
-                                obj.contains_key("FileReadRequest") ||
-                                obj.contains_key("components") ||
-                                obj.contains_key("schemas");
+        let has_schema_content = obj.contains_key("api_info")
+            || obj.contains_key("FileOperationEvent")
+            || obj.contains_key("FileReadRequest")
+            || obj.contains_key("components")
+            || obj.contains_key("schemas");
 
         Ok(has_schema_content)
     }
@@ -519,7 +557,10 @@ impl ComponentStatusChecker {
     pub fn print_status_summary(&self, summary: &StatusSummary) {
         println!("\n🔍 Hooksmith Component Status Report");
         println!("=====================================");
-        println!("Generated: {}", summary.timestamp.format("%Y-%m-%d %H:%M:%S UTC"));
+        println!(
+            "Generated: {}",
+            summary.timestamp.format("%Y-%m-%d %H:%M:%S UTC")
+        );
         println!("Build time: {:?}", summary.build_time);
         println!();
 
@@ -546,7 +587,7 @@ impl ComponentStatusChecker {
         println!("✅ Successful builds: {}", summary.successful_builds);
         println!("❌ Failed builds: {}", summary.failed_builds);
         println!("⏸️  Not built: {}", summary.not_built);
-        
+
         let success_rate = if summary.total_components > 0 {
             (summary.successful_builds as f64 / summary.total_components as f64) * 100.0
         } else {
@@ -557,8 +598,10 @@ impl ComponentStatusChecker {
 
     /// Print component table
     fn print_component_table(&self, components: &[ComponentStatus]) {
-        println!("{:<20} {:<12} {:<10} {:<8} {:<8} {:<8}", 
-                 "Name", "Category", "Status", "Build", "Version", "Schema");
+        println!(
+            "{:<20} {:<12} {:<10} {:<8} {:<8} {:<8}",
+            "Name", "Category", "Status", "Build", "Version", "Schema"
+        );
         println!("{:-<80}", "");
 
         for component in components {
@@ -576,21 +619,22 @@ impl ComponentStatusChecker {
             };
 
             let version = component.version.as_deref().unwrap_or("—");
-            
-            println!("{:<20} {:<12} {:<10} {:<8} {:<8} {:<8}",
-                     component.name,
-                     component.category,
-                     component.status,
-                     status_icon,
-                     version,
-                     schema_icon);
+
+            println!(
+                "{:<20} {:<12} {:<10} {:<8} {:<8} {:<8}",
+                component.name,
+                component.category,
+                component.status,
+                status_icon,
+                version,
+                schema_icon
+            );
         }
     }
 
     /// Export status to JSON
     pub fn export_status_json(&self, summary: &StatusSummary) -> Result<String> {
-        serde_json::to_string_pretty(summary)
-            .context("Failed to serialize status summary")
+        serde_json::to_string_pretty(summary).context("Failed to serialize status summary")
     }
 
     /// Export status to CSV
@@ -598,7 +642,11 @@ impl ComponentStatusChecker {
         let mut csv = String::new();
         csv.push_str("Name,Category,Status,Build Status,Version,Schema Valid,Errors\n");
 
-        for component in summary.wit_components.iter().chain(summary.native_crates.iter()) {
+        for component in summary
+            .wit_components
+            .iter()
+            .chain(summary.native_crates.iter())
+        {
             let build_status = match component.build_status {
                 BuildStatus::Success => "Success",
                 BuildStatus::Failed => "Failed",
@@ -613,15 +661,17 @@ impl ComponentStatusChecker {
             };
 
             let errors = component.errors.join("; ");
-            
-            csv.push_str(&format!("{},{},{},{},{},{},{}\n",
-                                 component.name,
-                                 component.category,
-                                 component.status,
-                                 build_status,
-                                 component.version.as_deref().unwrap_or(""),
-                                 schema_valid,
-                                 errors));
+
+            csv.push_str(&format!(
+                "{},{},{},{},{},{},{}\n",
+                component.name,
+                component.category,
+                component.status,
+                build_status,
+                component.version.as_deref().unwrap_or(""),
+                schema_valid,
+                errors
+            ));
         }
 
         Ok(csv)
@@ -676,7 +726,11 @@ mod tests {
 
         let registry_path = temp_dir.path().join("config");
         std::fs::create_dir_all(&registry_path).unwrap();
-        std::fs::write(registry_path.join("component-registry.jsonc"), registry_content).unwrap();
+        std::fs::write(
+            registry_path.join("component-registry.jsonc"),
+            registry_content,
+        )
+        .unwrap();
 
         let checker = ComponentStatusChecker::new(temp_dir.path().to_path_buf(), false).await;
         assert!(checker.is_ok());
@@ -699,4 +753,4 @@ mod tests {
         assert_eq!(summary.successful_builds, 3);
         assert_eq!(summary.failed_builds, 1);
     }
-} 
+}

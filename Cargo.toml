@@ -46,7 +46,7 @@ license = "MIT"
 [workspace.dependencies]
 # CLI framework
 clap = { version = "4.0", features = ["derive"] }
-tokio = { version = "1.0", features = ["full"] }
+tokio = { version = "1.0", features = ["sync", "macros", "io-util", "rt", "time"] }
 anyhow = "1.0"
 console = "0.15"
 indicatif = "0.17"
@@ -57,8 +57,8 @@ serde_json = "1.0"
 serde_yaml = "0.9"
 toml = "0.8"
 
-# Git operations
-git2 = "0.18"
+# Git operations - use WASM-compatible alternatives
+git2 = { version = "0.18", features = ["vendored-libgit2"] }
 gix-filter = "0.8"
 
 # Process and command execution
@@ -87,7 +87,7 @@ chrono = { version = "0.4", features = ["serde"] }
 # JSON Schema validation
 jsonschema = "0.17"
 schemars = "0.8"
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11", features = ["json", "blocking"] }
 
 # Cryptographic hashing
 sha2 = "0.10"

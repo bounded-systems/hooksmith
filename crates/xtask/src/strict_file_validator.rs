@@ -218,7 +218,11 @@ impl StrictFileValidationResult {
             println!("❌ Policy violations found:");
             for violation in &self.violations {
                 match violation {
-                    FileViolation::DisallowedExtension { file, extension, suggestion } => {
+                    FileViolation::DisallowedExtension {
+                        file,
+                        extension,
+                        suggestion,
+                    } => {
                         println!("   ❌ Disallowed extension '{extension}' in: {file}");
                         if let Some(suggestion) = suggestion {
                             println!("      💡 Suggestion: {}", suggestion);
@@ -245,7 +249,9 @@ impl StrictFileValidationResult {
             println!("   - Add generated headers to files that should be code-generated");
             println!("   - Run: cargo xtask gen-all --validate");
             println!("   - For .yaml files: rename to .yml (more standard)");
-            println!("   - For files without extensions: add appropriate extension or add to .gitignore");
+            println!(
+                "   - For files without extensions: add appropriate extension or add to .gitignore"
+            );
         } else {
             println!("✅ All files comply with the strict extension policy!");
         }
@@ -254,8 +260,15 @@ impl StrictFileValidationResult {
 
 #[derive(Debug, Serialize)]
 pub enum FileViolation {
-    DisallowedExtension { file: String, extension: String, suggestion: Option<String> },
-    MissingGeneratedHeader { file: String, extension: String },
+    DisallowedExtension {
+        file: String,
+        extension: String,
+        suggestion: Option<String>,
+    },
+    MissingGeneratedHeader {
+        file: String,
+        extension: String,
+    },
 }
 
 pub fn validate_files() -> Result<StrictFileValidationResult> {

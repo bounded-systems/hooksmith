@@ -19,8 +19,6 @@ pub struct HooksmithEvent {
     pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
-
-
 /// File operations event handler
 pub struct FileOperationsEventHandler {
     handler: FileOperationsHandler,
@@ -38,19 +36,22 @@ impl FileOperationsEventHandler {
     fn parse_event(&self, event: &HooksmithEvent) -> Result<FileOperationEvent> {
         let event_type = event.event.as_str();
         let context = &event.context;
-        
+
         match event_type {
             "file_read_request" => {
                 let request = FileReadRequest {
-                    request_id: context.get("request_id")
+                    request_id: context
+                        .get("request_id")
                         .and_then(|v| v.as_str())
                         .unwrap_or(&event.id)
                         .to_string(),
-                    path: context.get("path")
+                    path: context
+                        .get("path")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing path in file_read_request"))?
                         .to_string(),
-                    encoding: context.get("encoding")
+                    encoding: context
+                        .get("encoding")
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string()),
                     metadata: self.parse_metadata(context),
@@ -59,52 +60,57 @@ impl FileOperationsEventHandler {
             }
             "file_write_request" => {
                 let request = FileWriteRequest {
-                    request_id: context.get("request_id")
+                    request_id: context
+                        .get("request_id")
                         .and_then(|v| v.as_str())
                         .unwrap_or(&event.id)
                         .to_string(),
-                    path: context.get("path")
+                    path: context
+                        .get("path")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing path in file_write_request"))?
                         .to_string(),
-                    content: context.get("content")
+                    content: context
+                        .get("content")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing content in file_write_request"))?
                         .to_string(),
-                    encoding: context.get("encoding")
+                    encoding: context
+                        .get("encoding")
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string()),
-                    create_parents: context.get("create_parents")
-                        .and_then(|v| v.as_bool()),
-                    overwrite: context.get("overwrite")
-                        .and_then(|v| v.as_bool()),
+                    create_parents: context.get("create_parents").and_then(|v| v.as_bool()),
+                    overwrite: context.get("overwrite").and_then(|v| v.as_bool()),
                     metadata: self.parse_metadata(context),
                 };
                 Ok(FileOperationEvent::FileWriteRequest(request))
             }
             "file_delete_request" => {
                 let request = FileDeleteRequest {
-                    request_id: context.get("request_id")
+                    request_id: context
+                        .get("request_id")
                         .and_then(|v| v.as_str())
                         .unwrap_or(&event.id)
                         .to_string(),
-                    path: context.get("path")
+                    path: context
+                        .get("path")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing path in file_delete_request"))?
                         .to_string(),
-                    recursive: context.get("recursive")
-                        .and_then(|v| v.as_bool()),
+                    recursive: context.get("recursive").and_then(|v| v.as_bool()),
                     metadata: self.parse_metadata(context),
                 };
                 Ok(FileOperationEvent::FileDeleteRequest(request))
             }
             "file_exists_request" => {
                 let request = FileExistsRequest {
-                    request_id: context.get("request_id")
+                    request_id: context
+                        .get("request_id")
                         .and_then(|v| v.as_str())
                         .unwrap_or(&event.id)
                         .to_string(),
-                    path: context.get("path")
+                    path: context
+                        .get("path")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing path in file_exists_request"))?
                         .to_string(),
@@ -114,87 +120,96 @@ impl FileOperationsEventHandler {
             }
             "file_copy_request" => {
                 let request = FileCopyRequest {
-                    request_id: context.get("request_id")
+                    request_id: context
+                        .get("request_id")
                         .and_then(|v| v.as_str())
                         .unwrap_or(&event.id)
                         .to_string(),
-                    source: context.get("source")
+                    source: context
+                        .get("source")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing source in file_copy_request"))?
                         .to_string(),
-                    destination: context.get("destination")
+                    destination: context
+                        .get("destination")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing destination in file_copy_request"))?
                         .to_string(),
-                    overwrite: context.get("overwrite")
-                        .and_then(|v| v.as_bool()),
+                    overwrite: context.get("overwrite").and_then(|v| v.as_bool()),
                     metadata: self.parse_metadata(context),
                 };
                 Ok(FileOperationEvent::FileCopyRequest(request))
             }
             "file_move_request" => {
                 let request = FileMoveRequest {
-                    request_id: context.get("request_id")
+                    request_id: context
+                        .get("request_id")
                         .and_then(|v| v.as_str())
                         .unwrap_or(&event.id)
                         .to_string(),
-                    source: context.get("source")
+                    source: context
+                        .get("source")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing source in file_move_request"))?
                         .to_string(),
-                    destination: context.get("destination")
+                    destination: context
+                        .get("destination")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing destination in file_move_request"))?
                         .to_string(),
-                    overwrite: context.get("overwrite")
-                        .and_then(|v| v.as_bool()),
+                    overwrite: context.get("overwrite").and_then(|v| v.as_bool()),
                     metadata: self.parse_metadata(context),
                 };
                 Ok(FileOperationEvent::FileMoveRequest(request))
             }
             "directory_create_request" => {
                 let request = DirectoryCreateRequest {
-                    request_id: context.get("request_id")
+                    request_id: context
+                        .get("request_id")
                         .and_then(|v| v.as_str())
                         .unwrap_or(&event.id)
                         .to_string(),
-                    path: context.get("path")
+                    path: context
+                        .get("path")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing path in directory_create_request"))?
                         .to_string(),
-                    create_parents: context.get("create_parents")
-                        .and_then(|v| v.as_bool()),
+                    create_parents: context.get("create_parents").and_then(|v| v.as_bool()),
                     metadata: self.parse_metadata(context),
                 };
                 Ok(FileOperationEvent::DirectoryCreateRequest(request))
             }
             "directory_list_request" => {
                 let request = DirectoryListRequest {
-                    request_id: context.get("request_id")
+                    request_id: context
+                        .get("request_id")
                         .and_then(|v| v.as_str())
                         .unwrap_or(&event.id)
                         .to_string(),
-                    path: context.get("path")
+                    path: context
+                        .get("path")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing path in directory_list_request"))?
                         .to_string(),
-                    recursive: context.get("recursive")
-                        .and_then(|v| v.as_bool()),
+                    recursive: context.get("recursive").and_then(|v| v.as_bool()),
                     metadata: self.parse_metadata(context),
                 };
                 Ok(FileOperationEvent::DirectoryListRequest(request))
             }
             "file_checksum_request" => {
                 let request = FileChecksumRequest {
-                    request_id: context.get("request_id")
+                    request_id: context
+                        .get("request_id")
                         .and_then(|v| v.as_str())
                         .unwrap_or(&event.id)
                         .to_string(),
-                    path: context.get("path")
+                    path: context
+                        .get("path")
                         .and_then(|v| v.as_str())
                         .ok_or_else(|| anyhow::anyhow!("Missing path in file_checksum_request"))?
                         .to_string(),
-                    algorithm: context.get("algorithm")
+                    algorithm: context
+                        .get("algorithm")
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string()),
                     metadata: self.parse_metadata(context),
@@ -206,14 +221,18 @@ impl FileOperationsEventHandler {
     }
 
     /// Convert a FileOperationEvent to a HooksmithEvent
-    fn create_result_event(&self, file_event: FileOperationEvent, original_event: &HooksmithEvent) -> HooksmithEvent {
+    fn create_result_event(
+        &self,
+        file_event: FileOperationEvent,
+        original_event: &HooksmithEvent,
+    ) -> HooksmithEvent {
         let (event_type, context) = match file_event {
             FileOperationEvent::FileReadResult(result) => {
                 let mut context = json!({
                     "request_id": result.request_id,
                     "success": result.success,
                 });
-                
+
                 if let Some(content) = result.content {
                     context["content"] = json!(content);
                 }
@@ -232,7 +251,7 @@ impl FileOperationsEventHandler {
                 if let Some(duration_ms) = result.duration_ms {
                     context["duration_ms"] = json!(duration_ms);
                 }
-                
+
                 ("file_read_result", context)
             }
             FileOperationEvent::FileWriteResult(result) => {
@@ -240,7 +259,7 @@ impl FileOperationsEventHandler {
                     "request_id": result.request_id,
                     "success": result.success,
                 });
-                
+
                 if let Some(size) = result.size {
                     context["size"] = json!(size);
                 }
@@ -253,7 +272,7 @@ impl FileOperationsEventHandler {
                 if let Some(duration_ms) = result.duration_ms {
                     context["duration_ms"] = json!(duration_ms);
                 }
-                
+
                 ("file_write_result", context)
             }
             FileOperationEvent::FileDeleteResult(result) => {
@@ -261,14 +280,14 @@ impl FileOperationsEventHandler {
                     "request_id": result.request_id,
                     "success": result.success,
                 });
-                
+
                 if let Some(error) = result.error {
                     context["error"] = json!(error);
                 }
                 if let Some(duration_ms) = result.duration_ms {
                     context["duration_ms"] = json!(duration_ms);
                 }
-                
+
                 ("file_delete_result", context)
             }
             FileOperationEvent::FileExistsResult(result) => {
@@ -277,7 +296,7 @@ impl FileOperationsEventHandler {
                     "success": result.success,
                     "exists": result.exists,
                 });
-                
+
                 if let Some(metadata) = result.metadata {
                     context["metadata"] = json!(metadata);
                 }
@@ -287,7 +306,7 @@ impl FileOperationsEventHandler {
                 if let Some(duration_ms) = result.duration_ms {
                     context["duration_ms"] = json!(duration_ms);
                 }
-                
+
                 ("file_exists_result", context)
             }
             FileOperationEvent::FileCopyResult(result) => {
@@ -295,7 +314,7 @@ impl FileOperationsEventHandler {
                     "request_id": result.request_id,
                     "success": result.success,
                 });
-                
+
                 if let Some(size) = result.size {
                     context["size"] = json!(size);
                 }
@@ -308,7 +327,7 @@ impl FileOperationsEventHandler {
                 if let Some(duration_ms) = result.duration_ms {
                     context["duration_ms"] = json!(duration_ms);
                 }
-                
+
                 ("file_copy_result", context)
             }
             FileOperationEvent::FileMoveResult(result) => {
@@ -316,7 +335,7 @@ impl FileOperationsEventHandler {
                     "request_id": result.request_id,
                     "success": result.success,
                 });
-                
+
                 if let Some(metadata) = result.metadata {
                     context["metadata"] = json!(metadata);
                 }
@@ -326,7 +345,7 @@ impl FileOperationsEventHandler {
                 if let Some(duration_ms) = result.duration_ms {
                     context["duration_ms"] = json!(duration_ms);
                 }
-                
+
                 ("file_move_result", context)
             }
             FileOperationEvent::DirectoryCreateResult(result) => {
@@ -334,7 +353,7 @@ impl FileOperationsEventHandler {
                     "request_id": result.request_id,
                     "success": result.success,
                 });
-                
+
                 if let Some(metadata) = result.metadata {
                     context["metadata"] = json!(metadata);
                 }
@@ -344,7 +363,7 @@ impl FileOperationsEventHandler {
                 if let Some(duration_ms) = result.duration_ms {
                     context["duration_ms"] = json!(duration_ms);
                 }
-                
+
                 ("directory_create_result", context)
             }
             FileOperationEvent::DirectoryListResult(result) => {
@@ -352,7 +371,7 @@ impl FileOperationsEventHandler {
                     "request_id": result.request_id,
                     "success": result.success,
                 });
-                
+
                 if let Some(files) = result.files {
                     context["files"] = json!(files);
                 }
@@ -362,7 +381,7 @@ impl FileOperationsEventHandler {
                 if let Some(duration_ms) = result.duration_ms {
                     context["duration_ms"] = json!(duration_ms);
                 }
-                
+
                 ("directory_list_result", context)
             }
             FileOperationEvent::FileChecksumResult(result) => {
@@ -370,7 +389,7 @@ impl FileOperationsEventHandler {
                     "request_id": result.request_id,
                     "success": result.success,
                 });
-                
+
                 if let Some(checksum) = result.checksum {
                     context["checksum"] = json!(checksum);
                 }
@@ -383,7 +402,7 @@ impl FileOperationsEventHandler {
                 if let Some(duration_ms) = result.duration_ms {
                     context["duration_ms"] = json!(duration_ms);
                 }
-                
+
                 ("file_checksum_result", context)
             }
             _ => {
@@ -408,16 +427,19 @@ impl FileOperationsEventHandler {
     /// Parse metadata from event context
     fn parse_metadata(&self, context: &serde_json::Value) -> Option<EventMetadata> {
         let metadata = context.get("metadata")?;
-        
+
         Some(EventMetadata {
-            working_directory: metadata.get("working_directory")
+            working_directory: metadata
+                .get("working_directory")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string()),
-            timestamp: metadata.get("timestamp")
+            timestamp: metadata
+                .get("timestamp")
                 .and_then(|v| v.as_str())
                 .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
                 .map(|dt| DateTimeUtc::from(dt.with_timezone(&chrono::Utc))),
-            session_id: metadata.get("session_id")
+            session_id: metadata
+                .get("session_id")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string()),
         })
@@ -433,16 +455,16 @@ impl EventHandler for FileOperationsEventHandler {
 
         // Parse the event
         let file_event = self.parse_event(event)?;
-        
+
         // Handle the file operation
         let runtime = tokio::runtime::Runtime::new()?;
         let result_event = runtime.block_on(self.handler.handle_event(file_event))?;
-        
+
         // Convert result back to HooksmithEvent and emit it
         let _result_hooksmith_event = self.create_result_event(result_event, event);
         // TODO: Implement event emission when xtask integration is complete
         // crate::xtask::event_bus::emit_event(result_hooksmith_event)?;
-        
+
         Ok(())
     }
 
@@ -453,15 +475,15 @@ impl EventHandler for FileOperationsEventHandler {
     fn should_handle(&self, event: &HooksmithEvent) -> bool {
         matches!(
             event.event.as_str(),
-            "file_read_request" |
-            "file_write_request" |
-            "file_delete_request" |
-            "file_exists_request" |
-            "file_copy_request" |
-            "file_move_request" |
-            "directory_create_request" |
-            "directory_list_request" |
-            "file_checksum_request"
+            "file_read_request"
+                | "file_write_request"
+                | "file_delete_request"
+                | "file_exists_request"
+                | "file_copy_request"
+                | "file_move_request"
+                | "directory_create_request"
+                | "directory_list_request"
+                | "file_checksum_request"
         )
     }
-} 
+}

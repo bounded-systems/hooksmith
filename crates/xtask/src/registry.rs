@@ -1,8 +1,8 @@
+use anyhow::{anyhow, Context, Result};
+use serde_json::{json, Value};
 use std::fs;
 use std::path::Path;
 use std::process::Command;
-use serde_json::{json, Value};
-use anyhow::{Result, Context, anyhow};
 
 const REGISTRY_FILE: &str = "config/generated-files.jsonc";
 
@@ -17,10 +17,10 @@ impl RegistryManager {
         let registry_path = REGISTRY_FILE.to_string();
         let content = fs::read_to_string(&registry_path)
             .with_context(|| format!("Failed to read registry file: {}", registry_path))?;
-        
-        let registry_data: Value = serde_json::from_str(&content)
-            .with_context(|| "Failed to parse registry JSON")?;
-        
+
+        let registry_data: Value =
+            serde_json::from_str(&content).with_context(|| "Failed to parse registry JSON")?;
+
         Ok(Self {
             registry_path,
             registry_data,
@@ -32,14 +32,15 @@ impl RegistryManager {
         println!("║                REGISTRY STATUS                              ║");
         println!("╚══════════════════════════════════════════════════════════════╝");
 
-        let files = self.registry_data["files"].as_array()
+        let files = self.registry_data["files"]
+            .as_array()
             .ok_or_else(|| anyhow!("Invalid registry format: files array not found"))?;
 
         println!("\n📊 Registry Statistics:");
         println!("  • Total entries: {}", files.len());
-        
+
         let (valid, invalid, missing, ignored) = self.validate_all()?;
-        
+
         println!("  • Valid files: {}", valid);
         println!("  • Invalid checksums: {}", invalid);
         println!("  • Missing files: {}", missing);
@@ -56,9 +57,9 @@ impl RegistryManager {
 
     pub fn validate(&self) -> Result<()> {
         println!("Validating generated files registry...");
-        
+
         let (valid, invalid, missing, ignored) = self.validate_all()?;
-        
+
         println!("\n=== VALIDATION SUMMARY ===");
         println!("Valid files: {}", valid);
         println!("Invalid checksums: {}", invalid);
@@ -76,28 +77,34 @@ impl RegistryManager {
 
     pub fn update_checksums(&mut self) -> Result<()> {
         println!("Updating all checksums in registry...");
-        
+
         let mut updated = 0;
         let mut unchanged = 0;
         let mut updates = Vec::new();
 
         // First pass: collect all updates
         {
-            let files = self.registry_data["files"].as_array()
+            let files = self.registry_data["files"]
+                .as_array()
                 .ok_or_else(|| anyhow!("Invalid registry format"))?;
 
             for (i, file_entry) in files.iter().enumerate() {
-                let path = file_entry["path"].as_str()
+                let path = file_entry["path"]
+                    .as_str()
                     .ok_or_else(|| anyhow!("Invalid file entry: missing path"))?;
-                
+
                 if Path::new(path).exists() {
                     let current_checksum = self.generate_checksum(path)?;
-                    let stored_checksum = file_entry["checksum"].as_str()
+                    let stored_checksum = file_entry["checksum"]
+                        .as_str()
                         .ok_or_else(|| anyhow!("Invalid file entry: missing checksum"))?;
-                    
+
                     if current_checksum != stored_checksum {
                         updates.push((i, current_checksum.clone()));
-                        println!("  Updated: {} ({} → {})", path, stored_checksum, current_checksum);
+                        println!(
+                            "  Updated: {} ({} → {})",
+                            path, stored_checksum, current_checksum
+                        );
                         updated += 1;
                     } else {
                         unchanged += 1;
@@ -108,35 +115,36 @@ impl RegistryManager {
 
         // Second pass: apply updates
         {
-            let files = self.registry_data["files"].as_array_mut()
+            let files = self.registry_data["files"]
+                .as_array_mut()
                 .ok_or_else(|| anyhow!("Invalid registry format"))?;
-            
+
             for (index, checksum) in updates {
                 files[index]["checksum"] = json!(checksum);
             }
         }
 
         self.save_registry()?;
-        
+
         println!("\n=== UPDATE SUMMARY ===");
         println!("Files updated: {}", updated);
         println!("Files unchanged: {}", unchanged);
-        
+
         Ok(())
     }
 
     pub fn fix(&mut self) -> Result<()> {
         println!("Fixing registry issues...");
-        
+
         // First update all checksums
         self.update_checksums()?;
-        
+
         // Then clean up ignored files
         self.cleanup_ignored_files()?;
-        
+
         // Add missing files
         self.add_missing_files()?;
-        
+
         println!("✅ Registry fix complete!");
         Ok(())
     }
@@ -149,26 +157,29 @@ impl RegistryManager {
     }
 
     fn validate_all(&self) -> Result<(usize, usize, usize, usize)> {
-        let files = self.registry_data["files"].as_array()
+        let files = self.registry_data["files"]
+            .as_array()
             .ok_or_else(|| anyhow!("Invalid registry format"))?;
-        
+
         let mut valid = 0;
         let mut invalid = 0;
         let mut missing = 0;
         let mut ignored = 0;
 
         for file_entry in files {
-            let path = file_entry["path"].as_str()
+            let path = file_entry["path"]
+                .as_str()
                 .ok_or_else(|| anyhow!("Invalid file entry"))?;
-            
+
             if Path::new(path).exists() {
                 if self.is_ignored_by_git(path)? {
                     ignored += 1;
                 } else {
                     let current_checksum = self.generate_checksum(path)?;
-                    let stored_checksum = file_entry["checksum"].as_str()
+                    let stored_checksum = file_entry["checksum"]
+                        .as_str()
                         .ok_or_else(|| anyhow!("Invalid file entry"))?;
-                    
+
                     if current_checksum == stored_checksum {
                         valid += 1;
                     } else {
@@ -185,16 +196,18 @@ impl RegistryManager {
 
     fn cleanup_ignored_files(&mut self) -> Result<()> {
         let mut to_remove = Vec::new();
-        
+
         // First pass: collect indices to remove
         {
-            let files = self.registry_data["files"].as_array()
+            let files = self.registry_data["files"]
+                .as_array()
                 .ok_or_else(|| anyhow!("Invalid registry format"))?;
-            
+
             for (i, file_entry) in files.iter().enumerate() {
-                let path = file_entry["path"].as_str()
+                let path = file_entry["path"]
+                    .as_str()
                     .ok_or_else(|| anyhow!("Invalid file entry"))?;
-                
+
                 let should_remove = !Path::new(path).exists() || self.is_ignored_by_git(path)?;
                 if should_remove {
                     to_remove.push(i);
@@ -202,18 +215,19 @@ impl RegistryManager {
                 }
             }
         }
-        
+
         // Second pass: remove items
         {
-            let files = self.registry_data["files"].as_array_mut()
+            let files = self.registry_data["files"]
+                .as_array_mut()
                 .ok_or_else(|| anyhow!("Invalid registry format"))?;
-            
+
             // Remove in reverse order to maintain indices
             for &index in to_remove.iter().rev() {
                 files.remove(index);
             }
         }
-        
+
         self.save_registry()?;
         Ok(())
     }
@@ -227,12 +241,12 @@ impl RegistryManager {
             .iter()
             .filter_map(|f| f["path"].as_str())
             .collect();
-        
+
         let missing_files: Vec<_> = git_files
             .into_iter()
             .filter(|f| !registry_files.contains(f.as_str()))
             .collect();
-        
+
         if !missing_files.is_empty() {
             println!("Adding missing files to registry...");
             for file in missing_files {
@@ -241,7 +255,7 @@ impl RegistryManager {
             }
             self.save_registry()?;
         }
-        
+
         Ok(())
     }
 
@@ -249,18 +263,19 @@ impl RegistryManager {
         let checksum = self.generate_checksum(path)?;
         let slug = self.generate_slug(path);
         let file_type = self.get_file_type(path);
-        
+
         let new_entry = json!({
             "path": path,
             "checksum": checksum,
             "slug": slug,
             "type": file_type
         });
-        
-        let files = self.registry_data["files"].as_array_mut()
+
+        let files = self.registry_data["files"]
+            .as_array_mut()
             .ok_or_else(|| anyhow!("Invalid registry format"))?;
         files.push(new_entry);
-        
+
         Ok(())
     }
 
@@ -269,9 +284,11 @@ impl RegistryManager {
             .arg(path)
             .output()
             .with_context(|| format!("Failed to generate checksum for {}", path))?;
-        
+
         let checksum = String::from_utf8_lossy(&output.stdout);
-        Ok(checksum.split_whitespace().next()
+        Ok(checksum
+            .split_whitespace()
+            .next()
             .ok_or_else(|| anyhow!("Invalid checksum output"))?
             .chars()
             .take(8)
@@ -290,7 +307,7 @@ impl RegistryManager {
             .extension()
             .and_then(|ext| ext.to_str())
             .unwrap_or("");
-        
+
         match extension {
             "md" => "md".to_string(),
             "toml" => "toml".to_string(),
@@ -308,7 +325,11 @@ impl RegistryManager {
             "gitattributes" => "gitattributes".to_string(),
             _ => {
                 if path.ends_with("CODEOWNERS") || path.ends_with("Makefile") {
-                    if path.ends_with("CODEOWNERS") { "CODEOWNERS".to_string() } else { "makefile".to_string() }
+                    if path.ends_with("CODEOWNERS") {
+                        "CODEOWNERS".to_string()
+                    } else {
+                        "makefile".to_string()
+                    }
                 } else {
                     "unknown".to_string()
                 }
@@ -322,25 +343,23 @@ impl RegistryManager {
             .args(["check-ignore", path])
             .output()
             .with_context(|| format!("Failed to check git ignore for {}", path))?;
-        
+
         let git_ignored = output.status.success();
-        
+
         // Additional patterns for temporary/artifact files
         let temp_patterns = [
-            "2025",           // Timestamped files
-            ".backup",        // Backup files
-            ".disabled",      // Disabled files
-            ".sed",           // Sed scripts
-            ".jsonl",         // Log files
-            ".shellcheckrc",  // ShellCheck config
+            "2025",                // Timestamped files
+            ".backup",             // Backup files
+            ".disabled",           // Disabled files
+            ".sed",                // Sed scripts
+            ".jsonl",              // Log files
+            ".shellcheckrc",       // ShellCheck config
             "generated_file_demo", // Demo artifacts
-            "fix_format.sed", // Development artifacts
+            "fix_format.sed",      // Development artifacts
         ];
-        
-        let matches_temp_pattern = temp_patterns.iter().any(|pattern| {
-            path.contains(pattern)
-        });
-        
+
+        let matches_temp_pattern = temp_patterns.iter().any(|pattern| path.contains(pattern));
+
         Ok(git_ignored || matches_temp_pattern)
     }
 
@@ -349,22 +368,33 @@ impl RegistryManager {
             .args(["ls-files"])
             .output()
             .context("Failed to get git tracked files")?;
-        
+
         let files = String::from_utf8_lossy(&output.stdout);
         let tracked_files: Vec<String> = files
             .lines()
             .filter(|line| {
                 let path = line.trim();
-                path.ends_with(".md") || path.ends_with(".toml") || path.ends_with(".sh") ||
-                path.ends_with(".json") || path.ends_with(".wit") || path.ends_with(".hbs") ||
-                path.ends_with(".css") || path.ends_with(".sed") || path.ends_with(".jsonl") ||
-                path.ends_with(".yml") || path.ends_with(".yaml") || path.ends_with(".editorconfig") ||
-                path.ends_with(".envrc") || path.ends_with(".gitignore") || path.ends_with(".gitattributes") ||
-                path.ends_with("CODEOWNERS") || path.ends_with("Makefile")
+                path.ends_with(".md")
+                    || path.ends_with(".toml")
+                    || path.ends_with(".sh")
+                    || path.ends_with(".json")
+                    || path.ends_with(".wit")
+                    || path.ends_with(".hbs")
+                    || path.ends_with(".css")
+                    || path.ends_with(".sed")
+                    || path.ends_with(".jsonl")
+                    || path.ends_with(".yml")
+                    || path.ends_with(".yaml")
+                    || path.ends_with(".editorconfig")
+                    || path.ends_with(".envrc")
+                    || path.ends_with(".gitignore")
+                    || path.ends_with(".gitattributes")
+                    || path.ends_with("CODEOWNERS")
+                    || path.ends_with("Makefile")
             })
             .map(|s| s.to_string())
             .collect();
-        
+
         Ok(tracked_files)
     }
 
@@ -404,4 +434,4 @@ pub fn run_registry_command(args: &[String]) -> Result<()> {
             Err(anyhow!("Unknown command"))
         }
     }
-} 
+}
