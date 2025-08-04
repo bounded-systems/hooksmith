@@ -1,70 +1,23 @@
 {
-  // Worktree management configuration for Hooksmith
-  "preferred_tool": "wtp",
-  "worktree_base": "../",
-  "worktree_template": "{repo}-{branch}",
+  "worktree_base": "worktrees",
+  "worktree_template": null,
   "run_setup": true,
   "setup_commands": [
-    "cargo build",
-    "cargo xtask gen-all --validate",
-    "spin build || true"
+    "cargo build"
   ],
   "copy_env": true,
   "env_files": [
-    ".env.example",
-    ".env.local.example"
+    ".env.example"
   ],
   "git_aliases": {
-    "wt": "worktree",
+    "wtr": "worktree remove",
     "wtl": "worktree list",
     "wtc": "worktree create",
-    "wtr": "worktree remove",
-    "wts": "worktree switch"
+    "wt": "worktree"
   },
-  "hooks": {
-    "post_create": [
-      "cargo xtask bootstrap --validate",
-      "cargo xtask gen-config",
-      "cargo xtask gen-docs"
-    ],
-    "post_switch": [
-      "cargo check",
-      "cargo xtask check-all"
-    ],
-    "pre_remove": [
-      "cargo clean",
-      "rm -rf target/"
-    ]
-  },
-  "preserve_branches": [
-    "main",
-    "develop",
-    "master"
-  ],
-  "auto_cleanup": true,
-  "worktree_pattern": "{repo}-{branch}",
-  "integration": {
-    "lefthook": true,
-    "xtask": true,
-    "wasm_components": true,
-    "wtp": true
-  },
-  "existing_worktrees": {
-    "feature/spin-integration": "../hooksmith-spin",
-    "feature/spin-integration-v2": "../hooksmith-spin-integration"
-  },
-  "branch_patterns": {
-    "feature/*": {
-      "template": "{repo}-{branch}",
-      "setup": ["cargo build", "cargo xtask gen-all"]
-    },
-    "bugfix/*": {
-      "template": "{repo}-{branch}",
-      "setup": ["cargo build", "cargo test"]
-    },
-    "hotfix/*": {
-      "template": "{repo}-{branch}",
-      "setup": ["cargo build", "cargo xtask check-all"]
-    }
-  }
-} 
+  "existing_worktrees": null,
+  "branch_patterns": null,
+  "integration": null,
+  "cursor_integration": null,
+  "workbloom_metadata": null
+}

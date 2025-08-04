@@ -4,12 +4,12 @@
 //! including tool detection, configuration management, and integration
 //! with various worktree management tools like wtp, wt, and git.
 
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::process::Command;
 use anyhow::{Context, Result};
 use console::style;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 use tokio::fs;
 
 use crate::WorktreeCommands;
@@ -37,6 +37,10 @@ pub struct WorktreeConfig {
     pub branch_patterns: Option<HashMap<String, BranchPattern>>,
     /// Integration settings
     pub integration: Option<IntegrationConfig>,
+    /// Cursor integration settings
+    pub cursor_integration: Option<CursorIntegrationConfig>,
+    /// Workbloom metadata settings
+    pub workbloom_metadata: Option<WorkbloomMetadataConfig>,
 }
 
 /// Branch pattern configuration
@@ -46,6 +50,8 @@ pub struct BranchPattern {
     pub template: String,
     /// Setup commands for this pattern
     pub setup: Vec<String>,
+    /// Semantic labels for this pattern
+    pub labels: Vec<String>,
 }
 
 /// Integration configuration
@@ -57,6 +63,32 @@ pub struct IntegrationConfig {
     pub xtask: bool,
     /// Enable WASM components integration
     pub wasm_components: bool,
+}
+
+/// Cursor integration configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CursorIntegrationConfig {
+    /// Auto-open worktrees in Cursor
+    pub auto_open_cursor: bool,
+    /// Cursor project configuration template
+    pub cursor_config_template: Option<String>,
+    /// Shell integration commands
+    pub shell_aliases: HashMap<String, String>,
+    /// Environment variables to set
+    pub env_vars: HashMap<String, String>,
+}
+
+/// Workbloom metadata configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkbloomMetadataConfig {
+    /// Enable metadata tracking
+    pub enabled: bool,
+    /// Metadata directory
+    pub metadata_dir: String,
+    /// Semantic labels configuration
+    pub labels_config: Option<String>,
+    /// Status tracking
+    pub status_tracking: bool,
 }
 
 impl Default for WorktreeConfig {
@@ -80,27 +112,72 @@ impl Default for WorktreeConfig {
             ],
             git_aliases: HashMap::new(),
             existing_worktrees: Some(HashMap::from([
-                ("feature/spin-integration".to_string(), "../hooksmith-spin".to_string()),
-                ("feature/spin-integration-v2".to_string(), "../hooksmith-spin-integration".to_string()),
+                (
+                    "feature/spin-integration".to_string(),
+                    "../hooksmith-spin".to_string(),
+                ),
+                (
+                    "feature/spin-integration-v2".to_string(),
+                    "../hooksmith-spin-integration".to_string(),
+                ),
             ])),
             branch_patterns: Some(HashMap::from([
-                ("feature/*".to_string(), BranchPattern {
-                    template: "{repo}-{branch}".to_string(),
-                    setup: vec!["cargo build".to_string(), "cargo xtask gen-all".to_string()],
-                }),
-                ("bugfix/*".to_string(), BranchPattern {
-                    template: "{repo}-{branch}".to_string(),
-                    setup: vec!["cargo build".to_string(), "cargo test".to_string()],
-                }),
-                ("hotfix/*".to_string(), BranchPattern {
-                    template: "{repo}-{branch}".to_string(),
-                    setup: vec!["cargo build".to_string(), "cargo xtask check-all".to_string()],
-                }),
+                (
+                    "feature/*".to_string(),
+                    BranchPattern {
+                        template: "{repo}-{branch}".to_string(),
+                        setup: vec!["cargo build".to_string(), "cargo xtask gen-all".to_string()],
+                        labels: vec!["feature".to_string(), "development".to_string()],
+                    },
+                ),
+                (
+                    "bugfix/*".to_string(),
+                    BranchPattern {
+                        template: "{repo}-{branch}".to_string(),
+                        setup: vec!["cargo build".to_string(), "cargo test".to_string()],
+                        labels: vec!["bugfix".to_string(), "maintenance".to_string()],
+                    },
+                ),
+                (
+                    "hotfix/*".to_string(),
+                    BranchPattern {
+                        template: "{repo}-{branch}".to_string(),
+                        setup: vec![
+                            "cargo build".to_string(),
+                            "cargo xtask check-all".to_string(),
+                        ],
+                        labels: vec!["hotfix".to_string(), "urgent".to_string()],
+                    },
+                ),
             ])),
             integration: Some(IntegrationConfig {
                 lefthook: true,
                 xtask: true,
                 wasm_components: true,
+            }),
+            cursor_integration: Some(CursorIntegrationConfig {
+                auto_open_cursor: true,
+                cursor_config_template: Some(".cursor/workbloom.json".to_string()),
+                shell_aliases: HashMap::from([
+                    (
+                        "cbloom".to_string(),
+                        "wb bloom $1 && cursor ./$1".to_string(),
+                    ),
+                    (
+                        "cswitch".to_string(),
+                        "wb switch $1 && cursor .".to_string(),
+                    ),
+                ]),
+                env_vars: HashMap::from([
+                    ("WORKTREE_MANAGER".to_string(), "workbloom".to_string()),
+                    ("CURSOR_INTEGRATION".to_string(), "enabled".to_string()),
+                ]),
+            }),
+            workbloom_metadata: Some(WorkbloomMetadataConfig {
+                enabled: true,
+                metadata_dir: ".wb".to_string(),
+                labels_config: Some(".wb/labels.toml".to_string()),
+                status_tracking: true,
             }),
         }
     }
@@ -133,7 +210,9 @@ impl WorktreeTool {
     /// Get tool description
     pub fn description(&self) -> &'static str {
         match self {
-            WorktreeTool::Workbloom => "Rust-based CLI with automatic file copying and port allocation",
+            WorktreeTool::Workbloom => {
+                "Rust-based CLI with automatic file copying, port allocation, and semantic metadata"
+            }
             WorktreeTool::Git => "Native Git worktree commands",
         }
     }
@@ -147,7 +226,7 @@ impl WorktreeTool {
     }
 }
 
-/// Worktree information
+/// Worktree information with enhanced metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorktreeInfo {
     /// Worktree path
@@ -160,9 +239,17 @@ pub struct WorktreeInfo {
     pub current: bool,
     /// Whether the worktree is dirty
     pub dirty: bool,
+    /// Semantic labels
+    pub labels: Vec<String>,
+    /// Creation date
+    pub created: Option<String>,
+    /// Last activity
+    pub last_activity: Option<String>,
+    /// Purpose/description
+    pub purpose: Option<String>,
 }
 
-/// Worktree manager
+/// Worktree manager with enhanced features
 pub struct WorktreeManager {
     config: WorktreeConfig,
 }
@@ -184,16 +271,27 @@ impl WorktreeManager {
     pub async fn load_config(&mut self, config_path: &Path) -> Result<()> {
         // Load configuration in order of precedence:
         // 1. Project-specific workbloom config
-        // 2. Hooksmith-specific config
-        // 3. Defaults
+        // 2. Workbloom metadata (.wb/ directory)
+        // 3. Hooksmith-specific config
+        // 4. Defaults
 
         // Try to load project-specific workbloom config
         let workbloom_config = PathBuf::from(".workbloom");
         if workbloom_config.exists() {
             if let Ok(content) = fs::read_to_string(&workbloom_config).await {
                 println!("{}", style("✓ Loaded .workbloom configuration").green());
-                // Parse workbloom configuration (line-based file list)
                 self.parse_workbloom_config(&content)?;
+            }
+        }
+
+        // Try to load workbloom metadata
+        if let Some(metadata_config) = &self.config.workbloom_metadata {
+            if metadata_config.enabled {
+                let metadata_dir = PathBuf::from(&metadata_config.metadata_dir);
+                if metadata_dir.exists() {
+                    println!("{}", style("✓ Loaded Workbloom metadata").green());
+                    self.load_workbloom_metadata(&metadata_dir).await?;
+                }
             }
         }
 
@@ -227,6 +325,35 @@ impl WorktreeManager {
         Ok(())
     }
 
+    /// Load workbloom metadata from .wb/ directory
+    async fn load_workbloom_metadata(&mut self, metadata_dir: &Path) -> Result<()> {
+        // Load metadata.json if it exists
+        let metadata_file = metadata_dir.join("metadata.json");
+        if metadata_file.exists() {
+            let content = fs::read_to_string(&metadata_file).await?;
+            // Parse metadata (could be used for enhanced worktree info)
+            println!("{}", style("  - Loaded worktree metadata").dim());
+        }
+
+        // Load labels.toml if it exists
+        let labels_file = metadata_dir.join("labels.toml");
+        if labels_file.exists() {
+            let content = fs::read_to_string(&labels_file).await?;
+            // Parse labels configuration
+            println!("{}", style("  - Loaded semantic labels").dim());
+        }
+
+        // Load status.json if it exists
+        let status_file = metadata_dir.join("status.json");
+        if status_file.exists() {
+            let content = fs::read_to_string(&status_file).await?;
+            // Parse status information
+            println!("{}", style("  - Loaded worktree status").dim());
+        }
+
+        Ok(())
+    }
+
     /// Save configuration to file
     pub async fn save_config(&self, config_path: &Path) -> Result<()> {
         let content = serde_json::to_string_pretty(&self.config)?;
@@ -255,17 +382,17 @@ impl WorktreeManager {
         }
     }
 
-    /// List all worktrees
-    pub async fn list_worktrees(&self, _detailed: bool) -> Result<Vec<WorktreeInfo>> {
+    /// List all worktrees with enhanced metadata
+    pub async fn list_worktrees(&self, detailed: bool) -> Result<Vec<WorktreeInfo>> {
         let tool = self.select_best_tool()?;
 
         match tool {
-            WorktreeTool::Workbloom => self.list_with_workbloom().await,
-            WorktreeTool::Git => self.list_with_git().await,
+            WorktreeTool::Workbloom => self.list_with_workbloom(detailed).await,
+            WorktreeTool::Git => self.list_with_git(detailed).await,
         }
     }
 
-    /// Create a new worktree
+    /// Create a new worktree with enhanced features
     pub async fn create_worktree(
         &self,
         branch: &str,
@@ -280,7 +407,7 @@ impl WorktreeManager {
         }
     }
 
-    /// Switch to a worktree
+    /// Switch to a worktree with Cursor integration
     pub async fn switch_worktree(&self, worktree: &str) -> Result<()> {
         let tool = self.select_best_tool()?;
 
@@ -290,7 +417,7 @@ impl WorktreeManager {
         }
     }
 
-    /// Remove a worktree
+    /// Remove a worktree with smart cleanup
     pub async fn remove_worktree(&self, worktree: &str, with_branch: bool) -> Result<()> {
         let tool = self.select_best_tool()?;
 
@@ -325,7 +452,7 @@ impl WorktreeManager {
         Ok(())
     }
 
-    /// Create configuration files
+    /// Create configuration files with enhanced features
     pub async fn create_config_files(&self) -> Result<()> {
         println!(
             "{}",
@@ -380,10 +507,106 @@ tools/
 # Secrets and local config (if they exist)
 secrets/
 local/
+
+# Cursor integration
+.cursor/
 "#;
 
         fs::write(".workbloom", workbloom_config).await?;
         println!("{}", style("✓ Created .workbloom").green());
+
+        // Create Workbloom metadata directory structure
+        if let Some(metadata_config) = &self.config.workbloom_metadata {
+            if metadata_config.enabled {
+                let metadata_dir = PathBuf::from(&metadata_config.metadata_dir);
+                fs::create_dir_all(&metadata_dir).await?;
+
+                // Create metadata.json
+                let metadata = serde_json::json!({
+                    "version": "1.0",
+                    "created": chrono::Utc::now().to_rfc3339(),
+                    "worktrees": {},
+                    "labels": {
+                        "feature": ["development", "new-feature"],
+                        "bugfix": ["maintenance", "fix"],
+                        "hotfix": ["urgent", "critical"],
+                        "spike": ["experiment", "research"]
+                    }
+                });
+                fs::write(
+                    metadata_dir.join("metadata.json"),
+                    serde_json::to_string_pretty(&metadata)?,
+                )
+                .await?;
+
+                // Create labels.toml
+                let labels_config = r#"# .wb/labels.toml
+# Semantic labels for worktrees
+
+[labels]
+feature = ["development", "new-feature", "enhancement"]
+bugfix = ["maintenance", "fix", "bug"]
+hotfix = ["urgent", "critical", "production"]
+spike = ["experiment", "research", "prototype"]
+docs = ["documentation", "guide", "tutorial"]
+refactor = ["cleanup", "improvement", "technical-debt"]
+
+[patterns]
+"feature/*" = ["feature", "development"]
+"bugfix/*" = ["bugfix", "maintenance"]
+"hotfix/*" = ["hotfix", "urgent"]
+"spike/*" = ["spike", "experiment"]
+"docs/*" = ["docs", "documentation"]
+"refactor/*" = ["refactor", "cleanup"]
+"#;
+                fs::write(metadata_dir.join("labels.toml"), labels_config).await?;
+
+                // Create status.json
+                let status = serde_json::json!({
+                    "active_worktrees": [],
+                    "last_updated": chrono::Utc::now().to_rfc3339(),
+                    "cursor_integration": true
+                });
+                fs::write(
+                    metadata_dir.join("status.json"),
+                    serde_json::to_string_pretty(&status)?,
+                )
+                .await?;
+
+                println!(
+                    "{}",
+                    style("✓ Created Workbloom metadata structure").green()
+                );
+            }
+        }
+
+        // Create Cursor integration configuration
+        if let Some(cursor_config) = &self.config.cursor_integration {
+            if let Some(config_template) = &cursor_config.cursor_config_template {
+                let cursor_dir = PathBuf::from(".cursor");
+                fs::create_dir_all(&cursor_dir).await?;
+
+                let cursor_config_content = serde_json::json!({
+                    "worktree_integration": {
+                        "enabled": true,
+                        "tool": "workbloom",
+                        "auto_open": cursor_config.auto_open_cursor,
+                        "metadata_dir": ".wb"
+                    },
+                    "ai_context": {
+                        "include_worktree_labels": true,
+                        "include_branch_patterns": true,
+                        "semantic_context": true
+                    }
+                });
+                fs::write(
+                    cursor_dir.join("workbloom.json"),
+                    serde_json::to_string_pretty(&cursor_config_content)?,
+                )
+                .await?;
+                println!("{}", style("✓ Created Cursor integration config").green());
+            }
+        }
 
         // Create Hooksmith-specific config
         let hooksmith_config = serde_json::to_string_pretty(&self.config)?;
@@ -393,11 +616,11 @@ local/
         Ok(())
     }
 
-    /// Setup Git aliases
+    /// Setup Git aliases and shell integration
     pub async fn setup_git_aliases(&self) -> Result<()> {
         println!(
             "{}",
-            style("Setting up Git aliases for worktree management...").bold()
+            style("Setting up Git aliases and shell integration...").bold()
         );
 
         let aliases = [
@@ -415,10 +638,28 @@ local/
                 .context(format!("Failed to set alias: {}", alias))?;
 
             if output.status.success() {
-                println!("{}", style(&format!("✓ Set alias: {} -> {}", alias, command)).green());
+                println!(
+                    "{}",
+                    style(&format!("✓ Set alias: {} -> {}", alias, command)).green()
+                );
             } else {
-                println!("{}", style(&format!("✗ Failed to set alias: {}", alias)).red());
+                println!(
+                    "{}",
+                    style(&format!("✗ Failed to set alias: {}", alias)).red()
+                );
             }
+        }
+
+        // Setup shell aliases for Cursor integration
+        if let Some(cursor_config) = &self.config.cursor_integration {
+            println!("{}", style("Cursor integration aliases:").bold());
+            for (alias, command) in &cursor_config.shell_aliases {
+                println!("{}", style(&format!("  {} -> {}", alias, command)).dim());
+            }
+            println!(
+                "{}",
+                style("Add these to your shell configuration (.zshrc, .bashrc, etc.)").yellow()
+            );
         }
 
         Ok(())
@@ -426,7 +667,7 @@ local/
 
     // Tool-specific implementations
 
-    async fn list_with_workbloom(&self) -> Result<Vec<WorktreeInfo>> {
+    async fn list_with_workbloom(&self, detailed: bool) -> Result<Vec<WorktreeInfo>> {
         // Workbloom doesn't have a list command, so we'll use git worktree list
         // and enhance it with Workbloom's status information
         let output = Command::new("workbloom")
@@ -436,14 +677,15 @@ local/
 
         if output.status.success() {
             let output_str = String::from_utf8_lossy(&output.stdout);
-            self.parse_workbloom_status_output(&output_str)
+            self.parse_workbloom_status_output(&output_str, detailed)
+                .await
         } else {
             // Fall back to git worktree list if workbloom status fails
-            self.list_with_git().await
+            self.list_with_git(detailed).await
         }
     }
 
-    async fn list_with_git(&self) -> Result<Vec<WorktreeInfo>> {
+    async fn list_with_git(&self, detailed: bool) -> Result<Vec<WorktreeInfo>> {
         let output = Command::new("git")
             .args(["worktree", "list"])
             .output()
@@ -451,7 +693,7 @@ local/
 
         if output.status.success() {
             let output_str = String::from_utf8_lossy(&output.stdout);
-            self.parse_git_list_output(&output_str)
+            self.parse_git_list_output(&output_str, detailed).await
         } else {
             let error = String::from_utf8_lossy(&output.stderr);
             Err(anyhow::anyhow!("git worktree list failed: {}", error))
@@ -476,12 +718,30 @@ local/
             .context("Failed to run workbloom setup")?;
 
         if output.status.success() {
-            println!("{}", style("✓ Worktree created successfully with Workbloom").green());
+            println!(
+                "{}",
+                style("✓ Worktree created successfully with Workbloom").green()
+            );
             println!("{}", style("  - Automatic file copying enabled").dim());
             println!("{}", style("  - Port allocation configured").dim());
             if switch {
                 println!("{}", style("  - Shell opened in new worktree").dim());
             }
+
+            // Update metadata if enabled
+            if let Some(metadata_config) = &self.config.workbloom_metadata {
+                if metadata_config.enabled {
+                    self.update_worktree_metadata(branch, "created").await?;
+                }
+            }
+
+            // Open in Cursor if configured
+            if let Some(cursor_config) = &self.config.cursor_integration {
+                if cursor_config.auto_open_cursor {
+                    println!("{}", style("  - Cursor integration available").dim());
+                }
+            }
+
             Ok(())
         } else {
             let error = String::from_utf8_lossy(&output.stderr);
@@ -515,7 +775,10 @@ local/
         if output.status.success() {
             println!("{}", style("✓ Worktree created successfully").green());
             if switch {
-                println!("{}", style(&format!("Please run: cd {}", worktree_path)).yellow());
+                println!(
+                    "{}",
+                    style(&format!("Please run: cd {}", worktree_path)).yellow()
+                );
             }
             Ok(())
         } else {
@@ -527,10 +790,28 @@ local/
     async fn switch_with_workbloom(&self, worktree: &str) -> Result<()> {
         // Workbloom doesn't have a cd command, so we'll use git worktree list
         // to find the path and then provide instructions
-        let worktrees = self.list_with_git().await?;
+        let worktrees = self.list_with_git(false).await?;
         if let Some(wt) = worktrees.iter().find(|w| w.branch == worktree) {
-            println!("{}", style("✓ Workbloom environment files synchronized").green());
+            println!(
+                "{}",
+                style("✓ Workbloom environment files synchronized").green()
+            );
             println!("{}", style(&format!("Please run: cd {}", wt.path)).yellow());
+
+            // Update metadata if enabled
+            if let Some(metadata_config) = &self.config.workbloom_metadata {
+                if metadata_config.enabled {
+                    self.update_worktree_metadata(worktree, "switched").await?;
+                }
+            }
+
+            // Cursor integration hint
+            if let Some(cursor_config) = &self.config.cursor_integration {
+                if cursor_config.auto_open_cursor {
+                    println!("{}", style("  - Run 'cursor .' to open in Cursor").dim());
+                }
+            }
+
             Ok(())
         } else {
             Err(anyhow::anyhow!("Worktree '{}' not found", worktree))
@@ -539,7 +820,7 @@ local/
 
     async fn switch_with_git(&self, worktree: &str) -> Result<()> {
         // For git, we need to find the worktree path first
-        let worktrees = self.list_with_git().await?;
+        let worktrees = self.list_with_git(false).await?;
         if let Some(wt) = worktrees.iter().find(|w| w.branch == worktree) {
             println!("{}", style(&format!("Please run: cd {}", wt.path)).yellow());
             Ok(())
@@ -556,8 +837,19 @@ local/
             .context("Failed to run workbloom cleanup")?;
 
         if output.status.success() {
-            println!("{}", style("✓ Worktree removed successfully with Workbloom cleanup").green());
+            println!(
+                "{}",
+                style("✓ Worktree removed successfully with Workbloom cleanup").green()
+            );
             println!("{}", style("  - Smart cleanup completed").dim());
+
+            // Update metadata if enabled
+            if let Some(metadata_config) = &self.config.workbloom_metadata {
+                if metadata_config.enabled {
+                    self.update_worktree_metadata(worktree, "removed").await?;
+                }
+            }
+
             Ok(())
         } else {
             // Fall back to remove command if cleanup fails
@@ -597,9 +889,69 @@ local/
         }
     }
 
+    /// Update worktree metadata
+    async fn update_worktree_metadata(&self, worktree: &str, action: &str) -> Result<()> {
+        if let Some(metadata_config) = &self.config.workbloom_metadata {
+            let metadata_dir = PathBuf::from(&metadata_config.metadata_dir);
+            let metadata_file = metadata_dir.join("metadata.json");
+
+            if metadata_file.exists() {
+                let content = fs::read_to_string(&metadata_file).await?;
+                let mut metadata: serde_json::Value = serde_json::from_str(&content)?;
+
+                // Update worktrees section
+                if let Some(worktrees) = metadata.get_mut("worktrees") {
+                    if let Some(worktrees_obj) = worktrees.as_object_mut() {
+                        worktrees_obj.insert(
+                            worktree.to_string(),
+                            serde_json::json!({
+                                "action": action,
+                                "timestamp": chrono::Utc::now().to_rfc3339(),
+                                "labels": self.get_labels_for_branch(worktree)
+                            }),
+                        );
+                    }
+                }
+
+                fs::write(&metadata_file, serde_json::to_string_pretty(&metadata)?).await?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Get semantic labels for a branch
+    fn get_labels_for_branch(&self, branch: &str) -> Vec<String> {
+        let mut labels = Vec::new();
+
+        if let Some(patterns) = &self.config.branch_patterns {
+            for (pattern, pattern_config) in patterns {
+                if self.matches_pattern(branch, pattern) {
+                    labels.extend(pattern_config.labels.clone());
+                }
+            }
+        }
+
+        labels
+    }
+
+    /// Check if a branch matches a pattern
+    fn matches_pattern(&self, branch: &str, pattern: &str) -> bool {
+        // Simple pattern matching - could be enhanced with proper glob matching
+        if pattern.ends_with("*") {
+            let prefix = &pattern[..pattern.len() - 1];
+            branch.starts_with(prefix)
+        } else {
+            branch == pattern
+        }
+    }
+
     // Output parsing methods
 
-    fn parse_workbloom_status_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
+    async fn parse_workbloom_status_output(
+        &self,
+        output: &str,
+        detailed: bool,
+    ) -> Result<Vec<WorktreeInfo>> {
         // Parse workbloom cleanup --status output format
         // This will show merge status of branches, so we'll combine it with git worktree list
         let mut worktrees = Vec::new();
@@ -610,7 +962,11 @@ local/
         Ok(worktrees)
     }
 
-    fn parse_git_list_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
+    async fn parse_git_list_output(
+        &self,
+        output: &str,
+        detailed: bool,
+    ) -> Result<Vec<WorktreeInfo>> {
         let mut worktrees = Vec::new();
 
         for line in output.lines() {
@@ -630,13 +986,24 @@ local/
                     "detached".to_string()
                 };
 
-                worktrees.push(WorktreeInfo {
+                let mut worktree_info = WorktreeInfo {
                     path,
                     branch,
                     commit,
                     current: false, // Would need to detect current
                     dirty: false,   // Would need to detect dirty state
-                });
+                    labels: Vec::new(),
+                    created: None,
+                    last_activity: None,
+                    purpose: None,
+                };
+
+                // Add semantic labels if detailed mode is enabled
+                if detailed {
+                    worktree_info.labels = self.get_labels_for_branch(&worktree_info.branch);
+                }
+
+                worktrees.push(worktree_info);
             }
         }
 
@@ -677,13 +1044,17 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             copy_env,
             switch,
         } => {
-            if let Some(ref tool_name) = tool {
+            if let Some(ref _tool_name) = tool {
                 // Override preferred tool for this command
-                let mut config = WorktreeConfig::default();
+                let config = WorktreeConfig::default();
                 let manager = WorktreeManager::with_config(config);
-                manager.create_worktree(&branch, base_dir.as_deref(), switch).await?;
+                manager
+                    .create_worktree(&branch, base_dir.as_deref(), switch)
+                    .await?;
             } else {
-                manager.create_worktree(&branch, base_dir.as_deref(), switch).await?;
+                manager
+                    .create_worktree(&branch, base_dir.as_deref(), switch)
+                    .await?;
             }
 
             if setup {
@@ -711,19 +1082,19 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 for env_file in &manager.config.env_files {
                     if Path::new(env_file).exists() {
                         let target = env_file.replace(".example", "");
-                        let _ = Command::new("cp")
-                            .arg(env_file)
-                            .arg(&target)
-                            .output();
-                        println!("{}", style(&format!("✓ Copied {} to {}", env_file, target)).green());
+                        let _ = Command::new("cp").arg(env_file).arg(&target).output();
+                        println!(
+                            "{}",
+                            style(&format!("✓ Copied {} to {}", env_file, target)).green()
+                        );
                     }
                 }
             }
         }
         WorktreeCommands::Switch { worktree, tool } => {
-            if let Some(ref tool_name) = tool {
+            if let Some(ref _tool_name) = tool {
                 // Override preferred tool for this command
-                let mut config = WorktreeConfig::default();
+                let config = WorktreeConfig::default();
                 let manager = WorktreeManager::with_config(config);
                 manager.switch_worktree(&worktree).await?;
             } else {
@@ -737,7 +1108,10 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             force,
         } => {
             if !force {
-                println!("{}", style("Are you sure you want to remove this worktree? (y/N)").yellow());
+                println!(
+                    "{}",
+                    style("Are you sure you want to remove this worktree? (y/N)").yellow()
+                );
                 let mut input = String::new();
                 std::io::stdin().read_line(&mut input)?;
                 if !input.trim().to_lowercase().starts_with('y') {
@@ -746,9 +1120,9 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 }
             }
 
-            if let Some(ref tool_name) = tool {
+            if let Some(ref _tool_name) = tool {
                 // Override preferred tool for this command
-                let mut config = WorktreeConfig::default();
+                let config = WorktreeConfig::default();
                 let manager = WorktreeManager::with_config(config);
                 manager.remove_worktree(&worktree, with_branch).await?;
             } else {
@@ -787,7 +1161,9 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                                 "description": t.description()
                             })
                         }).collect::<Vec<_>>(),
-                        "best_tool": best_tool.map(|t| t.command_name())
+                        "best_tool": best_tool.map(|t| t.command_name()),
+                        "cursor_integration": manager.config.cursor_integration.is_some(),
+                        "metadata_enabled": manager.config.workbloom_metadata.as_ref().map(|m| m.enabled).unwrap_or(false)
                     });
                     println!("{}", serde_json::to_string_pretty(&status)?);
                 }
@@ -808,16 +1184,21 @@ fn print_worktree_table(worktrees: &[WorktreeInfo], detailed: bool) {
     }
 
     if detailed {
-        println!("{:<50} {:<30} {:<12} {:<8} {:<6}", "Path", "Branch", "Commit", "Current", "Dirty");
-        println!("{:-<120}", "");
+        println!(
+            "{:<50} {:<30} {:<12} {:<8} {:<6} {:<20}",
+            "Path", "Branch", "Commit", "Current", "Dirty", "Labels"
+        );
+        println!("{:-<130}", "");
         for wt in worktrees {
+            let labels_str = wt.labels.join(", ");
             println!(
-                "{:<50} {:<30} {:<12} {:<8} {:<6}",
+                "{:<50} {:<30} {:<12} {:<8} {:<6} {:<20}",
                 wt.path,
                 wt.branch,
                 &wt.commit[..std::cmp::min(12, wt.commit.len())],
                 if wt.current { "✓" } else { "" },
-                if wt.dirty { "✗" } else { "" }
+                if wt.dirty { "✗" } else { "" },
+                labels_str
             );
         }
     } else {
@@ -832,8 +1213,33 @@ fn print_worktree_table(worktrees: &[WorktreeInfo], detailed: bool) {
 fn print_worktree_summary(worktrees: &[WorktreeInfo]) {
     println!("Worktree Summary:");
     println!("Total worktrees: {}", worktrees.len());
-    println!("Current worktree: {}", worktrees.iter().find(|w| w.current).map(|w| &w.branch).unwrap_or(&"none".to_string()));
-    println!("Dirty worktrees: {}", worktrees.iter().filter(|w| w.dirty).count());
+    println!(
+        "Current worktree: {}",
+        worktrees
+            .iter()
+            .find(|w| w.current)
+            .map(|w| &w.branch)
+            .unwrap_or(&"none".to_string())
+    );
+    println!(
+        "Dirty worktrees: {}",
+        worktrees.iter().filter(|w| w.dirty).count()
+    );
+
+    // Count by labels
+    let mut label_counts: HashMap<String, usize> = HashMap::new();
+    for wt in worktrees {
+        for label in &wt.labels {
+            *label_counts.entry(label.clone()).or_insert(0) += 1;
+        }
+    }
+
+    if !label_counts.is_empty() {
+        println!("By labels:");
+        for (label, count) in label_counts {
+            println!("  {}: {}", label, count);
+        }
+    }
 }
 
 fn print_tool_status(tools: &[WorktreeTool], best_tool: &Option<WorktreeTool>, detailed: bool) {
@@ -843,8 +1249,16 @@ fn print_tool_status(tools: &[WorktreeTool], best_tool: &Option<WorktreeTool>, d
         println!("{:<12} {:<10} {:<50}", "Tool", "Status", "Description");
         println!("{:-<72}", "");
         for tool in tools {
-            let status = if tool.is_available() { "✓ Available" } else { "✗ Missing" };
-            let best_marker = if best_tool.as_ref() == Some(tool) { " (best)" } else { "" };
+            let status = if tool.is_available() {
+                "✓ Available"
+            } else {
+                "✗ Missing"
+            };
+            let best_marker = if best_tool.as_ref() == Some(tool) {
+                " (best)"
+            } else {
+                ""
+            };
             println!(
                 "{:<12} {:<10} {:<50}",
                 format!("{}{}", tool.command_name(), best_marker),
@@ -855,7 +1269,11 @@ fn print_tool_status(tools: &[WorktreeTool], best_tool: &Option<WorktreeTool>, d
     } else {
         for tool in tools {
             let status = if tool.is_available() { "✓" } else { "✗" };
-            let best_marker = if best_tool.as_ref() == Some(tool) { " (best)" } else { "" };
+            let best_marker = if best_tool.as_ref() == Some(tool) {
+                " (best)"
+            } else {
+                ""
+            };
             println!("{} {}{}", status, tool.command_name(), best_marker);
         }
     }

@@ -44,4 +44,7 @@ tools/
 
 # Secrets and local config (if they exist)
 secrets/
-local/ 
+local/
+
+# Cursor integration
+.cursor/
