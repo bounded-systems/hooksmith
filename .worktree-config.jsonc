@@ -1,0 +1,50 @@
+{
+  // Worktree management configuration for Hooksmith
+  "preferred_tool": "wtp",
+  "worktree_base": "worktrees",
+  "run_setup": true,
+  "setup_commands": [
+    "cargo build",
+    "cargo xtask gen-all --validate",
+    "cargo xtask bootstrap --validate"
+  ],
+  "copy_env": true,
+  "env_files": [
+    ".env.example",
+    ".env.local.example"
+  ],
+  "git_aliases": {
+    "wt": "worktree",
+    "wtl": "worktree list",
+    "wtc": "worktree create",
+    "wtr": "worktree remove",
+    "wts": "worktree switch"
+  },
+  "hooks": {
+    "post_create": [
+      "cargo xtask bootstrap --validate",
+      "cargo xtask gen-config",
+      "cargo xtask gen-docs"
+    ],
+    "post_switch": [
+      "cargo check",
+      "cargo xtask check-all"
+    ],
+    "pre_remove": [
+      "cargo clean",
+      "rm -rf target/"
+    ]
+  },
+  "preserve_branches": [
+    "main",
+    "develop",
+    "master"
+  ],
+  "auto_cleanup": true,
+  "worktree_pattern": "{branch}",
+  "integration": {
+    "lefthook": true,
+    "xtask": true,
+    "wasm_components": true
+  }
+} 

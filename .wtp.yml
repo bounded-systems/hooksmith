@@ -1,0 +1,9 @@
+version: "1.0"
+defaults:
+  base_dir: "worktrees"
+  post_create:
+    - type: copy
+      from: ".env.example"
+      to: ".env"
+    - type: command
+      command: "cargo build"
