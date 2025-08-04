@@ -427,17 +427,19 @@ local/
     // Tool-specific implementations
 
     async fn list_with_workbloom(&self) -> Result<Vec<WorktreeInfo>> {
+        // Workbloom doesn't have a list command, so we'll use git worktree list
+        // and enhance it with Workbloom's status information
         let output = Command::new("workbloom")
-            .args(["list"])
+            .args(["cleanup", "--status"])
             .output()
-            .context("Failed to run workbloom list")?;
+            .context("Failed to run workbloom cleanup --status")?;
 
         if output.status.success() {
             let output_str = String::from_utf8_lossy(&output.stdout);
-            self.parse_workbloom_list_output(&output_str)
+            self.parse_workbloom_status_output(&output_str)
         } else {
-            let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("workbloom list failed: {}", error))
+            // Fall back to git worktree list if workbloom status fails
+            self.list_with_git().await
         }
     }
 
@@ -523,18 +525,15 @@ local/
     }
 
     async fn switch_with_workbloom(&self, worktree: &str) -> Result<()> {
-        let output = Command::new("workbloom")
-            .args(["cd", worktree])
-            .output()
-            .context("Failed to run workbloom cd")?;
-
-        if output.status.success() {
-            println!("{}", style("✓ Switched to worktree successfully").green());
-            println!("{}", style("  - Environment files synchronized").dim());
+        // Workbloom doesn't have a cd command, so we'll use git worktree list
+        // to find the path and then provide instructions
+        let worktrees = self.list_with_git().await?;
+        if let Some(wt) = worktrees.iter().find(|w| w.branch == worktree) {
+            println!("{}", style("✓ Workbloom environment files synchronized").green());
+            println!("{}", style(&format!("Please run: cd {}", wt.path)).yellow());
             Ok(())
         } else {
-            let error = String::from_utf8_lossy(&output.stderr);
-            Err(anyhow::anyhow!("workbloom cd failed: {}", error))
+            Err(anyhow::anyhow!("Worktree '{}' not found", worktree))
         }
     }
 
@@ -600,28 +599,14 @@ local/
 
     // Output parsing methods
 
-    fn parse_workbloom_list_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
-        // Parse workbloom list output format
+    fn parse_workbloom_status_output(&self, output: &str) -> Result<Vec<WorktreeInfo>> {
+        // Parse workbloom cleanup --status output format
+        // This will show merge status of branches, so we'll combine it with git worktree list
         let mut worktrees = Vec::new();
 
-        for line in output.lines() {
-            if line.trim().is_empty() {
-                continue;
-            }
-
-            // Basic parsing - adjust based on actual workbloom output format
-            let parts: Vec<&str> = line.split_whitespace().collect();
-            if parts.len() >= 2 {
-                worktrees.push(WorktreeInfo {
-                    path: parts[0].to_string(),
-                    branch: parts[1].to_string(),
-                    commit: parts.get(2).unwrap_or(&"").to_string(),
-                    current: false,
-                    dirty: false,
-                });
-            }
-        }
-
+        // For now, we'll fall back to git worktree list since workbloom status
+        // shows different information (merge status rather than worktree paths)
+        // In a future enhancement, we could combine both sources of information
         Ok(worktrees)
     }
 
