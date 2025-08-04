@@ -104,7 +104,7 @@ impl Default for WorktreeConfig {
 }
 
 /// Worktree management tool
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum WorktreeTool {
     Wtp,
     Gwtr,
