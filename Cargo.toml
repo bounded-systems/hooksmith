@@ -24,12 +24,12 @@ categories = ["command-line-utilities", "development-tools"]
 [workspace]
 members = [
     ".",
-    "components/cli-core",
-    "components/worktree-runner",
-    "components/git-filter",
-    "components/hook-builder",
-    "lefthook-rs",
-    "xtask",
+    "crates/components/cli-core",
+    "crates/components/worktree-runner",
+    "crates/components/git-filter",
+    "crates/components/hook-builder",
+    "crates/lefthook-rs",
+    "crates/xtask",
 ]
 
 [workspace.package]
@@ -159,8 +159,8 @@ tracing.workspace = true
 tracing-subscriber.workspace = true
 
 # Internal component dependencies
-cli-core = { path = "components/cli-core" }
-git-filter = { path = "components/git-filter" }
+cli-core = { path = "crates/components/cli-core" }
+git-filter = { path = "crates/components/git-filter" }
 
 # WASM dependencies
 wasmtime.workspace = true

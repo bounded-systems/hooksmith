@@ -16,7 +16,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
-use json_comments::StripComments;
+// use json_comments::StripComments; // TODO: Add this dependency if needed
 use sha2::{Digest, Sha256};
 
 #[derive(Serialize)]
@@ -70,11 +70,11 @@ fn run_pre_add_validation() -> Result<()> {
             Ok(validation_result) => {
                 match validation_result {
                     ValidationResult::Allowed(reason) => {
-                        allowed_files.push((file_path.clone(), reason));
+                        allowed_files.push((file_path.clone(), reason.clone()));
                         log_event("info", "file_allowed", &format!("File allowed: {}", file_path), Some(&reason));
                     }
                     ValidationResult::Blocked(reason) => {
-                        violations.push((file_path.clone(), reason));
+                        violations.push((file_path.clone(), reason.clone()));
                         log_event("error", "file_blocked", &format!("File blocked: {}", file_path), Some(&reason));
                     }
                 }
@@ -160,9 +160,13 @@ fn load_checksum_registry() -> Result<ChecksumRegistry> {
     let content = fs::read_to_string(registry_path)
         .context("Failed to read generated-files.jsonc")?;
 
-    // Parse JSONC
-    let stripped = StripComments::new(content.as_bytes());
-    let json_value: serde_json::Value = serde_json::from_reader(stripped)
+    // Parse JSONC (temporarily disabled StripComments)
+    // let stripped = StripComments::new(content.as_bytes());
+    // let json_value: serde_json::Value = serde_json::from_reader(stripped)
+    //     .context("Failed to parse generated-files.jsonc")?;
+    
+    // For now, parse as regular JSON (will fail if there are comments)
+    let json_value: serde_json::Value = serde_json::from_str(&content)
         .context("Failed to parse generated-files.jsonc")?;
 
     let files_array = json_value.get("files")
