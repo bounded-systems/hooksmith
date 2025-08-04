@@ -77,6 +77,8 @@ interface validation-handler {
   add-rule: func(rule: validation-rule) -> result<bool, string>;
 }
 
+/// Validation handler world
+/// Exports the validation-handler interface as the main entry point for this component
 world validation-handler {
   export validation-handler;
-} 
+}
