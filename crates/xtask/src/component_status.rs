@@ -10,6 +10,7 @@ use std::process::Command;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tracing::{debug, error, info, warn};
@@ -46,6 +47,7 @@ pub struct RegistryItem {
     pub targets: Vec<String>,
     pub features: Vec<String>,
     pub wit: Option<String>,
+    pub schema_endpoint: Option<String>,
 }
 
 /// Component status information
@@ -297,6 +299,25 @@ impl ComponentStatusChecker {
             vec![]
         };
 
+        // Check RPC schema if endpoint is provided
+        let schema_valid = if let Some(endpoint) = &crate_item.schema_endpoint {
+            if self.check_schemas {
+                match self.check_rpc_schema(endpoint).await {
+                    Ok(valid) => Some(valid),
+                    Err(e) => {
+                        if self.verbose {
+                            warn!("Failed to check RPC schema for {}: {}", crate_item.name, e);
+                        }
+                        Some(false)
+                    }
+                }
+            } else {
+                None
+            }
+        } else {
+            None // No schema endpoint configured
+        };
+
         Ok(ComponentStatus {
             name: crate_item.name.clone(),
             path: crate_item.path.clone(),
@@ -305,7 +326,7 @@ impl ComponentStatusChecker {
             build_status,
             version,
             checksum,
-            schema_valid: None, // Native crates don't have WIT schemas
+            schema_valid,
             last_build: Some(chrono::Utc::now().to_rfc3339()),
             build_duration: Some(build_duration),
             errors,
@@ -452,6 +473,46 @@ impl ComponentStatusChecker {
         }
 
         Ok(())
+    }
+
+    /// Check RPC schema endpoint
+    async fn check_rpc_schema(&self, endpoint: &str) -> Result<bool> {
+        let client = Client::new();
+        let timeout = Duration::from_secs(5);
+        
+        // Try to fetch the schema endpoint
+        let response = client
+            .get(endpoint)
+            .timeout(timeout)
+            .send()
+            .await
+            .context("Failed to connect to schema endpoint")?;
+
+        if !response.status().is_success() {
+            return Ok(false);
+        }
+
+        // Try to parse the response as JSON
+        let json: serde_json::Value = response
+            .json()
+            .await
+            .context("Failed to parse schema response as JSON")?;
+
+        // Basic validation - check if it's an object and has some schema content
+        if !json.is_object() {
+            return Ok(false);
+        }
+
+        let obj = json.as_object().unwrap();
+        
+        // Check for common schema fields or API info
+        let has_schema_content = obj.contains_key("api_info") || 
+                                obj.contains_key("FileOperationEvent") ||
+                                obj.contains_key("FileReadRequest") ||
+                                obj.contains_key("components") ||
+                                obj.contains_key("schemas");
+
+        Ok(has_schema_content)
     }
 
     /// Print status summary in a formatted table

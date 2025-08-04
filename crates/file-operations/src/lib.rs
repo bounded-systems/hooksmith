@@ -91,7 +91,7 @@ pub struct FileWriteResult {
 }
 
 /// File delete request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileDeleteRequest {
     pub request_id: String,
     pub path: String,
@@ -100,7 +100,7 @@ pub struct FileDeleteRequest {
 }
 
 /// File delete result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileDeleteResult {
     pub request_id: String,
     pub success: bool,

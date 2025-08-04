@@ -36,7 +36,7 @@ impl FileOperationsHandler {
                         code: "READ_ERROR".to_string(),
                         message: e.to_string(),
                         details: None,
-                        io_error: Some(e.kind().to_string()),
+                        io_error: Some(e.to_string()),
                     }),
                 }))
             }
@@ -69,7 +69,7 @@ impl FileOperationsHandler {
                         code: "WRITE_ERROR".to_string(),
                         message: e.to_string(),
                         details: None,
-                        io_error: Some(e.kind().to_string()),
+                        io_error: Some(e.to_string()),
                     }),
                 }))
             }
@@ -98,7 +98,7 @@ impl FileOperationsHandler {
                         code: "DELETE_ERROR".to_string(),
                         message: e.to_string(),
                         details: None,
-                        io_error: Some(e.kind().to_string()),
+                        io_error: Some(e.to_string()),
                     }),
                 }))
             }
@@ -131,7 +131,7 @@ impl FileOperationsHandler {
                         code: "EXISTS_ERROR".to_string(),
                         message: e.to_string(),
                         details: None,
-                        io_error: Some(e.kind().to_string()),
+                        io_error: Some(e.to_string()),
                     }),
                 }))
             }
@@ -165,7 +165,7 @@ impl FileOperationsHandler {
                         code: "COPY_ERROR".to_string(),
                         message: e.to_string(),
                         details: None,
-                        io_error: Some(e.kind().to_string()),
+                        io_error: Some(e.to_string()),
                     }),
                 }))
             }
@@ -173,7 +173,7 @@ impl FileOperationsHandler {
     }
 
     /// Handle file move request
-    async fn handle_file_move(&self, req: FileMoveRequest) -> Result<FileOperationEvent> {
+    pub async fn handle_file_move(&self, req: FileMoveRequest) -> Result<FileOperationEvent> {
         let source = self.resolve_path(&req.source);
         let destination = self.resolve_path(&req.destination);
         
@@ -197,7 +197,7 @@ impl FileOperationsHandler {
                         code: "MOVE_ERROR".to_string(),
                         message: e.to_string(),
                         details: None,
-                        io_error: Some(e.kind().to_string()),
+                        io_error: Some(e.to_string()),
                     }),
                 }))
             }
@@ -205,7 +205,7 @@ impl FileOperationsHandler {
     }
 
     /// Handle directory create request
-    async fn handle_directory_create(&self, req: DirectoryCreateRequest) -> Result<FileOperationEvent> {
+    pub async fn handle_directory_create(&self, req: DirectoryCreateRequest) -> Result<FileOperationEvent> {
         let path = self.resolve_path(&req.path);
         
         match self.create_directory(&path, req.create_parents.unwrap_or(false)).await {
@@ -228,7 +228,7 @@ impl FileOperationsHandler {
                         code: "CREATE_DIR_ERROR".to_string(),
                         message: e.to_string(),
                         details: None,
-                        io_error: Some(e.kind().to_string()),
+                        io_error: Some(e.to_string()),
                     }),
                 }))
             }
@@ -236,7 +236,7 @@ impl FileOperationsHandler {
     }
 
     /// Handle directory list request
-    async fn handle_directory_list(&self, req: DirectoryListRequest) -> Result<FileOperationEvent> {
+    pub async fn handle_directory_list(&self, req: DirectoryListRequest) -> Result<FileOperationEvent> {
         let path = self.resolve_path(&req.path);
         
         match self.list_directory(&path, req.recursive.unwrap_or(false)).await {
@@ -267,7 +267,7 @@ impl FileOperationsHandler {
     }
 
     /// Handle file checksum request
-    async fn handle_file_checksum(&self, req: FileChecksumRequest) -> Result<FileOperationEvent> {
+    pub async fn handle_file_checksum(&self, req: FileChecksumRequest) -> Result<FileOperationEvent> {
         let path = self.resolve_path(&req.path);
         let algorithm = req.algorithm.unwrap_or_else(|| "sha256".to_string());
         
