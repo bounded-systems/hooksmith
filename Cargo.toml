@@ -26,7 +26,7 @@ members = [
     ".",
     "crates/components/cli-core",
     "crates/components/worktree-runner",
-    # "crates/components/git-filter",  # Temporarily disabled due to WIT issues
+    "crates/components/git-filter",
     "crates/components/hook-builder",
     "crates/lefthook-rs",
     "crates/xtask",
