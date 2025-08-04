@@ -677,7 +677,9 @@ refactor = ["cleanup", "improvement", "technical-debt"]
 
         if output.status.success() {
             let output_str = String::from_utf8_lossy(&output.stdout);
-            self.parse_workbloom_status_output(&output_str, detailed).await
+            // Workbloom status shows merge status, not worktree paths
+            // So we'll use git worktree list for actual worktree information
+            self.list_with_git(detailed).await
         } else {
             // Fall back to git worktree list if workbloom status fails
             self.list_with_git(detailed).await
