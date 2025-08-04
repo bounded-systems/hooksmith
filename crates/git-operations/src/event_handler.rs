@@ -416,33 +416,49 @@ impl EventHandler for GitOperationsEventHandler {
         let git_event = self.parse_event(event)?;
         
         // Handle the Git operation
-        let result_event = match git_event {
-            GitOperationEvent::GitCommitRequest(req) => {
-                self.handler.handle_git_commit(req).await?
+        let result_event = runtime.block_on(async {
+            match git_event {
+                GitOperationEvent::GitCommitRequest(req) => {
+                    self.handler.handle_git_commit(req).await
+                }
+                GitOperationEvent::GitPushRequest(req) => {
+                    self.handler.handle_git_push(req).await
+                }
+                GitOperationEvent::GitPullRequest(req) => {
+                    self.handler.handle_git_pull(req).await
+                }
+                GitOperationEvent::GitStatusRequest(req) => {
+                    self.handler.handle_git_status(req).await
+                }
+                GitOperationEvent::GitAddRequest(req) => {
+                    self.handler.handle_git_add(req).await
+                }
+                GitOperationEvent::GitNoteAddRequest(req) => {
+                    self.handler.handle_git_note_add(req).await
+                }
+                GitOperationEvent::GitNoteGetRequest(req) => {
+                    self.handler.handle_git_note_get(req).await
+                }
+                _ => Ok(GitOperationEvent::GitCommitResult(GitCommitResult {
+                    request_id: "".to_string(),
+                    success: false,
+                    commit_hash: None,
+                    files_changed: None,
+                    branch: None,
+                    duration_ms: None,
+                    error: Some(GitOperationError {
+                        code: "UNKNOWN_EVENT".to_string(),
+                        message: "Unknown event type".to_string(),
+                        details: None,
+                        stderr: None,
+                        exit_code: None,
+                    }),
+                })), // Skip result events
             }
-            GitOperationEvent::GitPushRequest(req) => {
-                self.handler.handle_git_push(req).await?
-            }
-            GitOperationEvent::GitPullRequest(req) => {
-                self.handler.handle_git_pull(req).await?
-            }
-            GitOperationEvent::GitStatusRequest(req) => {
-                self.handler.handle_git_status(req).await?
-            }
-            GitOperationEvent::GitAddRequest(req) => {
-                self.handler.handle_git_add(req).await?
-            }
-            GitOperationEvent::GitNoteAddRequest(req) => {
-                self.handler.handle_git_note_add(req).await?
-            }
-            GitOperationEvent::GitNoteGetRequest(req) => {
-                self.handler.handle_git_note_get(req).await?
-            }
-            _ => return Ok(()), // Skip result events
-        };
+        })?;
         
         // Convert result back to HooksmithEvent and emit it
-        let result_hooksmith_event = self.create_result_event(result_event, event);
+        let _result_hooksmith_event = self.create_result_event(result_event, event);
         // TODO: Implement event emission when xtask integration is complete
         // crate::xtask::event_bus::emit_event(result_hooksmith_event)?;
         

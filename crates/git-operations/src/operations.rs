@@ -10,7 +10,10 @@ impl GitOperationsHandler {
         let repo = self.open_repository()?;
         let signature = req.author
             .map(|author| Signature::now(&author.name, &author.email))
-            .unwrap_or_else(|| self.get_default_signature().unwrap())?;
+            .unwrap_or_else(|| {
+                self.get_default_signature()
+                    .map_err(|e| git2::Error::from_str(&e.to_string()))
+            })?;
         
         // Add files to index if specified
         if let Some(files) = req.files {
@@ -51,7 +54,7 @@ impl GitOperationsHandler {
     pub async fn handle_git_push(&mut self, req: GitPushRequest) -> Result<GitOperationEvent> {
         let repo = self.open_repository()?;
         let remote_name = req.remote.unwrap_or_else(|| "origin".to_string());
-        let branch_name = req.branch.unwrap_or_else(|| self.get_current_branch().unwrap());
+        let branch_name = req.branch.unwrap_or_else(|| self.get_current_branch().unwrap_or_else(|_| "main".to_string()));
         
         let mut remote = repo.find_remote(&remote_name)?;
         let mut callbacks = git2::RemoteCallbacks::new();
@@ -85,7 +88,7 @@ impl GitOperationsHandler {
     pub async fn handle_git_pull(&mut self, req: GitPullRequest) -> Result<GitOperationEvent> {
         let repo = self.open_repository()?;
         let remote_name = req.remote.unwrap_or_else(|| "origin".to_string());
-        let branch_name = req.branch.unwrap_or_else(|| self.get_current_branch().unwrap());
+        let branch_name = req.branch.unwrap_or_else(|| self.get_current_branch().unwrap_or_else(|_| "main".to_string()));
         
         let mut remote = repo.find_remote(&remote_name)?;
         remote.fetch(&[&branch_name], None, None)?;
