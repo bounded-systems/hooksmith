@@ -1252,6 +1252,15 @@ enum Commands {
         #[arg(long, default_value = "text")]
         format: String,
     },
+    /// Show status of all WIT components and native crates
+    ComponentStatus {
+        /// Show detailed output
+        #[arg(long)]
+        verbose: bool,
+        /// Output format (table, json, csv)
+        #[arg(long, default_value = "table")]
+        format: String,
+    },
 }
 
 /// WIT schema for function definition
@@ -1996,6 +2005,9 @@ async fn main() -> Result<()> {
             format,
         } => {
             run_validate_structure(*strict, *verbose, format).await?;
+        }
+        Commands::ComponentStatus { verbose, format } => {
+            component_status::show_component_status(*verbose, Some(format)).await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
