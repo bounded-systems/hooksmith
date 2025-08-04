@@ -19,6 +19,7 @@ use json_comments::StripComments;
 
 use hook_state_machine::{HookContext, HookManager, HookType};
 use workflow::{run_dev_workflow, run_optimize, run_macos_optimize, run_security_check};
+use worktree::run_worktree_command;
 
 /// CLI argument enum for hook types
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -439,6 +440,89 @@ enum JsoncCommands {
     },
 }
 
+/// Worktree management commands
+#[derive(Debug, Clone, clap::Subcommand)]
+enum WorktreeCommands {
+    /// List all worktrees
+    List {
+        /// Show detailed information
+        #[arg(long)]
+        detailed: bool,
+        /// Output format (table, json, summary)
+        #[arg(long, default_value = "table")]
+        format: String,
+    },
+    /// Create a new worktree
+    Create {
+        /// Branch name for the new worktree
+        #[arg(long)]
+        branch: String,
+        /// Base directory for worktrees
+        #[arg(long)]
+        base_dir: Option<String>,
+        /// Preferred tool to use (wtp, wt, git)
+        #[arg(long)]
+        tool: Option<String>,
+        /// Whether to run setup commands after creation
+        #[arg(long)]
+        setup: bool,
+        /// Whether to copy environment files
+        #[arg(long)]
+        copy_env: bool,
+        /// Whether to switch to the new worktree
+        #[arg(long)]
+        switch: bool,
+    },
+    /// Switch to a worktree
+    Switch {
+        /// Name of the worktree to switch to
+        #[arg(long)]
+        worktree: String,
+        /// Preferred tool to use
+        #[arg(long)]
+        tool: Option<String>,
+    },
+    /// Remove a worktree
+    Remove {
+        /// Name of the worktree to remove
+        #[arg(long)]
+        worktree: String,
+        /// Whether to also remove the branch
+        #[arg(long)]
+        with_branch: bool,
+        /// Preferred tool to use
+        #[arg(long)]
+        tool: Option<String>,
+        /// Force removal without confirmation
+        #[arg(long)]
+        force: bool,
+    },
+    /// Setup worktree management tools
+    Setup {
+        /// Install recommended tools
+        #[arg(long)]
+        install_tools: bool,
+        /// Create configuration files
+        #[arg(long)]
+        config: bool,
+        /// Setup Git aliases
+        #[arg(long)]
+        aliases: bool,
+        /// All of the above
+        #[arg(long)]
+        all: bool,
+    },
+    /// Show worktree status and tool availability
+    Status {
+        /// Show detailed tool information
+        #[arg(long)]
+        detailed: bool,
+        /// Output format (table, json)
+        #[arg(long, default_value = "table")]
+        format: String,
+    },
+}
+
 mod auto_push;
 mod code_stats;
 mod config;
@@ -470,6 +554,7 @@ mod checksum;
 mod checksum_registry;
 mod registry;
 mod workflow;
+mod worktree;
 mod unified_generator;
 mod repo_structure_validator;
 mod component_status;
@@ -1301,6 +1386,11 @@ enum Commands {
         #[arg(long, default_value = "3")]
         retries: u32,
     },
+    /// Worktree management and tool integration
+    Worktree {
+        #[command(subcommand)]
+        command: WorktreeCommands,
+    },
 }
 
 /// WIT schema for function definition
@@ -2075,6 +2165,9 @@ async fn main() -> Result<()> {
                 retries,
             )
             .await?;
+        }
+        Commands::Worktree { command } => {
+            run_worktree_command(command).await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {

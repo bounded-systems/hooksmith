@@ -1,0 +1,18 @@
+{
+  "preferred_tool": null,
+  "worktree_base": "worktrees",
+  "run_setup": true,
+  "setup_commands": [
+    "cargo build"
+  ],
+  "copy_env": true,
+  "env_files": [
+    ".env.example"
+  ],
+  "git_aliases": {
+    "wtl": "worktree list",
+    "wtr": "worktree remove",
+    "wt": "worktree",
+    "wtc": "worktree create"
+  }
+}
