@@ -441,6 +441,18 @@ fn commit_worktree_changes(worktree_path: &str, branch: &str) -> Result<()> {
 }
 
 fn push_worktree_branch(worktree_path: &str, branch: &str) -> Result<()> {
+    // Check if worktree directory exists
+    if !std::path::Path::new(worktree_path).exists() {
+        println!("   ⚠️  Worktree directory does not exist: {}", worktree_path);
+        return Ok(());
+    }
+
+    // Skip if branch is empty
+    if branch.is_empty() {
+        println!("   ⚠️  Skipping empty branch name");
+        return Ok(());
+    }
+
     Command::new("git")
         .args(["push", "origin", branch])
         .current_dir(worktree_path)
