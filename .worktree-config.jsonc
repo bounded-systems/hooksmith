@@ -1,6 +1,6 @@
 {
-  "worktree_base": "../",
-  "worktree_template": "{repo}-{branch}",
+  "worktree_base": "worktrees",
+  "worktree_template": "{branch}",
   "run_setup": true,
   "setup_commands": [
     "cargo build"
@@ -16,22 +16,22 @@
     "wt": "worktree"
   },
   "existing_worktrees": {
-    "feature/spin-integration": "../hooksmith-spin",
-    "feature/spin-integration-v2": "../hooksmith-spin-integration"
+    "feature/spin-integration": "worktrees/spin-integration",
+    "feature/spin-integration-v2": "worktrees/spin-integration-v2"
   },
   "branch_patterns": {
     "feature/*": {
-      "template": "../hooksmith-{branch}",
+      "template": "worktrees/{branch}",
       "setup": ["cargo build"],
       "labels": ["feature", "development"]
     },
     "bugfix/*": {
-      "template": "../hooksmith-{branch}",
+      "template": "worktrees/{branch}",
       "setup": ["cargo build"],
       "labels": ["bugfix", "maintenance"]
     },
     "hotfix/*": {
-      "template": "../hooksmith-{branch}",
+      "template": "worktrees/{branch}",
       "setup": ["cargo build"],
       "labels": ["hotfix", "urgent"]
     }
