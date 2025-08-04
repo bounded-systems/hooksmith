@@ -1968,6 +1968,14 @@ async fn main() -> Result<()> {
         } => {
             run_security_check(gatekeeper, sip, permissions, tools, score).await?;
         }
+        Commands::ComponentSmokeTest {
+            component,
+            build,
+            strict,
+            verbose,
+        } => {
+            run_component_smoke_test(component, *build, *strict, *verbose).await?;
+        }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
                 config_dir,
@@ -8360,4 +8368,234 @@ enum FileDifference {
     Added(String),
     Removed(String),
     Modified(String),
+}
+
+/// Component smoke test configuration
+struct ComponentTest {
+    name: String,
+    wasm_path: String,
+    test_functions: Vec<TestFunction>,
+}
+
+/// Test function configuration
+struct TestFunction {
+    name: String,
+    args: Vec<String>,
+    expected_output: String,
+}
+
+/// Run component smoke tests using wasmtime --invoke
+async fn run_component_smoke_test(
+    component: String,
+    build: bool,
+    strict: bool,
+    verbose: bool,
+) -> Result<()> {
+    if verbose {
+        println!("🧪 Running component smoke tests for: {}", component);
+    }
+
+    // Define test configurations for each component
+    let component_tests = vec![
+        ComponentTest {
+            name: "hook-builder".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/hook_builder.wasm".to_string(),
+            test_functions: vec![
+                TestFunction {
+                    name: "validate-source".to_string(),
+                    args: vec!["--source-path".to_string(), "src/main.rs".to_string()],
+                    expected_output: "success".to_string(),
+                },
+            ],
+        },
+        ComponentTest {
+            name: "worktree-runner".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/worktree_runner.wasm".to_string(),
+            test_functions: vec![
+                TestFunction {
+                    name: "list-worktrees".to_string(),
+                    args: vec![],
+                    expected_output: "worktree".to_string(),
+                },
+            ],
+        },
+        ComponentTest {
+            name: "git-filter".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/git_filter.wasm".to_string(),
+            test_functions: vec![
+                TestFunction {
+                    name: "validate-blob".to_string(),
+                    args: vec!["--blob".to_string(), "test-data".to_string()],
+                    expected_output: "valid".to_string(),
+                },
+            ],
+        },
+        ComponentTest {
+            name: "validation-handler".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/validation_handler.wasm".to_string(),
+            test_functions: vec![
+                TestFunction {
+                    name: "validate".to_string(),
+                    args: vec!["--input".to_string(), "test".to_string()],
+                    expected_output: "valid".to_string(),
+                },
+            ],
+        },
+    ];
+
+    // Filter components to test
+    let tests_to_run = if component == "all" {
+        component_tests
+    } else {
+        component_tests
+            .into_iter()
+            .filter(|test| test.name == component)
+            .collect()
+    };
+
+    if tests_to_run.is_empty() {
+        anyhow::bail!("No components found matching: {}", component);
+    }
+
+    // Build components if requested
+    if build {
+        if verbose {
+            println!("🔨 Building components...");
+        }
+        
+        // Add wasm32-wasip2 target if not present
+        let status = Command::new("rustup")
+            .args(["target", "add", "wasm32-wasip2"])
+            .status()
+            .context("Failed to add wasm32-wasip2 target")?;
+        
+        if !status.success() {
+            anyhow::bail!("Failed to add wasm32-wasip2 target");
+        }
+
+        // Build components
+        let status = Command::new("cargo")
+            .args([
+                "component", "build",
+                "--target", "wasm32-wasip2",
+                "--release",
+                "--workspace",
+                "--exclude", "xtask",
+            ])
+            .status()
+            .context("Failed to build components")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to build components");
+        }
+
+        if verbose {
+            println!("✅ Components built successfully");
+        }
+    }
+
+    // Check if wasmtime is available
+    let wasmtime_available = Command::new("wasmtime")
+        .arg("--version")
+        .output()
+        .is_ok();
+
+    if !wasmtime_available {
+        anyhow::bail!("wasmtime is not available. Please install it first: https://wasmtime.dev/");
+    }
+
+    // Run smoke tests
+    let mut all_passed = true;
+    let mut test_results = Vec::new();
+
+    for test in tests_to_run {
+        if verbose {
+            println!("🧪 Testing component: {}", test.name);
+        }
+
+        // Check if WASM file exists
+        if !Path::new(&test.wasm_path).exists() {
+            let error_msg = format!("WASM file not found: {}", test.wasm_path);
+            if strict {
+                anyhow::bail!("{}", error_msg);
+            } else {
+                println!("⚠️  {}", error_msg);
+                test_results.push((test.name.clone(), false, error_msg));
+                all_passed = false;
+                continue;
+            }
+        }
+
+        // Run each test function
+        for func in &test.test_functions {
+            if verbose {
+                println!("  Testing function: {}", func.name);
+            }
+
+            let mut args = vec!["run", "--invoke", &func.name, &test.wasm_path];
+            args.extend(func.args.iter().map(|s| s.as_str()));
+
+            let output = Command::new("wasmtime")
+                .args(&args)
+                .output()
+                .context(format!("Failed to run wasmtime for {}", func.name))?;
+
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+
+            let success = if output.status.success() {
+                stdout.contains(&func.expected_output)
+            } else {
+                false
+            };
+
+            let result_msg = if success {
+                format!("✅ {}:{} - PASSED", test.name, func.name)
+            } else {
+                format!(
+                    "❌ {}:{} - FAILED (expected: {}, got: {})",
+                    test.name, func.name, func.expected_output, stdout
+                )
+            };
+
+            if verbose || !success {
+                println!("    {}", result_msg);
+                if !stderr.is_empty() {
+                    println!("    stderr: {}", stderr);
+                }
+            }
+
+            test_results.push((test.name.clone(), success, result_msg));
+            if !success {
+                all_passed = false;
+            }
+        }
+    }
+
+    // Print summary
+    println!("\n📊 Component Smoke Test Summary:");
+    println!("=================================");
+    
+    let passed = test_results.iter().filter(|(_, success, _)| *success).count();
+    let total = test_results.len();
+    
+    for (_, success, msg) in &test_results {
+        if *success {
+            println!("✅ {}", msg);
+        } else {
+            println!("❌ {}", msg);
+        }
+    }
+    
+    println!("\nResults: {}/{} tests passed", passed, total);
+    
+    if !all_passed && strict {
+        anyhow::bail!("Component smoke tests failed");
+    }
+
+    if all_passed {
+        println!("🎉 All component smoke tests passed!");
+    }
+
+    Ok(())
 }

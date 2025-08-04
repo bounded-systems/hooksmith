@@ -2,6 +2,13 @@
 //!
 //! This module implements Git attributes as hook-like abstractions, providing
 //! a structured way to handle file processing based on .gitattributes.
+//!
+//! This component implements the WIT interface for git filtering operations.
+
+wit_bindgen::generate!({
+    path: "../wit/git-filter.wit",
+    world: "git-filter",
+});
 
 pub mod actions;
 pub mod blob_contract;
@@ -64,3 +71,76 @@ pub mod prelude {
         VALID_REMOTE_NAME_RE, VALID_TAG_NAME_RE,
     };
 }
+
+/// Git Filter Component Implementation
+struct GitFilterComponent;
+
+impl git_filter::GitFilter for GitFilterComponent {
+    fn validate_blob(
+        blob_content: String,
+        config: git_filter::FilterConfig,
+    ) -> Result<git_filter::FilterResult, String> {
+        // Implementation using existing filter logic
+        let filter_driver = FilterDriver::new();
+        
+        match filter_driver.validate_blob(&blob_content, &config.params) {
+            Ok(result) => Ok(git_filter::FilterResult {
+                success: result.is_valid(),
+                content: Some(blob_content),
+                error: None,
+                details: vec!["Validation completed".to_string()],
+            }),
+            Err(e) => Ok(git_filter::FilterResult {
+                success: false,
+                content: None,
+                error: Some(e.to_string()),
+                details: vec![],
+            }),
+        }
+    }
+
+    fn filter_object(
+        object_content: String,
+        config: git_filter::FilterConfig,
+    ) -> Result<git_filter::FilterResult, String> {
+        // Implementation using existing filter logic
+        let filter_driver = FilterDriver::new();
+        
+        match filter_driver.filter_content(&object_content, &config.params) {
+            Ok(filtered_content) => Ok(git_filter::FilterResult {
+                success: true,
+                content: Some(filtered_content),
+                error: None,
+                details: vec!["Object filtered successfully".to_string()],
+            }),
+            Err(e) => Ok(git_filter::FilterResult {
+                success: false,
+                content: None,
+                error: Some(e.to_string()),
+                details: vec![],
+            }),
+        }
+    }
+
+    fn check_contract(content: String, contract_name: String) -> Result<bool, String> {
+        // Implementation using existing contract validation
+        let validator = UnifiedValidator::new();
+        
+        match validator.validate_contract(&content, &contract_name) {
+            Ok(is_valid) => Ok(is_valid),
+            Err(e) => Err(e.to_string()),
+        }
+    }
+
+    fn transform_content(content: String, contract_name: String) -> Result<String, String> {
+        // Implementation using existing transformation logic
+        let filter_driver = FilterDriver::new();
+        
+        match filter_driver.transform_content(&content, &contract_name) {
+            Ok(transformed) => Ok(transformed),
+            Err(e) => Err(e.to_string()),
+        }
+    }
+}
+
+export_git_filter!(GitFilterComponent);
