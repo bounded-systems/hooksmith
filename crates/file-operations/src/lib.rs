@@ -6,17 +6,30 @@
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
-use schemars::JsonSchema;
+use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
-use std::collections::HashMap;
-use std::fs::{self, File, Metadata};
+use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
-use uuid::Uuid;
-use walkdir::WalkDir;
+
+// Newtype wrapper for DateTime<Utc> to implement JsonSchema
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct DateTimeUtc(#[serde(with = "chrono::serde::ts_seconds")] DateTime<Utc>);
+
+impl From<DateTime<Utc>> for DateTimeUtc {
+    fn from(dt: DateTime<Utc>) -> Self {
+        DateTimeUtc(dt)
+    }
+}
+
+impl From<DateTimeUtc> for DateTime<Utc> {
+    fn from(dt: DateTimeUtc) -> Self {
+        dt.0
+    }
+}
 
 pub mod operations;
 pub mod event_handler;
@@ -109,7 +122,7 @@ pub struct FileDeleteResult {
 }
 
 /// File exists request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileExistsRequest {
     pub request_id: String,
     pub path: String,
@@ -117,7 +130,7 @@ pub struct FileExistsRequest {
 }
 
 /// File exists result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileExistsResult {
     pub request_id: String,
     pub success: bool,
@@ -128,7 +141,7 @@ pub struct FileExistsResult {
 }
 
 /// File copy request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileCopyRequest {
     pub request_id: String,
     pub source: String,
@@ -138,7 +151,7 @@ pub struct FileCopyRequest {
 }
 
 /// File copy result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileCopyResult {
     pub request_id: String,
     pub success: bool,
@@ -149,7 +162,7 @@ pub struct FileCopyResult {
 }
 
 /// File move request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileMoveRequest {
     pub request_id: String,
     pub source: String,
@@ -159,7 +172,7 @@ pub struct FileMoveRequest {
 }
 
 /// File move result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileMoveResult {
     pub request_id: String,
     pub success: bool,
@@ -169,7 +182,7 @@ pub struct FileMoveResult {
 }
 
 /// Directory create request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct DirectoryCreateRequest {
     pub request_id: String,
     pub path: String,
@@ -178,7 +191,7 @@ pub struct DirectoryCreateRequest {
 }
 
 /// Directory create result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct DirectoryCreateResult {
     pub request_id: String,
     pub success: bool,
@@ -188,7 +201,7 @@ pub struct DirectoryCreateResult {
 }
 
 /// Directory list request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct DirectoryListRequest {
     pub request_id: String,
     pub path: String,
@@ -197,7 +210,7 @@ pub struct DirectoryListRequest {
 }
 
 /// Directory list result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct DirectoryListResult {
     pub request_id: String,
     pub success: bool,
@@ -207,7 +220,7 @@ pub struct DirectoryListResult {
 }
 
 /// File checksum request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileChecksumRequest {
     pub request_id: String,
     pub path: String,
@@ -216,7 +229,7 @@ pub struct FileChecksumRequest {
 }
 
 /// File checksum result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileChecksumResult {
     pub request_id: String,
     pub success: bool,
@@ -229,8 +242,8 @@ pub struct FileChecksumResult {
 /// File metadata
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileMetadata {
-    pub created: Option<DateTime<Utc>>,
-    pub modified: Option<DateTime<Utc>>,
+    pub created: Option<DateTimeUtc>,
+    pub modified: Option<DateTimeUtc>,
     pub permissions: Option<String>,
     pub owner: Option<String>,
     pub size: Option<u64>,

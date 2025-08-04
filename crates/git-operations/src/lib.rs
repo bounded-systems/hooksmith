@@ -6,13 +6,11 @@
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
-use git2::{Commit, Repository, Signature};
+use git2::{Repository, Signature};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Instant;
-use uuid::Uuid;
 
 pub mod operations;
 pub mod event_handler;
