@@ -503,6 +503,18 @@ enum Commands {
         #[arg(long)]
         overwrite: bool,
     },
+    /// Generate JSON schemas for WIT components
+    GenWitSchema {
+        /// Output directory for schema files
+        #[arg(long, default_value = "schemas")]
+        output_dir: String,
+        /// Whether to overwrite existing files
+        #[arg(long)]
+        overwrite: bool,
+        /// Specific WIT file to generate schema for
+        #[arg(long)]
+        wit_file: Option<String>,
+    },
     /// Generate Lefthook configuration
     GenLefthook {
         /// Output file path
@@ -1423,6 +1435,13 @@ async fn main() -> Result<()> {
             overwrite,
         } => {
             generate_wit_interfaces(&output_dir, overwrite)?;
+        }
+        Commands::GenWitSchema {
+            output_dir,
+            overwrite,
+            wit_file,
+        } => {
+            generate_wit_schemas(&output_dir, overwrite, wit_file.as_deref())?;
         }
         Commands::GenLefthook { output, validate } => {
             emit_warning!(
