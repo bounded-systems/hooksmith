@@ -14,6 +14,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use wasmtime::{Engine, Linker, Store, Component};
 
 use self::components::ComponentHandle;
 use self::config::OrchestratorConfig;
@@ -50,6 +51,12 @@ pub struct HooksmithOrchestrator {
     config: OrchestratorConfig,
     /// Loaded component handles
     components: HashMap<String, ComponentHandle>,
+    /// Event bus manager for event-driven communication
+    event_bus: EventBusManager,
+    /// Linked components for direct communication (fast path)
+    linked_components: HashMap<String, Box<dyn std::any::Any + Send + Sync>>,
+    /// Component linker for direct linking
+    linker: Option<Linker<()>>,
 }
 
 impl HooksmithOrchestrator {
@@ -58,12 +65,16 @@ impl HooksmithOrchestrator {
         let config = OrchestratorConfig::default();
         let runtime = WasmRuntime::new(&config.runtime_config).await?;
         let router = CommandRouter::new();
+        let event_bus = EventBusManagerBuilder::default().build()?;
 
         Ok(Self {
             runtime,
             router,
             config,
             components: HashMap::new(),
+            event_bus,
+            linked_components: HashMap::new(),
+            linker: None,
         })
     }
 
@@ -71,12 +82,16 @@ impl HooksmithOrchestrator {
     pub async fn with_config(config: OrchestratorConfig) -> Result<Self> {
         let runtime = WasmRuntime::new(&config.runtime_config).await?;
         let router = CommandRouter::new();
+        let event_bus = EventBusManagerBuilder::default().build()?;
 
         Ok(Self {
             runtime,
             router,
             config,
             components: HashMap::new(),
+            event_bus,
+            linked_components: HashMap::new(),
+            linker: None,
         })
     }
 
@@ -181,6 +196,154 @@ impl HooksmithOrchestrator {
     /// Check if a component is loaded
     pub fn has_component(&self, name: &str) -> bool {
         self.components.contains_key(name)
+    }
+
+    /// Route an event through the event bus
+    pub async fn route_event(&self, event: crate::xtask::event_bus::HooksmithEvent) -> Result<()> {
+        self.event_bus.route_event(event).await
+    }
+
+    /// Register a component with the event bus
+    pub async fn register_component_with_event_bus(&mut self, name: String, component: ComponentHandle) {
+        self.event_bus.register_component(name.clone(), component.clone()).await;
+        self.components.insert(name, component);
+    }
+
+    /// Register a native handler with the event bus
+    pub async fn register_native_handler(&mut self, name: String, handler: Box<dyn crate::xtask::event_bus::EventHandler>) {
+        self.event_bus.register_native_handler(name, handler).await;
+    }
+
+    /// Get event bus statistics
+    pub async fn get_event_bus_statistics(&self) -> Result<event_bus::EventBusStatistics> {
+        Ok(self.event_bus.get_statistics().await)
+    }
+
+    /// Validate a contract using event-driven approach
+    pub async fn validate_contract_via_events(
+        &self,
+        contract_name: &str,
+        file_path: &str,
+        content: &str,
+        strict: bool,
+        store_proof: bool,
+    ) -> Result<ValidationResult> {
+        use crate::xtask::event_bus::HooksmithEvent;
+        use serde_json::json;
+        use uuid::Uuid;
+
+        let request_id = Uuid::new_v4().to_string();
+        let session_id = self.config.session_id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
+
+        // Create validation request event
+        let validation_event = HooksmithEvent::new(
+            "orchestrator".to_string(),
+            "validation_request".to_string(),
+            json!({
+                "request_id": request_id,
+                "contract_name": contract_name,
+                "file_path": file_path,
+                "content": content,
+                "validation_config": {
+                    "strict": strict,
+                    "store_proof": store_proof,
+                    "rules": ["json_schema", "content_validation"]
+                },
+                "metadata": {
+                    "session_id": session_id,
+                    "timestamp": chrono::Utc::now().to_rfc3339(),
+                    "component": "validation-handler"
+                }
+            }),
+        )
+        .with_session_id(session_id);
+
+        // Route the event
+        self.route_event(validation_event).await?;
+
+        // TODO: Wait for validation result event
+        // In a real implementation, this would subscribe to the result event
+        // and wait for the response
+
+        // For now, return a mock result
+        Ok(ValidationResult {
+            success: true,
+            errors: Vec::new(),
+            warnings: Vec::new(),
+            details: Some("Mock validation result".to_string()),
+        })
+    }
+
+    /// Read file content using event-driven approach
+    pub async fn read_file_via_events(&self, file_path: &str) -> Result<String> {
+        use crate::xtask::event_bus::HooksmithEvent;
+        use serde_json::json;
+        use uuid::Uuid;
+
+        let request_id = Uuid::new_v4().to_string();
+        let session_id = self.config.session_id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
+
+        // Create file read request event
+        let read_event = HooksmithEvent::new(
+            "orchestrator".to_string(),
+            "file_read_request".to_string(),
+            json!({
+                "request_id": request_id,
+                "path": file_path,
+                "encoding": "utf8",
+                "metadata": {
+                    "session_id": session_id,
+                    "timestamp": chrono::Utc::now().to_rfc3339(),
+                    "working_directory": std::env::current_dir()?.to_string_lossy()
+                }
+            }),
+        )
+        .with_session_id(session_id);
+
+        // Route the event
+        self.route_event(read_event).await?;
+
+        // TODO: Wait for file read result event
+        // In a real implementation, this would subscribe to the result event
+        // and wait for the response
+
+        // For now, return mock content
+        Ok(format!("Mock content for file: {}", file_path))
+    }
+
+    /// Store validation proof using event-driven approach
+    pub async fn store_proof_via_events(&self, file_path: &str, validation_result: &ValidationResult) -> Result<()> {
+        use crate::xtask::event_bus::HooksmithEvent;
+        use serde_json::json;
+        use uuid::Uuid;
+
+        let request_id = Uuid::new_v4().to_string();
+        let session_id = self.config.session_id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
+
+        // Create Git note add request event
+        let note_event = HooksmithEvent::new(
+            "orchestrator".to_string(),
+            "git_note_add_request".to_string(),
+            json!({
+                "request_id": request_id,
+                "note": {
+                    "object": "HEAD",
+                    "message": format!("Validation proof for {}", file_path),
+                    "file": "validation_proof.json"
+                },
+                "metadata": {
+                    "session_id": session_id,
+                    "timestamp": chrono::Utc::now().to_rfc3339(),
+                    "repository": std::env::current_dir()?.to_string_lossy()
+                }
+            }),
+        )
+        .with_session_id(session_id);
+
+        // Route the event
+        self.route_event(note_event).await?;
+
+        Ok(())
     }
 }
 
