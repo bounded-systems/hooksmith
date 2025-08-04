@@ -357,7 +357,7 @@ pub enum HooksmithEvent {
 }
 
 /// Event metadata for tracking and routing
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct EventMetadata {
     /// Unique event ID
     pub id: String,
