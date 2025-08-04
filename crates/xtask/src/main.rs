@@ -468,6 +468,7 @@ mod checksum_registry;
 mod registry;
 mod workflow;
 mod unified_generator;
+mod repo_structure_validator;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -1238,6 +1239,18 @@ enum Commands {
         #[arg(long)]
         verbose: bool,
     },
+    /// Validate repository structure against schema
+    ValidateStructure {
+        /// Whether to exit with error on validation failures
+        #[arg(long)]
+        strict: bool,
+        /// Show detailed output
+        #[arg(long)]
+        verbose: bool,
+        /// Output format (text, json, summary)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
 }
 
 /// WIT schema for function definition
@@ -1975,6 +1988,13 @@ async fn main() -> Result<()> {
             verbose,
         } => {
             run_component_smoke_test(component, *build, *strict, *verbose).await?;
+        }
+        Commands::ValidateStructure {
+            strict,
+            verbose,
+            format,
+        } => {
+            run_validate_structure(*strict, *verbose, format).await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
@@ -8595,6 +8615,75 @@ async fn run_component_smoke_test(
 
     if all_passed {
         println!("🎉 All component smoke tests passed!");
+    }
+
+    Ok(())
+}
+
+async fn run_validate_structure(strict: bool, verbose: bool, format: String) -> Result<()> {
+    let workspace_root = std::env::current_dir()?;
+    
+    if verbose {
+        println!("🔍 Validating repository structure...");
+        println!("📁 Workspace root: {}", workspace_root.display());
+    }
+
+    // Run the validation
+    let result = repo_structure_validator::validate_repo_structure(workspace_root)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&result)?;
+            println!("{}", json_output);
+        }
+        "summary" => {
+            println!("📊 Repository Structure Validation Summary");
+            println!("==========================================");
+            println!("✅ Valid: {}", result.valid);
+            println!("❌ Errors: {}", result.errors.len());
+            println!("⚠️  Warnings: {}", result.warnings.len());
+            
+            if !result.errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in &result.errors {
+                    println!("  • {}: {}", error.path, error.message);
+                }
+            }
+            
+            if !result.warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in &result.warnings {
+                    println!("  • {}: {}", warning.path, warning.message);
+                }
+            }
+        }
+        "text" | _ => {
+            if result.valid {
+                println!("✅ Repository structure is valid!");
+            } else {
+                println!("❌ Repository structure validation failed!");
+            }
+            
+            if !result.errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in &result.errors {
+                    println!("  • {}: {}", error.path, error.message);
+                }
+            }
+            
+            if !result.warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in &result.warnings {
+                    println!("  • {}: {}", warning.path, warning.message);
+                }
+            }
+        }
+    }
+
+    // Exit with error if strict mode and validation failed
+    if strict && !result.valid {
+        anyhow::bail!("Repository structure validation failed with {} errors", result.errors.len());
     }
 
     Ok(())

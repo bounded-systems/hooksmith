@@ -12,18 +12,18 @@ Hooksmith provides multiple ways to run WIT components using `wasmtime --invoke`
 
 **Usage:**
 ```bash
-# Compile and run in one step
-rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs && /tmp/run-component <function> <component.wasm> [args...]
+# Compile and run in one step (with nightly toolchain)
+rustup run nightly rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs && /tmp/run-component <function> <component.wasm> [args...]
 
 # Or compile once and reuse
-rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs
+rustup run nightly rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs
 /tmp/run-component validate-source target/wasm32-wasip2/release/hook_builder.wasm
 ```
 
 **Pros:**
 - ✅ **No complex dependencies** - only standard library
 - ✅ **Fast compilation** - minimal dependencies
-- ✅ **Works with stable Rust** - no nightly required
+- ✅ **Works with nightly Rust** - supports WASI Preview 2
 - ✅ **Simple to understand** - straightforward code
 - ✅ **Easy to modify** - self-contained script
 
@@ -40,7 +40,7 @@ rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs
 
 **Usage:**
 ```bash
-# Run directly with cargo
+# Run directly with cargo (requires nightly toolchain)
 cargo run --bin run-component -- <function> <component.wasm> [args...]
 
 # Or build and run
@@ -63,27 +63,13 @@ cargo build --bin run-component
 
 **Best for:** Development, complex automation, integration with other tools
 
-### **3. Shell Script (Legacy)**
+### **3. Shell Script (Legacy - Removed)**
 
-**File:** `scripts/run_component.sh`
+**File:** `scripts/run_component.sh` - **REMOVED**
 
-**Usage:**
-```bash
-./scripts/run_component.sh <function> <component.wasm> [args...]
-```
+**Status:** This shell script has been **removed** and replaced with Rust implementations.
 
-**Pros:**
-- ✅ **No compilation** - runs immediately
-- ✅ **Cross-platform** - works on any Unix-like system
-- ✅ **Simple** - basic shell script
-
-**Cons:**
-- ❌ **Shell dependency** - requires bash
-- ❌ **Limited error handling** - basic shell error handling
-- ❌ **No type safety** - runtime errors only
-- ❌ **Harder to extend** - shell script limitations
-
-**Best for:** Legacy support, simple scripts, when Rust isn't available
+**Reason:** Better integration with project architecture, type safety, and maintainability.
 
 ## 📋 **Component Functions**
 
@@ -176,29 +162,26 @@ run-component validate-source target/wasm32-wasip2/release/hook_builder.wasm
 ## 🎯 **Recommendations**
 
 ### **For Quick Testing**
-Use the simple Rust script:
+Use the simple Rust script with nightly:
 ```bash
-rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs && /tmp/run-component validate-source target/wasm32-wasip2/release/hook_builder.wasm
+rustup run nightly rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs && /tmp/run-component validate-source target/wasm32-wasip2/release/hook_builder.wasm
 ```
 
 ### **For Development**
-Use the cargo binary:
+Use the cargo binary with nightly:
 ```bash
 cargo run --bin run-component -- validate-source target/wasm32-wasip2/release/hook_builder.wasm
 ```
 
 ### **For CI/CD**
-Use the simple Rust script for reliability:
+Use the simple Rust script with nightly for reliability:
 ```bash
-rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs
+rustup run nightly rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs
 /tmp/run-component validate-source target/wasm32-wasip2/release/hook_builder.wasm
 ```
 
 ### **For Legacy Support**
-Use the shell script:
-```bash
-./scripts/run_component.sh validate-source target/wasm32-wasip2/release/hook_builder.wasm
-```
+The shell script has been removed. Use the Rust implementations instead.
 
 ## 🚨 **Troubleshooting**
 
@@ -218,27 +201,34 @@ cargo component build --target wasm32-wasip2 --release
 ### **Function not found**
 ```bash
 # Check available functions
-run-component --list
-# or
-./scripts/run_component.sh --help
+run-component --help
 ```
 
 ### **Compilation errors**
 ```bash
-# Use stable Rust for simple script
-rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs
+# Use nightly for simple script
+rustup run nightly rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs
 
 # Use nightly for full binary
-rustup run nightly cargo run --bin run-component
+cargo run --bin run-component
+```
+
+### **Sccache issues**
+If you encounter sccache problems with the full binary:
+```bash
+# Use the simple script instead
+rustup run nightly rustc --edition=2021 -o /tmp/run-component scripts/run_component_simple.rs && /tmp/run-component <function> <component.wasm> [args...]
 ```
 
 ## 🎉 **Conclusion**
 
 The **simple Rust script** (`scripts/run_component_simple.rs`) is recommended for most use cases because it:
-- ✅ Works with stable Rust
+- ✅ Works with nightly Rust (required for WASI Preview 2)
 - ✅ Has minimal dependencies
 - ✅ Is fast to compile
 - ✅ Is easy to understand and modify
 - ✅ Is reliable for CI/CD
 
-Use the **full cargo binary** (`scripts/run_component.rs`) when you need advanced CLI features or integration with the project's tooling. 
+Use the **full cargo binary** (`scripts/run_component.rs`) when you need advanced CLI features or integration with the project's tooling.
+
+**Note:** The shell script has been removed and replaced with Rust implementations for better integration and maintainability. 
