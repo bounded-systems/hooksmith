@@ -11,7 +11,6 @@
     "toml",
     "md",
     "yml",
-    "yaml",
     "gitignore",
     "gitattributes",
     "CODEOWNERS",
@@ -38,10 +37,6 @@
       "suffix": ""
     },
     "yml": {
-      "prefix": "#",
-      "suffix": ""
-    },
-    "yaml": {
       "prefix": "#",
       "suffix": ""
     },
@@ -96,7 +91,6 @@
     "md": "xtask gen-docs",
     "toml": "xtask gen-config",
     "yml": "xtask gen-config",
-    "yaml": "xtask gen-config",
     "gitignore": "xtask gen-gitattributes",
     "gitattributes": "xtask gen-gitattributes",
     "CODEOWNERS": "xtask gen-config",

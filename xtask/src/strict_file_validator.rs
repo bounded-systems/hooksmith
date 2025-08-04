@@ -158,6 +158,7 @@ pub struct StrictFileValidationResult {
     pub exempt_files: usize,
     pub violations: Vec<FileViolation>,
     pub errors: Vec<String>,
+    pub allowed_directories: Vec<String>,
 }
 
 impl StrictFileValidationResult {
@@ -170,6 +171,27 @@ impl StrictFileValidationResult {
             exempt_files: 0,
             violations: Vec::new(),
             errors: Vec::new(),
+            allowed_directories: vec![
+                "src/".to_string(),
+                "components/".to_string(),
+                "xtask/".to_string(),
+                "config/".to_string(),
+                "schemas/".to_string(),
+                "docs/".to_string(),
+                "examples/".to_string(),
+                "tests/".to_string(),
+                "scripts/".to_string(),
+                "hooks/".to_string(),
+                "wit/".to_string(),
+                "completions/".to_string(),
+                "diagrams/".to_string(),
+                "generated-sources/".to_string(),
+                "status-trends/".to_string(),
+                "logs/".to_string(),
+                ".github/".to_string(),
+                ".hooksmith/".to_string(),
+                "test-enhanced-gen-files/".to_string(),
+            ],
         }
     }
 
@@ -185,12 +207,22 @@ impl StrictFileValidationResult {
         println!("🚫 Ignored files: {}", self.ignored_files);
         println!();
 
+        // Show allowed directories
+        println!("📁 Allowed directories:");
+        for dir in &self.allowed_directories {
+            println!("   📂 {}", dir);
+        }
+        println!();
+
         if self.has_violations() {
             println!("❌ Policy violations found:");
             for violation in &self.violations {
                 match violation {
-                    FileViolation::DisallowedExtension { file, extension } => {
+                    FileViolation::DisallowedExtension { file, extension, suggestion } => {
                         println!("   ❌ Disallowed extension '{extension}' in: {file}");
+                        if let Some(suggestion) = suggestion {
+                            println!("      💡 Suggestion: {}", suggestion);
+                        }
                     }
                     FileViolation::MissingGeneratedHeader { file, extension } => {
                         println!(
@@ -212,6 +244,8 @@ impl StrictFileValidationResult {
             println!("   - Convert files to .rs or .jsonc for manual maintenance");
             println!("   - Add generated headers to files that should be code-generated");
             println!("   - Run: cargo xtask gen-all --validate");
+            println!("   - For .yaml files: rename to .yml (more standard)");
+            println!("   - For files without extensions: add appropriate extension or add to .gitignore");
         } else {
             println!("✅ All files comply with the strict extension policy!");
         }
@@ -220,7 +254,7 @@ impl StrictFileValidationResult {
 
 #[derive(Debug, Serialize)]
 pub enum FileViolation {
-    DisallowedExtension { file: String, extension: String },
+    DisallowedExtension { file: String, extension: String, suggestion: Option<String> },
     MissingGeneratedHeader { file: String, extension: String },
 }
 
@@ -288,10 +322,33 @@ pub fn validate_files() -> Result<StrictFileValidationResult> {
             continue;
         }
 
-        // Extension is not allowed
+        // Extension is not allowed - provide suggestions
+        let suggestion = match extension {
+            "yaml" => Some("Consider using .yml extension instead (more standard)"),
+            "bash" => Some("Consider using .sh extension for shell scripts"),
+            "sed" => Some("Consider using .sh extension for shell scripts"),
+            "disabled" => Some("Remove .disabled extension or add to .gitignore"),
+            "backup" => Some("Remove .backup extension or add to .gitignore"),
+            "" => {
+                // Check if it's a known file without extension
+                let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                match filename {
+                    "pre-add" => Some("Consider renaming to pre-add.sh for shell scripts"),
+                    "CODEOWNERS" => Some("This file should have generated header"),
+                    ".gitignore" => Some("This file should have generated header"),
+                    ".gitattributes" => Some("This file should have generated header"),
+                    ".editorconfig" => Some("This file should have generated header"),
+                    ".envrc" => Some("This file should have generated header"),
+                    _ => Some("Add appropriate extension or add to .gitignore"),
+                }
+            }
+            _ => Some("Extension not allowed - convert to .rs or .jsonc for manual files"),
+        };
+
         result.violations.push(FileViolation::DisallowedExtension {
             file: path_str.to_string(),
             extension: extension.to_string(),
+            suggestion: suggestion.map(|s| s.to_string()),
         });
     }
 

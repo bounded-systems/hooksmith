@@ -215,11 +215,11 @@ impl PreAddValidator {
         for file in files {
             match self.validate_file(file)? {
                 ValidationResult::Allowed(reason) => {
-                    summary.allowed.push((file.to_string(), reason));
+                    summary.allowed.push((file.to_string(), reason.clone()));
                     println!("✅ {}", reason);
                 }
                 ValidationResult::Error(error) => {
-                    summary.errors.push((file.to_string(), error));
+                    summary.errors.push((file.to_string(), error.clone()));
                     println!("❌ {}", error);
                 }
             }

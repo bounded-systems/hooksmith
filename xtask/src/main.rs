@@ -3928,8 +3928,12 @@ fn validate_files_strict(strict: bool, verbose: bool) -> Result<()> {
                             strict_file_validator::FileViolation::DisallowedExtension {
                                 file,
                                 extension,
+                                suggestion,
                             } => {
                                 println!("   ❌ Disallowed extension '{extension}' in: {file}");
+                                if let Some(suggestion) = suggestion {
+                                    println!("      💡 Suggestion: {}", suggestion);
+                                }
                             }
                             strict_file_validator::FileViolation::MissingGeneratedHeader {
                                 file,
