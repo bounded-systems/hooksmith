@@ -508,7 +508,7 @@ impl FileOperationsHandler {
                     modified: fs::metadata(path)
                         .ok()
                         .and_then(|m| m.modified().ok())
-                        .map(|t| DateTime::from(t)),
+                        .map(|t| DateTimeUtc::from(DateTime::from(t))),
                 };
                 
                 files.push(file_info);
@@ -577,7 +577,7 @@ impl FileOperationsHandler {
                 format!("{:x}", hasher.finalize())
             }
             "md5" => {
-                use md5::{Md5, Digest};
+                use md5::{Md5, Digest as _};
                 let mut hasher = Md5::new();
                 let mut buffer = [0; 4096];
                 loop {
