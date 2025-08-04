@@ -405,20 +405,21 @@ impl FileOperationsEventHandler {
             }
             _ => {
                 // This shouldn't happen for result events
-                return HooksmithEvent::new(
-                    "file-operations-handler".to_string(),
-                    "unknown_result".to_string(),
-                    json!({"error": "Unknown result event type"}),
-                );
+                return HooksmithEvent {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    event: "unknown_result".to_string(),
+                    context: json!({"error": "Unknown result event type"}),
+                    timestamp: chrono::Utc::now(),
+                };
             }
         };
 
-        HooksmithEvent::new(
-            uuid::Uuid::new_v4().to_string(),
-            event_type.to_string(),
+        HooksmithEvent {
+            id: uuid::Uuid::new_v4().to_string(),
+            event: event_type.to_string(),
             context,
-        )
-        .with_session_id(original_event.session_id.clone().unwrap_or_default())
+            timestamp: chrono::Utc::now(),
+        }
     }
 
     /// Parse metadata from event context
@@ -455,7 +456,7 @@ impl EventHandler for FileOperationsEventHandler {
         let result_event = runtime.block_on(self.handler.handle_event(file_event))?;
         
         // Convert result back to HooksmithEvent and emit it
-        let result_hooksmith_event = self.create_result_event(result_event, event);
+        let _result_hooksmith_event = self.create_result_event(result_event, event);
         // TODO: Implement event emission when xtask integration is complete
         // crate::xtask::event_bus::emit_event(result_hooksmith_event)?;
         

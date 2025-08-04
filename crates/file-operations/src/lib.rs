@@ -18,17 +18,17 @@ use std::time::Instant;
 
 // Newtype wrapper for DateTime<Utc> to implement JsonSchema
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct DateTimeUtc(#[serde(with = "chrono::serde::ts_seconds_option")] Option<DateTime<Utc>>);
+pub struct DateTimeUtc(DateTime<Utc>);
 
 impl From<DateTime<Utc>> for DateTimeUtc {
     fn from(dt: DateTime<Utc>) -> Self {
-        DateTimeUtc(dt)
+        DateTimeUtc(Some(dt))
     }
 }
 
 impl From<DateTimeUtc> for DateTime<Utc> {
     fn from(dt: DateTimeUtc) -> Self {
-        dt.0
+        dt.0.unwrap_or_else(|| Utc::now())
     }
 }
 
@@ -392,7 +392,7 @@ impl FileOperationsHandler {
         
         Ok(FileMetadata {
             created: None, // Not available on all platforms
-            modified: Some(DateTime::from(metadata.modified()?)),
+            modified: Some(DateTimeUtc::from(DateTime::from(metadata.modified()?))),
             permissions: Some(format!("{:?}", metadata.permissions())),
             owner: None, // Would need platform-specific code
             size: Some(metadata.len()),
