@@ -13,6 +13,7 @@ categories = ["filesystem", "system-programming"]
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+schemars = "0.8"
 tokio = { version = "1.0", features = ["full"] }
 uuid = { version = "1.0", features = ["v4"] }
 chrono = { version = "0.4", features = ["serde"] }
@@ -20,6 +21,7 @@ sha2 = "0.10"
 base64 = "0.21"
 walkdir = "2.4"
 pathdiff = "0.2"
+warp = "0.3"
 
 [dev-dependencies]
 tempfile = "3.8"

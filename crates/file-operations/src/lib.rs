@@ -6,6 +6,7 @@
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -19,9 +20,10 @@ use walkdir::WalkDir;
 
 pub mod operations;
 pub mod event_handler;
+pub mod schema;
 
 /// File operation event types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub enum FileOperationEvent {
     FileReadRequest(FileReadRequest),
     FileReadResult(FileReadResult),
@@ -44,7 +46,7 @@ pub enum FileOperationEvent {
 }
 
 /// File read request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileReadRequest {
     pub request_id: String,
     pub path: String,
@@ -53,7 +55,7 @@ pub struct FileReadRequest {
 }
 
 /// File read result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileReadResult {
     pub request_id: String,
     pub success: bool,
@@ -66,7 +68,7 @@ pub struct FileReadResult {
 }
 
 /// File write request
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileWriteRequest {
     pub request_id: String,
     pub path: String,
@@ -78,7 +80,7 @@ pub struct FileWriteRequest {
 }
 
 /// File write result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileWriteResult {
     pub request_id: String,
     pub success: bool,
@@ -225,7 +227,7 @@ pub struct FileChecksumResult {
 }
 
 /// File metadata
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileMetadata {
     pub created: Option<DateTime<Utc>>,
     pub modified: Option<DateTime<Utc>>,
@@ -236,7 +238,7 @@ pub struct FileMetadata {
 }
 
 /// File information for directory listings
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileInfo {
     pub name: String,
     pub path: String,
@@ -246,7 +248,7 @@ pub struct FileInfo {
 }
 
 /// Event metadata
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct EventMetadata {
     pub working_directory: Option<String>,
     pub timestamp: Option<DateTime<Utc>>,
@@ -254,7 +256,7 @@ pub struct EventMetadata {
 }
 
 /// File operation error
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct FileOperationError {
     pub code: String,
     pub message: String,
