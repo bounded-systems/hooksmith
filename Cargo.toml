@@ -175,6 +175,7 @@ tracing-subscriber.workspace = true
 # Internal component dependencies
 cli-core = { path = "crates/components/cli-core" }
 git-filter = { path = "crates/components/git-filter" }
+event-types = { path = "crates/event-types" }
 
 # WASM dependencies
 wasmtime.workspace = true
@@ -195,6 +196,9 @@ hex.workspace = true
 
 # Text processing
 regex.workspace = true
+
+# UUID generation
+uuid.workspace = true
 
 [dev-dependencies]
 tempfile = "3.0"

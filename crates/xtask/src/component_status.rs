@@ -226,8 +226,14 @@ impl ComponentStatusChecker {
         // Check schema validation if enabled
         let schema_valid = if self.check_schemas {
             if let Some(wit_path) = &component.wit {
-                let full_wit_path = self.workspace_root.join(wit_path);
-                Some(self.validate_wit_schema(&full_wit_path).await.is_ok())
+                let full_wit_path = self.workspace_root.join(&component.path).join(wit_path);
+                let validation_result = self.validate_wit_schema(&full_wit_path).await;
+                if let Err(e) = &validation_result {
+                    if self.verbose {
+                        println!("  Schema validation failed for {}: {}", component.name, e);
+                    }
+                }
+                Some(validation_result.is_ok())
             } else {
                 None
             }
@@ -508,6 +514,34 @@ impl ComponentStatusChecker {
         // Check for basic WIT syntax
         if !content.contains("package") || !content.contains("interface") {
             anyhow::bail!("Invalid WIT file format");
+        }
+
+        // Check for corresponding JSON schema
+        let wit_filename = wit_path.file_name().unwrap().to_str().unwrap();
+        let component_name = wit_filename.replace(".wit", "");
+
+        if self.verbose {
+            println!("  Validating schema for component: {}", component_name);
+        }
+
+        // Look for schema in schemas directory
+        let schema_path = self.workspace_root.join("schemas").join(format!("{}.schema.jsonc", component_name));
+
+        if self.verbose {
+            println!("  Looking for schema at: {}", schema_path.display());
+        }
+
+        if !schema_path.exists() {
+            anyhow::bail!("Schema file not found: {}", schema_path.display());
+        }
+
+        // Validate JSON schema format
+        let schema_content = tokio::fs::read_to_string(&schema_path).await?;
+        let _schema: serde_json::Value = serde_json::from_str(&schema_content)
+            .context("Invalid JSON schema format")?;
+
+        if self.verbose {
+            println!("  Schema validation successful for: {}", component_name);
         }
 
         Ok(())

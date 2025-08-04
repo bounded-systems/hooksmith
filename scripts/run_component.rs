@@ -37,15 +37,15 @@ struct Cli {
     args: Vec<String>,
 
     /// Additional wasmtime arguments
-    #[arg(long, env = "WASMTIME_ARGS")]
+    #[arg(long)]
     wasmtime_args: Option<String>,
 
     /// Verbose output
-    #[arg(short, long, env = "VERBOSE")]
+    #[arg(short, long)]
     verbose: bool,
 
     /// Strict mode - exit on errors
-    #[arg(long, env = "STRICT")]
+    #[arg(long)]
     strict: bool,
 
     /// Show available components and functions

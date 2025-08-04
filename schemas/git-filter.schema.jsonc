@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/git-filter.schema.json",
+  "title": "Git Filter Component Schema",
+  "description": "Schema for the git-filter WIT component interface",
+  "type": "object",
+  "definitions": {
+    "GitObjectType": {
+      "type": "string",
+      "enum": ["blob", "tree", "commit", "tag"],
+      "description": "Git object type enumeration"
+    },
+    "FilterOperation": {
+      "type": "string",
+      "enum": ["validate", "transform", "filter", "check"],
+      "description": "Filter operation type enumeration"
+    },
+    "FilterConfig": {
+      "type": "object",
+      "properties": {
+        "object-type": {
+          "$ref": "#/definitions/GitObjectType"
+        },
+        "operation": {
+          "$ref": "#/definitions/FilterOperation"
+        },
+        "strict": {
+          "type": "boolean",
+          "description": "Whether to apply strict validation (fails on any violation)"
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Additional filter parameters as key-value pairs"
+        }
+      },
+      "required": ["object-type", "operation", "strict"],
+      "additionalProperties": false
+    },
+    "FilterResult": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether the filter operation completed successfully"
+        },
+        "content": {
+          "type": ["string", "null"],
+          "description": "The processed/filtered content (if successful)"
+        },
+        "error": {
+          "type": ["string", "null"],
+          "description": "Error message if the operation failed"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Detailed validation or processing information"
+        }
+      },
+      "required": ["success", "details"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "validate-blob": {
+      "type": "object",
+      "description": "Validate a Git blob object",
+      "properties": {
+        "blob-content": {
+          "type": "string",
+          "description": "The blob content to validate"
+        },
+        "config": {
+          "$ref": "#/definitions/FilterConfig"
+        }
+      },
+      "required": ["blob-content", "config"],
+      "additionalProperties": false
+    },
+    "filter-object": {
+      "type": "object",
+      "description": "Filter Git objects based on contracts",
+      "properties": {
+        "object-content": {
+          "type": "string",
+          "description": "The object content to filter"
+        },
+        "config": {
+          "$ref": "#/definitions/FilterConfig"
+        }
+      },
+      "required": ["object-content", "config"],
+      "additionalProperties": false
+    },
+    "check-contract": {
+      "type": "object",
+      "description": "Check if content matches contract requirements",
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "The content to check"
+        },
+        "contract-name": {
+          "type": "string",
+          "description": "The name of the contract to check against"
+        }
+      },
+      "required": ["content", "contract-name"],
+      "additionalProperties": false
+    },
+    "transform-content": {
+      "type": "object",
+      "description": "Transform content according to contract rules",
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "The content to transform"
+        },
+        "contract-name": {
+          "type": "string",
+          "description": "The name of the contract to apply"
+        }
+      },
+      "required": ["content", "contract-name"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+} 
