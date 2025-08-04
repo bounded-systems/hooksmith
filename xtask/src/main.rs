@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
 use tokio::time::sleep;
-use jsonc_parser::parse_to_value;
+use json_comments::StripComments;
 
 use hook_state_machine::{HookContext, HookManager, HookType};
 use workflow::{run_dev_workflow, run_optimize, run_macos_optimize, run_security_check};
@@ -751,6 +751,18 @@ enum Commands {
         /// Whether to commit generated files
         #[arg(long)]
         commit: bool,
+        /// Whether to clean existing generated files first
+        #[arg(long)]
+        clean: bool,
+        /// Whether to build xtask first (ensures minimal build environment)
+        #[arg(long, default_value = "true")]
+        build_xtask: bool,
+        /// Whether to use dry-run mode (show what would be done)
+        #[arg(long)]
+        dry_run: bool,
+        /// Whether to show detailed output
+        #[arg(long)]
+        verbose: bool,
     },
     /// Generate Git attributes files
     GenGitattributes {
@@ -7916,11 +7928,10 @@ async fn allow_manual_file(path: String, verbose: bool) -> Result<()> {
     let content = fs::read_to_string(&manual_files_path)
         .with_context(|| format!("Failed to read manual files registry: {}", manual_files_path.display()))?;
     
-    // Parse JSONC directly using jsonc-parser
-    let value = parse_to_value(&content, &Default::default())
+    // Parse JSONC directly using json_comments
+    let stripped = StripComments::new(content.as_bytes());
+    let mut registry: serde_json::Value = serde_json::from_reader(stripped)
         .with_context(|| "Failed to parse JSONC")?;
-    let mut registry: serde_json::Value = value
-        .ok_or_else(|| anyhow::anyhow!("Invalid JSONC content"))?;
     
     // Get the manual files array
     let manual_files = registry.get_mut("manual")

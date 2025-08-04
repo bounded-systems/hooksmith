@@ -50,7 +50,7 @@ walkdir = "2.4"
 # System information
 num_cpus = "1.0"
 # JSONC parsing support
-jsonc-parser = "0.25"
+json_comments = "0.2"
 
 [dev-dependencies]
 tempfile = "3.0"
