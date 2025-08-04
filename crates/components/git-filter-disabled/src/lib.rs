@@ -6,7 +6,7 @@
 //! This component implements the WIT interface for git filtering operations.
 
 wit_bindgen::generate!({
-    path: "../wit/git-filter.wit",
+    path: "wit/git-filter.wit",
     world: "git-filter",
 });
 

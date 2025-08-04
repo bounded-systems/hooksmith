@@ -10,7 +10,7 @@
 
 [build]
 # Default target for all crates in the workspace
-target = "wasm32-wasip2"
+# target = "wasm32-wasip2"  # Commented out to use native target by default
 
 # Use nightly toolchain for wasm32-wasip2 support
 # rustc = "rustup run nightly rustc"
