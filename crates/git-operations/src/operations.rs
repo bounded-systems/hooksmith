@@ -16,9 +16,10 @@ impl GitOperationsHandler {
             })?;
         
         // Add files to index if specified
-        if let Some(files) = req.files {
+        let files_changed = req.files.clone();
+        if let Some(files) = &req.files {
             for file in files {
-                let path = self.working_directory.join(&file);
+                let path = self.working_directory.join(file);
                 repo.index()?.add_path(&path)?;
             }
         }
@@ -43,7 +44,7 @@ impl GitOperationsHandler {
             request_id: req.request_id,
             success: true,
             commit_hash: Some(commit.id().to_string()),
-            files_changed: req.files,
+            files_changed,
             branch: Some(branch),
             duration_ms: None,
             error: None,
