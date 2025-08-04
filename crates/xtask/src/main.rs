@@ -1410,7 +1410,7 @@ async fn main() -> Result<()> {
             generate_documentation(&output_dir, open)?;
         }
         Commands::Docs { command } => {
-            doc_extractor::run(command)?;
+            doc_extractor::run(doc_extractor::DocsCommand { subcommand: command })?;
         }
         Commands::GenDocsComprehensive {
             all,

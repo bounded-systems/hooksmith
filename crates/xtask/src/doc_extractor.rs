@@ -14,7 +14,7 @@ pub struct DocsCommand {
 }
 
 #[derive(Subcommand)]
-enum DocsSubcommand {
+pub enum DocsSubcommand {
     /// Extract documentation from Rust source files
     Extract(ExtractCommand),
     /// Generate markdown from extracted documentation

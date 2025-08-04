@@ -37,6 +37,15 @@ struct ValidationError {
 struct ValidationNote {
     scope: String,
     message: String,
+    file: String,
+    range: Option<String>,
+    hash: String,
+    validated: bool,
+    contract_type: String,
+    validation_duration_ms: u64,
+    timestamp: String,
+    validation_errors: Vec<ValidationError>,
+    child_scopes: Vec<String>,
 }
 
 /// CLI for hierarchical contract validation
