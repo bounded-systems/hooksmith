@@ -19,6 +19,25 @@ pub struct HooksmithEvent {
     pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
+impl HooksmithEvent {
+    pub fn new(id: String, event: String, context: serde_json::Value) -> Self {
+        Self {
+            id,
+            event,
+            context,
+            timestamp: chrono::Utc::now(),
+        }
+    }
+
+    pub fn with_session_id(mut self, session_id: String) -> Self {
+        // Add session_id to context
+        if let Some(obj) = self.context.as_object_mut() {
+            obj.insert("session_id".to_string(), serde_json::Value::String(session_id));
+        }
+        self
+    }
+}
+
 /// File operations event handler
 pub struct FileOperationsEventHandler {
     handler: FileOperationsHandler,
@@ -395,7 +414,7 @@ impl FileOperationsEventHandler {
         };
 
         HooksmithEvent::new(
-            "file-operations-handler".to_string(),
+            uuid::Uuid::new_v4().to_string(),
             event_type.to_string(),
             context,
         )

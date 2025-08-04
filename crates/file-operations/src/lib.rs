@@ -18,7 +18,7 @@ use std::time::Instant;
 
 // Newtype wrapper for DateTime<Utc> to implement JsonSchema
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct DateTimeUtc(#[serde(with = "chrono::serde::ts_seconds")] DateTime<Utc>);
+pub struct DateTimeUtc(#[serde(with = "chrono::serde::ts_seconds_option")] Option<DateTime<Utc>>);
 
 impl From<DateTime<Utc>> for DateTimeUtc {
     fn from(dt: DateTime<Utc>) -> Self {
