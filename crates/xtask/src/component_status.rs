@@ -4,13 +4,14 @@
 //! and native crates in the Hooksmith workspace. It includes build status,
 //! version information, schema validation, and checksum verification.
 
-use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
-use std::time::{Duration, Instant};
-use tokio::fs;
+use std::process::Command;
+use std::time::Duration;
+
+use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use tracing::{debug, error, info, warn};
 
 /// Component registry structure
@@ -99,7 +100,7 @@ impl ComponentStatusChecker {
     /// Create a new component status checker
     pub async fn new(workspace_root: PathBuf, verbose: bool) -> Result<Self> {
         let registry_path = workspace_root.join("config/component-registry.jsonc");
-        let registry_content = fs::read_to_string(&registry_path)
+        let registry_content = tokio::fs::read_to_string(&registry_path)
             .await
             .context("Failed to read component registry")?;
 
@@ -129,7 +130,7 @@ impl ComponentStatusChecker {
 
     /// Check status of all components and crates
     pub async fn check_all_status(&self) -> Result<StatusSummary> {
-        let start_time = Instant::now();
+        let start_time = std::time::Instant::now();
         let timestamp = chrono::Utc::now();
 
         info!("Starting component status check...");
@@ -168,7 +169,7 @@ impl ComponentStatusChecker {
 
     /// Check status of a WIT component
     async fn check_wit_component(&self, component: &RegistryItem) -> Result<ComponentStatus> {
-        let start_time = Instant::now();
+        let start_time = std::time::Instant::now();
         let manifest_path = self.workspace_root.join(&component.path).join("Cargo.toml");
 
         if self.verbose {
@@ -247,7 +248,7 @@ impl ComponentStatusChecker {
 
     /// Check status of a native crate
     async fn check_native_crate(&self, crate_item: &RegistryItem) -> Result<ComponentStatus> {
-        let start_time = Instant::now();
+        let start_time = std::time::Instant::now();
         let manifest_path = self.workspace_root.join(&crate_item.path).join("Cargo.toml");
 
         if self.verbose {
@@ -325,8 +326,8 @@ impl ComponentStatusChecker {
                 "--release",
             ])
             .current_dir(&self.workspace_root)
-            .stdout(if self.verbose { Stdio::inherit() } else { Stdio::piped() })
-            .stderr(if self.verbose { Stdio::inherit() } else { Stdio::piped() })
+            .stdout(if self.verbose { std::process::Stdio::inherit() } else { std::process::Stdio::piped() })
+            .stderr(if self.verbose { std::process::Stdio::inherit() } else { std::process::Stdio::piped() })
             .output()
             .context("Failed to execute cargo component build")?;
 
@@ -347,8 +348,8 @@ impl ComponentStatusChecker {
                 &format!("{}/Cargo.toml", crate_path),
             ])
             .current_dir(&self.workspace_root)
-            .stdout(if self.verbose { Stdio::inherit() } else { Stdio::piped() })
-            .stderr(if self.verbose { Stdio::inherit() } else { Stdio::piped() })
+            .stdout(if self.verbose { std::process::Stdio::inherit() } else { std::process::Stdio::piped() })
+            .stderr(if self.verbose { std::process::Stdio::inherit() } else { std::process::Stdio::piped() })
             .output()
             .context("Failed to execute cargo check")?;
 
@@ -399,8 +400,8 @@ impl ComponentStatusChecker {
             anyhow::bail!("Component WASM file not found");
         }
 
-        let content = fs::read(&wasm_path).await?;
-        let checksum = sha2::Sha256::digest(&content);
+        let content = tokio::fs::read(&wasm_path).await?;
+        let checksum = Sha256::digest(&content);
         Ok(format!("{:x}", checksum))
     }
 
@@ -413,21 +414,21 @@ impl ComponentStatusChecker {
         }
 
         // Simple directory checksum (in production, you might want a more sophisticated approach)
-        let mut hasher = sha2::Sha256::new();
+        let mut hasher = Sha256::new();
         self.hash_directory(&crate_path, &mut hasher).await?;
         let checksum = hasher.finalize();
         Ok(format!("{:x}", checksum))
     }
 
     /// Hash a directory recursively
-    async fn hash_directory(&self, dir: &Path, hasher: &mut sha2::Sha256) -> Result<()> {
-        let mut entries = fs::read_dir(dir).await?;
+    async fn hash_directory(&self, dir: &Path, hasher: &mut Sha256) -> Result<()> {
+        let mut entries = tokio::fs::read_dir(dir).await?;
         while let Some(entry) = entries.next_entry().await? {
             let path = entry.path();
             let metadata = entry.metadata().await?;
 
             if metadata.is_file() {
-                let content = fs::read(&path).await?;
+                let content = tokio::fs::read(&path).await?;
                 hasher.update(&content);
             } else if metadata.is_dir() {
                 self.hash_directory(&path, hasher).await?;
@@ -443,7 +444,7 @@ impl ComponentStatusChecker {
         }
 
         // Basic WIT validation (in production, you might use wit-parser)
-        let content = fs::read_to_string(wit_path).await?;
+        let content = tokio::fs::read_to_string(wit_path).await?;
         
         // Check for basic WIT syntax
         if !content.contains("package") || !content.contains("interface") {

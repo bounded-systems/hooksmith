@@ -5,10 +5,25 @@
 //!
 //! This component implements the WIT interface for git filtering operations.
 
+#[cfg(feature = "host")]
 wit_bindgen::generate!({
     path: "wit/git-filter.wit",
     world: "git-filter",
 });
+
+#[cfg(not(feature = "host"))]
+wit_bindgen::generate!({
+    path: "wit/git-filter.wit",
+    world: "git-filter",
+});
+
+// Export the generated bindings
+pub use git_filter::*;
+
+// Re-export the WIT interface for use in other crates
+pub mod wit {
+    pub use super::git_filter::*;
+}
 
 pub mod actions;
 pub mod blob_contract;
