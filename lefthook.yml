@@ -19,6 +19,8 @@ pre-push:
       run: cargo audit
     validate-all-checksums:
       run: cargo run -p xtask -- validate-checksums --strict
+
+
     check-generated:
       run: cargo xtask check --strict
     contract-check:

@@ -134,6 +134,10 @@ path = "scripts/report-file-checksums.rs"
 name = "add-registry-checksums"
 path = "scripts/add-registry-checksums.rs"
 
+[[bin]]
+name = "pre-add"
+path = "hooks/pre-add.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"

@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
 use tokio::time::sleep;
+use jsonc_parser::parse_to_value;
 
 use hook_state_machine::{HookContext, HookManager, HookType};
 use workflow::{run_dev_workflow, run_optimize, run_macos_optimize, run_security_check};
@@ -733,6 +734,15 @@ enum Commands {
         #[arg(long)]
         verbose: bool,
     },
+    /// Allow a file to be manually maintained
+    AllowManual {
+        /// Path to the file to allow manual maintenance
+        #[arg(long)]
+        path: String,
+        /// Whether to show detailed output
+        #[arg(long)]
+        verbose: bool,
+    },
     /// Bootstrap the project with all generated files
     Bootstrap {
         /// Whether to validate after bootstrap
@@ -1434,6 +1444,9 @@ async fn main() -> Result<()> {
         }
         Commands::ValidateGeneratedUnified { strict, verbose } => {
             validate_generated_files_unified(strict, verbose).await?;
+        }
+        Commands::AllowManual { path, verbose } => {
+            allow_manual_file(path, verbose).await?;
         }
         Commands::Bootstrap { validate, commit } => {
             bootstrap_project(validate, commit).await?;
@@ -7891,3 +7904,59 @@ async fn validate_generated_files_unified(strict: bool, _verbose: bool) -> Resul
     
     Ok(())
 }
+
+/// Allow a file to be manually maintained
+async fn allow_manual_file(path: String, verbose: bool) -> Result<()> {
+    println!("🔓 Allowing manual maintenance for file: {}", path);
+    
+    let project_root = std::env::current_dir()?;
+    let manual_files_path = project_root.join("config").join("manual-files.jsonc");
+    
+    // Load existing manual files registry
+    let content = fs::read_to_string(&manual_files_path)
+        .with_context(|| format!("Failed to read manual files registry: {}", manual_files_path.display()))?;
+    
+    // Parse JSONC directly using jsonc-parser
+    let value = parse_to_value(&content, &Default::default())
+        .with_context(|| "Failed to parse JSONC")?;
+    let mut registry: serde_json::Value = value
+        .ok_or_else(|| anyhow::anyhow!("Invalid JSONC content"))?;
+    
+    // Get the manual files array
+    let manual_files = registry.get_mut("manual")
+        .ok_or_else(|| anyhow::anyhow!("Manual files registry missing 'manual' array"))?
+        .as_array_mut()
+        .ok_or_else(|| anyhow::anyhow!("Manual files registry 'manual' field is not an array"))?;
+    
+    // Check if file is already in the list
+    if manual_files.iter().any(|f| f.as_str() == Some(&path)) {
+        if verbose {
+            println!("ℹ️  File '{}' is already in the manual files registry", path);
+        }
+        return Ok(());
+    }
+    
+    // Add the file to the list
+    manual_files.push(serde_json::Value::String(path.clone()));
+    
+    // Update the metadata
+    if let Some(metadata) = registry.get_mut("metadata") {
+        if let Some(last_updated) = metadata.get_mut("last_updated") {
+            *last_updated = serde_json::Value::String(chrono::Utc::now().to_rfc3339());
+        }
+    }
+    
+    // Save the updated registry
+    let updated_content = serde_json::to_string_pretty(&registry)?;
+    fs::write(&manual_files_path, updated_content)
+        .with_context(|| format!("Failed to write manual files registry: {}", manual_files_path.display()))?;
+    
+    println!("✅ File '{}' added to manual files registry", path);
+    if verbose {
+        println!("📝 Registry updated: {}", manual_files_path.display());
+    }
+    
+    Ok(())
+}
+
+
