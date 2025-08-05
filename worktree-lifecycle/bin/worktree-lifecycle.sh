@@ -49,6 +49,7 @@ Usage: $0 <command> [options]
 Commands:
   status              Show comprehensive worktree status
   create              Create a new worktree for development
+  sync                Sync all remote branches (main to base, others to worktrees)
   process             Process all worktrees through state machine
   create-prs          Create PRs for ready worktrees
   auto-merge          Auto merge all PRs for worktrees
@@ -67,6 +68,7 @@ Examples:
   $0 status                    # Show worktree status
   $0 status --json            # Show status in JSON format
   $0 create feature/new-feature  # Create new worktree
+  $0 sync --dry-run           # Sync all branches (main to base, others to worktrees)
   $0 process --dry-run        # Show what would be processed
   $0 create-prs               # Create PRs for ready worktrees
   $0 auto-merge --dry-run     # Auto merge all PRs (dry run)
@@ -99,6 +101,59 @@ check_dependencies() {
         log_error "Missing required dependencies: ${missing_deps[*]}"
         exit 1
     fi
+}
+
+# Function to sync all remote branches
+run_sync() {
+    local dry_run=false
+    local skip_main=false
+    local force=false
+    local verbose=false
+    local quiet=false
+    
+    # Parse options
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run)
+                dry_run=true
+                shift
+                ;;
+            --skip-main)
+                skip_main=true
+                shift
+                ;;
+            --force)
+                force=true
+                shift
+                ;;
+            --verbose)
+                verbose=true
+                shift
+                ;;
+            --quiet)
+                quiet=true
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
+    # Build arguments for the sync script
+    local script_args=""
+    if [ "$dry_run" = true ]; then
+        script_args="$script_args --dry-run"
+    fi
+    if [ "$skip_main" = true ]; then
+        script_args="$script_args --skip-main"
+    fi
+    if [ "$force" = true ]; then
+        script_args="$script_args --force"
+    fi
+    
+    # Run the sync script
+    "$PROJECT_DIR/../scripts/sync-all-remote-branches.sh" $script_args
 }
 
 # Function to create new worktree
@@ -439,6 +494,9 @@ main() {
             ;;
         "create")
             run_create "$@"
+            ;;
+        "sync")
+            run_sync "$@"
             ;;
         "process")
             run_process "$@"
