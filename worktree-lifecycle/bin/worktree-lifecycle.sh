@@ -50,6 +50,7 @@ Commands:
   status              Show comprehensive worktree status
   create              Create a new worktree for development
   sync                Sync all remote branches (main to base, others to worktrees)
+  update-to-main      Update all worktrees to origin/main
   detect-orphaned     Detect branches not in worktrees
   process             Process all worktrees through state machine
   create-prs          Create PRs for ready worktrees
@@ -70,6 +71,7 @@ Examples:
   $0 status --json            # Show status in JSON format
   $0 create feature/new-feature  # Create new worktree
   $0 sync --dry-run           # Sync all branches (main to base, others to worktrees)
+  $0 update-to-main --dry-run # Update all worktrees to origin/main
   $0 detect-orphaned          # Detect branches not in worktrees
   $0 process --dry-run        # Show what would be processed
   $0 create-prs               # Create PRs for ready worktrees
@@ -103,6 +105,59 @@ check_dependencies() {
         log_error "Missing required dependencies: ${missing_deps[*]}"
         exit 1
     fi
+}
+
+# Function to update all worktrees to main
+run_update_to_main() {
+    local dry_run=false
+    local create_prs=false
+    local force=false
+    local verbose=false
+    local quiet=false
+    
+    # Parse options
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run)
+                dry_run=true
+                shift
+                ;;
+            --create-prs)
+                create_prs=true
+                shift
+                ;;
+            --force)
+                force=true
+                shift
+                ;;
+            --verbose)
+                verbose=true
+                shift
+                ;;
+            --quiet)
+                quiet=true
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
+    # Build arguments for the update script
+    local script_args=""
+    if [ "$dry_run" = true ]; then
+        script_args="$script_args --dry-run"
+    fi
+    if [ "$create_prs" = true ]; then
+        script_args="$script_args --create-prs"
+    fi
+    if [ "$force" = true ]; then
+        script_args="$script_args --force"
+    fi
+    
+    # Run the update script
+    "$PROJECT_DIR/../scripts/update-all-worktrees-to-main.sh" $script_args
 }
 
 # Function to detect orphaned branches
@@ -552,6 +607,9 @@ main() {
             ;;
         "sync")
             run_sync "$@"
+            ;;
+        "update-to-main")
+            run_update_to_main "$@"
             ;;
         "detect-orphaned")
             run_detect_orphaned "$@"
