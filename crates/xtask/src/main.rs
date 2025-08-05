@@ -472,6 +472,9 @@ enum WorktreeCommands {
         /// Whether to switch to the new worktree
         #[arg(long)]
         switch: bool,
+        /// Whether to open the worktree in Cursor after creation
+        #[arg(long)]
+        open_cursor: bool,
     },
     /// Switch to a worktree
     Switch {

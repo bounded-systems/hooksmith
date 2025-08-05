@@ -15,6 +15,7 @@ A powerful Rust-based tool for building and managing Git hooks with WASM compone
 - **Structured Logging**: Comprehensive event-driven logging
 - **Code Generation**: Automated file generation and validation
 - **Component Status**: Real-time monitoring of WIT components and native crates
+- **Cursor Integration**: Automatic worktree opening in Cursor editor
 
 ## Quick Start
 
@@ -30,6 +31,9 @@ cargo xtask gen-all
 
 # Run pre-commit hooks
 lefthook run pre-commit
+
+# Create worktree with Cursor integration
+cargo xtask worktree create --branch feature-name --open-cursor
 ```
 
 ## Development
