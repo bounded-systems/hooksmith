@@ -33,6 +33,11 @@
   },
   "version": "1.0",
   "worktrees": {
+    "feat-shell-to-rust": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T20:56:02.769038+00:00"
+    },
     "test-cursor-integration": {
       "action": "created",
       "labels": [],
