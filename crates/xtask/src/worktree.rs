@@ -1605,6 +1605,32 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 }
             }
         }
+        WorktreeCommands::Sync { all, worktree, force, pull, push } => {
+            println!("{}", style("Syncing worktrees...").bold());
+            
+            if all {
+                println!("{}", style("Syncing all worktrees").cyan());
+                println!("{}", style("Feature not yet implemented").yellow());
+            } else if let Some(wt) = worktree {
+                println!("{}", style(&format!("Syncing worktree: {}", wt)).cyan());
+                println!("{}", style("Feature not yet implemented").yellow());
+            } else {
+                println!("{}", style("No worktree specified. Use --all or --worktree").yellow());
+            }
+        },
+        WorktreeCommands::Pull { all, branch, create_worktrees, base_dir } => {
+            println!("{}", style("Pulling remote branches...").bold());
+            
+            if all {
+                println!("{}", style("Pulling all remote branches").cyan());
+                println!("{}", style("Feature not yet implemented").yellow());
+            } else if let Some(branch_name) = branch {
+                println!("{}", style(&format!("Pulling branch: {}", branch_name)).cyan());
+                println!("{}", style("Feature not yet implemented").yellow());
+            } else {
+                println!("{}", style("No branch specified. Use --all or --branch").yellow());
+            }
+        },
     }
 
     Ok(())
