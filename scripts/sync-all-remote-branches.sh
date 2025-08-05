@@ -48,16 +48,17 @@ Options:
   --help              Show this usage information
 
 Examples:
-  $0                    # Create worktrees for all remote branches
-  $0 --dry-run         # Show what would be created
-  $0 --skip-main       # Create worktrees except for main
-  $0 --force           # Recreate existing worktrees
+  $0                    # Sync main to base + create worktrees for other branches
+  $0 --dry-run         # Show what would be synced/created
+  $0 --skip-main       # Skip main sync, only create worktrees for other branches
+  $0 --force           # Force recreation of existing worktrees
 
 This script will:
 1. Fetch all remote branches
-2. Create worktrees for branches that don't exist locally
-3. Skip main branch unless --skip-main is not specified
-4. Show summary of created worktrees
+2. Sync main branch to base repository (not worktree)
+3. Create worktrees for other branches that don't exist locally
+4. Skip main worktree creation (main stays in base)
+5. Show summary of created worktrees
 EOF
 }
 
@@ -173,22 +174,57 @@ create_worktree() {
     fi
 }
 
+# Function to sync main branch to base
+sync_main_branch() {
+    local dry_run="$1"
+    
+    log_info "Syncing main branch to base repository"
+    
+    if [ "$dry_run" = true ]; then
+        log_info "DRY RUN: Would sync main branch to base"
+        return 0
+    fi
+    
+    # Fetch latest main
+    git fetch origin main
+    
+    # Check if we're behind
+    if git rev-list HEAD..origin/main --count | grep -q -v "^0$"; then
+        log_info "Main branch is behind origin/main, updating..."
+        if git pull origin main; then
+            log_success "Successfully synced main branch to origin/main"
+            return 0
+        else
+            log_error "Failed to sync main branch"
+            return 1
+        fi
+    else
+        log_info "Main branch is already up to date with origin/main"
+        return 0
+    fi
+}
+
 # Function to sync all remote branches
 sync_all_branches() {
     local dry_run="$1"
     local skip_main="$2"
     local force="$3"
     
-    log_header "SYNCING ALL REMOTE BRANCHES"
+    log_header "SYNCING ALL REMOTE BRRANCHES"
     
     # Fetch remote branches
     fetch_remote_branches
     
-    # Get list of remote branches
-    local branches
-    read -ra branches <<< "$(get_remote_branches "$skip_main")"
+    # Sync main branch to base (not worktree)
+    if [ "$skip_main" = false ]; then
+        sync_main_branch "$dry_run"
+    fi
     
-    log_info "Found ${#branches[@]} remote branches to process"
+    # Get list of remote branches (excluding main)
+    local branches
+    read -ra branches <<< "$(get_remote_branches true)"
+    
+    log_info "Found ${#branches[@]} remote branches to process for worktrees"
     
     local created_count=0
     local skipped_count=0
