@@ -27,9 +27,19 @@ host = ["wit-bindgen"]
 anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde_yaml = "0.9"
 tracing.workspace = true
+tracing-subscriber = "0.3"
 thiserror.workspace = true
+chrono = { version = "0.4", features = ["serde"] }
+tokio = { version = "1.0", features = ["fs", "macros", "rt", "rt-multi-thread"] }
+tempfile = "3.8"
+clap = { version = "4.0", features = ["derive"] }
 # Remove which dependency for WASM compatibility
 # which.workspace = true
 # wit-bindgen is optional and only used for host builds
 wit-bindgen = { version = "0.20", optional = true }
+
+[[bin]]
+name = "crd-cli"
+path = "src/bin/crd-cli.rs"
