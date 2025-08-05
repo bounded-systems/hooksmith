@@ -6,12 +6,12 @@
 
 use anyhow::{Context, Result};
 use console::style;
+use json_comments::StripComments;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs;
-use json_comments::StripComments;
 
 use crate::WorktreeCommands;
 
@@ -149,8 +149,6 @@ pub struct WorkbloomCursorConfig {
     /// Extensions to enable
     pub extensions: Option<Vec<String>>,
 }
-
-
 
 /// Lifecycle hooks configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -440,17 +438,26 @@ impl WorktreeManager {
         let content = fs::read_to_string(config_path).await?;
         let stripped_content = StripComments::new(content.as_bytes());
         let config: WorktreeConfig = serde_json::from_reader(stripped_content)?;
-        
+
         // Basic validation
         if let Some(base) = &config.worktree_base {
-            if !base.starts_with("../") && !base.starts_with("./") && !base.chars().all(|c| c.is_alphanumeric() || c == '/' || c == '_' || c == '-') {
-                return Err(anyhow::anyhow!("Invalid worktree_base: must be relative path or valid directory name"));
+            if !base.starts_with("../")
+                && !base.starts_with("./")
+                && !base
+                    .chars()
+                    .all(|c| c.is_alphanumeric() || c == '/' || c == '_' || c == '-')
+            {
+                return Err(anyhow::anyhow!(
+                    "Invalid worktree_base: must be relative path or valid directory name"
+                ));
             }
         }
 
         if let Some(template) = &config.worktree_template {
             if !template.contains("{repo}") && !template.contains("{branch}") {
-                return Err(anyhow::anyhow!("Invalid worktree_template: must contain {{repo}} or {{branch}}"));
+                return Err(anyhow::anyhow!(
+                    "Invalid worktree_template: must contain {{repo}} or {{branch}}"
+                ));
             }
         }
 
@@ -464,17 +471,18 @@ impl WorktreeManager {
         }
 
         let content = fs::read_to_string(workbloom_path).await?;
-        
+
         // Parse as JSON if it looks like JSON
         if content.trim().starts_with('{') {
             let stripped_content = StripComments::new(content.as_bytes());
             let _config: WorkbloomConfig = serde_json::from_reader(stripped_content)?;
         } else {
             // Parse as line-based format
-            let lines: Vec<&str> = content.lines()
+            let lines: Vec<&str> = content
+                .lines()
                 .filter(|line| !line.trim().is_empty() && !line.trim().starts_with('#'))
                 .collect();
-            
+
             // Basic validation for line-based format
             for line in lines {
                 if line.contains("..") || line.contains("~") {
@@ -488,8 +496,12 @@ impl WorktreeManager {
 
     /// Generate worktree name from branch pattern
     pub fn generate_worktree_name(&self, branch: &str) -> Result<String> {
-        let template = self.config.worktree_template.as_deref().unwrap_or("{repo}-{branch}");
-        
+        let template = self
+            .config
+            .worktree_template
+            .as_deref()
+            .unwrap_or("{repo}-{branch}");
+
         // Extract branch suffix (e.g., "feature/foo" -> "foo")
         let branch_suffix = if let Some(slash_pos) = branch.rfind('/') {
             &branch[slash_pos + 1..]
@@ -525,7 +537,7 @@ impl WorktreeManager {
         }
 
         let content = fs::read_to_string(&workbloom_path).await?;
-        
+
         // Parse as JSON if it looks like JSON
         if content.trim().starts_with('{') {
             let stripped_content = StripComments::new(content.as_bytes());
@@ -533,10 +545,11 @@ impl WorktreeManager {
             Ok(Some(config))
         } else {
             // Parse as line-based format and convert to config
-            let lines: Vec<&str> = content.lines()
+            let lines: Vec<&str> = content
+                .lines()
                 .filter(|line| !line.trim().is_empty() && !line.trim().starts_with('#'))
                 .collect();
-            
+
             let config = WorkbloomConfig {
                 copy_files: Some(lines.iter().map(|s| s.to_string()).collect()),
                 auto_shell: Some(true),
@@ -550,7 +563,7 @@ impl WorktreeManager {
                 hooks: None,
                 metadata: None,
             };
-            
+
             Ok(Some(config))
         }
     }
@@ -776,7 +789,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
 
         // Create Cursor integration configuration
         if let Some(cursor_config) = &self.config.cursor_integration {
-                            if let Some(config_template) = &cursor_config.project_config {
+            if let Some(config_template) = &cursor_config.project_config {
                 let cursor_dir = PathBuf::from(".cursor");
                 fs::create_dir_all(&cursor_dir).await?;
 
@@ -1214,7 +1227,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
         PathBuf::from(".worktree-config.jsonc"),
         PathBuf::from(".worktree-config.json"),
     ];
-    
+
     for config_path in &config_paths {
         if config_path.exists() {
             manager.load_config(config_path).await.ok();
@@ -1246,16 +1259,31 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             setup,
             copy_env,
             switch,
+            open_cursor,
         } => {
             // Generate worktree name according to specification
             let worktree_name = manager.generate_worktree_name(&branch)?;
-            println!("{}", style(&format!("Creating worktree: {} -> {}", branch, worktree_name)).bold());
-            
+            println!(
+                "{}",
+                style(&format!(
+                    "Creating worktree: {} -> {}",
+                    branch, worktree_name
+                ))
+                .bold()
+            );
+
             // Get branch pattern configuration
             if let Some(pattern) = manager.get_branch_pattern(&branch) {
-                println!("{}", style(&format!("Branch pattern: {} (labels: {:?})", branch, pattern.labels)).cyan());
+                println!(
+                    "{}",
+                    style(&format!(
+                        "Branch pattern: {} (labels: {:?})",
+                        branch, pattern.labels
+                    ))
+                    .cyan()
+                );
             }
-            
+
             if let Some(ref _tool_name) = tool {
                 // Override preferred tool for this command
                 let config = WorktreeConfig::default();
@@ -1293,7 +1321,10 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                         println!("{}", style("✓ Setup command completed").green());
                     } else {
                         let error = String::from_utf8_lossy(&output.stderr);
-                        println!("{}", style(&format!("✗ Setup command failed: {}", error)).red());
+                        println!(
+                            "{}",
+                            style(&format!("✗ Setup command failed: {}", error)).red()
+                        );
                     }
                 }
             }
@@ -1304,10 +1335,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 for env_file in &manager.config.env_files {
                     if Path::new(env_file).exists() {
                         let target = env_file.replace(".example", "");
-                        let output = Command::new("cp")
-                            .arg(env_file)
-                            .arg(&target)
-                            .output();
+                        let output = Command::new("cp").arg(env_file).arg(&target).output();
 
                         if let Ok(output) = output {
                             if output.status.success() {
@@ -1318,16 +1346,59 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                             } else {
                                 println!(
                                     "{}",
-                                    style(&format!("✗ Failed to copy {} to {}", env_file, target)).red()
+                                    style(&format!("✗ Failed to copy {} to {}", env_file, target))
+                                        .red()
                                 );
                             }
                         } else {
                             println!(
                                 "{}",
-                                style(&format!("✗ Failed to copy {} to {}", env_file, target)).red()
+                                style(&format!("✗ Failed to copy {} to {}", env_file, target))
+                                    .red()
                             );
                         }
                     }
+                }
+            }
+
+            // Open worktree in Cursor if requested
+            if open_cursor {
+                println!("{}", style("Opening worktree in Cursor...").bold());
+
+                // Get the worktree path
+                let worktree_path = if let Some(base_dir) = base_dir {
+                    format!("{}{}", base_dir, branch)
+                } else {
+                    format!("../{}", branch)
+                };
+
+                // Check if Cursor is available
+                let cursor_check = Command::new("which").arg("cursor").output();
+                if let Ok(output) = cursor_check {
+                    if output.status.success() {
+                        // Open worktree in Cursor
+                        let cursor_result = Command::new("cursor")
+                            .arg(&worktree_path)
+                            .spawn();
+
+                        match cursor_result {
+                            Ok(_) => {
+                                println!("{}", style("✓ Opened worktree in Cursor").green());
+                                println!("{}", style(&format!("  - Path: {}", worktree_path)).dim());
+                            }
+                            Err(e) => {
+                                println!("{}", style(&format!("✗ Failed to open Cursor: {}", e)).red());
+                                println!("{}", style("  - You can manually open it with: cursor .").dim());
+                            }
+                        }
+                    } else {
+                        println!("{}", style("✗ Cursor not found in PATH").red());
+                        println!("{}", style("  - Please install Cursor or add it to your PATH").dim());
+                        println!("{}", style(&format!("  - You can manually open it with: cursor {}", worktree_path)).dim());
+                    }
+                } else {
+                    println!("{}", style("✗ Could not check for Cursor installation").red());
+                    println!("{}", style(&format!("  - You can manually open it with: cursor {}", worktree_path)).dim());
                 }
             }
         }
@@ -1381,31 +1452,39 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
 
             if all || config {
                 manager.create_config_files().await?;
-                
+
                 // Validate configuration after creation
                 let config_paths = [
                     PathBuf::from(".worktree-config.jsonc"),
                     PathBuf::from(".worktree-config.json"),
                 ];
-                
+
                 for config_path in &config_paths {
                     if config_path.exists() {
                         println!("{}", style("Validating worktree configuration...").bold());
                         if let Err(e) = manager.validate_config(config_path).await {
-                            eprintln!("{}", style(&format!("Warning: Configuration validation failed: {}", e)).yellow());
+                            eprintln!(
+                                "{}",
+                                style(&format!("Warning: Configuration validation failed: {}", e))
+                                    .yellow()
+                            );
                         } else {
                             println!("{}", style("✓ Configuration validation passed").green());
                         }
                         break;
                     }
                 }
-                
+
                 // Validate .workbloom configuration
                 let workbloom_path = PathBuf::from(".workbloom");
                 if workbloom_path.exists() {
                     println!("{}", style("Validating .workbloom configuration...").bold());
                     if let Err(e) = manager.validate_workbloom_config(&workbloom_path).await {
-                        eprintln!("{}", style(&format!("Warning: .workbloom validation failed: {}", e)).yellow());
+                        eprintln!(
+                            "{}",
+                            style(&format!("Warning: .workbloom validation failed: {}", e))
+                                .yellow()
+                        );
                     } else {
                         println!("{}", style("✓ .workbloom validation passed").green());
                     }
@@ -1439,13 +1518,16 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 }
                 _ => {
                     print_tool_status(&tools, &best_tool, detailed);
-                    
+
                     // Show specification compliance
                     if detailed {
                         println!("\n{}", style("📋 Specification Compliance:").bold());
                         println!("  {} Spec: hooksmith-worktree-rfc@v1", style("✅").green());
                         println!("  {} Pattern: worktree-base root + ../hooksmith-{{branch}} per feature", style("✅").green());
-                        println!("  {} CLI: xtask + workbloom to manage lifecycle", style("✅").green());
+                        println!(
+                            "  {} CLI: xtask + workbloom to manage lifecycle",
+                            style("✅").green()
+                        );
                         println!("  {} Goal: Schema-typed, AI-compatible, automation-first worktree system", style("✅").green());
                     }
                 }

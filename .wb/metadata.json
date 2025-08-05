@@ -1,18 +1,42 @@
 {
-  "version": "1.0",
   "created": "2025-01-27T00:00:00Z",
-  "worktrees": {},
-  "labels": {
-    "feature": ["development", "new-feature"],
-    "bugfix": ["maintenance", "fix"],
-    "hotfix": ["urgent", "critical"],
-    "spike": ["experiment", "research"],
-    "docs": ["documentation", "guide"],
-    "refactor": ["cleanup", "improvement"]
-  },
   "cursor_integration": {
-    "enabled": true,
     "auto_open": true,
+    "enabled": true,
     "metadata_dir": ".wb"
+  },
+  "labels": {
+    "bugfix": [
+      "maintenance",
+      "fix"
+    ],
+    "docs": [
+      "documentation",
+      "guide"
+    ],
+    "feature": [
+      "development",
+      "new-feature"
+    ],
+    "hotfix": [
+      "urgent",
+      "critical"
+    ],
+    "refactor": [
+      "cleanup",
+      "improvement"
+    ],
+    "spike": [
+      "experiment",
+      "research"
+    ]
+  },
+  "version": "1.0",
+  "worktrees": {
+    "test-cursor-integration": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T20:36:13.501184+00:00"
+    }
   }
-} 
+}
