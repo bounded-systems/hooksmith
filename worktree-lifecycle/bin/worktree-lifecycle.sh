@@ -51,6 +51,7 @@ Commands:
   create              Create a new worktree for development
   process             Process all worktrees through state machine
   create-prs          Create PRs for ready worktrees
+  auto-merge          Auto merge all PRs for worktrees
   resolve-conflicts   Resolve conflicts in worktrees
   cleanup             Clean up obsolete worktrees
   demo                Demonstrate complete workflow
@@ -68,6 +69,7 @@ Examples:
   $0 create feature/new-feature  # Create new worktree
   $0 process --dry-run        # Show what would be processed
   $0 create-prs               # Create PRs for ready worktrees
+  $0 auto-merge --dry-run     # Auto merge all PRs (dry run)
   $0 resolve-conflicts        # Resolve conflicts
   $0 cleanup                  # Clean up obsolete worktrees
   $0 demo                     # Demonstrate complete workflow
@@ -283,6 +285,51 @@ run_create_prs() {
     "$PROJECT_DIR/scripts/pr_creator.sh"
 }
 
+# Function to auto merge PRs
+run_auto_merge() {
+    local dry_run=false
+    local verbose=false
+    local quiet=false
+    local force=false
+    
+    # Parse options
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run)
+                dry_run=true
+                shift
+                ;;
+            --force)
+                force=true
+                shift
+                ;;
+            --verbose)
+                verbose=true
+                shift
+                ;;
+            --quiet)
+                quiet=true
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
+    # Build arguments for the auto-merge script
+    local script_args=""
+    if [ "$dry_run" = true ]; then
+        script_args="$script_args --dry-run"
+    fi
+    if [ "$force" = true ]; then
+        script_args="$script_args --force"
+    fi
+    
+    # Run the auto-merge script
+    "$PROJECT_DIR/../scripts/auto-merge-all-prs.sh" $script_args
+}
+
 # Function to resolve conflicts
 run_resolve_conflicts() {
     local dry_run=false
@@ -398,6 +445,9 @@ main() {
             ;;
         "create-prs")
             run_create_prs "$@"
+            ;;
+        "auto-merge")
+            run_auto_merge "$@"
             ;;
         "resolve-conflicts")
             run_resolve_conflicts "$@"
