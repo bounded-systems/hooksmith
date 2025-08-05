@@ -50,6 +50,7 @@ Commands:
   status              Show comprehensive worktree status
   create              Create a new worktree for development
   sync                Sync all remote branches (main to base, others to worktrees)
+  detect-orphaned     Detect branches not in worktrees
   process             Process all worktrees through state machine
   create-prs          Create PRs for ready worktrees
   auto-merge          Auto merge all PRs for worktrees
@@ -69,6 +70,7 @@ Examples:
   $0 status --json            # Show status in JSON format
   $0 create feature/new-feature  # Create new worktree
   $0 sync --dry-run           # Sync all branches (main to base, others to worktrees)
+  $0 detect-orphaned          # Detect branches not in worktrees
   $0 process --dry-run        # Show what would be processed
   $0 create-prs               # Create PRs for ready worktrees
   $0 auto-merge --dry-run     # Auto merge all PRs (dry run)
@@ -101,6 +103,59 @@ check_dependencies() {
         log_error "Missing required dependencies: ${missing_deps[*]}"
         exit 1
     fi
+}
+
+# Function to detect orphaned branches
+run_detect_orphaned() {
+    local create_worktrees=false
+    local delete_branches=false
+    local dry_run=false
+    local verbose=false
+    local quiet=false
+    
+    # Parse options
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --create-worktrees)
+                create_worktrees=true
+                shift
+                ;;
+            --delete-branches)
+                delete_branches=true
+                shift
+                ;;
+            --dry-run)
+                dry_run=true
+                shift
+                ;;
+            --verbose)
+                verbose=true
+                shift
+                ;;
+            --quiet)
+                quiet=true
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
+    # Build arguments for the detect-orphaned script
+    local script_args=""
+    if [ "$create_worktrees" = true ]; then
+        script_args="$script_args --create-worktrees"
+    fi
+    if [ "$delete_branches" = true ]; then
+        script_args="$script_args --delete-branches"
+    fi
+    if [ "$dry_run" = true ]; then
+        script_args="$script_args --dry-run"
+    fi
+    
+    # Run the detect-orphaned script
+    "$PROJECT_DIR/../scripts/detect-orphaned-branches.sh" $script_args
 }
 
 # Function to sync all remote branches
@@ -497,6 +552,9 @@ main() {
             ;;
         "sync")
             run_sync "$@"
+            ;;
+        "detect-orphaned")
+            run_detect_orphaned "$@"
             ;;
         "process")
             run_process "$@"
