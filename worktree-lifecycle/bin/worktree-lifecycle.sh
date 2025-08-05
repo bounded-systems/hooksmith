@@ -48,6 +48,7 @@ Usage: $0 <command> [options]
 
 Commands:
   status              Show comprehensive worktree status
+  create              Create a new worktree for development
   process             Process all worktrees through state machine
   create-prs          Create PRs for ready worktrees
   resolve-conflicts   Resolve conflicts in worktrees
@@ -64,6 +65,7 @@ Options:
 Examples:
   $0 status                    # Show worktree status
   $0 status --json            # Show status in JSON format
+  $0 create feature/new-feature  # Create new worktree
   $0 process --dry-run        # Show what would be processed
   $0 create-prs               # Create PRs for ready worktrees
   $0 resolve-conflicts        # Resolve conflicts
@@ -94,6 +96,78 @@ check_dependencies() {
     if [ ${#missing_deps[@]} -gt 0 ]; then
         log_error "Missing required dependencies: ${missing_deps[*]}"
         exit 1
+    fi
+}
+
+# Function to create new worktree
+run_create() {
+    local branch_name=""
+    local dry_run=false
+    local verbose=false
+    local quiet=false
+    
+    # Parse options and get branch name
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run)
+                dry_run=true
+                shift
+                ;;
+            --verbose)
+                verbose=true
+                shift
+                ;;
+            --quiet)
+                quiet=true
+                shift
+                ;;
+            -*)
+                shift
+                ;;
+            *)
+                if [ -z "$branch_name" ]; then
+                    branch_name="$1"
+                fi
+                shift
+                ;;
+        esac
+    done
+    
+    if [ -z "$branch_name" ]; then
+        log_error "Branch name is required. Usage: $0 create <branch-name>"
+        exit 1
+    fi
+    
+    if [ "$dry_run" = true ]; then
+        log_info "DRY RUN: Would create worktree for branch: $branch_name"
+        return 0
+    fi
+    
+    # Create worktree directory path
+    local worktree_path="worktrees/${branch_name//\//\/}"
+    
+    log_info "Creating worktree for branch: $branch_name"
+    log_info "Worktree path: $worktree_path"
+    
+    # Check if worktree already exists
+    if git worktree list | grep -q "$worktree_path"; then
+        log_warning "Worktree already exists at: $worktree_path"
+        return 1
+    fi
+    
+    # Create the worktree
+    if git worktree add "$worktree_path" -b "$branch_name"; then
+        log_success "Successfully created worktree for branch: $branch_name"
+        log_info "Worktree location: $worktree_path"
+        log_info "Next steps:"
+        log_info "  cd $worktree_path"
+        log_info "  # Make your changes"
+        log_info "  git add . && git commit -m 'your message'"
+        log_info "  git push -u origin $branch_name"
+        return 0
+    else
+        log_error "Failed to create worktree for branch: $branch_name"
+        return 1
     fi
 }
 
@@ -315,6 +389,9 @@ main() {
     case "$command" in
         "status")
             run_status "$@"
+            ;;
+        "create")
+            run_create "$@"
             ;;
         "process")
             run_process "$@"
