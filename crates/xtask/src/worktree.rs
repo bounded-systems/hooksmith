@@ -605,7 +605,7 @@ impl WorktreeManager {
         branch: &str,
         base_dir: Option<&str>,
         switch: bool,
-    ) -> Result<()> {
+    ) -> Result<String> {
         let tool = self.select_best_tool()?;
 
         match tool {
@@ -912,7 +912,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
         branch: &str,
         _base_dir: Option<&str>,
         switch: bool,
-    ) -> Result<()> {
+    ) -> Result<String> {
         // Use workbloom's setup command which includes file copying and port allocation
         let mut args = vec!["setup", branch];
         if !switch {
@@ -935,6 +935,11 @@ refactor = ["cleanup", "improvement", "technical-debt"]
                 println!("{}", style("  - Shell opened in new worktree").dim());
             }
 
+            // Extract worktree path from Workbloom output
+            let output_str = String::from_utf8_lossy(&output.stdout);
+            let worktree_path = Self::extract_worktree_path_from_workbloom(&output_str)
+                .unwrap_or_else(|| format!("worktree-{}", branch.replace('/', "-")));
+
             // Update metadata if enabled
             if let Some(metadata_config) = &self.config.workbloom_metadata {
                 if metadata_config.enabled {
@@ -949,7 +954,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
                 }
             }
 
-            Ok(())
+            Ok(worktree_path)
         } else {
             let error = String::from_utf8_lossy(&output.stderr);
             Err(anyhow::anyhow!("workbloom setup failed: {}", error))
@@ -961,7 +966,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
         branch: &str,
         base_dir: Option<&str>,
         switch: bool,
-    ) -> Result<()> {
+    ) -> Result<String> {
         let base_path = base_dir.unwrap_or("../");
         let worktree_path = format!("{}{}", base_path, branch);
 
@@ -987,7 +992,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
                     style(&format!("Please run: cd {}", worktree_path)).yellow()
                 );
             }
-            Ok(())
+            Ok(worktree_path)
         } else {
             let error = String::from_utf8_lossy(&output.stderr);
             Err(anyhow::anyhow!("git worktree add failed: {}", error))
@@ -1097,6 +1102,20 @@ refactor = ["cleanup", "improvement", "technical-debt"]
     }
 
     /// Update worktree metadata
+    fn extract_worktree_path_from_workbloom(output: &str) -> Option<String> {
+        // Look for the worktree location line in Workbloom output
+        for line in output.lines() {
+            if line.contains("📍 Worktree location:") {
+                return Some(line.split("📍 Worktree location:").nth(1)?.trim().to_string());
+            }
+            // Also check for the alternative format without emoji
+            if line.contains("Worktree location:") {
+                return Some(line.split("Worktree location:").nth(1)?.trim().to_string());
+            }
+        }
+        None
+    }
+
     async fn update_worktree_metadata(&self, worktree: &str, action: &str) -> Result<()> {
         if let Some(metadata_config) = &self.config.workbloom_metadata {
             let metadata_dir = PathBuf::from(&metadata_config.metadata_dir);
@@ -1261,6 +1280,30 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             switch,
             open_cursor,
         } => {
+            // Normalize working directory - ensure we're in the base repository
+            let current_dir = std::env::current_dir()?;
+            let git_root = Command::new("git")
+                .args(["rev-parse", "--show-toplevel"])
+                .current_dir(&current_dir)
+                .output()
+                .context("Failed to get git root")?;
+
+            let git_root_path = if git_root.status.success() {
+                let path = String::from_utf8_lossy(&git_root.stdout).trim().to_string();
+
+                // If we're not in the git root, change to it
+                if current_dir.to_string_lossy() != path {
+                    println!(
+                        "{}",
+                        style(&format!("Switching to base repository: {}", path)).cyan()
+                    );
+                    std::env::set_current_dir(&path)?;
+                }
+                path
+            } else {
+                current_dir.to_string_lossy().to_string()
+            };
+
             // Check if worktree already exists for this branch
             let existing_worktrees = manager.list_worktrees(false).await?;
             if let Some(existing) = existing_worktrees.iter().find(|wt| wt.branch == branch) {
@@ -1306,23 +1349,24 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 );
             }
 
-            if let Some(ref _tool_name) = tool {
+            let worktree_path = if let Some(ref _tool_name) = tool {
                 // Override preferred tool for this command
                 let config = WorktreeConfig::default();
                 let manager = WorktreeManager::with_config(config);
                 manager
                     .create_worktree(&branch, base_dir.as_deref(), switch)
-                    .await?;
+                    .await?
             } else {
                 manager
                     .create_worktree(&branch, base_dir.as_deref(), switch)
-                    .await?;
-            }
+                    .await?
+            };
 
             // Push branch to remote after successful creation
             println!("{}", style("Pushing branch to remote...").bold());
             let push_output = Command::new("git")
-                .args(["push", "-u", "origin", branch])
+                .args(["push", "-u", "origin", &branch])
+                .current_dir(&git_root_path)
                 .output()
                 .context("Failed to push branch to remote")?;
 
@@ -1402,43 +1446,8 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             if open_cursor {
                 println!("{}", style("Opening worktree in Cursor...").bold());
 
-                // Get the actual worktree path from git worktree list
-                let worktree_path = {
-                    let output = Command::new("git")
-                        .args(["worktree", "list", "--porcelain"])
-                        .output()
-                        .context("Failed to get worktree list")?;
-
-                    if output.status.success() {
-                        let output_str = String::from_utf8_lossy(&output.stdout);
-                        let lines: Vec<&str> = output_str.lines().collect();
-
-                        // Find the worktree for this branch
-                        for chunk in lines.chunks(3) {
-                            if chunk.len() >= 3 && chunk[2].starts_with("branch refs/heads/") {
-                                let branch_name = &chunk[2][18..]; // Remove "branch refs/heads/" prefix
-                                if branch_name == branch {
-                                    let worktree_path = chunk[0][9..].to_string(); // Remove "worktree " prefix
-                                    return worktree_path;
-                                }
-                            }
-                        }
-
-                        // Fallback to generated name if not found
-                        if let Some(base_dir) = base_dir {
-                            format!("{}{}", base_dir, worktree_name)
-                        } else {
-                            format!("../{}", worktree_name)
-                        }
-                    } else {
-                        // Fallback to generated name if git command fails
-                        if let Some(base_dir) = base_dir {
-                            format!("{}{}", base_dir, worktree_name)
-                        } else {
-                            format!("../{}", worktree_name)
-                        }
-                    }
-                };
+                // Use the actual worktree path returned from the creation process
+                let cursor_path = worktree_path;
 
                 // Check if Cursor is available
                 let cursor_check = Command::new("which").arg("cursor").output();
@@ -1446,13 +1455,13 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                     if output.status.success() {
                         // Open worktree in Cursor
                         let cursor_result = Command::new("cursor")
-                            .arg(&worktree_path)
+                            .arg(&cursor_path)
                             .spawn();
 
                         match cursor_result {
                             Ok(_) => {
                                 println!("{}", style("✓ Opened worktree in Cursor").green());
-                                println!("{}", style(&format!("  - Path: {}", worktree_path)).dim());
+                                println!("{}", style(&format!("  - Path: {}", cursor_path)).dim());
                             }
                             Err(e) => {
                                 println!("{}", style(&format!("✗ Failed to open Cursor: {}", e)).red());
@@ -1462,11 +1471,11 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                     } else {
                         println!("{}", style("✗ Cursor not found in PATH").red());
                         println!("{}", style("  - Please install Cursor or add it to your PATH").dim());
-                        println!("{}", style(&format!("  - You can manually open it with: cursor {}", worktree_path)).dim());
+                        println!("{}", style(&format!("  - You can manually open it with: cursor {}", cursor_path)).dim());
                     }
                 } else {
                     println!("{}", style("✗ Could not check for Cursor installation").red());
-                    println!("{}", style(&format!("  - You can manually open it with: cursor {}", worktree_path)).dim());
+                    println!("{}", style(&format!("  - You can manually open it with: cursor {}", cursor_path)).dim());
                 }
             }
         }
