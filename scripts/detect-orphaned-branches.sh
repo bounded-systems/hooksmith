@@ -140,7 +140,11 @@ find_orphaned_branches() {
         fi
     done
     
-    echo "${orphaned[@]}"
+    if [ ${#orphaned[@]} -eq 0 ]; then
+        echo ""
+    else
+        echo "${orphaned[@]}"
+    fi
 }
 
 # Function to create worktree for orphaned branch
@@ -218,13 +222,17 @@ handle_orphaned_branches() {
     log_header "DETECTING ORPHANED BRANCHES"
     
     # Find orphaned branches
-    local orphaned
-    read -ra orphaned <<< "$(find_orphaned_branches)"
+    local orphaned_result
+    orphaned_result=$(find_orphaned_branches)
     
-    if [ ${#orphaned[@]} -eq 0 ] || [ -z "${orphaned[*]}" ]; then
+    if [ -z "$orphaned_result" ]; then
         log_success "No orphaned branches found! All branches (except main) are properly managed as worktrees."
         return 0
     fi
+    
+    # Convert result to array
+    local orphaned=()
+    read -ra orphaned <<< "$orphaned_result"
     
     log_warning "Found ${#orphaned[@]} orphaned branches:"
     for branch in "${orphaned[@]}"; do
