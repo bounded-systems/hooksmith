@@ -1,11 +1,24 @@
-//! Worktree Runner WASM Component
+//! Worktree Runner WASM Component with CRD Lifecycle Management
 //!
 //! This component provides WASM interface for managing Git worktrees using various tools.
 //! It supports multiple worktree management tools and provides a unified interface.
+//! 
+//! The CRD system provides synchronized, self-healing worktree lifecycle management
+//! across four domains: Local Branch, Remote Branch, Worktree, and Pull Request.
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::process::Command;
+use std::path::PathBuf;
+
+// CRD system modules
+pub mod crd;
+pub mod state_machine;
+pub mod storage;
+pub mod tools;
+
+// Kubernetes-style CRD system
+pub mod kube_crd;
 
 /// Configuration for worktree tools
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -70,6 +83,9 @@ impl WorktreeTool {
 /// Worktree runner component
 pub struct WorktreeRunner {
     config: ToolConfig,
+    state_machine: Option<state_machine::WorktreeStateMachine>,
+    storage: Option<storage::WorktreeStorage>,
+    enhanced_ops: Option<tools::EnhancedWorktreeOps>,
 }
 
 impl WorktreeRunner {
@@ -77,12 +93,149 @@ impl WorktreeRunner {
     pub fn new() -> Self {
         Self {
             config: ToolConfig::default(),
+            state_machine: None,
+            storage: None,
+            enhanced_ops: None,
         }
     }
 
     /// Create a new worktree runner with custom configuration
     pub fn with_config(config: ToolConfig) -> Self {
-        Self { config }
+        Self { 
+            config,
+            state_machine: None,
+            storage: None,
+            enhanced_ops: None,
+        }
+    }
+
+    /// Initialize the CRD lifecycle management system
+    pub async fn init_crd_system(&mut self, repo_path: PathBuf, worktree_base: PathBuf, storage_dir: PathBuf, github_token: Option<String>) -> Result<()> {
+        let state_machine = state_machine::WorktreeStateMachine::new(
+            repo_path,
+            worktree_base,
+            github_token,
+        );
+        
+        let storage = storage::WorktreeStorage::new(storage_dir);
+        storage.init().await?;
+        
+        // Initialize enhanced operations with preferred tool
+        let preferred_tool = if self.config.preferred_tool.is_some() {
+            Some(tools::WorktreeTool::Workbloom) // Default to workbloom if configured
+        } else {
+            None
+        };
+        let enhanced_ops = tools::EnhancedWorktreeOps::new(preferred_tool);
+        
+        self.state_machine = Some(state_machine);
+        self.storage = Some(storage);
+        self.enhanced_ops = Some(enhanced_ops);
+        
+        Ok(())
+    }
+
+    /// Run a complete reconciliation cycle
+    pub async fn reconcile(&mut self) -> Result<Vec<kube_crd::WorktreeChangeRequest>> {
+        let state_machine = self.state_machine.as_mut()
+            .ok_or_else(|| anyhow::anyhow!("CRD system not initialized"))?;
+        
+        let storage = self.storage.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Storage not initialized"))?;
+        
+        // Scan and create CRDs
+        let mut crds = state_machine.scan_and_reconcile().await?;
+        
+        // Load existing CRDs from storage
+        let stored_crds = storage.load_all_crds().await?;
+        
+        // Merge with existing CRDs
+        for (branch_name, stored_crd) in stored_crds {
+            if let Some(existing_crd) = crds.iter_mut().find(|c| c.spec.branch == branch_name) {
+                // Update with stored history and status
+                // Note: Kubernetes CRD status is managed separately
+                // We'll just update the spec for now
+                existing_crd.spec = stored_crd.spec;
+            } else {
+                // Add stored CRD that wasn't found in current scan
+                crds.push(stored_crd);
+            }
+        }
+        
+        // Execute actions
+        state_machine.execute_actions(&mut crds).await?;
+        
+        // Save updated CRDs
+        for crd in &crds {
+            storage.save_crd(crd).await?;
+        }
+        
+        Ok(crds)
+    }
+
+    /// Get status of all worktrees
+    pub async fn get_status(&self) -> Result<Vec<kube_crd::WorktreeChangeRequest>> {
+        let storage = self.storage.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Storage not initialized"))?;
+        
+        let crds = storage.load_all_crds().await?;
+        Ok(crds.into_values().collect())
+    }
+
+    /// Get detailed status for a specific branch
+    pub async fn get_branch_status(&self, branch_name: &str) -> Result<Option<kube_crd::WorktreeChangeRequest>> {
+        let storage = self.storage.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Storage not initialized"))?;
+        
+        storage.load_crd(branch_name).await
+    }
+
+    /// Get storage reference for CLI operations
+    pub fn get_storage(&self) -> Result<&storage::WorktreeStorage> {
+        self.storage.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Storage not initialized"))
+    }
+
+    /// Get enhanced operations for tool integration
+    pub fn get_enhanced_ops(&self) -> Result<&tools::EnhancedWorktreeOps> {
+        self.enhanced_ops.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Enhanced operations not initialized"))
+    }
+
+    /// Get tool status
+    pub fn get_tool_status(&self) -> Result<Vec<tools::ToolStatus>> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        Ok(enhanced_ops.tool_manager.get_tool_status())
+    }
+
+    /// Bulk pull all worktrees using integrated tools
+    pub async fn bulk_pull_all(&self) -> Result<tools::ToolResult> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        enhanced_ops.bulk_pull_all().await
+    }
+
+    /// Prune stale worktrees using integrated tools
+    pub async fn prune_worktrees(&self, force: bool) -> Result<tools::ToolResult> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        enhanced_ops.prune_worktrees(force).await
+    }
+
+    /// Create worktree with automatic setup using integrated tools
+    pub async fn create_worktree_with_setup(&self, branch_name: &str) -> Result<tools::ToolResult> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        enhanced_ops.create_worktree_with_setup(branch_name, &[]).await
+    }
+
+    /// Switch context using devspace
+    pub async fn switch_context(&self, context_name: &str) -> Result<tools::ToolResult> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        enhanced_ops.switch_context(context_name).await
+    }
+
+    /// List worktrees using devspace
+    pub async fn list_devspace_worktrees(&self) -> Result<tools::ToolResult> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        enhanced_ops.list_worktrees().await
     }
 
     /// Get available worktree tools

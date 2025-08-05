@@ -10,6 +10,7 @@ license = "MIT"
 members = [
     ".",
     "crates/components/cli-core",
+    "crates/components/worktree-runner",
     "crates/xtask",
     "scripts/ensure-clean-main",
 ]
