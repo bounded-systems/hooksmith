@@ -33,6 +33,11 @@
   },
   "version": "1.0",
   "worktrees": {
+    "feat-cleanup-test": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T21:23:03.224084+00:00"
+    },
     "feat-shell-to-rust": {
       "action": "created",
       "labels": [],
@@ -57,6 +62,11 @@
       "action": "created",
       "labels": [],
       "timestamp": "2025-08-05T20:59:14.747429+00:00"
+    },
+    "feat-test-with-changes": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T21:24:36.670387+00:00"
     },
     "feature/test-with-slash": {
       "action": "created",
