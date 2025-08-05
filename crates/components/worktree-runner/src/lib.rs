@@ -15,6 +15,10 @@ use std::path::PathBuf;
 pub mod crd;
 pub mod state_machine;
 pub mod storage;
+pub mod tools;
+
+// Kubernetes-style CRD system
+pub mod kube_crd;
 
 /// Configuration for worktree tools
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -81,6 +85,7 @@ pub struct WorktreeRunner {
     config: ToolConfig,
     state_machine: Option<state_machine::WorktreeStateMachine>,
     storage: Option<storage::WorktreeStorage>,
+    enhanced_ops: Option<tools::EnhancedWorktreeOps>,
 }
 
 impl WorktreeRunner {
@@ -90,6 +95,7 @@ impl WorktreeRunner {
             config: ToolConfig::default(),
             state_machine: None,
             storage: None,
+            enhanced_ops: None,
         }
     }
 
@@ -99,6 +105,7 @@ impl WorktreeRunner {
             config,
             state_machine: None,
             storage: None,
+            enhanced_ops: None,
         }
     }
 
@@ -113,14 +120,23 @@ impl WorktreeRunner {
         let storage = storage::WorktreeStorage::new(storage_dir);
         storage.init().await?;
         
+        // Initialize enhanced operations with preferred tool
+        let preferred_tool = if self.config.preferred_tool.is_some() {
+            Some(tools::WorktreeTool::Workbloom) // Default to workbloom if configured
+        } else {
+            None
+        };
+        let enhanced_ops = tools::EnhancedWorktreeOps::new(preferred_tool);
+        
         self.state_machine = Some(state_machine);
         self.storage = Some(storage);
+        self.enhanced_ops = Some(enhanced_ops);
         
         Ok(())
     }
 
     /// Run a complete reconciliation cycle
-    pub async fn reconcile(&mut self) -> Result<Vec<crd::WorktreeChangeRequest>> {
+    pub async fn reconcile(&mut self) -> Result<Vec<kube_crd::WorktreeChangeRequest>> {
         let state_machine = self.state_machine.as_mut()
             .ok_or_else(|| anyhow::anyhow!("CRD system not initialized"))?;
         
@@ -137,8 +153,9 @@ impl WorktreeRunner {
         for (branch_name, stored_crd) in stored_crds {
             if let Some(existing_crd) = crds.iter_mut().find(|c| c.spec.branch == branch_name) {
                 // Update with stored history and status
-                existing_crd.status = stored_crd.status;
-                existing_crd.metadata.last_modified = stored_crd.metadata.last_modified;
+                // Note: Kubernetes CRD status is managed separately
+                // We'll just update the spec for now
+                existing_crd.spec = stored_crd.spec;
             } else {
                 // Add stored CRD that wasn't found in current scan
                 crds.push(stored_crd);
@@ -157,7 +174,7 @@ impl WorktreeRunner {
     }
 
     /// Get status of all worktrees
-    pub async fn get_status(&self) -> Result<Vec<crd::WorktreeChangeRequest>> {
+    pub async fn get_status(&self) -> Result<Vec<kube_crd::WorktreeChangeRequest>> {
         let storage = self.storage.as_ref()
             .ok_or_else(|| anyhow::anyhow!("Storage not initialized"))?;
         
@@ -166,7 +183,7 @@ impl WorktreeRunner {
     }
 
     /// Get detailed status for a specific branch
-    pub async fn get_branch_status(&self, branch_name: &str) -> Result<Option<crd::WorktreeChangeRequest>> {
+    pub async fn get_branch_status(&self, branch_name: &str) -> Result<Option<kube_crd::WorktreeChangeRequest>> {
         let storage = self.storage.as_ref()
             .ok_or_else(|| anyhow::anyhow!("Storage not initialized"))?;
         
@@ -177,6 +194,48 @@ impl WorktreeRunner {
     pub fn get_storage(&self) -> Result<&storage::WorktreeStorage> {
         self.storage.as_ref()
             .ok_or_else(|| anyhow::anyhow!("Storage not initialized"))
+    }
+
+    /// Get enhanced operations for tool integration
+    pub fn get_enhanced_ops(&self) -> Result<&tools::EnhancedWorktreeOps> {
+        self.enhanced_ops.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Enhanced operations not initialized"))
+    }
+
+    /// Get tool status
+    pub fn get_tool_status(&self) -> Result<Vec<tools::ToolStatus>> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        Ok(enhanced_ops.tool_manager.get_tool_status())
+    }
+
+    /// Bulk pull all worktrees using integrated tools
+    pub async fn bulk_pull_all(&self) -> Result<tools::ToolResult> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        enhanced_ops.bulk_pull_all().await
+    }
+
+    /// Prune stale worktrees using integrated tools
+    pub async fn prune_worktrees(&self, force: bool) -> Result<tools::ToolResult> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        enhanced_ops.prune_worktrees(force).await
+    }
+
+    /// Create worktree with automatic setup using integrated tools
+    pub async fn create_worktree_with_setup(&self, branch_name: &str) -> Result<tools::ToolResult> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        enhanced_ops.create_worktree_with_setup(branch_name, &[]).await
+    }
+
+    /// Switch context using devspace
+    pub async fn switch_context(&self, context_name: &str) -> Result<tools::ToolResult> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        enhanced_ops.switch_context(context_name).await
+    }
+
+    /// List worktrees using devspace
+    pub async fn list_devspace_worktrees(&self) -> Result<tools::ToolResult> {
+        let enhanced_ops = self.get_enhanced_ops()?;
+        enhanced_ops.list_worktrees().await
     }
 
     /// Get available worktree tools

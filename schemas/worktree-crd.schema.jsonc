@@ -1,0 +1,282 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WorktreeChangeRequest",
+  "description": "Custom Resource Definition for Git worktree lifecycle management across four domains",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Branch name (e.g., 'feature/xyz')"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Repository identifier",
+          "default": "default"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when this CRD was created"
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last modification"
+        },
+        "version": {
+          "type": "string",
+          "description": "CRD version",
+          "default": "v1"
+        }
+      },
+      "required": ["name", "created"]
+    },
+    "spec": {
+      "type": "object",
+      "properties": {
+        "branch": {
+          "type": "string",
+          "description": "Git branch name"
+        },
+        "domains": {
+          "type": "object",
+          "description": "State across the four domains",
+          "properties": {
+            "local": {
+              "type": "object",
+              "properties": {
+                "exists": {
+                  "type": "boolean",
+                  "description": "Whether local branch exists in .git/refs/heads/"
+                },
+                "current": {
+                  "type": "boolean",
+                  "description": "Whether this is the currently checked out branch"
+                },
+                "lastCommit": {
+                  "type": "string",
+                  "description": "SHA of the last commit on this branch"
+                },
+                "ahead": {
+                  "type": "integer",
+                  "description": "Number of commits ahead of main"
+                },
+                "behind": {
+                  "type": "integer",
+                  "description": "Number of commits behind main"
+                }
+              },
+              "required": ["exists"]
+            },
+            "remote": {
+              "type": "object",
+              "properties": {
+                "exists": {
+                  "type": "boolean",
+                  "description": "Whether remote branch exists in origin/"
+                },
+                "lastCommit": {
+                  "type": "string",
+                  "description": "SHA of the last commit on remote branch"
+                },
+                "upstream": {
+                  "type": "string",
+                  "description": "Upstream branch name (e.g., 'origin/feature/xyz')"
+                }
+              },
+              "required": ["exists"]
+            },
+            "worktree": {
+              "type": "object",
+              "properties": {
+                "exists": {
+                  "type": "boolean",
+                  "description": "Whether worktree directory exists"
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Path to the worktree directory"
+                },
+                "dirty": {
+                  "type": "boolean",
+                  "description": "Whether worktree has uncommitted changes"
+                },
+                "conflicted": {
+                  "type": "boolean",
+                  "description": "Whether worktree has merge/rebase conflicts"
+                },
+                "rebaseInProgress": {
+                  "type": "boolean",
+                  "description": "Whether a rebase is in progress"
+                }
+              },
+              "required": ["exists"]
+            },
+            "pr": {
+              "type": "object",
+              "properties": {
+                "exists": {
+                  "type": "boolean",
+                  "description": "Whether GitHub PR exists"
+                },
+                "number": {
+                  "type": "integer",
+                  "description": "GitHub PR number"
+                },
+                "url": {
+                  "type": "string",
+                  "description": "GitHub PR URL"
+                },
+                "state": {
+                  "type": "string",
+                  "enum": ["draft", "open", "closed", "merged"],
+                  "description": "PR state"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "PR title"
+                },
+                "labels": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "PR labels"
+                }
+              },
+              "required": ["exists"]
+            }
+          },
+          "required": ["local", "remote", "worktree", "pr"]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "CREATED",
+            "DEVELOPING", 
+            "CONFLICTED",
+            "RESOLVING",
+            "READY",
+            "PR_CREATED",
+            "MERGED",
+            "CLEANUP",
+            "REMOVED"
+          ],
+          "description": "Current lifecycle state"
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "create_worktree",
+            "create_branch",
+            "push_branch",
+            "create_pr",
+            "merge_pr",
+            "resolve_conflicts",
+            "rebase_main",
+            "cleanup_worktree",
+            "remove_branch",
+            "reset_main"
+          ],
+          "description": "Next action to perform"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Action priority (1=highest, 10=lowest)"
+        },
+        "retryCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of times this action has been retried"
+        },
+        "maxRetries": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Maximum number of retries for this action"
+        }
+      },
+      "required": ["branch", "domains", "state"]
+    },
+    "status": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": ["Pending", "Running", "Succeeded", "Failed"],
+          "description": "Current phase of the action"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable status message"
+        },
+        "lastTransitionTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last state transition"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Condition type"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["True", "False", "Unknown"]
+              },
+              "lastTransitionTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "reason": {
+                "type": "string",
+                "description": "Reason for condition"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable condition message"
+              }
+            },
+            "required": ["type", "status"]
+          }
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "state": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string"
+              },
+              "success": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": ["timestamp", "state", "action", "success"]
+          }
+        }
+      },
+      "required": ["phase"]
+    }
+  },
+  "required": ["metadata", "spec", "status"]
+} 

@@ -32,9 +32,19 @@ tracing.workspace = true
 tracing-subscriber = "0.3"
 thiserror.workspace = true
 chrono = { version = "0.4", features = ["serde"] }
-tokio = { version = "1.0", features = ["fs", "macros", "rt", "rt-multi-thread"] }
+tokio = { version = "1.0", features = ["fs", "macros", "rt", "rt-multi-thread", "process"] }
 tempfile = "3.8"
 clap = { version = "4.0", features = ["derive"] }
+
+# Kubernetes CRD support
+kube = { version = "0.91", features = ["runtime", "derive"] }
+kube-derive = "0.91"
+kube-runtime = "0.91"
+k8s-openapi = { version = "0.22", features = ["v1_28"] }
+schemars = { version = "0.8", features = ["derive"] }
+futures = "0.3"
+futures-util = "0.3"
+
 # Remove which dependency for WASM compatibility
 # which.workspace = true
 # wit-bindgen is optional and only used for host builds

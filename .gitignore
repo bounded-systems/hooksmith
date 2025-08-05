@@ -74,6 +74,5 @@ fix_format.sed
 examples/schema_validation_demo.rs.disabled
 tests/*.disabled
 
-# Worktree directories
-worktree-*/
-worktrees/
+# Git worktree directories
+/.wt/
