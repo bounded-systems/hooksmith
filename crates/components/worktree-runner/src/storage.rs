@@ -21,8 +21,12 @@ impl WorktreeStorage {
     /// Initialize the storage directory
     pub async fn init(&self) -> Result<()> {
         if !self.storage_dir.exists() {
+<<<<<<< HEAD
             fs::create_dir_all(&self.storage_dir)
                 .await
+=======
+            fs::create_dir_all(&self.storage_dir).await
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
                 .context("Failed to create storage directory")?;
             info!("Created storage directory: {:?}", self.storage_dir);
         }
@@ -31,6 +35,7 @@ impl WorktreeStorage {
 
     /// Save a CRD to storage
     pub async fn save_crd(&self, crd: &WorktreeChangeRequest) -> Result<()> {
+<<<<<<< HEAD
         let filename =
             self.get_crd_filename(&crd.metadata.name.as_ref().unwrap_or(&crd.spec.branch));
         let filepath = self.storage_dir.join(filename);
@@ -41,6 +46,17 @@ impl WorktreeStorage {
             .await
             .context("Failed to write CRD file")?;
 
+=======
+        let filename = self.get_crd_filename(&crd.metadata.name.as_ref().unwrap_or(&crd.spec.branch));
+        let filepath = self.storage_dir.join(filename);
+        
+        let json = serde_json::to_string_pretty(crd)
+            .context("Failed to serialize CRD")?;
+        
+        fs::write(&filepath, json).await
+            .context("Failed to write CRD file")?;
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         debug!("Saved CRD to: {:?}", filepath);
         Ok(())
     }
@@ -49,6 +65,7 @@ impl WorktreeStorage {
     pub async fn load_crd(&self, branch_name: &str) -> Result<Option<WorktreeChangeRequest>> {
         let filename = self.get_crd_filename(branch_name);
         let filepath = self.storage_dir.join(filename);
+<<<<<<< HEAD
 
         if !filepath.exists() {
             return Ok(None);
@@ -61,6 +78,19 @@ impl WorktreeStorage {
         let crd: WorktreeChangeRequest =
             serde_json::from_str(&content).context("Failed to deserialize CRD")?;
 
+=======
+        
+        if !filepath.exists() {
+            return Ok(None);
+        }
+        
+        let content = fs::read_to_string(&filepath).await
+            .context("Failed to read CRD file")?;
+        
+        let crd: WorktreeChangeRequest = serde_json::from_str(&content)
+            .context("Failed to deserialize CRD")?;
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         debug!("Loaded CRD from: {:?}", filepath);
         Ok(Some(crd))
     }
@@ -68,6 +98,7 @@ impl WorktreeStorage {
     /// Load all CRDs from storage
     pub async fn load_all_crds(&self) -> Result<HashMap<String, WorktreeChangeRequest>> {
         let mut crds = HashMap::new();
+<<<<<<< HEAD
 
         if !self.storage_dir.exists() {
             return Ok(crds);
@@ -77,6 +108,16 @@ impl WorktreeStorage {
             .await
             .context("Failed to read storage directory")?;
 
+=======
+        
+        if !self.storage_dir.exists() {
+            return Ok(crds);
+        }
+        
+        let mut entries = fs::read_dir(&self.storage_dir).await
+            .context("Failed to read storage directory")?;
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         while let Some(entry) = entries.next_entry().await? {
             let path = entry.path();
             if path.is_file() && path.extension().map_or(false, |ext| ext == "json") {
@@ -87,7 +128,11 @@ impl WorktreeStorage {
                 }
             }
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         info!("Loaded {} CRDs from storage", crds.len());
         Ok(crds)
     }
@@ -96,10 +141,16 @@ impl WorktreeStorage {
     pub async fn delete_crd(&self, branch_name: &str) -> Result<bool> {
         let filename = self.get_crd_filename(branch_name);
         let filepath = self.storage_dir.join(filename);
+<<<<<<< HEAD
 
         if filepath.exists() {
             fs::remove_file(&filepath)
                 .await
+=======
+        
+        if filepath.exists() {
+            fs::remove_file(&filepath).await
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
                 .context("Failed to delete CRD file")?;
             debug!("Deleted CRD: {:?}", filepath);
             Ok(true)
@@ -114,7 +165,11 @@ impl WorktreeStorage {
         let crd_clone = crd.clone();
         // Note: Kubernetes CRD doesn't have a touch method
         // We'll update the creation timestamp instead
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         self.save_crd(&crd_clone).await
     }
 
@@ -131,7 +186,11 @@ impl WorktreeStorage {
             .replace('<', "_")
             .replace('>', "_")
             .replace('|', "_");
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         format!("{}.json", sanitized)
     }
 
@@ -151,6 +210,7 @@ impl WorktreeStorage {
             failed_crds: 0,
             storage_size_bytes: 0,
         };
+<<<<<<< HEAD
 
         if !self.storage_dir.exists() {
             return Ok(stats);
@@ -160,15 +220,33 @@ impl WorktreeStorage {
             .await
             .context("Failed to read storage directory")?;
 
+=======
+        
+        if !self.storage_dir.exists() {
+            return Ok(stats);
+        }
+        
+        let mut entries = fs::read_dir(&self.storage_dir).await
+            .context("Failed to read storage directory")?;
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         while let Some(entry) = entries.next_entry().await? {
             let path = entry.path();
             if path.is_file() && path.extension().map_or(false, |ext| ext == "json") {
                 stats.total_crds += 1;
+<<<<<<< HEAD
 
                 if let Ok(metadata) = fs::metadata(&path).await {
                     stats.storage_size_bytes += metadata.len();
                 }
 
+=======
+                
+                if let Ok(metadata) = fs::metadata(&path).await {
+                    stats.storage_size_bytes += metadata.len();
+                }
+                
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
                 // Try to load the CRD to get status info
                 if let Some(branch_name) = self.parse_branch_name_from_filename(&path) {
                     if let Ok(Some(crd)) = self.load_crd(&branch_name).await {
@@ -183,7 +261,11 @@ impl WorktreeStorage {
                 }
             }
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         Ok(stats)
     }
 
@@ -191,10 +273,17 @@ impl WorktreeStorage {
     pub async fn cleanup_old_crds(&self, max_age_days: u64) -> Result<usize> {
         let mut deleted_count = 0;
         let cutoff = chrono::Utc::now() - chrono::Duration::days(max_age_days as i64);
+<<<<<<< HEAD
 
         let crds = self.load_all_crds().await?;
         let _crds_len = crds.len();
 
+=======
+        
+        let crds = self.load_all_crds().await?;
+        let _crds_len = crds.len();
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         for (branch_name, crd) in crds {
             // Note: Kubernetes CRD doesn't have last_modified field
             // We'll use creation_timestamp instead
@@ -207,7 +296,11 @@ impl WorktreeStorage {
                 }
             }
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         info!("Cleaned up {} old CRDs", deleted_count);
         Ok(deleted_count)
     }
@@ -216,11 +309,16 @@ impl WorktreeStorage {
     pub async fn export_crds(&self, format: ExportFormat, output_path: &Path) -> Result<()> {
         let crds = self.load_all_crds().await?;
         let _crds_len = crds.len();
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         match format {
             ExportFormat::Json => {
                 let json = serde_json::to_string_pretty(&crds)
                     .context("Failed to serialize CRDs to JSON")?;
+<<<<<<< HEAD
                 fs::write(output_path, json)
                     .await
                     .context("Failed to write JSON export")?;
@@ -230,11 +328,21 @@ impl WorktreeStorage {
                     serde_yaml::to_string(&crds).context("Failed to serialize CRDs to YAML")?;
                 fs::write(output_path, yaml)
                     .await
+=======
+                fs::write(output_path, json).await
+                    .context("Failed to write JSON export")?;
+            }
+            ExportFormat::Yaml => {
+                let yaml = serde_yaml::to_string(&crds)
+                    .context("Failed to serialize CRDs to YAML")?;
+                fs::write(output_path, yaml).await
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
                     .context("Failed to write YAML export")?;
             }
             ExportFormat::Csv => {
                 let mut csv = String::new();
                 csv.push_str("branch,state,local,remote,worktree,pr,last_modified\n");
+<<<<<<< HEAD
 
                 for (branch_name, crd) in crds {
                     let last_modified = crd
@@ -244,6 +352,15 @@ impl WorktreeStorage {
                         .map(|dt| dt.0.format("%Y-%m-%d %H:%M:%S").to_string())
                         .unwrap_or_else(|| "unknown".to_string());
 
+=======
+                
+                for (branch_name, crd) in crds {
+                    let last_modified = crd.metadata.creation_timestamp
+                        .as_ref()
+                        .map(|dt| dt.0.format("%Y-%m-%d %H:%M:%S").to_string())
+                        .unwrap_or_else(|| "unknown".to_string());
+                    
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
                     csv.push_str(&format!(
                         "{},{},{},{},{},{},{}\n",
                         branch_name,
@@ -255,6 +372,7 @@ impl WorktreeStorage {
                         last_modified
                     ));
                 }
+<<<<<<< HEAD
 
                 fs::write(output_path, csv)
                     .await
@@ -262,6 +380,14 @@ impl WorktreeStorage {
             }
         }
 
+=======
+                
+                fs::write(output_path, csv).await
+                    .context("Failed to write CSV export")?;
+            }
+        }
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         info!("Exported {} CRDs to {:?}", _crds_len, output_path);
         Ok(())
     }
@@ -288,14 +414,23 @@ pub enum ExportFormat {
 #[cfg(test)]
 mod tests {
     use super::*;
+<<<<<<< HEAD
     use crate::kube_crd::WorktreeChangeRequest;
     use tempfile::tempdir;
+=======
+    use tempfile::tempdir;
+    use crate::kube_crd::WorktreeChangeRequest;
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
 
     #[tokio::test]
     async fn test_storage_creation() {
         let temp_dir = tempdir().unwrap();
         let storage = WorktreeStorage::new(temp_dir.path().to_path_buf());
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         storage.init().await.unwrap();
         assert!(temp_dir.path().exists());
     }
@@ -305,10 +440,17 @@ mod tests {
         let temp_dir = tempdir().unwrap();
         let storage = WorktreeStorage::new(temp_dir.path().to_path_buf());
         storage.init().await.unwrap();
+<<<<<<< HEAD
 
         let crd = WorktreeChangeRequest::create("feature/test");
         storage.save_crd(&crd).await.unwrap();
 
+=======
+        
+        let crd = WorktreeChangeRequest::create("feature/test");
+        storage.save_crd(&crd).await.unwrap();
+        
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
         let loaded = storage.load_crd("feature/test").await.unwrap();
         assert!(loaded.is_some());
         assert_eq!(loaded.unwrap().spec.branch, "feature/test");
@@ -318,6 +460,7 @@ mod tests {
     async fn test_filename_sanitization() {
         let temp_dir = tempdir().unwrap();
         let storage = WorktreeStorage::new(temp_dir.path().to_path_buf());
+<<<<<<< HEAD
 
         let filename = storage.get_crd_filename("feature/test-branch");
         assert_eq!(filename, "feature_test-branch.json");
@@ -326,3 +469,13 @@ mod tests {
         assert_eq!(filename, "bugfix_urgent-fix_.json");
     }
 }
+=======
+        
+        let filename = storage.get_crd_filename("feature/test-branch");
+        assert_eq!(filename, "feature_test-branch.json");
+        
+        let filename = storage.get_crd_filename("bugfix/urgent-fix!");
+        assert_eq!(filename, "bugfix_urgent-fix_.json");
+    }
+} 
+>>>>>>> 32d9c520 (feat: Enhanced worktree CRD system with Kubernetes integration)
