@@ -303,6 +303,175 @@ impl WorktreeContract {
         Ok(())
     }
 
+    /// Switch to next worktree (remove current, add new, open in Cursor)
+    pub fn switch_next_worktree(&self, new_branch: &str, base_dir: &str) -> Result<()> {
+        println!("🔄 Switching to next worktree: {}", new_branch);
+
+        // Step 1: Detect current worktree
+        let current_dir = Command::new("git")
+            .args(["rev-parse", "--show-toplevel"])
+            .stdout(Stdio::piped())
+            .output()
+            .context("Failed to get current worktree")?;
+
+        let current_path = String::from_utf8(current_dir.stdout)?.trim().to_string();
+
+        // Check if we're in a .wt/* worktree
+        if !current_path.contains("/.wt/") {
+            return Err(anyhow::anyhow!("❌ Not inside a .wt/* worktree"));
+        }
+
+        let current_branch = Command::new("git")
+            .args(["rev-parse", "--abbrev-ref", "HEAD"])
+            .stdout(Stdio::piped())
+            .output()
+            .context("Failed to get current branch")?;
+
+        let current_branch_name = String::from_utf8(current_branch.stdout)?.trim().to_string();
+        let current_wt_name = Path::new(&current_path)
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("unknown");
+
+        println!(
+            "📍 Current worktree: {} (branch: {})",
+            current_wt_name, current_branch_name
+        );
+
+        // Step 2: Check for uncommitted changes
+        let status_output = Command::new("git")
+            .args(["status", "--porcelain"])
+            .current_dir(&current_path)
+            .output()
+            .context("Failed to check worktree status")?;
+
+        let status = String::from_utf8(status_output.stdout)?;
+        if !status.trim().is_empty() {
+            println!("⚠️  WARNING: Current worktree has uncommitted changes!");
+            println!("   Changes:");
+            for line in status.lines() {
+                if !line.trim().is_empty() {
+                    println!("      {}", line);
+                }
+            }
+            println!("   Consider committing or stashing changes before switching");
+        }
+
+        // Step 3: Remove current worktree
+        println!("🗑️  Removing current worktree: {}", current_wt_name);
+
+        // Unlock if needed
+        let unlock_output = Command::new("git")
+            .args(["worktree", "unlock", &current_path])
+            .output();
+
+        if unlock_output.is_ok() && unlock_output.unwrap().status.success() {
+            println!("🔓 Unlocked worktree");
+        }
+
+        // Remove worktree
+        let remove_output = Command::new("git")
+            .args(["worktree", "remove", &current_path])
+            .output()
+            .context("Failed to remove current worktree")?;
+
+        if !remove_output.status.success() {
+            let error = String::from_utf8_lossy(&remove_output.stderr);
+            return Err(anyhow::anyhow!("Failed to remove worktree: {}", error));
+        }
+
+        println!("✅ Removed current worktree");
+
+        // Step 4: Add new worktree
+        let new_wt_path = self.generate_valid_path(new_branch, base_dir);
+        println!("📦 Creating new worktree: {}", new_wt_path);
+
+        // Check if branch exists
+        let branch_check = Command::new("git")
+            .args([
+                "show-ref",
+                "--verify",
+                "--quiet",
+                &format!("refs/heads/{}", new_branch),
+            ])
+            .output();
+
+        let branch_exists = branch_check.is_ok() && branch_check.unwrap().status.success();
+
+        if branch_exists {
+            println!("📦 Using existing branch: {}", new_branch);
+            let add_output = Command::new("git")
+                .args(["worktree", "add", &new_wt_path, new_branch])
+                .output()
+                .context("Failed to add worktree for existing branch")?;
+
+            if !add_output.status.success() {
+                let error = String::from_utf8_lossy(&add_output.stderr);
+                return Err(anyhow::anyhow!("Failed to add worktree: {}", error));
+            }
+        } else {
+            println!("🌱 Creating new branch: {} from main", new_branch);
+            let add_output = Command::new("git")
+                .args(["worktree", "add", &new_wt_path, "-b", new_branch, "main"])
+                .output()
+                .context("Failed to add worktree for new branch")?;
+
+            if !add_output.status.success() {
+                let error = String::from_utf8_lossy(&add_output.stderr);
+                return Err(anyhow::anyhow!("Failed to add worktree: {}", error));
+            }
+        }
+
+        // Step 5: Lock the new worktree
+        self.lock_worktree(&new_wt_path)?;
+
+        // Step 6: Open in Cursor
+        println!("🚀 Opening new worktree in Cursor: {}", new_wt_path);
+
+        #[cfg(target_os = "macos")]
+        {
+            let cursor_output = Command::new("open")
+                .args(["-na", "Cursor", "--args", &new_wt_path])
+                .output()
+                .context("Failed to open Cursor")?;
+
+            if !cursor_output.status.success() {
+                println!("⚠️  Failed to open Cursor, but worktree is ready");
+            } else {
+                println!("✅ Opened in Cursor");
+            }
+        }
+
+        #[cfg(not(target_os = "macos"))]
+        {
+            // Try to open with code (VSCode) as fallback
+            let code_output = Command::new("code").args([&new_wt_path]).output();
+
+            if code_output.is_ok() && code_output.unwrap().status.success() {
+                println!("✅ Opened in VSCode");
+            } else {
+                println!("📁 Worktree ready at: {}", new_wt_path);
+                println!("   Open manually in your preferred editor");
+            }
+        }
+
+        // Step 7: Print summary
+        println!("\n✅ Successfully switched worktrees!");
+        println!("   From: {} ({})", current_wt_name, current_branch_name);
+        println!(
+            "   To: {} ({})",
+            Path::new(&new_wt_path)
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            new_branch
+        );
+        println!("   Path: {}", new_wt_path);
+
+        Ok(())
+    }
+
     /// Validate a worktree's naming contract
     pub fn validate_worktree(
         &self,
@@ -569,4 +738,10 @@ pub fn create_pr_for_worktree(worktree_path: &str, branch_name: &str) -> Result<
 pub fn merge_pr_and_cleanup(branch_name: &str, worktree_path: &str) -> Result<()> {
     let contract = WorktreeContract::default();
     contract.merge_pr_and_cleanup(branch_name, worktree_path)
+}
+
+/// Switch to next worktree (remove current, add new, open in Cursor)
+pub fn switch_next_worktree(new_branch: &str, base_dir: &str) -> Result<()> {
+    let contract = WorktreeContract::default();
+    contract.switch_next_worktree(new_branch, base_dir)
 }

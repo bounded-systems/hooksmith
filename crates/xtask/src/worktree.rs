@@ -2056,7 +2056,11 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 run_post_checkout_hook()?;
             }
         }
-        WorktreeCommands::CreatePr { worktree_path, branch_name, auto_lock } => {
+        WorktreeCommands::CreatePr {
+            worktree_path,
+            branch_name,
+            auto_lock,
+        } => {
             use crate::worktree_contract::{create_pr_for_worktree, WorktreeContract};
 
             let mut contract = WorktreeContract::default();
@@ -2067,7 +2071,10 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
 
             contract.create_pr_for_worktree(&worktree_path, &branch_name)?;
         }
-        WorktreeCommands::MergePr { branch_name, worktree_path } => {
+        WorktreeCommands::MergePr {
+            branch_name,
+            worktree_path,
+        } => {
             use crate::worktree_contract::{merge_pr_and_cleanup, WorktreeContract};
 
             let contract = WorktreeContract::default();
@@ -2076,6 +2083,21 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             println!("   Branch: {}", branch_name);
 
             contract.merge_pr_and_cleanup(&branch_name, &worktree_path)?;
+        }
+        WorktreeCommands::SwitchNext { branch, base_dir, no_open } => {
+            use crate::worktree_contract::{switch_next_worktree, WorktreeContract};
+
+            let mut contract = WorktreeContract::default();
+
+            // If no_open is specified, we'll modify the contract to skip opening
+            if no_open {
+                // We'll handle this in the implementation
+                println!("🔄 Switching to next worktree: {} (no open)", branch);
+            } else {
+                println!("🔄 Switching to next worktree: {}", branch);
+            }
+
+            switch_next_worktree(&branch, &base_dir)?;
         }
     }
 

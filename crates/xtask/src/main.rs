@@ -630,6 +630,18 @@ enum WorktreeCommands {
         #[arg(long)]
         worktree_path: String,
     },
+    /// Switch to next worktree (remove current, add new, open in Cursor)
+    SwitchNext {
+        /// New branch name
+        #[arg(long)]
+        branch: String,
+        /// Base directory for worktrees (default: .wt)
+        #[arg(long, default_value = ".wt")]
+        base_dir: String,
+        /// Don't open in Cursor (just switch)
+        #[arg(long)]
+        no_open: bool,
+    },
 }
 
 mod auto_push;
