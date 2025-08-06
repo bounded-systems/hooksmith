@@ -477,6 +477,24 @@ enum WorktreeCommands {
         #[arg(long)]
         open_cursor: bool,
     },
+    /// Create a new feature worktree with consistent naming
+    CreateFeature {
+        /// Feature slug (e.g., "add-logging", "fix-bug-123")
+        #[arg(long)]
+        slug: String,
+        /// Base directory for worktrees
+        #[arg(long)]
+        base_dir: Option<String>,
+        /// Whether to push and set upstream
+        #[arg(long, default_value = "true")]
+        push_upstream: bool,
+        /// Whether to switch to the new worktree
+        #[arg(long, default_value = "true")]
+        switch: bool,
+        /// Whether to open the worktree in Cursor after creation
+        #[arg(long)]
+        open_cursor: bool,
+    },
     /// Switch to a worktree
     Switch {
         /// Name of the worktree to switch to
@@ -570,6 +588,60 @@ enum WorktreeCommands {
         #[arg(long)]
         force: bool,
     },
+    /// Audit worktree naming contracts
+    AuditContracts {
+        /// Show detailed validation results
+        #[arg(long)]
+        detailed: bool,
+        /// Output format (text, json, summary)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    /// Validate worktree naming contract (for hooks)
+    ValidateContract {
+        /// Worktree path to validate
+        #[arg(long)]
+        worktree_path: Option<String>,
+        /// Branch name to validate
+        #[arg(long)]
+        branch_name: Option<String>,
+        /// Exit with error on violations
+        #[arg(long)]
+        strict: bool,
+    },
+    /// Create PR for a worktree
+    CreatePr {
+        /// Worktree path
+        #[arg(long)]
+        worktree_path: String,
+        /// Branch name
+        #[arg(long)]
+        branch_name: String,
+        /// Auto-lock worktree after PR creation
+        #[arg(long)]
+        auto_lock: bool,
+    },
+    /// Merge PR and cleanup worktree
+    MergePr {
+        /// Branch name
+        #[arg(long)]
+        branch_name: String,
+        /// Worktree path
+        #[arg(long)]
+        worktree_path: String,
+    },
+    /// Switch to next worktree (remove current, add new, open in Cursor)
+    SwitchNext {
+        /// New branch name
+        #[arg(long)]
+        branch: String,
+        /// Base directory for worktrees (default: .wt)
+        #[arg(long, default_value = ".wt")]
+        base_dir: String,
+        /// Don't open in Cursor (just switch)
+        #[arg(long)]
+        no_open: bool,
+    },
 }
 
 mod auto_push;
@@ -610,6 +682,12 @@ mod wasm_event_bus;
 mod workflow;
 mod worktree;
 mod worktree_sync;
+mod worktree_contract;
+mod unified_generator;
+mod repo_structure_validator;
+mod component_status;
+mod schema_registry;
+mod sbom;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
