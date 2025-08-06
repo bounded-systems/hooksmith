@@ -326,6 +326,112 @@ pub fn create_pr_with_gh(worktree_path: &str, branch_name: &str) -> Result<bool,
     }
 }
 
+/// Check if a worktree is currently in a rebase state
+pub fn is_rebasing(worktree_path: &str) -> Result<bool, String> {
+    let status_output = Command::new("git")
+        .args(&["status", "--porcelain"])
+        .current_dir(worktree_path)
+        .output();
+
+    match status_output {
+        Ok(output) => {
+            let status = String::from_utf8_lossy(&output.stdout);
+
+            // Check for conflict markers
+            if status.lines().any(|line| line.starts_with("UU") || line.starts_with("AA") || line.starts_with("DD")) {
+                return Ok(true);
+            }
+
+            // Check for rebase in progress
+            let git_status_output = Command::new("git")
+                .args(&["status"])
+                .current_dir(worktree_path)
+                .output();
+
+            match git_status_output {
+                Ok(git_output) => {
+                    let git_status = String::from_utf8_lossy(&git_output.stdout);
+                    Ok(git_status.contains("rebase in progress"))
+                }
+                Err(_) => Ok(false)
+            }
+        }
+        Err(_) => Ok(false)
+    }
+}
+
+/// Stash uncommitted changes in a worktree
+pub fn stash_changes(worktree_path: &str) -> Result<bool, String> {
+    let output = Command::new("git")
+        .args(&["stash", "push", "-m", "Auto-stashed by conflict resolver"])
+        .current_dir(worktree_path)
+        .output();
+
+    match output {
+        Ok(output) => {
+            if output.status.success() {
+                log_success("Stashed uncommitted changes");
+                Ok(true)
+            } else {
+                let error = String::from_utf8_lossy(&output.stderr);
+                log_warning(&format!("Failed to stash changes: {}", error));
+                Ok(false)
+            }
+        }
+        Err(e) => {
+            log_error(&format!("Failed to execute stash command: {}", e));
+            Ok(false)
+        }
+    }
+}
+
+/// Clean up a merged worktree
+pub fn cleanup_merged_worktree(worktree_path: &str, branch_name: &str) -> Result<bool, String> {
+    // Check if branch is merged into main
+    let merge_check = Command::new("git")
+        .args(&["branch", "--merged", "main"])
+        .current_dir(worktree_path)
+        .output();
+
+    match merge_check {
+        Ok(output) => {
+            let merged_branches = String::from_utf8_lossy(&output.stdout);
+            if merged_branches.lines().any(|line| line.trim() == branch_name) {
+                log_info(&format!("Branch {} is merged, cleaning up worktree", branch_name));
+
+                // Remove the worktree
+                let remove_output = Command::new("git")
+                    .args(&["worktree", "remove", worktree_path])
+                    .output();
+
+                match remove_output {
+                    Ok(remove_output) => {
+                        if remove_output.status.success() {
+                            log_success(&format!("Removed merged worktree: {}", worktree_path));
+                            Ok(true)
+                        } else {
+                            let error = String::from_utf8_lossy(&remove_output.stderr);
+                            log_warning(&format!("Failed to remove worktree: {}", error));
+                            Ok(false)
+                        }
+                    }
+                    Err(e) => {
+                        log_error(&format!("Failed to execute worktree remove: {}", e));
+                        Ok(false)
+                    }
+                }
+            } else {
+                log_info(&format!("Branch {} is not merged, keeping worktree", branch_name));
+                Ok(false)
+            }
+        }
+        Err(e) => {
+            log_error(&format!("Failed to check merged branches: {}", e));
+            Ok(false)
+        }
+    }
+}
+
 /// Command implementations for the CLI
 pub mod commands;
 /// Core modules for CLI functionality
