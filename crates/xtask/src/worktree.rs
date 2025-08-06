@@ -1778,6 +1778,30 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 );
             }
         }
+        WorktreeCommands::SyncStrategy {
+            validate,
+            report,
+            force,
+        } => {
+            println!("{}", style("Running worktree sync strategy...").bold());
+
+            if validate {
+                println!("{}", style("Validating sync readiness...").cyan());
+                // TODO: Add validation logic
+            }
+
+            if report {
+                println!("{}", style("Generating sync report...").cyan());
+                // TODO: Add report generation
+            }
+
+            if force {
+                println!("{}", style("Force sync enabled - proceeding with uncommitted changes").yellow());
+            }
+
+            // Run the worktree sync strategy
+            run_worktree_sync_command().await?;
+        }
     }
 
     Ok(())
