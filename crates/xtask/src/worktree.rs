@@ -1265,6 +1265,433 @@ refactor = ["cleanup", "improvement", "technical-debt"]
             branch
         ))
     }
+
+    /// Pull all remote branches and optionally create worktrees
+    pub async fn pull_all_remote_branches(&self, create_worktrees: bool, base_dir: Option<&str>) -> Result<()> {
+        println!("{}", style("Fetching all remote branches...").cyan());
+        
+        // Fetch all remote branches
+        let fetch_output = Command::new("git")
+            .args(["fetch", "--all"])
+            .output()
+            .context("Failed to fetch remote branches")?;
+
+        if !fetch_output.status.success() {
+            let error = String::from_utf8_lossy(&fetch_output.stderr);
+            return Err(anyhow::anyhow!("Failed to fetch remote branches: {}", error));
+        }
+
+        // Get list of remote branches
+        let branch_output = Command::new("git")
+            .args(["branch", "-r", "--format=%(refname:short)"])
+            .output()
+            .context("Failed to get remote branches")?;
+
+        if !branch_output.status.success() {
+            let error = String::from_utf8_lossy(&branch_output.stderr);
+            return Err(anyhow::anyhow!("Failed to get remote branches: {}", error));
+        }
+
+        let branches_str = String::from_utf8_lossy(&branch_output.stdout);
+        let remote_branches: Vec<String> = branches_str
+            .lines()
+            .map(|line| line.trim().to_string())
+            .filter(|line| !line.is_empty() && !line.contains("HEAD"))
+            .collect();
+
+        println!("{}", style(&format!("Found {} remote branches", remote_branches.len())).green());
+
+        if create_worktrees {
+            for branch in &remote_branches {
+                let branch_name = branch.replace("origin/", "");
+                if branch_name != "main" {
+                    println!("{}", style(&format!("Creating worktree for {}", branch)).cyan());
+                    self.create_worktree(&branch_name, base_dir, false).await?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Pull a single remote branch
+    pub async fn pull_single_branch(&self, branch: &str, create_worktree: bool, base_dir: Option<&str>) -> Result<()> {
+        println!("{}", style(&format!("Pulling branch: {}", branch)).cyan());
+
+        // Fetch the specific branch
+        let fetch_output = Command::new("git")
+            .args(["fetch", "origin", branch])
+            .output()
+            .context("Failed to fetch branch")?;
+
+        if !fetch_output.status.success() {
+            let error = String::from_utf8_lossy(&fetch_output.stderr);
+            return Err(anyhow::anyhow!("Failed to fetch branch {}: {}", branch, error));
+        }
+
+        if create_worktree {
+            println!("{}", style(&format!("Creating worktree for {}", branch)).cyan());
+            self.create_worktree(branch, base_dir, false).await?;
+        }
+
+        Ok(())
+    }
+
+    /// Ensure 1:1 relationship between local worktrees and remote branches
+    pub async fn ensure_one_to_one_relationship(
+        &self,
+        create_missing: bool,
+        remove_orphaned: bool,
+        force: bool,
+        dry_run: bool,
+    ) -> Result<()> {
+        println!("{}", style("Analyzing worktree and remote branch relationship...").bold());
+
+        // Get current worktrees
+        let worktrees = self.list_worktrees(false).await?;
+        let worktree_branches: std::collections::HashSet<String> = worktrees
+            .iter()
+            .map(|wt| wt.branch.clone())
+            .collect();
+
+        // Get remote branches
+        let branch_output = Command::new("git")
+            .args(["branch", "-r", "--format=%(refname:short)"])
+            .output()
+            .context("Failed to get remote branches")?;
+
+        let branches_str = String::from_utf8_lossy(&branch_output.stdout);
+        let remote_branches: Vec<String> = branches_str
+            .lines()
+            .map(|line| line.trim().to_string())
+            .filter(|line| !line.is_empty() && !line.contains("HEAD"))
+            .collect();
+
+        let remote_branch_set: std::collections::HashSet<String> = remote_branches
+            .iter()
+            .map(|branch| branch.replace("origin/", ""))
+            .collect();
+
+        // Find missing worktrees (remote branches without local worktrees)
+        let missing_worktrees: Vec<String> = remote_branch_set
+            .difference(&worktree_branches)
+            .cloned()
+            .collect();
+
+        // Find orphaned worktrees (local worktrees without remote branches)
+        let orphaned_worktrees: Vec<String> = worktree_branches
+            .difference(&remote_branch_set)
+            .cloned()
+            .collect();
+
+        println!("{}", style("Analysis Results:").bold());
+        println!("  Remote branches: {}", remote_branches.len());
+        println!("  Local worktrees: {}", worktrees.len());
+        println!("  Missing worktrees: {}", missing_worktrees.len());
+        println!("  Orphaned worktrees: {}", orphaned_worktrees.len());
+
+        if !missing_worktrees.is_empty() {
+            println!("{}", style("Missing worktrees:").yellow());
+            for branch in &missing_worktrees {
+                println!("  - {}", branch);
+            }
+        }
+
+        if !orphaned_worktrees.is_empty() {
+            println!("{}", style("Orphaned worktrees:").red());
+            for branch in &orphaned_worktrees {
+                println!("  - {}", branch);
+            }
+        }
+
+        // Create missing worktrees
+        if create_missing && !missing_worktrees.is_empty() {
+            println!("{}", style("Creating missing worktrees...").bold());
+            for branch in &missing_worktrees {
+                if dry_run {
+                    println!("{}", style(&format!("DRY RUN: Would create worktree for {}", branch)).cyan());
+                } else {
+                    println!("{}", style(&format!("Creating worktree for {}", branch)).green());
+                    self.create_worktree(branch, None, false).await?;
+                }
+            }
+        }
+
+        // Remove orphaned worktrees
+        if remove_orphaned && !orphaned_worktrees.is_empty() {
+            println!("{}", style("Removing orphaned worktrees...").bold());
+            for branch in &orphaned_worktrees {
+                if dry_run {
+                    println!("{}", style(&format!("DRY RUN: Would remove worktree for {}", branch)).cyan());
+                } else {
+                    if force {
+                        println!("{}", style(&format!("Force removing worktree for {}", branch)).red());
+                        self.remove_worktree(branch, true).await?;
+                    } else {
+                        println!("{}", style(&format!("Removing worktree for {}", branch)).yellow());
+                        self.remove_worktree(branch, true).await?;
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Create pull requests for worktrees
+    pub async fn create_pull_requests(
+        &self,
+        all: bool,
+        worktree: Option<&str>,
+        title_template: &str,
+        body_template: &str,
+        force: bool,
+        draft: bool,
+    ) -> Result<()> {
+        println!("{}", style("Creating pull requests...").bold());
+
+        let worktrees = if all {
+            self.list_worktrees(false).await?
+        } else if let Some(wt) = worktree {
+            let all_worktrees = self.list_worktrees(false).await?;
+            all_worktrees.into_iter().filter(|w| w.branch == wt).collect()
+        } else {
+            return Err(anyhow::anyhow!("No worktree specified. Use --all or --worktree"));
+        };
+
+        for wt in worktrees {
+            if wt.branch == "main" {
+                continue; // Skip main branch
+            }
+
+            println!("{}", style(&format!("Creating PR for worktree: {}", wt.branch)).cyan());
+
+            // Check if PR already exists
+            let pr_check = Command::new("gh")
+                .args(["pr", "list", "--head", &wt.branch, "--json", "number", "--jq", ".[0].number"])
+                .output();
+
+            if let Ok(output) = pr_check {
+                if output.status.success() {
+                    let pr_number = String::from_utf8_lossy(&output.stdout).trim();
+                    if !pr_number.is_empty() && !force {
+                        println!("{}", style(&format!("PR already exists for {}: #{}", wt.branch, pr_number)).yellow());
+                        continue;
+                    }
+                }
+            }
+
+            // Create PR
+            let title = title_template.replace("{branch}", &wt.branch);
+            let body = body_template.replace("{branch}", &wt.branch);
+
+            let mut args = vec!["pr", "create"];
+            if draft {
+                args.push("--draft");
+            }
+            args.extend_from_slice(&["--title", &title, "--body", &body, "--head", &wt.branch]);
+
+            let pr_output = Command::new("gh")
+                .args(&args)
+                .output()
+                .context("Failed to create pull request")?;
+
+            if pr_output.status.success() {
+                println!("{}", style(&format!("✓ Created PR for {}", wt.branch)).green());
+            } else {
+                let error = String::from_utf8_lossy(&pr_output.stderr);
+                println!("{}", style(&format!("✗ Failed to create PR for {}: {}", wt.branch, error)).red());
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Merge worktrees into main
+    pub async fn merge_to_main(
+        &self,
+        all: bool,
+        worktree: Option<&str>,
+        strategy: &str,
+        delete_branch: bool,
+        force: bool,
+    ) -> Result<()> {
+        println!("{}", style("Merging worktrees into main...").bold());
+
+        let worktrees = if all {
+            self.list_worktrees(false).await?
+        } else if let Some(wt) = worktree {
+            let all_worktrees = self.list_worktrees(false).await?;
+            all_worktrees.into_iter().filter(|w| w.branch == wt).collect()
+        } else {
+            return Err(anyhow::anyhow!("No worktree specified. Use --all or --worktree"));
+        };
+
+        for wt in worktrees {
+            if wt.branch == "main" {
+                continue; // Skip main branch
+            }
+
+            println!("{}", style(&format!("Merging {} into main", wt.branch)).cyan());
+
+            // Switch to main branch
+            let checkout_output = Command::new("git")
+                .args(["checkout", "main"])
+                .output()
+                .context("Failed to checkout main")?;
+
+            if !checkout_output.status.success() {
+                let error = String::from_utf8_lossy(&checkout_output.stderr);
+                println!("{}", style(&format!("✗ Failed to checkout main: {}", error)).red());
+                continue;
+            }
+
+            // Pull latest main
+            let pull_output = Command::new("git")
+                .args(["pull", "origin", "main"])
+                .output()
+                .context("Failed to pull main")?;
+
+            if !pull_output.status.success() {
+                let error = String::from_utf8_lossy(&pull_output.stderr);
+                println!("{}", style(&format!("✗ Failed to pull main: {}", error)).red());
+                continue;
+            }
+
+            // Merge the branch
+            let merge_args = match strategy {
+                "squash" => vec!["merge", "--squash", &wt.branch],
+                "rebase" => vec!["rebase", &wt.branch],
+                "merge" => vec!["merge", &wt.branch],
+                _ => vec!["merge", "--squash", &wt.branch],
+            };
+
+            let merge_output = Command::new("git")
+                .args(&merge_args)
+                .output()
+                .context("Failed to merge branch")?;
+
+            if merge_output.status.success() {
+                println!("{}", style(&format!("✓ Successfully merged {}", wt.branch)).green());
+
+                if delete_branch {
+                    // Delete the branch
+                    let delete_output = Command::new("git")
+                        .args(["branch", "-D", &wt.branch])
+                        .output();
+
+                    if let Ok(output) = delete_output {
+                        if output.status.success() {
+                            println!("{}", style(&format!("✓ Deleted branch {}", wt.branch)).green());
+                        }
+                    }
+                }
+            } else {
+                let error = String::from_utf8_lossy(&merge_output.stderr);
+                if force {
+                    println!("{}", style(&format!("⚠ Force merging {} despite conflicts", wt.branch)).yellow());
+                    // TODO: Implement conflict resolution
+                } else {
+                    println!("{}", style(&format!("✗ Failed to merge {}: {}", wt.branch, error)).red());
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Sync worktrees and create PRs
+    pub async fn sync_and_create_prs(
+        &self,
+        all: bool,
+        worktree: Option<&str>,
+        auto_merge: bool,
+        draft: bool,
+    ) -> Result<()> {
+        println!("{}", style("Syncing worktrees and creating PRs...").bold());
+
+        let worktrees = if all {
+            self.list_worktrees(false).await?
+        } else if let Some(wt) = worktree {
+            let all_worktrees = self.list_worktrees(false).await?;
+            all_worktrees.into_iter().filter(|w| w.branch == wt).collect()
+        } else {
+            return Err(anyhow::anyhow!("No worktree specified. Use --all or --worktree"));
+        };
+
+        for wt in worktrees {
+            if wt.branch == "main" {
+                continue; // Skip main branch
+            }
+
+            println!("{}", style(&format!("Processing worktree: {}", wt.branch)).cyan());
+
+            // Switch to the worktree
+            let worktree_path = wt.path.clone();
+            let current_dir = std::env::current_dir()?;
+            std::env::set_current_dir(&worktree_path)?;
+
+            // Pull latest changes
+            let pull_output = Command::new("git")
+                .args(["pull", "origin", &wt.branch])
+                .output();
+
+            if let Ok(output) = pull_output {
+                if output.status.success() {
+                    println!("{}", style(&format!("✓ Synced {}", wt.branch)).green());
+                }
+            }
+
+            // Push changes
+            let push_output = Command::new("git")
+                .args(["push", "origin", &wt.branch])
+                .output();
+
+            if let Ok(output) = push_output {
+                if output.status.success() {
+                    println!("{}", style(&format!("✓ Pushed {}", wt.branch)).green());
+                }
+            }
+
+            // Create PR
+            let title = format!("feat: {} changes", wt.branch);
+            let body = format!("Automated PR for {} branch", wt.branch);
+
+            let mut args = vec!["pr", "create"];
+            if draft {
+                args.push("--draft");
+            }
+            args.extend_from_slice(&["--title", &title, "--body", &body, "--head", &wt.branch]);
+
+            let pr_output = Command::new("gh")
+                .args(&args)
+                .output();
+
+            if let Ok(output) = pr_output {
+                if output.status.success() {
+                    println!("{}", style(&format!("✓ Created PR for {}", wt.branch)).green());
+
+                    if auto_merge {
+                        // Try to auto-merge the PR
+                        let merge_output = Command::new("gh")
+                            .args(["pr", "merge", "--auto", "--delete-branch"])
+                            .output();
+
+                        if let Ok(merge_result) = merge_output {
+                            if merge_result.status.success() {
+                                println!("{}", style(&format!("✓ Auto-merged PR for {}", wt.branch)).green());
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Return to original directory
+            std::env::set_current_dir(&current_dir)?;
+        }
+
+        Ok(())
+    }
 }
 
 /// Run worktree command
@@ -1764,19 +2191,58 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
 
             if all {
                 println!("{}", style("Pulling all remote branches").cyan());
-                println!("{}", style("Feature not yet implemented").yellow());
+                manager.pull_all_remote_branches(create_worktrees, base_dir.as_deref()).await?;
             } else if let Some(branch_name) = branch {
                 println!(
                     "{}",
                     style(&format!("Pulling branch: {}", branch_name)).cyan()
                 );
-                println!("{}", style("Feature not yet implemented").yellow());
+                manager.pull_single_branch(&branch_name, create_worktrees, base_dir.as_deref()).await?;
             } else {
                 println!(
                     "{}",
                     style("No branch specified. Use --all or --branch").yellow()
                 );
             }
+        }
+        WorktreeCommands::EnsureOneToOne {
+            create_missing,
+            remove_orphaned,
+            force,
+            dry_run,
+        } => {
+            println!("{}", style("Ensuring 1:1 relationship between worktrees and remote branches...").bold());
+            manager.ensure_one_to_one_relationship(create_missing, remove_orphaned, force, dry_run).await?;
+        }
+        WorktreeCommands::CreatePullRequests {
+            all,
+            worktree,
+            title_template,
+            body_template,
+            force,
+            draft,
+        } => {
+            println!("{}", style("Creating pull requests...").bold());
+            manager.create_pull_requests(all, worktree.as_deref(), &title_template, &body_template, force, draft).await?;
+        }
+        WorktreeCommands::MergeToMain {
+            all,
+            worktree,
+            strategy,
+            delete_branch,
+            force,
+        } => {
+            println!("{}", style("Merging worktrees into main...").bold());
+            manager.merge_to_main(all, worktree.as_deref(), &strategy, delete_branch, force).await?;
+        }
+        WorktreeCommands::SyncAndPr {
+            all,
+            worktree,
+            auto_merge,
+            draft,
+        } => {
+            println!("{}", style("Syncing worktrees and creating PRs...").bold());
+            manager.sync_and_create_prs(all, worktree.as_deref(), auto_merge, draft).await?;
         }
     }
 
