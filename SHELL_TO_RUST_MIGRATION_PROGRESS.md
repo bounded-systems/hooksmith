@@ -301,6 +301,9 @@ We have successfully completed the shell-to-Rust migration and achieved **100% R
 - `update-all-worktrees-to-main` - Successfully compiled and showed help
 - `state_machine` - Successfully compiled and showed help
 - `worktree-lifecycle` - Successfully compiled and showed help
+- `conflict_resolver` - Successfully compiled and ready for testing
+- `pr_creator` - Successfully compiled and ready for testing
+- `status_report` - Successfully compiled and ready for testing
 - Shared library functions - All core functions working correctly
 - Error handling - Proper error propagation and user-friendly messages
 - Logging system - Colored output with appropriate emojis
@@ -318,9 +321,6 @@ We have successfully completed the shell-to-Rust migration and achieved **100% R
 - `git-worktree-wrapper` - Ready for testing with worktree guidance
 - `update-worktrees` - Ready for testing with worktree updates
 - `migrate-worktrees-to-wt` - Ready for testing with worktree migration
-- `conflict_resolver` - Ready for testing with conflict resolution
-- `pr_creator` - Ready for testing with PR creation
-- `status_report` - Ready for testing with status reporting
 
 ## 📋 **Next Steps**
 
