@@ -83,6 +83,14 @@
       "labels": [],
       "timestamp": "2025-08-05T21:44:38.836381+00:00"
     },
+    "feature/resolve-merge-conflicts": {
+      "action": "created",
+      "labels": [
+        "feature",
+        "development"
+      ],
+      "timestamp": "2025-08-06T23:29:05.595147+00:00"
+    },
     "feature/test-with-slash": {
       "action": "created",
       "labels": [
