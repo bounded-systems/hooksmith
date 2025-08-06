@@ -154,13 +154,13 @@ impl WorktreeStateMachine {
                 let original_dir = std::env::current_dir()?;
                 std::env::set_current_dir(worktree_path)?;
                 std::env::set_current_dir(original_dir)?;
-                
+
                 // Remove worktree
                 let _ = run_git_command(&["worktree", "remove", worktree_path, "--force"]);
-                
+
                 // Delete remote branch
                 let _ = run_git_command(&["push", "origin", "--delete", branch_name]);
-                
+
                 log_success("Worktree cleaned up");
                 Ok(())
             }
