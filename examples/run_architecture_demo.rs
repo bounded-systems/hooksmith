@@ -5,6 +5,7 @@ use std::fs;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::io::{self, Write};
+use std::os::unix::fs::PermissionsExt;
 
 // Colors for output
 const RED: &str = "\x1b[31m";
@@ -16,23 +17,23 @@ const CYAN: &str = "\x1b[36m";
 const NC: &str = "\x1b[0m"; // No Color
 
 fn print_step(message: &str) {
-    println!("{}{}🔧 {}{}", BLUE, message, NC);
+    println!("{}🔧 {} {}", BLUE, NC, message);
 }
 
 fn print_success(message: &str) {
-    println!("{}{}✅ {}{}", GREEN, message, NC);
+    println!("{}✅ {} {}", GREEN, NC, message);
 }
 
 fn print_warning(message: &str) {
-    println!("{}{}⚠️  {}{}", YELLOW, message, NC);
+    println!("{}⚠️  {} {}", YELLOW, NC, message);
 }
 
 fn print_error(message: &str) {
-    println!("{}{}❌ {}{}", RED, message, NC);
+    println!("{}❌ {} {}", RED, NC, message);
 }
 
 fn print_info(message: &str) {
-    println!("{}{}ℹ️  {}{}", CYAN, message, NC);
+    println!("{}ℹ️  {} {}", CYAN, NC, message);
 }
 
 fn check_dependencies() -> Result<(), Box<dyn std::error::Error>> {
@@ -188,7 +189,7 @@ fn create_routing_config() -> Result<(), Box<dyn std::error::Error>> {
       },
       "action": { 
         "type": "notify.slack",
-        "channel": "#workflows",
+        "channel": "\\#workflows",
         "message": "Slack workflow handler is missing"
       }
     }
