@@ -1,6 +1,6 @@
 {
   "preferred_tool": null,
-  "worktree_base": "worktrees",
+  "worktree_base": ".wt",
   "run_setup": true,
   "setup_commands": [
     "cargo build"
