@@ -111,10 +111,10 @@ impl WorktreeStateMachine {
             WorktreeState::Resolving => {
                 let original_dir = std::env::current_dir()?;
                 std::env::set_current_dir(worktree_path)?;
-                
+
                 let result = run_git_command(&["rebase", "main"]);
                 std::env::set_current_dir(original_dir)?;
-                
+
                 match result {
                     Ok(_) => {
                         log_success("Rebase successful");
@@ -130,10 +130,10 @@ impl WorktreeStateMachine {
             WorktreeState::Ready => {
                 let original_dir = std::env::current_dir()?;
                 std::env::set_current_dir(worktree_path)?;
-                
+
                 let result = run_git_command(&["push", "origin", branch_name]);
                 std::env::set_current_dir(original_dir)?;
-                
+
                 match result {
                     Ok(_) => {
                         log_success("Branch pushed successfully");
