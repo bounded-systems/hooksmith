@@ -14,51 +14,32 @@ fn resolve_worktree_conflicts(worktree_path: &str, branch_name: &str) -> Result<
     let status = run_git_command_in_dir(&["status", "--porcelain"], worktree_path)?;
     let is_rebase_state = is_rebasing(worktree_path)?;
 
-    log_info(&format!("Current status: {}", status.trim()));
+    log_info(&format!("Current status: {}", status));
 
     if is_rebase_state {
         log_warning("Rebase in progress - aborting to preserve state");
-        let output = Command::new("git")
-            .args(&["rebase", "--abort"])
-            .current_dir(worktree_path)
-            .output()
-            .map_err(|e| format!("Failed to abort rebase: {}", e))?;
-
-        if output.status.success() {
-            log_success("Rebase aborted");
-        } else {
-            log_warning("Failed to abort rebase");
-        }
+        run_git_command_in_dir(&["rebase", "--abort"], worktree_path)?;
+        log_success("Rebase aborted");
     }
 
     // Stash any uncommitted changes
-    if !run_git_command_in_dir(&["diff", "--quiet"], worktree_path).is_ok() {
+    let has_changes = !run_git_command_in_dir(&["diff", "--quiet"], worktree_path).is_ok();
+    if has_changes {
         stash_changes(worktree_path)?;
     }
 
     // Try to rebase onto main
     log_info("Attempting to rebase onto main");
-    let output = Command::new("git")
-        .args(&["rebase", "main"])
-        .current_dir(worktree_path)
-        .output()
-        .map_err(|e| format!("Failed to rebase: {}", e))?;
-
-    if output.status.success() {
-        log_success("Rebase successful");
-        Ok(true)
-    } else {
-        log_warning("Rebase failed - preserving worktree state");
-        let abort_output = Command::new("git")
-            .args(&["rebase", "--abort"])
-            .current_dir(worktree_path)
-            .output()
-            .map_err(|e| format!("Failed to abort rebase: {}", e))?;
-
-        if abort_output.status.success() {
-            log_info("Rebase aborted successfully");
+    match run_git_command_in_dir(&["rebase", "main"], worktree_path) {
+        Ok(_) => {
+            log_success("Rebase successful");
+            Ok(true)
         }
-        Ok(false)
+        Err(_) => {
+            log_warning("Rebase failed - preserving worktree state");
+            run_git_command_in_dir(&["rebase", "--abort"], worktree_path)?;
+            Ok(false)
+        }
     }
 }
 
@@ -74,9 +55,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut processed_count = 0;
-    let mut success_count = 0;
-    let mut conflicted_count = 0;
-    let mut merged_count = 0;
+    let mut resolved_count = 0;
+    let mut failed_count = 0;
 
     // Process each worktree
     for worktree_path in &worktrees {
@@ -97,39 +77,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match resolve_worktree_conflicts(worktree_path, &branch_name) {
             Ok(success) => {
                 if success {
-                    success_count += 1;
+                    resolved_count += 1;
                 } else {
-                    conflicted_count += 1;
+                    failed_count += 1;
                 }
+                processed_count += 1;
             }
             Err(e) => {
                 log_error(&format!("Failed to resolve conflicts: {}", e));
+                failed_count += 1;
             }
         }
 
         // Push branch
-        match push_branch(worktree_path, &branch_name) {
-            Ok(_) => {
-                log_success(&format!("Branch {} pushed successfully", branch_name));
-            }
-            Err(e) => {
-                log_warning(&format!("Failed to push branch {}: {}", branch_name, e));
-            }
+        if push_branch(worktree_path, &branch_name)? {
+            log_success(&format!("Branch {} pushed successfully", branch_name));
+        } else {
+            log_warning(&format!("Failed to push branch {}", branch_name));
         }
 
         // Check if merged and cleanup if needed
-        match cleanup_merged_worktree(worktree_path, &branch_name) {
-            Ok(cleaned) => {
-                if cleaned {
-                    merged_count += 1;
-                }
-            }
-            Err(e) => {
-                log_warning(&format!("Failed to cleanup merged worktree: {}", e));
-            }
+        if cleanup_merged_worktree(worktree_path, &branch_name)? {
+            log_success(&format!("Merged worktree {} cleaned up", branch_name));
         }
 
-        processed_count += 1;
         println!("---");
     }
 
@@ -137,9 +108,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     log_header("SUMMARY");
     println!();
     log_success(&format!("Processed {} worktree(s)", processed_count));
-    log_info(&format!("Successfully resolved: {}", success_count));
-    log_warning(&format!("Conflicted (preserved): {}", conflicted_count));
-    log_info(&format!("Merged and cleaned up: {}", merged_count));
+    log_info(&format!("Resolved: {}", resolved_count));
+    log_warning(&format!("Failed: {}", failed_count));
 
     Ok(())
 }
