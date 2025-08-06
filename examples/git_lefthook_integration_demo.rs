@@ -102,13 +102,27 @@ impl GitLefthookIntegration {
     }
 
     /// Transition to a new state based on an event
-    pub fn transition(&mut self, event: GitWorkflowEvent, _context: serde_json::Value) -> Result<()> {
+    pub fn transition(
+        &mut self,
+        event: GitWorkflowEvent,
+        _context: serde_json::Value,
+    ) -> Result<()> {
         self.current_state = match (&self.current_state, &event) {
-            (GitWorkflowState::IDLE, GitWorkflowEvent::CommitStarted) => GitWorkflowState::COMMITTING,
-            (GitWorkflowState::COMMITTING, GitWorkflowEvent::HookStarted) => GitWorkflowState::HookRunning,
-            (GitWorkflowState::HookRunning, GitWorkflowEvent::HookCompleted) => GitWorkflowState::COMMITTED,
-            (GitWorkflowState::COMMITTED, GitWorkflowEvent::PushStarted) => GitWorkflowState::PUSHING,
-            (GitWorkflowState::PUSHING, GitWorkflowEvent::PushCompleted) => GitWorkflowState::PUSHED,
+            (GitWorkflowState::IDLE, GitWorkflowEvent::CommitStarted) => {
+                GitWorkflowState::COMMITTING
+            }
+            (GitWorkflowState::COMMITTING, GitWorkflowEvent::HookStarted) => {
+                GitWorkflowState::HookRunning
+            }
+            (GitWorkflowState::HookRunning, GitWorkflowEvent::HookCompleted) => {
+                GitWorkflowState::COMMITTED
+            }
+            (GitWorkflowState::COMMITTED, GitWorkflowEvent::PushStarted) => {
+                GitWorkflowState::PUSHING
+            }
+            (GitWorkflowState::PUSHING, GitWorkflowEvent::PushCompleted) => {
+                GitWorkflowState::PUSHED
+            }
             (_, GitWorkflowEvent::OperationFailed) => GitWorkflowState::ERROR,
             _ => {
                 return Err(anyhow::anyhow!(
@@ -235,11 +249,11 @@ async fn main() -> Result<()> {
     for result in integration.validation_results() {
         let status = if result.is_valid { "✅" } else { "❌" };
         println!("   {} {} ({})", status, result.contract_id, result.file);
-        
+
         for error in &result.errors {
             println!("      ❌ Error: {}", error);
         }
-        
+
         for warning in &result.warnings {
             println!("      ⚠️  Warning: {}", warning);
         }
@@ -261,7 +275,10 @@ async fn main() -> Result<()> {
 
     println!("\n✅ Demo completed successfully!");
     println!("   Final State: {:?}", integration.current_state());
-    println!("   Total Validation Results: {}", integration.validation_results().len());
+    println!(
+        "   Total Validation Results: {}",
+        integration.validation_results().len()
+    );
 
     Ok(())
-} 
+}

@@ -1,6 +1,6 @@
-use std::process::Command;
+use hooksmith::{log_error, log_header, log_info, log_success, log_warning, run_git_command};
 use std::env;
-use hooksmith::{log_info, log_warning, log_error, log_success, log_header, run_git_command};
+use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -31,8 +31,16 @@ fn verify_worktree_sync() -> Result<(), Box<dyn std::error::Error>> {
     let remote_branches = get_remote_branches()?;
     let worktree_branches = get_worktree_branches()?;
 
-    log_info(&format!("Remote branches ({}): {}", remote_branches.len(), remote_branches.join(", ")));
-    log_info(&format!("Worktree branches ({}): {}", worktree_branches.len(), worktree_branches.join(", ")));
+    log_info(&format!(
+        "Remote branches ({}): {}",
+        remote_branches.len(),
+        remote_branches.join(", ")
+    ));
+    log_info(&format!(
+        "Worktree branches ({}): {}",
+        worktree_branches.len(),
+        worktree_branches.join(", ")
+    ));
 
     // Find missing worktrees (remote branches without worktrees)
     let mut missing_worktrees = Vec::new();
@@ -60,11 +68,19 @@ fn verify_worktree_sync() -> Result<(), Box<dyn std::error::Error>> {
         Ok(())
     } else {
         if !missing_worktrees.is_empty() {
-            log_warning(&format!("⚠️  MISSING WORKTREES ({}): {}", missing_worktrees.len(), missing_worktrees.join(", ")));
+            log_warning(&format!(
+                "⚠️  MISSING WORKTREES ({}): {}",
+                missing_worktrees.len(),
+                missing_worktrees.join(", ")
+            ));
         }
 
         if !orphaned_worktrees.is_empty() {
-            log_warning(&format!("⚠️  ORPHANED WORKTREES ({}): {}", orphaned_worktrees.len(), orphaned_worktrees.join(", ")));
+            log_warning(&format!(
+                "⚠️  ORPHANED WORKTREES ({}): {}",
+                orphaned_worktrees.len(),
+                orphaned_worktrees.join(", ")
+            ));
         }
 
         log_info("💡 Run 'cargo run --bin sync-all-remote-branches' to fix the sync");
@@ -76,9 +92,7 @@ fn show_status() -> Result<(), Box<dyn std::error::Error>> {
     log_header("CURRENT STATUS");
 
     println!("Worktrees:");
-    let worktree_output = Command::new("git")
-        .args(&["worktree", "list"])
-        .output()?;
+    let worktree_output = Command::new("git").args(&["worktree", "list"]).output()?;
 
     let worktree_list = String::from_utf8(worktree_output.stdout)?;
     for line in worktree_list.lines() {
@@ -89,13 +103,14 @@ fn show_status() -> Result<(), Box<dyn std::error::Error>> {
 
     println!();
     println!("Remote branches:");
-    let remote_output = Command::new("git")
-        .args(&["branch", "-r"])
-        .output()?;
+    let remote_output = Command::new("git").args(&["branch", "-r"]).output()?;
 
     let remote_list = String::from_utf8(remote_output.stdout)?;
     for line in remote_list.lines() {
-        if line.contains("origin/") && !line.contains("origin/main") && !line.contains("origin/HEAD") {
+        if line.contains("origin/")
+            && !line.contains("origin/main")
+            && !line.contains("origin/HEAD")
+        {
             log_info(line.trim());
         }
     }
@@ -113,13 +128,15 @@ fn show_help() {
 }
 
 fn get_remote_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    let output = Command::new("git")
-        .args(&["branch", "-r"])
-        .output()?;
+    let output = Command::new("git").args(&["branch", "-r"]).output()?;
 
     let branches = String::from_utf8(output.stdout)?
         .lines()
-        .filter(|line| line.contains("origin/") && !line.contains("origin/main") && !line.contains("origin/HEAD"))
+        .filter(|line| {
+            line.contains("origin/")
+                && !line.contains("origin/main")
+                && !line.contains("origin/HEAD")
+        })
         .map(|line| line.replace("origin/", "").trim().to_string())
         .filter(|branch| !branch.is_empty())
         .collect();
@@ -128,9 +145,7 @@ fn get_remote_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
 }
 
 fn get_worktree_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    let output = Command::new("git")
-        .args(&["worktree", "list"])
-        .output()?;
+    let output = Command::new("git").args(&["worktree", "list"]).output()?;
 
     let branches = String::from_utf8(output.stdout)?
         .lines()
@@ -152,9 +167,7 @@ fn get_worktree_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
 }
 
 fn worktree_exists(branch_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    let output = Command::new("git")
-        .args(&["worktree", "list"])
-        .output()?;
+    let output = Command::new("git").args(&["worktree", "list"]).output()?;
 
     let worktree_list = String::from_utf8(output.stdout)?;
     Ok(worktree_list.contains(&format!("[{}]", branch_name)))

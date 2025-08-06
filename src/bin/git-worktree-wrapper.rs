@@ -1,6 +1,6 @@
-use std::process::Command;
+use hooksmith::{log_error, log_header, log_info, log_success, log_warning};
 use std::env;
-use hooksmith::{log_info, log_warning, log_error, log_success, log_header};
+use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -77,7 +77,7 @@ fn show_worktree_status() -> Result<(), Box<dyn std::error::Error>> {
             log_warning("⚠️  Cargo not available");
         }
     }
-    
+
     println!();
     log_info("📁 .wt Directory Contents:");
 
@@ -113,6 +113,6 @@ fn show_worktree_status() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         log_warning("⚠️  .wt directory not found");
     }
-    
+
     Ok(())
 }

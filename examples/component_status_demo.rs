@@ -18,7 +18,10 @@ async fn main() -> Result<()> {
     // Check if component registry exists
     let registry_path = workspace_root.join("config/component-registry.jsonc");
     if !registry_path.exists() {
-        println!("❌ Component registry not found at: {}", registry_path.display());
+        println!(
+            "❌ Component registry not found at: {}",
+            registry_path.display()
+        );
         println!("Please run: cargo run -p xtask -- component-status");
         return Ok(());
     }
@@ -65,16 +68,16 @@ async fn main() -> Result<()> {
 async fn run_component_status(workspace_root: &PathBuf, verbose: bool, format: &str) -> Result<()> {
     let mut cmd = std::process::Command::new("cargo");
     cmd.args(["run", "-p", "xtask", "--", "component-status"]);
-    
+
     if verbose {
         cmd.arg("--verbose");
     }
-    
+
     cmd.args(["--format", format]);
     cmd.current_dir(workspace_root);
 
     let output = cmd.output()?;
-    
+
     if output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         println!("{}", stdout);
@@ -138,7 +141,7 @@ async fn check_individual_components(workspace_root: &PathBuf) -> Result<()> {
         let component_path = workspace_root.join(path);
         if component_path.exists() {
             println!("  ✅ {}: {}", name, path);
-            
+
             // Check for Cargo.toml
             let cargo_toml = component_path.join("Cargo.toml");
             if cargo_toml.exists() {
@@ -164,7 +167,7 @@ async fn check_individual_components(workspace_root: &PathBuf) -> Result<()> {
         let crate_path = workspace_root.join(path);
         if crate_path.exists() {
             println!("  ✅ {}: {}", name, path);
-            
+
             // Check for Cargo.toml
             let cargo_toml = crate_path.join("Cargo.toml");
             if cargo_toml.exists() {
@@ -205,4 +208,4 @@ mod tests {
         let result = check_individual_components(&workspace_root).await;
         assert!(result.is_ok());
     }
-} 
+}

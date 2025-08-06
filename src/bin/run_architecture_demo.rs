@@ -1,17 +1,18 @@
-use std::process::Command;
+use hooksmith::{log_error, log_header, log_info, log_success, log_warning};
 use std::path::Path;
-use hooksmith::{log_info, log_success, log_warning, log_error, log_header};
+use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     log_header("run_architecture_demo");
     println!();
-    
+
     // TODO: Implement functionality from ./examples/run_architecture_demo.sh
     log_info("Converting from shell script: ./examples/run_architecture_demo.sh");
-    
+
     // Add specific implementation based on script type
     match "[0;34m[INFO][0m Analyzing: run_architecture_demo
-general_utility" {
+general_utility"
+    {
         "worktree_management" => {
             log_info("This is a worktree management script");
             // TODO: Add worktree-specific functionality
@@ -41,7 +42,7 @@ general_utility" {
             // TODO: Add general functionality
         }
     }
-    
+
     log_success("Script execution completed");
     Ok(())
 }

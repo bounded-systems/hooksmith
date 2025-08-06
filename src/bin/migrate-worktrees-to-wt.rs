@@ -1,8 +1,10 @@
-use std::process::Command;
+use hooksmith::{
+    get_worktree_paths, log_error, log_info, log_success, log_warning, run_git_command,
+};
+use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::env;
-use hooksmith::{log_info, log_warning, log_error, log_success, run_git_command, get_worktree_paths};
+use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     log_info("Worktree Migration Script");
@@ -49,14 +51,20 @@ fn migrate_worktrees() -> Result<(), Box<dyn std::error::Error>> {
     for worktree_path in worktrees {
         // Skip the main worktree
         if worktree_path == current_dir {
-            log_info(&format!("Skipping main worktree: {}", worktree_path.display()));
+            log_info(&format!(
+                "Skipping main worktree: {}",
+                worktree_path.display()
+            ));
             continue;
         }
 
         // Get branch name
         let branch_name = get_worktree_branch(&worktree_path)?;
         if branch_name.is_empty() {
-            log_warning(&format!("Could not determine branch name for worktree: {}", worktree_path.display()));
+            log_warning(&format!(
+                "Could not determine branch name for worktree: {}",
+                worktree_path.display()
+            ));
             continue;
         }
 
@@ -96,7 +104,9 @@ fn get_worktree_branch(worktree_path: &Path) -> Result<String, Box<dyn std::erro
         if line.starts_with("worktree ") && line.contains(worktree_path.to_str().unwrap()) {
             if i + 1 < lines.len() && lines[i + 1].starts_with("branch ") {
                 let branch_line = lines[i + 1];
-                let branch = branch_line.replace("branch ", "").replace("refs/heads/", "");
+                let branch = branch_line
+                    .replace("branch ", "")
+                    .replace("refs/heads/", "");
                 return Ok(branch);
             }
         }
@@ -117,7 +127,10 @@ fn get_worktree_branch(worktree_path: &Path) -> Result<String, Box<dyn std::erro
     Ok(String::new())
 }
 
-fn move_worktree(worktree_path: &Path, branch_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
+fn move_worktree(
+    worktree_path: &Path,
+    branch_name: &str,
+) -> Result<bool, Box<dyn std::error::Error>> {
     // Create .wt directory if it doesn't exist
     fs::create_dir_all(".wt")?;
 
@@ -125,17 +138,27 @@ fn move_worktree(worktree_path: &Path, branch_name: &str) -> Result<bool, Box<dy
     let new_name = branch_name.replace("/", "-");
     let new_path = PathBuf::from(".wt").join(&new_name);
 
-    log_info(&format!("Moving worktree from {} to {}", worktree_path.display(), new_path.display()));
+    log_info(&format!(
+        "Moving worktree from {} to {}",
+        worktree_path.display(),
+        new_path.display()
+    ));
 
     // Check if destination already exists
     if new_path.exists() {
-        log_warning(&format!("Destination {} already exists. Skipping.", new_path.display()));
+        log_warning(&format!(
+            "Destination {} already exists. Skipping.",
+            new_path.display()
+        ));
         return Ok(false);
     }
 
     // Move the worktree
     fs::rename(worktree_path, &new_path)?;
-    log_success(&format!("Successfully moved worktree to {}", new_path.display()));
+    log_success(&format!(
+        "Successfully moved worktree to {}",
+        new_path.display()
+    ));
 
     // Update the worktree in git
     if let Ok(_) = run_git_command(&["worktree", "remove", worktree_path.to_str().unwrap()]) {
@@ -152,8 +175,14 @@ fn move_worktree(worktree_path: &Path, branch_name: &str) -> Result<bool, Box<dy
     Ok(true)
 }
 
-fn handle_external_worktree(worktree_path: &Path, branch_name: &str) -> Result<(), Box<dyn std::error::Error>> {
-    log_warning(&format!("Found external worktree: {}", worktree_path.display()));
+fn handle_external_worktree(
+    worktree_path: &Path,
+    branch_name: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    log_warning(&format!(
+        "Found external worktree: {}",
+        worktree_path.display()
+    ));
     log_info("This worktree is outside the repository and cannot be moved automatically.");
     log_info("You may want to manually move it to .wt/{branch_name}");
 
@@ -162,7 +191,10 @@ fn handle_external_worktree(worktree_path: &Path, branch_name: &str) -> Result<(
     let new_path = PathBuf::from(".wt").join(&new_name);
 
     if !new_path.exists() {
-        log_info(&format!("Creating placeholder directory: {}", new_path.display()));
+        log_info(&format!(
+            "Creating placeholder directory: {}",
+            new_path.display()
+        ));
         fs::create_dir_all(&new_path)?;
 
         let readme_content = format!(

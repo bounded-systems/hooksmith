@@ -1,7 +1,10 @@
-use std::process::Command;
-use std::path::Path;
+use hooksmith::{
+    get_worktrees, log_error, log_header, log_info, log_success, log_warning, run_git_command,
+    run_git_command_in_dir,
+};
 use std::env;
-use hooksmith::{log_info, log_success, log_warning, log_error, log_header, get_worktrees, run_git_command_in_dir, run_git_command};
+use std::path::Path;
+use std::process::Command;
 
 fn update_worktree_to_main(worktree_path: &str, branch_name: &str) -> Result<bool, String> {
     log_info(&format!("Updating worktree: {}", branch_name));
@@ -13,10 +16,11 @@ fn update_worktree_to_main(worktree_path: &str, branch_name: &str) -> Result<boo
     }
 
     // Check if already up to date
-    let commits_behind = run_git_command_in_dir(&["rev-list", "--count", "HEAD..origin/main"], worktree_path)
-        .unwrap_or_else(|_| "0".to_string())
-        .parse::<i32>()
-        .unwrap_or(0);
+    let commits_behind =
+        run_git_command_in_dir(&["rev-list", "--count", "HEAD..origin/main"], worktree_path)
+            .unwrap_or_else(|_| "0".to_string())
+            .parse::<i32>()
+            .unwrap_or(0);
 
     if commits_behind == 0 {
         log_info(&format!("Worktree {} is already up to date", branch_name));
@@ -24,8 +28,12 @@ fn update_worktree_to_main(worktree_path: &str, branch_name: &str) -> Result<boo
     }
 
     // Check if branch is merged
-    let merged_branches = run_git_command_in_dir(&["branch", "--merged", "origin/main"], worktree_path)?;
-    if merged_branches.lines().any(|line| line.trim() == format!("* {}", branch_name)) {
+    let merged_branches =
+        run_git_command_in_dir(&["branch", "--merged", "origin/main"], worktree_path)?;
+    if merged_branches
+        .lines()
+        .any(|line| line.trim() == format!("* {}", branch_name))
+    {
         log_info(&format!("Branch {} is merged - cleaning up", branch_name));
 
         // Remove worktree
@@ -63,7 +71,10 @@ fn update_worktree_to_main(worktree_path: &str, branch_name: &str) -> Result<boo
         log_success(&format!("Successfully rebased {} onto main", branch_name));
         Ok(true)
     } else {
-        log_warning(&format!("Rebase failed for {} - creating fresh branch", branch_name));
+        log_warning(&format!(
+            "Rebase failed for {} - creating fresh branch",
+            branch_name
+        ));
 
         // Remove old worktree and create fresh one
         let _ = Command::new("git")
@@ -81,7 +92,10 @@ fn update_worktree_to_main(worktree_path: &str, branch_name: &str) -> Result<boo
             .map_err(|e| format!("Failed to create fresh worktree: {}", e))?;
 
         if output.status.success() {
-            log_success(&format!("Created fresh worktree for {} based on main", branch_name));
+            log_success(&format!(
+                "Created fresh worktree for {} based on main",
+                branch_name
+            ));
             Ok(true)
         } else {
             Err("Failed to create fresh worktree".to_string())
@@ -118,7 +132,10 @@ fn process_all_worktrees() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     println!();
-    log_success(&format!("Updated {} out of {} worktrees", updated_count, total_count));
+    log_success(&format!(
+        "Updated {} out of {} worktrees",
+        updated_count, total_count
+    ));
 
     Ok(())
 }

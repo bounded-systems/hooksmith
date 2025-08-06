@@ -1,7 +1,7 @@
-use std::process::Command;
-use std::path::Path;
+use hooksmith::{get_worktrees, log_error, log_header, log_info, log_success, log_warning};
 use std::env;
-use hooksmith::{log_info, log_success, log_warning, log_error, log_header, get_worktrees};
+use std::path::Path;
+use std::process::Command;
 
 fn create_demo_worktree(branch_name: &str) -> Result<bool, String> {
     let worktree_path = format!(".wt/{}", branch_name.replace('/', "/"));
@@ -20,7 +20,10 @@ fn create_demo_worktree(branch_name: &str) -> Result<bool, String> {
     }
 
     // Add some demo content
-    let demo_content = format!("# Demo worktree for {}\n\nThis is a demo worktree created by the comprehensive workflow.", branch_name);
+    let demo_content = format!(
+        "# Demo worktree for {}\n\nThis is a demo worktree created by the comprehensive workflow.",
+        branch_name
+    );
     let demo_file = format!("{}/demo.md", worktree_path);
 
     std::fs::write(&demo_file, demo_content)
@@ -38,7 +41,11 @@ fn create_demo_worktree(branch_name: &str) -> Result<bool, String> {
     }
 
     let output = Command::new("git")
-        .args(&["commit", "-m", &format!("feat: add demo content for {}", branch_name)])
+        .args(&[
+            "commit",
+            "-m",
+            &format!("feat: add demo content for {}", branch_name),
+        ])
         .current_dir(&worktree_path)
         .output()
         .map_err(|e| format!("Failed to commit demo content: {}", e))?;
@@ -140,7 +147,9 @@ fn show_summary() {
     println!();
 
     println!("📊 **State Machine Architecture**");
-    println!("   CREATED → DEVELOPING → RESOLVING → READY → PR_CREATED → MERGED → CLEANUP → REMOVED");
+    println!(
+        "   CREATED → DEVELOPING → RESOLVING → READY → PR_CREATED → MERGED → CLEANUP → REMOVED"
+    );
     println!("       ↓         ↓");
     println!("   CONFLICTED → RESOLVING");
     println!();

@@ -1,10 +1,10 @@
 //! Enhanced Bootstrap Demo
-//! 
+//!
 //! This example demonstrates how to use the enhanced bootstrap command
 //! with all its new features.
 
-use std::process::Command;
 use anyhow::Result;
+use std::process::Command;
 
 fn main() -> Result<()> {
     println!("🚀 Enhanced Bootstrap Demo");
@@ -20,7 +20,13 @@ fn main() -> Result<()> {
 
     // Example 3: Dry-run to see what would be done
     println!("\n3️⃣ Dry-run to see what would be done:");
-    run_bootstrap(&["--validate", "--commit", "--clean", "--dry-run", "--verbose"])?;
+    run_bootstrap(&[
+        "--validate",
+        "--commit",
+        "--clean",
+        "--dry-run",
+        "--verbose",
+    ])?;
 
     // Example 4: CI/CD friendly bootstrap
     println!("\n4️⃣ CI/CD friendly bootstrap:");
@@ -36,9 +42,9 @@ fn run_bootstrap(args: &[&str]) -> Result<()> {
     command.args(args);
 
     println!("   Running: cargo xtask bootstrap {}", args.join(" "));
-    
+
     let output = command.output()?;
-    
+
     if output.status.success() {
         println!("   ✅ Success");
         if !output.stdout.is_empty() {
@@ -71,10 +77,10 @@ mod tests {
         let output = Command::new("cargo")
             .args(["xtask", "bootstrap", "--help"])
             .output()?;
-        
+
         assert!(output.status.success());
         assert!(String::from_utf8_lossy(&output.stdout).contains("Bootstrap"));
-        
+
         Ok(())
     }
-} 
+}

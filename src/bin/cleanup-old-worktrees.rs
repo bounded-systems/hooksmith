@@ -1,6 +1,6 @@
-use std::process::Command;
+use hooksmith::{log_error, log_header, log_info, log_success, log_warning, print_status};
 use std::path::Path;
-use hooksmith::{log_info, log_success, log_warning, log_error, log_header, print_status};
+use std::process::Command;
 
 fn remove_worktree(worktree_name: &str) -> Result<bool, String> {
     if !Path::new(worktree_name).exists() {
@@ -33,7 +33,9 @@ fn remove_worktree(worktree_name: &str) -> Result<bool, String> {
         .map_err(|e| format!("Failed to get branch name: {}", e))?;
 
     let branch_name = if branch_output.status.success() {
-        String::from_utf8_lossy(&branch_output.stdout).trim().to_string()
+        String::from_utf8_lossy(&branch_output.stdout)
+            .trim()
+            .to_string()
     } else {
         String::new()
     };
@@ -71,7 +73,10 @@ fn create_pr_for_ready() -> Result<bool, String> {
         return Ok(false);
     }
 
-    log_info(&format!("Creating PR for ready worktree: {}", worktree_name));
+    log_info(&format!(
+        "Creating PR for ready worktree: {}",
+        worktree_name
+    ));
 
     // Get branch name
     let branch_output = Command::new("git")
@@ -81,7 +86,9 @@ fn create_pr_for_ready() -> Result<bool, String> {
         .map_err(|e| format!("Failed to get branch name: {}", e))?;
 
     let branch_name = if branch_output.status.success() {
-        String::from_utf8_lossy(&branch_output.stdout).trim().to_string()
+        String::from_utf8_lossy(&branch_output.stdout)
+            .trim()
+            .to_string()
     } else {
         log_error("Failed to get branch name");
         return Ok(false);
@@ -95,7 +102,9 @@ fn create_pr_for_ready() -> Result<bool, String> {
             .output()
             .map_err(|e| format!("Failed to check remote: {}", e))?;
 
-        if remote_output.status.success() && !String::from_utf8_lossy(&remote_output.stdout).is_empty() {
+        if remote_output.status.success()
+            && !String::from_utf8_lossy(&remote_output.stdout).is_empty()
+        {
             // Get repo URL
             let url_output = Command::new("git")
                 .args(&["config", "--get", "remote.origin.url"])
@@ -104,7 +113,9 @@ fn create_pr_for_ready() -> Result<bool, String> {
                 .map_err(|e| format!("Failed to get repo URL: {}", e))?;
 
             if url_output.status.success() {
-                let repo_url = String::from_utf8_lossy(&url_output.stdout).trim().replace(".git", "");
+                let repo_url = String::from_utf8_lossy(&url_output.stdout)
+                    .trim()
+                    .replace(".git", "");
                 if repo_url.contains("github.com") {
                     let pr_url = format!("{}/compare/main...{}", repo_url, branch_name);
                     log_success(&format!("Create PR at: {}", pr_url));
@@ -148,7 +159,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🎉 Cleanup completed!");
     println!();
     println!("📊 Final Status:");
-    
+
     // Run worktree status report
     let output = Command::new("cargo")
         .args(&["run", "--bin", "worktree-status-report"])

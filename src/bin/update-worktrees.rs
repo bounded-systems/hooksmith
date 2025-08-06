@@ -1,6 +1,8 @@
-use std::process::Command;
+use hooksmith::{
+    get_worktree_paths, log_error, log_info, log_success, log_warning, run_git_command,
+};
 use std::env;
-use hooksmith::{log_info, log_warning, log_error, log_success, run_git_command, get_worktree_paths};
+use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     log_info("🔄 Updating all worktrees to latest origin/main...");
@@ -23,7 +25,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         if worktree_path.exists() {
             println!();
-            log_info(&format!("🔄 Updating worktree: {}", worktree_path.file_name().unwrap().to_string_lossy()));
+            log_info(&format!(
+                "🔄 Updating worktree: {}",
+                worktree_path.file_name().unwrap().to_string_lossy()
+            ));
             log_info(&format!("   Path: {}", worktree_path.display()));
 
             // Get the branch name for this worktree
@@ -50,7 +55,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // Check how many commits behind origin/main
             let behind_count = get_behind_count(&worktree_path)?;
-            log_info(&format!("   Behind origin/main by: {} commits", behind_count));
+            log_info(&format!(
+                "   Behind origin/main by: {} commits",
+                behind_count
+            ));
 
             if behind_count == 0 {
                 log_success("   ✅ Already up to date!");
@@ -67,7 +75,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     updated_count += 1;
                 }
                 Err(e) => {
-                    log_error(&format!("   ❌ Rebase failed! Manual intervention may be needed. Error: {}", e));
+                    log_error(&format!(
+                        "   ❌ Rebase failed! Manual intervention may be needed. Error: {}",
+                        e
+                    ));
                     log_info("   💡 You can:");
                     log_info(&format!("      - cd {}", worktree_path.display()));
                     log_info("      - git rebase --abort (to cancel)");
@@ -86,7 +97,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     log_info(&format!("   - Main worktree: {}", main_commit));
     let origin_main_commit = get_origin_main_commit()?;
     log_info(&format!("   - Origin/main: {}", origin_main_commit));
-    log_info(&format!("   - Updated: {}, Skipped: {}, Failed: {}", updated_count, skipped_count, failed_count));
+    log_info(&format!(
+        "   - Updated: {}, Skipped: {}, Failed: {}",
+        updated_count, skipped_count, failed_count
+    ));
     println!();
     log_info("💡 Next steps:");
     log_info("   - Review any worktrees that had conflicts");
@@ -96,7 +110,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn get_current_branch(worktree_path: &std::path::Path) -> Result<String, Box<dyn std::error::Error>> {
+fn get_current_branch(
+    worktree_path: &std::path::Path,
+) -> Result<String, Box<dyn std::error::Error>> {
     let output = Command::new("git")
         .args(&["branch", "--show-current"])
         .current_dir(worktree_path)
@@ -106,7 +122,9 @@ fn get_current_branch(worktree_path: &std::path::Path) -> Result<String, Box<dyn
     Ok(branch)
 }
 
-fn get_uncommitted_changes(worktree_path: &std::path::Path) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+fn get_uncommitted_changes(
+    worktree_path: &std::path::Path,
+) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let output = Command::new("git")
         .args(&["status", "--porcelain"])
         .current_dir(worktree_path)
@@ -121,7 +139,9 @@ fn get_uncommitted_changes(worktree_path: &std::path::Path) -> Result<Vec<String
     Ok(changes)
 }
 
-fn get_current_commit(worktree_path: &std::path::Path) -> Result<String, Box<dyn std::error::Error>> {
+fn get_current_commit(
+    worktree_path: &std::path::Path,
+) -> Result<String, Box<dyn std::error::Error>> {
     let output = Command::new("git")
         .args(&["log", "--oneline", "-1"])
         .current_dir(worktree_path)
@@ -142,7 +162,9 @@ fn get_behind_count(worktree_path: &std::path::Path) -> Result<u32, Box<dyn std:
     Ok(count)
 }
 
-fn rebase_to_origin_main(worktree_path: &std::path::Path) -> Result<(), Box<dyn std::error::Error>> {
+fn rebase_to_origin_main(
+    worktree_path: &std::path::Path,
+) -> Result<(), Box<dyn std::error::Error>> {
     let output = Command::new("git")
         .args(&["rebase", "origin/main"])
         .current_dir(worktree_path)

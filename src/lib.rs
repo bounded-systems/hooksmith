@@ -4,9 +4,9 @@
 //!
 //! This library provides core functionality for building Rust binaries into Lefthook hooks with WASM components.
 
-use std::process::{Command, Stdio};
 use std::io::{self, Write};
 use std::path::Path;
+use std::process::{Command, Stdio};
 
 /// ANSI color codes for terminal output
 pub const RED: &str = "\x1b[0;31m";
@@ -140,33 +140,40 @@ pub fn run_git_command_in_dir(args: &[&str], worktree_path: &str) -> Result<Stri
 pub fn get_worktree_status(worktree_path: &str) -> Result<WorktreeStatus, String> {
     // Get current branch
     let current_branch = run_git_command_in_dir(&["branch", "--show-current"], worktree_path)?;
-    
+
     // Get status
     let status = run_git_command_in_dir(&["status", "--porcelain"], worktree_path)?;
     let is_clean = status.is_empty();
-    
+
     // Check if rebasing
     let git_status = run_git_command_in_dir(&["status"], worktree_path)?;
     let is_rebasing = git_status.contains("rebase");
-    
+
     // Check if branch exists on origin
-    let remote_check = run_git_command_in_dir(&["ls-remote", "--heads", "origin", &current_branch], worktree_path);
+    let remote_check = run_git_command_in_dir(
+        &["ls-remote", "--heads", "origin", &current_branch],
+        worktree_path,
+    );
     let remote_exists = remote_check.is_ok() && !remote_check.unwrap().is_empty();
-    
+
     // Check if merged into main
     let merged_branches = run_git_command_in_dir(&["branch", "--merged", "main"], worktree_path)?;
-    let is_merged = merged_branches.lines().any(|line| line.trim() == format!("* {}", current_branch));
-    
-    // Get commit count ahead/behind main
-    let ahead_behind = run_git_command_in_dir(&["rev-list", "--count", "main..HEAD"], worktree_path)
-        .unwrap_or_else(|_| "0".to_string())
-        .parse::<i32>()
-        .unwrap_or(0);
+    let is_merged = merged_branches
+        .lines()
+        .any(|line| line.trim() == format!("* {}", current_branch));
 
-    let behind_ahead = run_git_command_in_dir(&["rev-list", "--count", "HEAD..main"], worktree_path)
-        .unwrap_or_else(|_| "0".to_string())
-        .parse::<i32>()
-        .unwrap_or(0);
+    // Get commit count ahead/behind main
+    let ahead_behind =
+        run_git_command_in_dir(&["rev-list", "--count", "main..HEAD"], worktree_path)
+            .unwrap_or_else(|_| "0".to_string())
+            .parse::<i32>()
+            .unwrap_or(0);
+
+    let behind_ahead =
+        run_git_command_in_dir(&["rev-list", "--count", "HEAD..main"], worktree_path)
+            .unwrap_or_else(|_| "0".to_string())
+            .parse::<i32>()
+            .unwrap_or(0);
 
     Ok(WorktreeStatus {
         current_branch,
@@ -199,14 +206,14 @@ pub fn determine_state(status: &WorktreeStatus) -> WorktreeState {
 /// Get a list of all worktree paths
 pub fn get_worktrees() -> Result<Vec<String>, String> {
     let output = run_git_command(&["worktree", "list", "--porcelain"])?;
-    
+
     let worktrees: Vec<String> = output
         .lines()
         .filter(|line| line.starts_with("worktree "))
         .map(|line| line.splitn(2, ' ').nth(1).unwrap_or("").to_string())
         .filter(|path| !path.is_empty())
         .collect();
-    
+
     Ok(worktrees)
 }
 
@@ -215,7 +222,7 @@ pub fn generate_pr_url(branch_name: &str) -> String {
     let repo_url = run_git_command(&["config", "--get", "remote.origin.url"])
         .unwrap_or_else(|_| "".to_string())
         .replace(".git", "");
-    
+
     if repo_url.contains("github.com") {
         format!("{}/compare/main...{}", repo_url, branch_name)
     } else {
@@ -230,16 +237,17 @@ pub fn is_ready_for_pr(worktree_path: &str) -> Result<bool, String> {
     if !status.is_empty() {
         return Ok(false);
     }
-    
+
     // Check if up to date with main
-    let behind_count = run_git_command_in_dir(&["rev-list", "--count", "HEAD..main"], worktree_path)
-        .unwrap_or_else(|_| "0".to_string())
-        .parse::<i32>()
-        .unwrap_or(0);
+    let behind_count =
+        run_git_command_in_dir(&["rev-list", "--count", "HEAD..main"], worktree_path)
+            .unwrap_or_else(|_| "0".to_string())
+            .parse::<i32>()
+            .unwrap_or(0);
     if behind_count > 0 {
         return Ok(false);
     }
-    
+
     // Check if has commits ahead of main
     let ahead_count = run_git_command_in_dir(&["rev-list", "--count", "main..HEAD"], worktree_path)
         .unwrap_or_else(|_| "0".to_string())
@@ -248,20 +256,20 @@ pub fn is_ready_for_pr(worktree_path: &str) -> Result<bool, String> {
     if ahead_count == 0 {
         return Ok(false);
     }
-    
+
     Ok(true)
 }
 
 /// Push a branch to the remote repository
 pub fn push_branch(worktree_path: &str, branch_name: &str) -> Result<bool, String> {
     log_info(&format!("Pushing branch {}", branch_name));
-    
+
     let output = Command::new("git")
         .args(&["push", "origin", branch_name])
         .current_dir(worktree_path)
         .output()
         .map_err(|e| format!("Failed to push branch: {}", e))?;
-    
+
     if output.status.success() {
         log_success("Branch pushed successfully");
         Ok(true)
@@ -273,12 +281,15 @@ pub fn push_branch(worktree_path: &str, branch_name: &str) -> Result<bool, Strin
 
 /// Create a pull request using GitHub CLI
 pub fn create_pr_with_gh(worktree_path: &str, branch_name: &str) -> Result<bool, String> {
-    log_info(&format!("Creating PR for branch {} using GitHub CLI", branch_name));
-    
+    log_info(&format!(
+        "Creating PR for branch {} using GitHub CLI",
+        branch_name
+    ));
+
     // Get commit message for PR title
     let commit_msg = run_git_command_in_dir(&["log", "--oneline", "-1"], worktree_path)?;
     let pr_title = commit_msg.splitn(2, ' ').nth(1).unwrap_or("").to_string();
-    
+
     // Get PR body from commit messages
     let pr_body = run_git_command_in_dir(&["log", "--oneline", "main..HEAD"], worktree_path)
         .unwrap_or_else(|_| "".to_string());
@@ -288,13 +299,24 @@ pub fn create_pr_with_gh(worktree_path: &str, branch_name: &str) -> Result<bool,
         .map(|line| format!("- {}", line))
         .collect::<Vec<_>>()
         .join("\n");
-    
+
     let output = Command::new("gh")
-        .args(&["pr", "create", "--title", &pr_title, "--body", &pr_body, "--base", "main", "--head", branch_name])
+        .args(&[
+            "pr",
+            "create",
+            "--title",
+            &pr_title,
+            "--body",
+            &pr_body,
+            "--base",
+            "main",
+            "--head",
+            branch_name,
+        ])
         .current_dir(worktree_path)
         .output()
         .map_err(|e| format!("Failed to create PR with GitHub CLI: {}", e))?;
-    
+
     if output.status.success() {
         log_success("PR created successfully");
         Ok(true)

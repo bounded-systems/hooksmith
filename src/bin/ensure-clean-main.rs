@@ -1,7 +1,7 @@
-use std::process::Command;
-use std::env;
-use hooksmith::{log_info, log_warning, log_error, log_success, run_git_command};
 use chrono::Utc;
+use hooksmith::{log_error, log_info, log_success, log_warning, run_git_command};
+use std::env;
+use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     log_info("🔍 Checking if main is ahead of origin/main...");
@@ -9,7 +9,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Check if we're on main branch
     let current_branch = get_current_branch()?;
     if current_branch != "main" {
-        log_warning(&format!("⚠️  Not on main branch (currently on: {}). Skipping cleanup.", current_branch));
+        log_warning(&format!(
+            "⚠️  Not on main branch (currently on: {}). Skipping cleanup.",
+            current_branch
+        ));
         return Ok(());
     }
 
@@ -20,7 +23,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    log_warning(&format!("⚠️  Main is ahead of origin/main by {} commit(s):", ahead_commits.len()));
+    log_warning(&format!(
+        "⚠️  Main is ahead of origin/main by {} commit(s):",
+        ahead_commits.len()
+    ));
     for commit in &ahead_commits {
         log_info(&format!("   - {}", commit));
     }
@@ -39,7 +45,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let worktree_name = format!("fix/main-cleanup-{}", timestamp);
     let branch_name = format!("fix/main-cleanup-{}", timestamp);
 
-    log_info(&format!("🔄 Creating worktree: {} -> {}", branch_name, worktree_name));
+    log_info(&format!(
+        "🔄 Creating worktree: {} -> {}",
+        branch_name, worktree_name
+    ));
 
     // Create worktree
     create_worktree(&branch_name, &worktree_name)?;
@@ -106,13 +115,23 @@ fn get_uncommitted_changes() -> Result<Vec<String>, Box<dyn std::error::Error>> 
     Ok(changes)
 }
 
-fn create_worktree(branch_name: &str, worktree_name: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn create_worktree(
+    branch_name: &str,
+    worktree_name: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     // First create the branch
     run_git_command(&["checkout", "-b", branch_name])?;
 
     // Create worktree using the project's worktree tools
     let output = Command::new("cargo")
-        .args(&["xtask", "worktree", "create", "--branch", branch_name, "--switch"])
+        .args(&[
+            "xtask",
+            "worktree",
+            "create",
+            "--branch",
+            branch_name,
+            "--switch",
+        ])
         .output()?;
 
     if !output.status.success() {
@@ -149,7 +168,7 @@ fn commit_changes(branch_name: &str) -> Result<(), Box<dyn std::error::Error>> {
 fn switch_to_main() -> Result<(), Box<dyn std::error::Error>> {
     // Get the repository root from the current directory
     let repo_root = get_repo_root()?;
-    
+
     // Change back to main directory
     env::set_current_dir(&repo_root)?;
 

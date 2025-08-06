@@ -7,18 +7,18 @@
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
+use heck::ToTitleCase;
+use json_comments::StripComments;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use heck::ToTitleCase;
 use std::time::Duration;
 use tokio::time::sleep;
-use json_comments::StripComments;
 
 use hook_state_machine::{HookContext, HookManager, HookType};
-use workflow::{run_dev_workflow, run_optimize, run_macos_optimize, run_security_check};
+use workflow::{run_dev_workflow, run_macos_optimize, run_optimize, run_security_check};
 use worktree::run_worktree_command;
 use worktree_sync::run_worktree_sync_command;
 
@@ -573,13 +573,16 @@ enum WorktreeCommands {
 }
 
 mod auto_push;
+mod checksum;
+mod checksum_registry;
 mod code_stats;
+mod component_status;
 mod config;
 mod contract;
 mod contract_validation;
 mod dashboard;
-mod docs;
 mod doc_extractor;
+mod docs;
 mod emit;
 mod error_deduplication;
 mod event_bus;
@@ -587,29 +590,26 @@ mod event_stream;
 mod events;
 mod file_audit;
 mod generated_file_validator;
+mod git_lefthook_integration;
 mod git_notes_manager;
 mod hierarchical_validation;
 mod hook_runner;
 mod hook_state_machine;
+mod jsonc;
+mod registry;
+mod repo_structure_validator;
 mod sarif_integration;
+mod sbom;
+mod schema_registry;
 mod status;
 mod strict_file_validator;
 mod structured_auto_push;
 mod structured_logging;
+mod unified_generator;
 mod wasm_event_bus;
-mod jsonc;
-mod git_lefthook_integration;
-mod checksum;
-mod checksum_registry;
-mod registry;
 mod workflow;
 mod worktree;
 mod worktree_sync;
-mod unified_generator;
-mod repo_structure_validator;
-mod component_status;
-mod schema_registry;
-mod sbom;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -1604,7 +1604,9 @@ async fn main() -> Result<()> {
             generate_documentation(&output_dir, open)?;
         }
         Commands::Docs { command } => {
-            doc_extractor::run(doc_extractor::DocsCommand { subcommand: command })?;
+            doc_extractor::run(doc_extractor::DocsCommand {
+                subcommand: command,
+            })?;
         }
         Commands::GenDocsComprehensive {
             all,
@@ -1695,13 +1697,21 @@ async fn main() -> Result<()> {
         Commands::CheckFiles { strict, verbose } => {
             check_files(strict, verbose)?;
         }
-        Commands::ValidateFiles { strict, verbose, staged } => {
+        Commands::ValidateFiles {
+            strict,
+            verbose,
+            staged,
+        } => {
             validate_files_strict(strict, verbose, staged)?;
         }
         Commands::GenAll { validate, force } => {
             generate_all_files(validate, force).await?;
         }
-        Commands::GenAllUnified { validate, force, clean } => {
+        Commands::GenAllUnified {
+            validate,
+            force,
+            clean,
+        } => {
             run_unified_generator(validate, force, clean).await?;
         }
         Commands::CleanGenerated { verbose } => {
@@ -1716,7 +1726,14 @@ async fn main() -> Result<()> {
         Commands::RegenCheck { strict, verbose } => {
             run_regen_check(strict, verbose).await?;
         }
-        Commands::Bootstrap { validate, commit, clean, build_xtask, dry_run, verbose } => {
+        Commands::Bootstrap {
+            validate,
+            commit,
+            clean,
+            build_xtask,
+            dry_run,
+            verbose,
+        } => {
             bootstrap_project(validate, commit, clean, build_xtask, dry_run, verbose).await?;
         }
         Commands::GenGitattributes {
@@ -2113,9 +2130,7 @@ async fn main() -> Result<()> {
                 remote,
                 branch,
                 force,
-            } => {
-                git_lefthook_integration::run_push_command(remote, branch, force).await?
-            }
+            } => git_lefthook_integration::run_push_command(remote, branch, force).await?,
             GitLefthookCommands::Validate {
                 contract_id,
                 file,
@@ -2145,9 +2160,7 @@ async fn main() -> Result<()> {
             GitLefthookCommands::GenerateSarif { output } => {
                 git_lefthook_integration::run_generate_sarif_command(output).await?
             }
-            GitLefthookCommands::Status => {
-                git_lefthook_integration::run_status_command().await?
-            }
+            GitLefthookCommands::Status => git_lefthook_integration::run_status_command().await?,
         },
         Commands::Registry { args } => {
             registry::run_registry_command(&args)?;
@@ -2238,7 +2251,7 @@ async fn main() -> Result<()> {
             } => {
                 let manager = jsonc::JsoncManager::new(config_dir);
                 let files = manager.load_all()?;
-                
+
                 // Process template variables
                 let mut template_vars = HashMap::new();
                 for var in vars {
@@ -2246,7 +2259,7 @@ async fn main() -> Result<()> {
                         template_vars.insert(key.to_string(), value.to_string());
                     }
                 }
-                
+
                 // Process each file
                 for file in files {
                     let processed_file = if !template_vars.is_empty() {
@@ -2254,11 +2267,12 @@ async fn main() -> Result<()> {
                     } else {
                         file
                     };
-                    
-                    let output_path = Path::new(&output_dir).join(processed_file.path.file_name().unwrap());
+
+                    let output_path =
+                        Path::new(&output_dir).join(processed_file.path.file_name().unwrap());
                     manager.write_output(&processed_file, &output_path, "json")?;
                 }
-                
+
                 if validate {
                     println!("✅ JSONC files processed and validated successfully");
                 } else {
@@ -2273,15 +2287,16 @@ async fn main() -> Result<()> {
                 let manager = jsonc::JsoncManager::new(&config_dir);
                 let file_path = Path::new(&config_dir).join(&filename);
                 manager.create_sample(&filename, &file_type)?;
-                println!("✅ Sample {} file created: {}", file_type, file_path.display());
+                println!(
+                    "✅ Sample {} file created: {}",
+                    file_type,
+                    file_path.display()
+                );
             }
-            JsoncCommands::Validate {
-                config_dir,
-                strict,
-            } => {
+            JsoncCommands::Validate { config_dir, strict } => {
                 let manager = jsonc::JsoncManager::new(config_dir);
                 let files = manager.load_all()?;
-                
+
                 let mut has_errors = false;
                 for file in files {
                     if let Some(schema_name) = &file.metadata.schema {
@@ -2296,7 +2311,7 @@ async fn main() -> Result<()> {
                         }
                     }
                 }
-                
+
                 if has_errors && strict {
                     anyhow::bail!("JSONC validation failed");
                 }
@@ -2558,7 +2573,11 @@ fn generate_wit_interfaces(output_dir: &str, overwrite: bool) -> Result<()> {
 }
 
 /// Generate JSON schemas for WIT components
-fn generate_wit_schemas(output_dir: &str, overwrite: bool, specific_wit_file: Option<&str>) -> Result<()> {
+fn generate_wit_schemas(
+    output_dir: &str,
+    overwrite: bool,
+    specific_wit_file: Option<&str>,
+) -> Result<()> {
     println!("📋 Generating JSON schemas for WIT components...");
     println!("   Output directory: {output_dir}");
 
@@ -2605,8 +2624,10 @@ fn generate_wit_schemas(output_dir: &str, overwrite: bool, specific_wit_file: Op
 
         let schema = generate_schema_from_wit(&wit_content, filename)?;
 
-        fs::write(&schema_path, schema)
-            .context(format!("Failed to write schema file: {}", schema_path.display()))?;
+        fs::write(&schema_path, schema).context(format!(
+            "Failed to write schema file: {}",
+            schema_path.display()
+        ))?;
 
         println!("   Generated {schema_filename}");
     }
@@ -2620,11 +2641,38 @@ fn generate_schema_from_wit(wit_content: &str, filename: &str) -> Result<String>
     let mut schema = serde_json::Map::new();
 
     // Add schema metadata
-    schema.insert("$schema".to_string(), serde_json::Value::String("http://json-schema.org/draft-07/schema#".to_string()));
-    schema.insert("$id".to_string(), serde_json::Value::String(format!("https://hooksmith.dev/schemas/{}.schema.json", filename.replace(".wit", ""))));
-    schema.insert("title".to_string(), serde_json::Value::String(format!("{} Component Schema", filename.replace(".wit", "").replace("-", " ").to_title_case())));
-    schema.insert("description".to_string(), serde_json::Value::String(format!("Schema for the {} WIT component interface", filename.replace(".wit", ""))));
-    schema.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+    schema.insert(
+        "$schema".to_string(),
+        serde_json::Value::String("http://json-schema.org/draft-07/schema#".to_string()),
+    );
+    schema.insert(
+        "$id".to_string(),
+        serde_json::Value::String(format!(
+            "https://hooksmith.dev/schemas/{}.schema.json",
+            filename.replace(".wit", "")
+        )),
+    );
+    schema.insert(
+        "title".to_string(),
+        serde_json::Value::String(format!(
+            "{} Component Schema",
+            filename
+                .replace(".wit", "")
+                .replace("-", " ")
+                .to_title_case()
+        )),
+    );
+    schema.insert(
+        "description".to_string(),
+        serde_json::Value::String(format!(
+            "Schema for the {} WIT component interface",
+            filename.replace(".wit", "")
+        )),
+    );
+    schema.insert(
+        "type".to_string(),
+        serde_json::Value::String("object".to_string()),
+    );
 
     let mut definitions = serde_json::Map::new();
 
@@ -2650,107 +2698,148 @@ fn generate_schema_from_wit(wit_content: &str, filename: &str) -> Result<String>
         else if line.starts_with("enum ") {
             let (enum_name, enum_schema) = parse_wit_enum(&lines, &mut i)?;
             definitions.insert(enum_name, serde_json::Value::Object(enum_schema));
-        }
-        else {
+        } else {
             i += 1;
         }
     }
 
-    schema.insert("definitions".to_string(), serde_json::Value::Object(definitions));
+    schema.insert(
+        "definitions".to_string(),
+        serde_json::Value::Object(definitions),
+    );
 
     serde_json::to_string_pretty(&serde_json::Value::Object(schema))
         .context("Failed to serialize schema to JSON")
 }
 
 /// Parse WIT record and generate JSON schema
-fn parse_wit_record(lines: &[&str], index: &mut usize) -> Result<(String, serde_json::Map<String, serde_json::Value>)> {
+fn parse_wit_record(
+    lines: &[&str],
+    index: &mut usize,
+) -> Result<(String, serde_json::Map<String, serde_json::Value>)> {
     let line = lines[*index].trim();
-    let record_name = line.strip_prefix("record ").unwrap().strip_suffix(" {").unwrap();
-    
+    let record_name = line
+        .strip_prefix("record ")
+        .unwrap()
+        .strip_suffix(" {")
+        .unwrap();
+
     let mut schema = serde_json::Map::new();
-    schema.insert("type".to_string(), serde_json::Value::String("object".to_string()));
-    
+    schema.insert(
+        "type".to_string(),
+        serde_json::Value::String("object".to_string()),
+    );
+
     let mut properties = serde_json::Map::new();
     let mut required = Vec::new();
-    
+
     *index += 1;
-    
+
     while *index < lines.len() {
         let line = lines[*index].trim();
-        
+
         if line == "}" {
             break;
         }
-        
+
         if line.starts_with("///") {
             // Skip documentation comments for now
             *index += 1;
             continue;
         }
-        
+
         if line.contains(':') {
             let parts: Vec<&str> = line.split(':').collect();
             if parts.len() >= 2 {
                 let field_name = parts[0].trim();
-                let field_type = parts[1].trim().strip_suffix(';').unwrap_or(parts[1].trim()).strip_suffix(',').unwrap_or(parts[1].trim().strip_suffix(';').unwrap_or(parts[1].trim()));
-                
+                let field_type = parts[1]
+                    .trim()
+                    .strip_suffix(';')
+                    .unwrap_or(parts[1].trim())
+                    .strip_suffix(',')
+                    .unwrap_or(parts[1].trim().strip_suffix(';').unwrap_or(parts[1].trim()));
+
                 let (schema_type, is_optional) = convert_wit_type_to_json_schema(field_type);
                 properties.insert(field_name.to_string(), schema_type);
-                
+
                 if !is_optional {
                     required.push(field_name.to_string());
                 }
             }
         }
-        
+
         *index += 1;
     }
-    
-    schema.insert("properties".to_string(), serde_json::Value::Object(properties));
+
+    schema.insert(
+        "properties".to_string(),
+        serde_json::Value::Object(properties),
+    );
     if !required.is_empty() {
-        schema.insert("required".to_string(), serde_json::Value::Array(required.into_iter().map(serde_json::Value::String).collect()));
+        schema.insert(
+            "required".to_string(),
+            serde_json::Value::Array(
+                required
+                    .into_iter()
+                    .map(serde_json::Value::String)
+                    .collect(),
+            ),
+        );
     }
-    schema.insert("additionalProperties".to_string(), serde_json::Value::Bool(false));
-    
+    schema.insert(
+        "additionalProperties".to_string(),
+        serde_json::Value::Bool(false),
+    );
+
     *index += 1;
     Ok((record_name.to_string(), schema))
 }
 
 /// Parse WIT enum and generate JSON schema
-fn parse_wit_enum(lines: &[&str], index: &mut usize) -> Result<(String, serde_json::Map<String, serde_json::Value>)> {
+fn parse_wit_enum(
+    lines: &[&str],
+    index: &mut usize,
+) -> Result<(String, serde_json::Map<String, serde_json::Value>)> {
     let line = lines[*index].trim();
-    let enum_name = line.strip_prefix("enum ").unwrap().strip_suffix(" {").unwrap();
-    
+    let enum_name = line
+        .strip_prefix("enum ")
+        .unwrap()
+        .strip_suffix(" {")
+        .unwrap();
+
     let mut schema = serde_json::Map::new();
-    schema.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-    
+    schema.insert(
+        "type".to_string(),
+        serde_json::Value::String("string".to_string()),
+    );
+
     let mut enum_values = Vec::new();
-    
+
     *index += 1;
-    
+
     while *index < lines.len() {
         let line = lines[*index].trim();
-        
+
         if line == "}" {
             break;
         }
-        
+
         if line.starts_with("///") {
             // Skip documentation comments for now
             *index += 1;
             continue;
         }
-        
+
         if line.ends_with(',') {
             let variant = line.strip_suffix(',').unwrap().trim();
             enum_values.push(serde_json::Value::String(variant.to_string()));
         }
-        
+
         *index += 1;
     }
-    
+
     schema.insert("enum".to_string(), serde_json::Value::Array(enum_values));
-    
+
     *index += 1;
     Ok((enum_name.to_string(), schema))
 }
@@ -2761,30 +2850,39 @@ fn convert_wit_type_to_json_schema(wit_type: &str) -> (serde_json::Value, bool) 
         "string" => (serde_json::Value::String("string".to_string()), false),
         "u8" | "u16" | "u32" | "u64" | "s8" | "s16" | "s32" | "s64" => {
             (serde_json::Value::String("integer".to_string()), false)
-        },
+        }
         "f32" | "f64" => (serde_json::Value::String("number".to_string()), false),
         "bool" => (serde_json::Value::String("boolean".to_string()), false),
         _ => {
             if wit_type.starts_with("option<") && wit_type.ends_with(">") {
-                let inner_type = &wit_type[7..wit_type.len()-1];
+                let inner_type = &wit_type[7..wit_type.len() - 1];
                 let (inner_schema, _) = convert_wit_type_to_json_schema(inner_type);
                 let mut schema = serde_json::Map::new();
-                schema.insert("type".to_string(), serde_json::Value::Array(vec![
-                    inner_schema,
-                    serde_json::Value::String("null".to_string())
-                ]));
+                schema.insert(
+                    "type".to_string(),
+                    serde_json::Value::Array(vec![
+                        inner_schema,
+                        serde_json::Value::String("null".to_string()),
+                    ]),
+                );
                 (serde_json::Value::Object(schema), true)
             } else if wit_type.starts_with("list<") && wit_type.ends_with(">") {
-                let inner_type = &wit_type[5..wit_type.len()-1];
+                let inner_type = &wit_type[5..wit_type.len() - 1];
                 let (inner_schema, _) = convert_wit_type_to_json_schema(inner_type);
                 let mut schema = serde_json::Map::new();
-                schema.insert("type".to_string(), serde_json::Value::String("array".to_string()));
+                schema.insert(
+                    "type".to_string(),
+                    serde_json::Value::String("array".to_string()),
+                );
                 schema.insert("items".to_string(), inner_schema);
                 (serde_json::Value::Object(schema), false)
             } else {
                 // Assume it's a reference to another type
                 let mut schema = serde_json::Map::new();
-                schema.insert("$ref".to_string(), serde_json::Value::String(format!("#/definitions/{}", wit_type)));
+                schema.insert(
+                    "$ref".to_string(),
+                    serde_json::Value::String(format!("#/definitions/{}", wit_type)),
+                );
                 (serde_json::Value::Object(schema), false)
             }
         }
@@ -4572,7 +4670,14 @@ async fn generate_all_files(validate: bool, force: bool) -> Result<()> {
 }
 
 /// Bootstrap the project with all generated files
-async fn bootstrap_project(validate: bool, commit: bool, clean: bool, build_xtask: bool, dry_run: bool, verbose: bool) -> Result<()> {
+async fn bootstrap_project(
+    validate: bool,
+    commit: bool,
+    clean: bool,
+    build_xtask: bool,
+    dry_run: bool,
+    verbose: bool,
+) -> Result<()> {
     use crate::{log_event, structured_logging::emit_sarif_error};
 
     log_event!(
@@ -4609,7 +4714,7 @@ async fn bootstrap_project(validate: bool, commit: bool, clean: bool, build_xtas
             "🔨 Building xtask binary for generation",
             None::<String>
         );
-        
+
         match build_xtask_binary().await {
             Ok(_) => log_event!(
                 "info",
@@ -4649,7 +4754,7 @@ async fn bootstrap_project(validate: bool, commit: bool, clean: bool, build_xtas
             "🧹 Cleaning all generated files",
             None::<String>
         );
-        
+
         match clean_generated_files_enhanced(verbose).await {
             Ok(_) => log_event!(
                 "info",
@@ -4664,11 +4769,7 @@ async fn bootstrap_project(validate: bool, commit: bool, clean: bool, build_xtas
                     &format!("Failed to clean generated files: {e}"),
                     None::<String>
                 );
-                emit_sarif_error(
-                    "xtask/src/main.rs",
-                    4040,
-                    &format!("Clean failed: {e}"),
-                );
+                emit_sarif_error("xtask/src/main.rs", 4040, &format!("Clean failed: {e}"));
                 return Err(e);
             }
         }
@@ -4689,7 +4790,7 @@ async fn bootstrap_project(validate: bool, commit: bool, clean: bool, build_xtas
             "🔄 Regenerating all files deterministically",
             None::<String>
         );
-        
+
         match regenerate_all_files_unified().await {
             Ok(_) => log_event!(
                 "info",
@@ -4729,7 +4830,7 @@ async fn bootstrap_project(validate: bool, commit: bool, clean: bool, build_xtas
             "🔍 Validating generated file checksums and registry",
             None::<String>
         );
-        
+
         match validate_checksums_and_registry(verbose).await {
             Ok(_) => log_event!(
                 "info",
@@ -4770,10 +4871,10 @@ async fn bootstrap_project(validate: bool, commit: bool, clean: bool, build_xtas
             "🔍 Validating generated files using unified generator",
             None::<String>
         );
-        
+
         let project_root = std::env::current_dir()?;
         let generator = unified_generator::UnifiedGenerator::new(project_root);
-        
+
         match generator.validate_all() {
             Ok(true) => {
                 log_event!(
@@ -4790,7 +4891,11 @@ async fn bootstrap_project(validate: bool, commit: bool, clean: bool, build_xtas
                     "Unified generator validation failed",
                     None::<String>
                 );
-                emit_sarif_error("xtask/src/main.rs", 4100, "Unified generator validation failed");
+                emit_sarif_error(
+                    "xtask/src/main.rs",
+                    4100,
+                    "Unified generator validation failed",
+                );
                 anyhow::bail!("Bootstrap validation failed. Please fix issues and try again.");
             }
             Err(e) => {
@@ -4895,11 +5000,7 @@ async fn bootstrap_project(validate: bool, commit: bool, clean: bool, build_xtas
                     &format!("Git commit error: {e}"),
                     None::<String>
                 );
-                emit_sarif_error(
-                    "xtask/src/main.rs",
-                    4140,
-                    &format!("Git commit error: {e}"),
-                );
+                emit_sarif_error("xtask/src/main.rs", 4140, &format!("Git commit error: {e}"));
                 return Err(e);
             }
         }
@@ -4939,31 +5040,31 @@ async fn build_xtask_binary() -> Result<()> {
         .args(["build", "-p", "xtask"])
         .status()
         .context("Failed to run cargo build for xtask")?;
-    
+
     if !status.success() {
         anyhow::bail!("cargo build -p xtask failed");
     }
-    
+
     Ok(())
 }
 
 /// Enhanced clean generated files with JSONC parsing
 async fn clean_generated_files_enhanced(verbose: bool) -> Result<()> {
     let registry_path = Path::new("config/generated-files.jsonc");
-    
+
     if !registry_path.exists() {
         if verbose {
             println!("⚠️  No generated-files.jsonc found, skipping clean");
         }
         return Ok(());
     }
-    
-    let content = fs::read_to_string(registry_path)
-        .context("Failed to read generated-files.jsonc")?;
-    
+
+    let content =
+        fs::read_to_string(registry_path).context("Failed to read generated-files.jsonc")?;
+
     let stripped = StripComments::new(content.as_bytes());
-    let registry: serde_json::Value = serde_json::from_reader(stripped)
-        .context("Failed to parse generated-files.jsonc")?;
+    let registry: serde_json::Value =
+        serde_json::from_reader(stripped).context("Failed to parse generated-files.jsonc")?;
 
     if let Some(files) = registry.get("files").and_then(|f| f.as_array()) {
         for entry in files {
@@ -5003,7 +5104,14 @@ async fn regenerate_all_files_unified() -> Result<()> {
 /// Validate checksums and registry
 async fn validate_checksums_and_registry(verbose: bool) -> Result<()> {
     let status = Command::new("cargo")
-        .args(["run", "-p", "xtask", "--", "validate-generated-unified", "--strict"])
+        .args([
+            "run",
+            "-p",
+            "xtask",
+            "--",
+            "validate-generated-unified",
+            "--strict",
+        ])
         .status()
         .context("Failed to run xtask validate-generated-unified")?;
 
@@ -7456,12 +7564,8 @@ async fn monitor_events_command(
 
     println!("✅ Event monitor started with handlers:");
     println!("   📺 Console handler (show_metadata: {show_metadata})");
-    println!(
-        "   ⚡ Performance handler (threshold: {performance_threshold}ms)"
-    );
-    println!(
-        "   🚨 Error aggregation handler (threshold: {error_threshold})"
-    );
+    println!("   ⚡ Performance handler (threshold: {performance_threshold}ms)");
+    println!("   🚨 Error aggregation handler (threshold: {error_threshold})");
     println!("   Press Ctrl+C to stop");
 
     // Start monitoring
@@ -8336,9 +8440,7 @@ async fn run_sarif_to_jsonl_command(input: String, output: String, validate: boo
         writeln!(output_file, "{jsonl}")?;
     }
 
-    println!(
-        "✅ Successfully converted SARIF to JSONL ({events_count} events)"
-    );
+    println!("✅ Successfully converted SARIF to JSONL ({events_count} events)");
 
     Ok(())
 }
@@ -8617,23 +8719,23 @@ async fn run_check_all(strict: bool, staged_only: bool, verbose: bool) -> Result
 /// Run the unified generator for all generated files
 async fn run_unified_generator(validate: bool, _force: bool, clean: bool) -> Result<()> {
     println!("🚀 Running unified generator...");
-    
+
     let project_root = std::env::current_dir()?;
     let generator = unified_generator::UnifiedGenerator::new(project_root);
-    
+
     if clean {
         generator.clean_all()?;
     }
-    
+
     let _registry = generator.generate_all()?;
-    
+
     if validate {
         let is_valid = generator.validate_all()?;
         if !is_valid {
             return Err(anyhow::anyhow!("Generated files validation failed"));
         }
     }
-    
+
     println!("✅ Unified generation completed successfully");
     Ok(())
 }
@@ -8641,28 +8743,28 @@ async fn run_unified_generator(validate: bool, _force: bool, clean: bool) -> Res
 /// Clean all generated files
 async fn clean_generated_files(verbose: bool) -> Result<()> {
     println!("🧹 Cleaning all generated files...");
-    
+
     let project_root = std::env::current_dir()?;
     let generator = unified_generator::UnifiedGenerator::new(project_root);
-    
+
     generator.clean_all()?;
-    
+
     if verbose {
         println!("✅ All generated files cleaned");
     }
-    
+
     Ok(())
 }
 
 /// Validate all generated files against registry
 async fn validate_generated_files_unified(strict: bool, _verbose: bool) -> Result<()> {
     println!("🔍 Validating generated files against registry...");
-    
+
     let project_root = std::env::current_dir()?;
     let generator = unified_generator::UnifiedGenerator::new(project_root);
-    
+
     let is_valid = generator.validate_all()?;
-    
+
     if !is_valid {
         let error_msg = "❌ Generated files validation failed";
         if strict {
@@ -8673,60 +8775,72 @@ async fn validate_generated_files_unified(strict: bool, _verbose: bool) -> Resul
     } else {
         println!("✅ All generated files are valid");
     }
-    
+
     Ok(())
 }
 
 /// Allow a file to be manually maintained
 async fn allow_manual_file(path: String, verbose: bool) -> Result<()> {
     println!("🔓 Allowing manual maintenance for file: {}", path);
-    
+
     let project_root = std::env::current_dir()?;
     let manual_files_path = project_root.join("config").join("manual-files.jsonc");
-    
+
     // Load existing manual files registry
-    let content = fs::read_to_string(&manual_files_path)
-        .with_context(|| format!("Failed to read manual files registry: {}", manual_files_path.display()))?;
-    
+    let content = fs::read_to_string(&manual_files_path).with_context(|| {
+        format!(
+            "Failed to read manual files registry: {}",
+            manual_files_path.display()
+        )
+    })?;
+
     // Parse JSONC directly using json_comments
     let stripped = StripComments::new(content.as_bytes());
-    let mut registry: serde_json::Value = serde_json::from_reader(stripped)
-        .with_context(|| "Failed to parse JSONC")?;
-    
+    let mut registry: serde_json::Value =
+        serde_json::from_reader(stripped).with_context(|| "Failed to parse JSONC")?;
+
     // Get the manual files array
-    let manual_files = registry.get_mut("manual")
+    let manual_files = registry
+        .get_mut("manual")
         .ok_or_else(|| anyhow::anyhow!("Manual files registry missing 'manual' array"))?
         .as_array_mut()
         .ok_or_else(|| anyhow::anyhow!("Manual files registry 'manual' field is not an array"))?;
-    
+
     // Check if file is already in the list
     if manual_files.iter().any(|f| f.as_str() == Some(&path)) {
         if verbose {
-            println!("ℹ️  File '{}' is already in the manual files registry", path);
+            println!(
+                "ℹ️  File '{}' is already in the manual files registry",
+                path
+            );
         }
         return Ok(());
     }
-    
+
     // Add the file to the list
     manual_files.push(serde_json::Value::String(path.clone()));
-    
+
     // Update the metadata
     if let Some(metadata) = registry.get_mut("metadata") {
         if let Some(last_updated) = metadata.get_mut("last_updated") {
             *last_updated = serde_json::Value::String(chrono::Utc::now().to_rfc3339());
         }
     }
-    
+
     // Save the updated registry
     let updated_content = serde_json::to_string_pretty(&registry)?;
-    fs::write(&manual_files_path, updated_content)
-        .with_context(|| format!("Failed to write manual files registry: {}", manual_files_path.display()))?;
-    
+    fs::write(&manual_files_path, updated_content).with_context(|| {
+        format!(
+            "Failed to write manual files registry: {}",
+            manual_files_path.display()
+        )
+    })?;
+
     println!("✅ File '{}' added to manual files registry", path);
     if verbose {
         println!("📝 Registry updated: {}", manual_files_path.display());
     }
-    
+
     Ok(())
 }
 
@@ -8742,9 +8856,9 @@ async fn run_regen_check(strict: bool, verbose: bool) -> Result<()> {
     if verbose {
         println!("📊 Step 1: Capturing current state...");
     }
-    
+
     let current_files = get_generated_files_state()?;
-    
+
     if verbose {
         println!("   Found {} generated files", current_files.len());
     }
@@ -8753,35 +8867,38 @@ async fn run_regen_check(strict: bool, verbose: bool) -> Result<()> {
     if verbose {
         println!("🧹 Step 2: Cleaning all generated files...");
     }
-    
+
     clean_generated_files_enhanced(verbose).await?;
 
     // Step 3: Regenerate all files
     if verbose {
         println!("🔄 Step 3: Regenerating all files...");
     }
-    
+
     regenerate_all_files_unified().await?;
 
     // Step 4: Get new state
     if verbose {
         println!("📊 Step 4: Capturing new state...");
     }
-    
+
     let new_files = get_generated_files_state()?;
 
     // Step 5: Compare states
     if verbose {
         println!("🔍 Step 5: Comparing states...");
     }
-    
+
     let differences = compare_file_states(&current_files, &new_files)?;
-    
+
     if differences.is_empty() {
         println!("✅ Regeneration check passed! All files are consistent.");
     } else {
-        println!("❌ Regeneration check failed! Found {} differences:", differences.len());
-        
+        println!(
+            "❌ Regeneration check failed! Found {} differences:",
+            differences.len()
+        );
+
         for diff in &differences {
             match diff {
                 FileDifference::Added(path) => println!("   ➕ Added: {}", path),
@@ -8789,9 +8906,12 @@ async fn run_regen_check(strict: bool, verbose: bool) -> Result<()> {
                 FileDifference::Modified(path) => println!("   🔄 Modified: {}", path),
             }
         }
-        
+
         if strict {
-            anyhow::bail!("Regeneration check failed with {} differences", differences.len());
+            anyhow::bail!(
+                "Regeneration check failed with {} differences",
+                differences.len()
+            );
         }
     }
 
@@ -8801,18 +8921,17 @@ async fn run_regen_check(strict: bool, verbose: bool) -> Result<()> {
 /// Get the current state of all generated files
 fn get_generated_files_state() -> Result<HashMap<String, String>> {
     use unified_generator::UnifiedGenerator;
-    
+
     let project_root = std::env::current_dir()?;
     let generator = UnifiedGenerator::new(project_root);
     let registry = generator.load_registry()?;
     let mut state = HashMap::new();
-    
+
     for file in &registry.files {
-        let content = std::fs::read_to_string(&file.path)
-            .unwrap_or_else(|_| String::new());
+        let content = std::fs::read_to_string(&file.path).unwrap_or_else(|_| String::new());
         state.insert(file.path.clone(), content);
     }
-    
+
     Ok(state)
 }
 
@@ -8822,21 +8941,21 @@ fn compare_file_states(
     after: &HashMap<String, String>,
 ) -> Result<Vec<FileDifference>> {
     let mut differences = Vec::new();
-    
+
     // Check for added files
     for path in after.keys() {
         if !before.contains_key(path) {
             differences.push(FileDifference::Added(path.clone()));
         }
     }
-    
+
     // Check for removed files
     for path in before.keys() {
         if !after.contains_key(path) {
             differences.push(FileDifference::Removed(path.clone()));
         }
     }
-    
+
     // Check for modified files
     for (path, after_content) in after {
         if let Some(before_content) = before.get(path) {
@@ -8845,7 +8964,7 @@ fn compare_file_states(
             }
         }
     }
-    
+
     Ok(differences)
 }
 
@@ -8887,46 +9006,38 @@ async fn run_component_smoke_test(
         ComponentTest {
             name: "hook-builder".to_string(),
             wasm_path: "target/wasm32-wasip2/release/hook_builder.wasm".to_string(),
-            test_functions: vec![
-                TestFunction {
-                    name: "validate-source".to_string(),
-                    args: vec!["--source-path".to_string(), "src/main.rs".to_string()],
-                    expected_output: "success".to_string(),
-                },
-            ],
+            test_functions: vec![TestFunction {
+                name: "validate-source".to_string(),
+                args: vec!["--source-path".to_string(), "src/main.rs".to_string()],
+                expected_output: "success".to_string(),
+            }],
         },
         ComponentTest {
             name: "worktree-runner".to_string(),
             wasm_path: "target/wasm32-wasip2/release/worktree_runner.wasm".to_string(),
-            test_functions: vec![
-                TestFunction {
-                    name: "list-worktrees".to_string(),
-                    args: vec![],
-                    expected_output: "worktree".to_string(),
-                },
-            ],
+            test_functions: vec![TestFunction {
+                name: "list-worktrees".to_string(),
+                args: vec![],
+                expected_output: "worktree".to_string(),
+            }],
         },
         ComponentTest {
             name: "git-filter".to_string(),
             wasm_path: "target/wasm32-wasip2/release/git_filter.wasm".to_string(),
-            test_functions: vec![
-                TestFunction {
-                    name: "validate-blob".to_string(),
-                    args: vec!["--blob".to_string(), "test-data".to_string()],
-                    expected_output: "valid".to_string(),
-                },
-            ],
+            test_functions: vec![TestFunction {
+                name: "validate-blob".to_string(),
+                args: vec!["--blob".to_string(), "test-data".to_string()],
+                expected_output: "valid".to_string(),
+            }],
         },
         ComponentTest {
             name: "validation-handler".to_string(),
             wasm_path: "target/wasm32-wasip2/release/validation_handler.wasm".to_string(),
-            test_functions: vec![
-                TestFunction {
-                    name: "validate".to_string(),
-                    args: vec!["--input".to_string(), "test".to_string()],
-                    expected_output: "valid".to_string(),
-                },
-            ],
+            test_functions: vec![TestFunction {
+                name: "validate".to_string(),
+                args: vec!["--input".to_string(), "test".to_string()],
+                expected_output: "valid".to_string(),
+            }],
         },
     ];
 
@@ -8949,13 +9060,13 @@ async fn run_component_smoke_test(
         if verbose {
             println!("🔨 Building components...");
         }
-        
+
         // Add wasm32-wasip2 target if not present
         let status = Command::new("rustup")
             .args(["target", "add", "wasm32-wasip2"])
             .status()
             .context("Failed to add wasm32-wasip2 target")?;
-        
+
         if !status.success() {
             anyhow::bail!("Failed to add wasm32-wasip2 target");
         }
@@ -8963,11 +9074,14 @@ async fn run_component_smoke_test(
         // Build components
         let status = Command::new("cargo")
             .args([
-                "component", "build",
-                "--target", "wasm32-wasip2",
+                "component",
+                "build",
+                "--target",
+                "wasm32-wasip2",
                 "--release",
                 "--workspace",
-                "--exclude", "xtask",
+                "--exclude",
+                "xtask",
             ])
             .status()
             .context("Failed to build components")?;
@@ -8982,10 +9096,7 @@ async fn run_component_smoke_test(
     }
 
     // Check if wasmtime is available
-    let wasmtime_available = Command::new("wasmtime")
-        .arg("--version")
-        .output()
-        .is_ok();
+    let wasmtime_available = Command::new("wasmtime").arg("--version").output().is_ok();
 
     if !wasmtime_available {
         anyhow::bail!("wasmtime is not available. Please install it first: https://wasmtime.dev/");
@@ -9062,10 +9173,13 @@ async fn run_component_smoke_test(
     // Print summary
     println!("\n📊 Component Smoke Test Summary:");
     println!("=================================");
-    
-    let passed = test_results.iter().filter(|(_, success, _)| *success).count();
+
+    let passed = test_results
+        .iter()
+        .filter(|(_, success, _)| *success)
+        .count();
     let total = test_results.len();
-    
+
     for (_, success, msg) in &test_results {
         if *success {
             println!("✅ {}", msg);
@@ -9073,9 +9187,9 @@ async fn run_component_smoke_test(
             println!("❌ {}", msg);
         }
     }
-    
+
     println!("\nResults: {}/{} tests passed", passed, total);
-    
+
     if !all_passed && strict {
         anyhow::bail!("Component smoke tests failed");
     }
@@ -9113,11 +9227,9 @@ async fn run_schema_registry_command(
         println!("📋 Discovered {} endpoints:", endpoints.len());
         for endpoint in endpoints {
             let status_icon = if endpoint.accessible { "✅" } else { "❌" };
-            println!("  {} {} ({}) - {}",
-                status_icon,
-                endpoint.name,
-                endpoint.category,
-                endpoint.url
+            println!(
+                "  {} {} ({}) - {}",
+                status_icon, endpoint.name, endpoint.category, endpoint.url
             );
         }
     }
@@ -9172,7 +9284,7 @@ async fn run_schema_registry_command(
 
 async fn run_validate_structure(strict: bool, verbose: bool, format: String) -> Result<()> {
     let workspace_root = std::env::current_dir()?;
-    
+
     if verbose {
         println!("🔍 Validating repository structure...");
         println!("📁 Workspace root: {}", workspace_root.display());
@@ -9193,14 +9305,14 @@ async fn run_validate_structure(strict: bool, verbose: bool, format: String) -> 
             println!("✅ Valid: {}", result.valid);
             println!("❌ Errors: {}", result.errors.len());
             println!("⚠️  Warnings: {}", result.warnings.len());
-            
+
             if !result.errors.is_empty() {
                 println!("\n❌ Errors:");
                 for error in &result.errors {
                     println!("  • {}: {}", error.path, error.message);
                 }
             }
-            
+
             if !result.warnings.is_empty() {
                 println!("\n⚠️  Warnings:");
                 for warning in &result.warnings {
@@ -9214,14 +9326,14 @@ async fn run_validate_structure(strict: bool, verbose: bool, format: String) -> 
             } else {
                 println!("❌ Repository structure validation failed!");
             }
-            
+
             if !result.errors.is_empty() {
                 println!("\n❌ Errors:");
                 for error in &result.errors {
                     println!("  • {}: {}", error.path, error.message);
                 }
             }
-            
+
             if !result.warnings.is_empty() {
                 println!("\n⚠️  Warnings:");
                 for warning in &result.warnings {
@@ -9233,7 +9345,10 @@ async fn run_validate_structure(strict: bool, verbose: bool, format: String) -> 
 
     // Exit with error if strict mode and validation failed
     if strict && !result.valid {
-        anyhow::bail!("Repository structure validation failed with {} errors", result.errors.len());
+        anyhow::bail!(
+            "Repository structure validation failed with {} errors",
+            result.errors.len()
+        );
     }
 
     Ok(())

@@ -1,10 +1,10 @@
-use std::process::Command;
-use std::path::Path;
-use std::collections::HashMap;
 use hooksmith::{
-    log_info, log_success, log_warning, log_error, log_header,
-    get_worktrees, run_git_command, run_git_command_in_dir, get_worktree_status, determine_state
+    determine_state, get_worktree_status, get_worktrees, log_error, log_header, log_info,
+    log_success, log_warning, run_git_command, run_git_command_in_dir,
 };
+use std::collections::HashMap;
+use std::path::Path;
+use std::process::Command;
 
 #[derive(Debug, Clone, PartialEq)]
 enum WorktreeState {
@@ -62,10 +62,13 @@ impl WorktreeStateMachine {
         Ok(Self { worktrees })
     }
 
-    fn get_worktree_state(&self, worktree_path: &str) -> Result<WorktreeState, Box<dyn std::error::Error>> {
+    fn get_worktree_state(
+        &self,
+        worktree_path: &str,
+    ) -> Result<WorktreeState, Box<dyn std::error::Error>> {
         // Get worktree status using the library function
         let status = get_worktree_status(worktree_path).map_err(|e| e.to_string())?;
-        
+
         // Map the library's WorktreeState to our internal WorktreeState
         match determine_state(&status) {
             hooksmith::WorktreeState::Merged => Ok(WorktreeState::Merged),
@@ -77,17 +80,30 @@ impl WorktreeStateMachine {
         }
     }
 
-    fn transition_state(&self, worktree_path: &str, branch_name: &str, current_state: &WorktreeState, target_state: &WorktreeState) -> Result<(), Box<dyn std::error::Error>> {
-        log_info(&format!("Transitioning {}: {} → {}", branch_name, current_state.to_string(), target_state.to_string()));
+    fn transition_state(
+        &self,
+        worktree_path: &str,
+        branch_name: &str,
+        current_state: &WorktreeState,
+        target_state: &WorktreeState,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        log_info(&format!(
+            "Transitioning {}: {} → {}",
+            branch_name,
+            current_state.to_string(),
+            target_state.to_string()
+        ));
 
         match target_state {
             WorktreeState::Resolving => {
-                let result = run_git_command_in_dir(&["rebase", "main"], worktree_path).map_err(|e| e.to_string())?;
+                let _result = run_git_command_in_dir(&["rebase", "main"], worktree_path)
+                    .map_err(|e| e.to_string())?;
                 log_success("Rebase successful");
                 Ok(())
             }
             WorktreeState::Ready => {
-                let result = run_git_command_in_dir(&["push", "origin", branch_name], worktree_path);
+                let result =
+                    run_git_command_in_dir(&["push", "origin", branch_name], worktree_path);
                 match result {
                     Ok(_) => {
                         log_success("Branch pushed successfully");
@@ -106,41 +122,54 @@ impl WorktreeStateMachine {
             }
             WorktreeState::Cleanup => {
                 // Remove worktree
-                let _ = run_git_command(&["worktree", "remove", worktree_path, "--force"]);
-
-                // Delete remote branch
-                let _ = run_git_command(&["push", "origin", "--delete", branch_name]);
-
-                log_success("Worktree cleaned up");
-                Ok(())
+                let result = run_git_command(&["worktree", "remove", worktree_path, "--force"]);
+                if result.is_ok() {
+                    // Try to delete remote branch
+                    let _ = run_git_command(&["push", "origin", "--delete", branch_name]);
+                    log_success("Worktree cleaned up");
+                    Ok(())
+                } else {
+                    log_warning("Failed to remove worktree");
+                    Err("Failed to remove worktree".into())
+                }
             }
             _ => {
-                log_warning(&format!("Unknown target state: {}", target_state.to_string()));
+                log_warning(&format!(
+                    "Unknown target state: {}",
+                    target_state.to_string()
+                ));
                 Err("Unknown target state".into())
             }
         }
     }
 
     fn generate_pr_url(&self, branch_name: &str) -> String {
-        let repo_url = run_git_command(&["config", "--get", "remote.origin.url"])
-            .unwrap_or_else(|_| "".to_string())
-            .replace(".git", "");
-
-        if repo_url.contains("github.com") {
-            format!("{}/compare/main...{}", repo_url, branch_name)
-        } else {
-            "Unknown repository URL".to_string()
+        // Get repository URL
+        let output = run_git_command(&["config", "--get", "remote.origin.url"]);
+        match output {
+            Ok(repo_url) => {
+                let repo_url = repo_url.trim().replace(".git", "");
+                if repo_url.contains("github.com") {
+                    format!("{}/compare/main...{}", repo_url, branch_name)
+                } else {
+                    "Unknown repository URL".to_string()
+                }
+            }
+            Err(_) => "Unknown repository URL".to_string(),
         }
     }
 
     fn process_worktree(&mut self, worktree_path: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let branch_name = Path::new(worktree_path)
+        let branch_name = std::path::Path::new(worktree_path)
             .file_name()
-            .unwrap_or_else(|| std::ffi::OsStr::new("unknown"))
+            .unwrap_or_default()
             .to_string_lossy()
             .to_string();
 
-        log_info(&format!("Processing worktree: {} (branch: {})", worktree_path, branch_name));
+        log_info(&format!(
+            "Processing worktree: {} (branch: {})",
+            worktree_path, branch_name
+        ));
 
         // Get current state
         let current_state = self.get_worktree_state(worktree_path)?;
@@ -150,13 +179,11 @@ impl WorktreeStateMachine {
         let next_state = match current_state {
             WorktreeState::Created => Some(WorktreeState::Developing),
             WorktreeState::Developing => {
-                // Check if ready to move to next state
-                let status = run_git_command_in_dir(&["status", "--porcelain"], worktree_path).map_err(|e| e.to_string())?;
-                
-                if status.is_empty() {
-                    Some(WorktreeState::Resolving)
-                } else {
-                    None
+                // Check if worktree is clean
+                let status = run_git_command_in_dir(&["status", "--porcelain"], worktree_path);
+                match status {
+                    Ok(output) if output.trim().is_empty() => Some(WorktreeState::Resolving),
+                    _ => None,
                 }
             }
             WorktreeState::Conflicted => Some(WorktreeState::Resolving),
@@ -169,12 +196,22 @@ impl WorktreeStateMachine {
         };
 
         if let Some(next_state) = next_state {
-            if self.transition_state(worktree_path, &branch_name, &current_state, &next_state).is_ok() {
-                log_success(&format!("Successfully transitioned to {}", next_state.to_string()));
-                Ok(())
-            } else {
-                log_warning(&format!("Failed to transition to {}", next_state.to_string()));
-                Err("Transition failed".into())
+            match self.transition_state(worktree_path, &branch_name, &current_state, &next_state) {
+                Ok(_) => {
+                    log_success(&format!(
+                        "Successfully transitioned to {}",
+                        next_state.to_string()
+                    ));
+                    Ok(())
+                }
+                Err(e) => {
+                    log_warning(&format!(
+                        "Failed to transition to {}: {}",
+                        next_state.to_string(),
+                        e
+                    ));
+                    Err(e)
+                }
             }
         } else {
             log_info("No transition needed");
@@ -185,25 +222,23 @@ impl WorktreeStateMachine {
     fn print_diagram(&self) {
         log_header("WORKTREE STATE MACHINE DIAGRAM");
         println!();
-        println!("CREATED → DEVELOPING → RESOLVING → READY → PR_CREATED → MERGED → CLEANUP → REMOVED");
+        println!(
+            "CREATED → DEVELOPING → RESOLVING → READY → PR_CREATED → MERGED → CLEANUP → REMOVED"
+        );
         println!("    ↓         ↓");
         println!("CONFLICTED → RESOLVING");
         println!();
         println!("State Descriptions:");
-        for state in [
-            WorktreeState::Created,
-            WorktreeState::Developing,
-            WorktreeState::Conflicted,
-            WorktreeState::Resolving,
-            WorktreeState::Resolved,
-            WorktreeState::Ready,
-            WorktreeState::PrCreated,
-            WorktreeState::Merged,
-            WorktreeState::Cleanup,
-            WorktreeState::Removed,
-        ] {
-            println!("  {}: {}", state.to_string(), state.description());
-        }
+        println!("  CREATED: {}", WorktreeState::Created.description());
+        println!("  DEVELOPING: {}", WorktreeState::Developing.description());
+        println!("  CONFLICTED: {}", WorktreeState::Conflicted.description());
+        println!("  RESOLVING: {}", WorktreeState::Resolving.description());
+        println!("  RESOLVED: {}", WorktreeState::Resolved.description());
+        println!("  READY: {}", WorktreeState::Ready.description());
+        println!("  PR_CREATED: {}", WorktreeState::PrCreated.description());
+        println!("  MERGED: {}", WorktreeState::Merged.description());
+        println!("  CLEANUP: {}", WorktreeState::Cleanup.description());
+        println!("  REMOVED: {}", WorktreeState::Removed.description());
     }
 
     fn process_all_worktrees(&mut self) -> Result<(), Box<dyn std::error::Error>> {
@@ -221,9 +256,9 @@ impl WorktreeStateMachine {
         let worktree_paths: Vec<String> = self.worktrees.clone();
         for worktree_path in &worktree_paths {
             // Skip main worktree
-            let branch_name = Path::new(worktree_path)
+            let branch_name = std::path::Path::new(worktree_path)
                 .file_name()
-                .unwrap_or_else(|| std::ffi::OsStr::new("unknown"))
+                .unwrap_or_default()
                 .to_string_lossy()
                 .to_string();
 
@@ -233,29 +268,29 @@ impl WorktreeStateMachine {
 
             processed_count += 1;
 
-            if self.process_worktree(worktree_path).is_ok() {
-                success_count += 1;
+            match self.process_worktree(worktree_path) {
+                Ok(_) => success_count += 1,
+                Err(_) => {}
             }
 
             println!("---");
         }
 
-        log_success(&format!("Processed {} worktree(s), {} successful", processed_count, success_count));
+        log_success(&format!(
+            "Processed {} worktree(s), {} successful",
+            processed_count, success_count
+        ));
         Ok(())
     }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    log_header("state_machine");
-    println!();
-
     let args: Vec<String> = std::env::args().collect();
-    let default_command = "process".to_string();
-    let command = args.get(1).unwrap_or(&default_command);
+    let command = args.get(1).map(|s| s.as_str()).unwrap_or("process");
 
     let mut state_machine = WorktreeStateMachine::new()?;
 
-    match command.as_str() {
+    match command {
         "diagram" => {
             state_machine.print_diagram();
         }
@@ -263,31 +298,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             state_machine.process_all_worktrees()?;
         }
         "status" => {
-            log_info("Running worktree status report...");
-            let status_output = Command::new("cargo")
+            // Run worktree status report
+            let output = Command::new("cargo")
                 .args(&["run", "--bin", "worktree-status-report"])
                 .output()?;
-
-            if status_output.status.success() {
-                println!("{}", String::from_utf8_lossy(&status_output.stdout));
-            } else {
-                log_error("Failed to run worktree status report");
-            }
+            print!("{}", String::from_utf8_lossy(&output.stdout));
         }
-        "help" | "--help" | "-h" => {
-            println!("Usage: cargo run --bin state_machine [diagram|process|status|help]");
+        _ => {
+            println!("Usage: {} [diagram|process|status]", args[0]);
             println!("  diagram: Show state machine diagram");
             println!("  process: Process all worktrees through state machine");
             println!("  status: Show current worktree status");
-            println!("  help: Show this help message");
-        }
-        _ => {
-            log_error(&format!("Unknown command: {}", command));
-            println!("Use 'help' for usage information");
             std::process::exit(1);
         }
     }
 
-    log_success("Script execution completed");
     Ok(())
 }

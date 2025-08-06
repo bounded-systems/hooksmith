@@ -45,7 +45,10 @@ async fn main() -> Result<()> {
 }
 
 /// Demo 1: Direct Component Linking (Fastest Path)
-async fn demo_direct_linking(orchestrator: &HooksmithOrchestrator, contract_data: &str) -> Result<()> {
+async fn demo_direct_linking(
+    orchestrator: &HooksmithOrchestrator,
+    contract_data: &str,
+) -> Result<()> {
     println!("\n🔗 Demo 1: Direct Component Linking");
     println!("-----------------------------------");
 
@@ -61,16 +64,19 @@ async fn demo_direct_linking(orchestrator: &HooksmithOrchestrator, contract_data
     // Check if direct linking is available
     if orchestrator.has_linked_component("contract-checker") {
         println!("✅ Direct linking available for contract-checker");
-        
+
         let validation_start = Instant::now();
         let result = orchestrator.validate_contract_direct(contract_data).await?;
         let validation_duration = validation_start.elapsed();
 
-        println!("✅ Direct validation completed in {:?}", validation_duration);
+        println!(
+            "✅ Direct validation completed in {:?}",
+            validation_duration
+        );
         println!("   Success: {}", result.success);
         println!("   Errors: {}", result.errors.len());
         println!("   Warnings: {}", result.warnings.len());
-        
+
         if let Some(details) = &result.details {
             println!("   Details: {}", details);
         }
@@ -86,7 +92,10 @@ async fn demo_direct_linking(orchestrator: &HooksmithOrchestrator, contract_data
 }
 
 /// Demo 2: Event-Driven Communication (System Operations)
-async fn demo_event_driven(orchestrator: &HooksmithOrchestrator, contract_data: &str) -> Result<()> {
+async fn demo_event_driven(
+    orchestrator: &HooksmithOrchestrator,
+    contract_data: &str,
+) -> Result<()> {
     println!("\n🔄 Demo 2: Event-Driven Communication");
     println!("-------------------------------------");
 
@@ -104,7 +113,10 @@ async fn demo_event_driven(orchestrator: &HooksmithOrchestrator, contract_data: 
         .await?;
     let validation_duration = validation_start.elapsed();
 
-    println!("✅ Event-driven validation completed in {:?}", validation_duration);
+    println!(
+        "✅ Event-driven validation completed in {:?}",
+        validation_duration
+    );
     println!("   Success: {}", result.success);
     println!("   Errors: {}", result.errors.len());
     println!("   Warnings: {}", result.warnings.len());
@@ -124,7 +136,10 @@ async fn demo_event_driven(orchestrator: &HooksmithOrchestrator, contract_data: 
 }
 
 /// Demo 3: wRPC Distributed Communication
-async fn demo_wrpc_communication(orchestrator: &HooksmithOrchestrator, contract_data: &str) -> Result<()> {
+async fn demo_wrpc_communication(
+    orchestrator: &HooksmithOrchestrator,
+    contract_data: &str,
+) -> Result<()> {
     println!("\n🌐 Demo 3: wRPC Distributed Communication");
     println!("----------------------------------------");
 
@@ -134,12 +149,17 @@ async fn demo_wrpc_communication(orchestrator: &HooksmithOrchestrator, contract_
     match orchestrator.init_wrpc_client("tcp://localhost:8080").await {
         Ok(_) => {
             println!("✅ wRPC client initialized");
-            
+
             let validation_start = Instant::now();
-            let result = orchestrator.validate_contract_distributed(contract_data).await?;
+            let result = orchestrator
+                .validate_contract_distributed(contract_data)
+                .await?;
             let validation_duration = validation_start.elapsed();
 
-            println!("✅ Distributed validation completed in {:?}", validation_duration);
+            println!(
+                "✅ Distributed validation completed in {:?}",
+                validation_duration
+            );
             println!("   Success: {}", result.success);
             println!("   Errors: {}", result.errors.len());
             println!("   Warnings: {}", result.warnings.len());
@@ -158,7 +178,10 @@ async fn demo_wrpc_communication(orchestrator: &HooksmithOrchestrator, contract_
 }
 
 /// Demo 4: Adaptive Pattern Selection
-async fn demo_adaptive_pattern_selection(orchestrator: &HooksmithOrchestrator, contract_data: &str) -> Result<()> {
+async fn demo_adaptive_pattern_selection(
+    orchestrator: &HooksmithOrchestrator,
+    contract_data: &str,
+) -> Result<()> {
     println!("\n🎯 Demo 4: Adaptive Pattern Selection");
     println!("------------------------------------");
 
@@ -173,10 +196,13 @@ async fn demo_adaptive_pattern_selection(orchestrator: &HooksmithOrchestrator, c
     ];
 
     for (operation_type, operation_name) in operations {
-        println!("\n🔍 Testing operation: {} ({})", operation_name, operation_type);
-        
+        println!(
+            "\n🔍 Testing operation: {} ({})",
+            operation_name, operation_type
+        );
+
         let operation_start = Instant::now();
-        
+
         // In a real implementation, this would use the adaptive pattern selection
         let pattern = match operation_type {
             "pure-computation" => {
@@ -229,7 +255,10 @@ async fn demo_adaptive_pattern_selection(orchestrator: &HooksmithOrchestrator, c
     }
 
     let total_duration = start.elapsed();
-    println!("\n⏱️  Total adaptive selection demo time: {:?}", total_duration);
+    println!(
+        "\n⏱️  Total adaptive selection demo time: {:?}",
+        total_duration
+    );
 
     Ok(())
 }
@@ -299,10 +328,34 @@ fn show_performance_characteristics() {
     println!("-----------------------------");
 
     let characteristics = vec![
-        ("Direct Linking", "~100ns", "Very High", "Low", "Pure computation chains"),
-        ("Event-Driven", "~1-10ms", "High", "Medium", "System operations"),
-        ("wRPC Local", "~100-500μs", "High", "Medium", "Process isolation"),
-        ("wRPC Network", "~10-100ms", "Medium", "High", "Distributed systems"),
+        (
+            "Direct Linking",
+            "~100ns",
+            "Very High",
+            "Low",
+            "Pure computation chains",
+        ),
+        (
+            "Event-Driven",
+            "~1-10ms",
+            "High",
+            "Medium",
+            "System operations",
+        ),
+        (
+            "wRPC Local",
+            "~100-500μs",
+            "High",
+            "Medium",
+            "Process isolation",
+        ),
+        (
+            "wRPC Network",
+            "~10-100ms",
+            "Medium",
+            "High",
+            "Distributed systems",
+        ),
     ];
 
     for (pattern, latency, throughput, complexity, use_case) in characteristics {
@@ -323,7 +376,7 @@ mod tests {
     async fn test_direct_linking_demo() {
         let orchestrator = HooksmithOrchestrator::new().await.unwrap();
         let contract_data = r#"{"name": "test"}"#;
-        
+
         // This should not fail even if components aren't loaded
         let result = demo_direct_linking(&orchestrator, contract_data).await;
         assert!(result.is_ok());
@@ -333,8 +386,8 @@ mod tests {
     async fn test_event_driven_demo() {
         let orchestrator = HooksmithOrchestrator::new().await.unwrap();
         let contract_data = r#"{"name": "test"}"#;
-        
+
         let result = demo_event_driven(&orchestrator, contract_data).await;
         assert!(result.is_ok());
     }
-} 
+}

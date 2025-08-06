@@ -1,7 +1,7 @@
-use std::process::Command;
-use std::path::Path;
+use hooksmith::{get_worktrees, log_error, log_header, log_info, log_success, log_warning};
 use std::env;
-use hooksmith::{log_info, log_success, log_warning, log_error, log_header, get_worktrees};
+use std::path::Path;
+use std::process::Command;
 
 fn check_dependencies() -> Result<(), String> {
     // Check if git is available
@@ -39,7 +39,16 @@ fn get_worktree_branches() -> Result<Vec<String>, String> {
 
 fn branch_has_open_pr(branch_name: &str) -> Result<bool, String> {
     let output = Command::new("gh")
-        .args(&["pr", "list", "--head", branch_name, "--json", "number", "--jq", "length"])
+        .args(&[
+            "pr",
+            "list",
+            "--head",
+            branch_name,
+            "--json",
+            "number",
+            "--jq",
+            "length",
+        ])
         .output()
         .map_err(|e| format!("Failed to check PR status: {}", e))?;
 
@@ -53,7 +62,16 @@ fn branch_has_open_pr(branch_name: &str) -> Result<bool, String> {
 
 fn get_pr_number(branch_name: &str) -> Result<String, String> {
     let output = Command::new("gh")
-        .args(&["pr", "list", "--head", branch_name, "--json", "number", "--jq", ".[0].number"])
+        .args(&[
+            "pr",
+            "list",
+            "--head",
+            branch_name,
+            "--json",
+            "number",
+            "--jq",
+            ".[0].number",
+        ])
         .output()
         .map_err(|e| format!("Failed to get PR number: {}", e))?;
 
@@ -70,7 +88,10 @@ fn get_pr_number(branch_name: &str) -> Result<String, String> {
 }
 
 fn merge_pr(pr_number: &str, branch_name: &str, force: bool) -> Result<bool, String> {
-    log_info(&format!("Merging PR #{} for branch: {}", pr_number, branch_name));
+    log_info(&format!(
+        "Merging PR #{} for branch: {}",
+        pr_number, branch_name
+    ));
 
     let mut args = vec!["pr", "merge", pr_number, "--delete-branch"];
     if force {
@@ -83,10 +104,16 @@ fn merge_pr(pr_number: &str, branch_name: &str, force: bool) -> Result<bool, Str
         .map_err(|e| format!("Failed to merge PR: {}", e))?;
 
     if output.status.success() {
-        log_success(&format!("Successfully merged PR #{} for branch: {}", pr_number, branch_name));
+        log_success(&format!(
+            "Successfully merged PR #{} for branch: {}",
+            pr_number, branch_name
+        ));
         Ok(true)
     } else {
-        log_error(&format!("Failed to merge PR #{} for branch: {}", pr_number, branch_name));
+        log_error(&format!(
+            "Failed to merge PR #{} for branch: {}",
+            pr_number, branch_name
+        ));
         Ok(false)
     }
 }
@@ -97,7 +124,10 @@ fn auto_merge_all_prs(dry_run: bool, force: bool) -> Result<(), Box<dyn std::err
     // Get list of worktree branches
     let branches = get_worktree_branches()?;
 
-    log_info(&format!("Found {} worktree branches to check", branches.len()));
+    log_info(&format!(
+        "Found {} worktree branches to check",
+        branches.len()
+    ));
 
     let mut merged_count = 0;
     let mut skipped_count = 0;
@@ -111,7 +141,10 @@ fn auto_merge_all_prs(dry_run: bool, force: bool) -> Result<(), Box<dyn std::err
             match get_pr_number(branch) {
                 Ok(pr_number) => {
                     if dry_run {
-                        log_info(&format!("DRY RUN: Would merge PR #{} for branch: {}", pr_number, branch));
+                        log_info(&format!(
+                            "DRY RUN: Would merge PR #{} for branch: {}",
+                            pr_number, branch
+                        ));
                         merged_count += 1;
                     } else {
                         if merge_pr(&pr_number, branch, force)? {

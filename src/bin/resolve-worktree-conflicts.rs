@@ -1,12 +1,21 @@
-use std::process::Command;
+use hooksmith::{
+    cleanup_merged_worktree, get_worktrees, is_rebasing, log_error, log_header, log_info,
+    log_success, log_warning, push_branch, run_git_command_in_dir, stash_changes,
+};
 use std::path::Path;
-use hooksmith::{log_info, log_success, log_warning, log_error, log_header, get_worktrees, run_git_command_in_dir, is_rebasing, stash_changes, push_branch, cleanup_merged_worktree};
+use std::process::Command;
 
 fn resolve_worktree_conflicts(worktree_path: &str, branch_name: &str) -> Result<bool, String> {
-    log_info(&format!("Processing worktree: {} (branch: {})", worktree_path, branch_name));
+    log_info(&format!(
+        "Processing worktree: {} (branch: {})",
+        worktree_path, branch_name
+    ));
 
     if !Path::new(worktree_path).exists() {
-        log_error(&format!("Worktree directory does not exist: {}", worktree_path));
+        log_error(&format!(
+            "Worktree directory does not exist: {}",
+            worktree_path
+        ));
         return Err("Worktree directory does not exist".to_string());
     }
 

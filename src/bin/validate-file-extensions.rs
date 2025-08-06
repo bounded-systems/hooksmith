@@ -1,22 +1,29 @@
+use hooksmith::{log_error, log_header, log_info, log_success, log_warning};
 use std::collections::HashSet;
 use std::env;
 use std::path::Path;
-use hooksmith::{log_info, log_success, log_warning, log_error, log_header};
 
 /// Whitelist of allowed file extensions for source files
 /// Only .rs and .jsonc files are allowed as manually maintained source files
 /// All other file types must be code-generated
 const ALLOWED_EXTENSIONS: &[&str] = &[
     // Rust source files (manually maintained)
-    "rs",
-    // JSON with comments configuration files (manually maintained)
+    "rs", // JSON with comments configuration files (manually maintained)
     "jsonc",
 ];
 
 /// Directories to exclude from validation
 const EXCLUDED_DIRS: &[&str] = &[
-    "target", "dist", "build", "node_modules", ".git", ".trunk", "logs",
-    "status-trends", "generated_file_demo", ".hooks"
+    "target",
+    "dist",
+    "build",
+    "node_modules",
+    ".git",
+    ".trunk",
+    "logs",
+    "status-trends",
+    "generated_file_demo",
+    ".hooks",
 ];
 
 fn validate_file_extensions() -> Result<(), Box<dyn std::error::Error>> {
@@ -25,7 +32,7 @@ fn validate_file_extensions() -> Result<(), Box<dyn std::error::Error>> {
 
     let allowed_extensions: HashSet<&str> = ALLOWED_EXTENSIONS.iter().copied().collect();
     let excluded_dirs: HashSet<&str> = EXCLUDED_DIRS.iter().copied().collect();
-    
+
     let mut errors = Vec::new();
     let mut warnings = Vec::new();
     let mut shell_scripts = Vec::new();
@@ -39,7 +46,7 @@ fn validate_file_extensions() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|e| format!("Failed to get git files: {}", e))?;
 
     let files_list = String::from_utf8_lossy(&output.stdout);
-    
+
     for file_path in files_list.lines() {
         let file_path = file_path.trim();
         if file_path.is_empty() {
@@ -47,7 +54,7 @@ fn validate_file_extensions() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         let path = Path::new(file_path);
-        
+
         // Skip excluded directories
         if path.components().any(|component| {
             if let std::path::Component::Normal(name) = component {
@@ -113,7 +120,7 @@ fn validate_file_extensions() -> Result<(), Box<dyn std::error::Error>> {
     println!();
     log_header("VALIDATION SUMMARY");
     println!();
-    
+
     println!("📊 File Statistics:");
     println!("   Rust files (.rs): {}", rust_files.len());
     println!("   Shell scripts (.sh/.bash/.zsh): {}", shell_scripts.len());
@@ -121,7 +128,10 @@ fn validate_file_extensions() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     if !shell_scripts.is_empty() {
-        log_error(&format!("Found {} shell scripts that need to be converted to Rust:", shell_scripts.len()));
+        log_error(&format!(
+            "Found {} shell scripts that need to be converted to Rust:",
+            shell_scripts.len()
+        ));
         for script in &shell_scripts {
             println!("   - {}", script);
         }
@@ -156,7 +166,7 @@ fn validate_file_extensions() -> Result<(), Box<dyn std::error::Error>> {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() > 1 {
         // Validate specific files
         let allowed_extensions: HashSet<&str> = ALLOWED_EXTENSIONS.iter().copied().collect();
@@ -164,7 +174,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         for file_path in &args[1..] {
             let path = Path::new(file_path);
-            
+
             if let Some(extension) = path.extension() {
                 if let Some(ext_str) = extension.to_str() {
                     if !allowed_extensions.contains(ext_str) {
@@ -191,4 +201,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-} 
+}

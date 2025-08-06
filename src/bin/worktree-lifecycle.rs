@@ -1,9 +1,9 @@
-use std::process::Command;
-use std::path::Path;
 use hooksmith::{
-    log_info, log_success, log_warning, log_error, log_header,
-    get_worktrees, run_git_command, run_git_command_in_dir, get_worktree_status, determine_state
+    determine_state, get_worktree_status, get_worktrees, log_error, log_header, log_info,
+    log_success, log_warning, run_git_command, run_git_command_in_dir,
 };
+use std::path::Path;
+use std::process::Command;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum LifecycleStage {
@@ -58,7 +58,10 @@ impl WorktreeLifecycle {
         Ok(Self { worktrees })
     }
 
-    fn get_worktree_stage(&self, worktree_path: &str) -> Result<LifecycleStage, Box<dyn std::error::Error>> {
+    fn get_worktree_stage(
+        &self,
+        worktree_path: &str,
+    ) -> Result<LifecycleStage, Box<dyn std::error::Error>> {
         // Get worktree status using the library function
         let status = get_worktree_status(worktree_path).map_err(|e| e.to_string())?;
 
@@ -76,7 +79,9 @@ impl WorktreeLifecycle {
     fn show_lifecycle_diagram(&self) {
         log_header("WORKTREE LIFECYCLE DIAGRAM");
         println!();
-        println!("CREATED → DEVELOPING → RESOLVING → READY → PR_CREATED → MERGED → CLEANUP → REMOVED");
+        println!(
+            "CREATED → DEVELOPING → RESOLVING → READY → PR_CREATED → MERGED → CLEANUP → REMOVED"
+        );
         println!("    ↓         ↓");
         println!("CONFLICTED → RESOLVING");
         println!();
@@ -105,7 +110,8 @@ impl WorktreeLifecycle {
             return Ok(());
         }
 
-        let mut stage_counts: std::collections::HashMap<LifecycleStage, Vec<String>> = std::collections::HashMap::new();
+        let mut stage_counts: std::collections::HashMap<LifecycleStage, Vec<String>> =
+            std::collections::HashMap::new();
 
         for worktree_path in &self.worktrees {
             let branch_name = Path::new(worktree_path)
@@ -120,9 +126,17 @@ impl WorktreeLifecycle {
             }
 
             let stage = self.get_worktree_stage(worktree_path)?;
-            stage_counts.entry(stage.clone()).or_insert_with(Vec::new).push(branch_name.clone());
+            stage_counts
+                .entry(stage.clone())
+                .or_insert_with(Vec::new)
+                .push(branch_name.clone());
 
-            println!("📁 {} (branch: {}) - Stage: {}", worktree_path, branch_name, stage.to_string());
+            println!(
+                "📁 {} (branch: {}) - Stage: {}",
+                worktree_path,
+                branch_name,
+                stage.to_string()
+            );
         }
 
         println!();
@@ -132,25 +146,54 @@ impl WorktreeLifecycle {
         for (stage, branches) in stage_counts {
             match stage {
                 LifecycleStage::Ready => {
-                    log_success(&format!("Ready ({}): {}", branches.len(), branches.join(", ")));
+                    log_success(&format!(
+                        "Ready ({}): {}",
+                        branches.len(),
+                        branches.join(", ")
+                    ));
                 }
                 LifecycleStage::Conflicted => {
-                    log_warning(&format!("Conflicted ({}): {}", branches.len(), branches.join(", ")));
+                    log_warning(&format!(
+                        "Conflicted ({}): {}",
+                        branches.len(),
+                        branches.join(", ")
+                    ));
                 }
                 LifecycleStage::Merged => {
-                    log_info(&format!("Merged ({}): {}", branches.len(), branches.join(", ")));
+                    log_info(&format!(
+                        "Merged ({}): {}",
+                        branches.len(),
+                        branches.join(", ")
+                    ));
                 }
                 LifecycleStage::Developing => {
-                    log_info(&format!("Developing ({}): {}", branches.len(), branches.join(", ")));
+                    log_info(&format!(
+                        "Developing ({}): {}",
+                        branches.len(),
+                        branches.join(", ")
+                    ));
                 }
                 LifecycleStage::Resolving => {
-                    log_warning(&format!("Resolving ({}): {}", branches.len(), branches.join(", ")));
+                    log_warning(&format!(
+                        "Resolving ({}): {}",
+                        branches.len(),
+                        branches.join(", ")
+                    ));
                 }
                 LifecycleStage::Created => {
-                    log_info(&format!("Created ({}): {}", branches.len(), branches.join(", ")));
+                    log_info(&format!(
+                        "Created ({}): {}",
+                        branches.len(),
+                        branches.join(", ")
+                    ));
                 }
                 _ => {
-                    log_info(&format!("{} ({}): {}", stage.to_string(), branches.len(), branches.join(", ")));
+                    log_info(&format!(
+                        "{} ({}): {}",
+                        stage.to_string(),
+                        branches.len(),
+                        branches.join(", ")
+                    ));
                 }
             }
         }
@@ -158,8 +201,15 @@ impl WorktreeLifecycle {
         Ok(())
     }
 
-    fn process_worktree_lifecycle(&self, worktree_path: &str, branch_name: &str) -> Result<(), Box<dyn std::error::Error>> {
-        log_info(&format!("Processing worktree lifecycle: {} (branch: {})", worktree_path, branch_name));
+    fn process_worktree_lifecycle(
+        &self,
+        worktree_path: &str,
+        branch_name: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        log_info(&format!(
+            "Processing worktree lifecycle: {} (branch: {})",
+            worktree_path, branch_name
+        ));
 
         let current_stage = self.get_worktree_stage(worktree_path)?;
         log_info(&format!("Current stage: {}", current_stage.to_string()));
@@ -168,7 +218,13 @@ impl WorktreeLifecycle {
             LifecycleStage::Conflicted => {
                 log_info("Resolving conflicts...");
                 let _ = Command::new("cargo")
-                    .args(&["run", "--bin", "conflict_resolver", "process", worktree_path])
+                    .args(&[
+                        "run",
+                        "--bin",
+                        "conflict_resolver",
+                        "process",
+                        worktree_path,
+                    ])
                     .output();
             }
             LifecycleStage::Ready => {
@@ -184,7 +240,10 @@ impl WorktreeLifecycle {
                     .output();
             }
             _ => {
-                log_info(&format!("No action needed for stage: {}", current_stage.to_string()));
+                log_info(&format!(
+                    "No action needed for stage: {}",
+                    current_stage.to_string()
+                ));
             }
         }
 
@@ -218,14 +277,20 @@ impl WorktreeLifecycle {
 
             processed_count += 1;
 
-            if self.process_worktree_lifecycle(worktree_path, &branch_name).is_ok() {
+            if self
+                .process_worktree_lifecycle(worktree_path, &branch_name)
+                .is_ok()
+            {
                 success_count += 1;
             }
 
             println!("---");
         }
 
-        log_success(&format!("Processed {} worktree(s), {} successful", processed_count, success_count));
+        log_success(&format!(
+            "Processed {} worktree(s), {} successful",
+            processed_count, success_count
+        ));
         Ok(())
     }
 
@@ -405,7 +470,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("  status: Show worktree lifecycle status");
             println!("  diagram: Show lifecycle diagram");
             println!("  process [path]: Process worktree lifecycle (all or specific)");
-            println!("  workflow: Run complete workflow (status → conflicts → state → PRs → cleanup)");
+            println!(
+                "  workflow: Run complete workflow (status → conflicts → state → PRs → cleanup)"
+            );
             println!("  state-machine: Run worktree state machine");
             println!("  status-report: Run worktree status report");
             println!("  conflict-resolution: Run conflict resolution");

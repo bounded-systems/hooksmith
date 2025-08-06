@@ -1,6 +1,6 @@
-use std::process::Command;
+use hooksmith::{log_error, log_header, log_info, log_success, log_warning};
 use std::env;
-use hooksmith::{log_info, log_warning, log_error, log_success, log_header};
+use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -34,7 +34,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     build_xtask(target, &args[2..])?;
 
     log_success("✅ xtask cross-compilation completed successfully!");
-    log_info(&format!("📁 Binary location: target/{}/debug/xtask", target));
+    log_info(&format!(
+        "📁 Binary location: target/{}/debug/xtask",
+        target
+    ));
 
     Ok(())
 }
@@ -46,9 +49,7 @@ fn show_usage() {
 }
 
 fn is_target_installed(target: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    let output = Command::new("rustup")
-        .args(&["target", "list"])
-        .output()?;
+    let output = Command::new("rustup").args(&["target", "list"]).output()?;
 
     let target_list = String::from_utf8(output.stdout)?;
     Ok(target_list.contains(&format!("{} (installed)", target)))
@@ -75,9 +76,7 @@ fn build_xtask(target: &str, additional_args: &[String]) -> Result<(), Box<dyn s
         args.push(arg);
     }
 
-    let output = Command::new("cargo")
-        .args(&args)
-        .output()?;
+    let output = Command::new("cargo").args(&args).output()?;
 
     if !output.status.success() {
         let stderr = String::from_utf8(output.stderr)?;

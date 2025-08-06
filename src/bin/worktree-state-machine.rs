@@ -1,7 +1,10 @@
-use std::process::Command;
-use std::path::Path;
+use hooksmith::{
+    determine_state, get_worktree_status, get_worktrees, log_error, log_header, log_info,
+    log_success, log_warning, run_git_command_in_dir, WorktreeState,
+};
 use std::env;
-use hooksmith::{log_info, log_success, log_warning, log_error, log_header, get_worktrees, run_git_command_in_dir, get_worktree_status, determine_state, WorktreeState};
+use std::path::Path;
+use std::process::Command;
 
 #[derive(Debug, Clone, PartialEq)]
 enum State {
@@ -65,8 +68,18 @@ fn get_worktree_state(worktree_path: &str, branch_name: &str) -> Result<State, S
     }
 }
 
-fn transition_state(worktree_path: &str, branch_name: &str, current_state: &State, target_state: &State) -> Result<bool, String> {
-    log_info(&format!("Transitioning {}: {} → {}", branch_name, current_state.to_string(), target_state.to_string()));
+fn transition_state(
+    worktree_path: &str,
+    branch_name: &str,
+    current_state: &State,
+    target_state: &State,
+) -> Result<bool, String> {
+    log_info(&format!(
+        "Transitioning {}: {} → {}",
+        branch_name,
+        current_state.to_string(),
+        target_state.to_string()
+    ));
 
     match target_state {
         State::Resolving => {
@@ -105,7 +118,10 @@ fn transition_state(worktree_path: &str, branch_name: &str, current_state: &Stat
         }
         State::PrCreated => {
             // Generate PR URL
-            let pr_url = format!("git@github.com:bdelanghe/hooksmith/compare/main...{}", branch_name);
+            let pr_url = format!(
+                "git@github.com:bdelanghe/hooksmith/compare/main...{}",
+                branch_name
+            );
             log_info(&format!("PR URL: {}", pr_url));
             Ok(true)
         }
@@ -129,7 +145,10 @@ fn transition_state(worktree_path: &str, branch_name: &str, current_state: &Stat
             }
         }
         _ => {
-            log_warning(&format!("Unknown target state: {}", target_state.to_string()));
+            log_warning(&format!(
+                "Unknown target state: {}",
+                target_state.to_string()
+            ));
             Ok(false)
         }
     }
@@ -151,7 +170,10 @@ fn get_next_state(current_state: &State) -> Option<State> {
 }
 
 fn process_worktree(worktree_path: &str, branch_name: &str) -> Result<bool, String> {
-    log_info(&format!("Processing worktree: {} (branch: {})", worktree_path, branch_name));
+    log_info(&format!(
+        "Processing worktree: {} (branch: {})",
+        worktree_path, branch_name
+    ));
 
     // Get current state
     let current_state = get_worktree_state(worktree_path, branch_name)?;
@@ -160,10 +182,16 @@ fn process_worktree(worktree_path: &str, branch_name: &str) -> Result<bool, Stri
     // Determine next state
     if let Some(next_state) = get_next_state(&current_state) {
         if transition_state(worktree_path, branch_name, &current_state, &next_state)? {
-            log_success(&format!("Successfully transitioned to {}", next_state.to_string()));
+            log_success(&format!(
+                "Successfully transitioned to {}",
+                next_state.to_string()
+            ));
             Ok(true)
         } else {
-            log_warning(&format!("Failed to transition to {}", next_state.to_string()));
+            log_warning(&format!(
+                "Failed to transition to {}",
+                next_state.to_string()
+            ));
             Ok(false)
         }
     } else {
@@ -228,7 +256,10 @@ fn process_all_worktrees() -> Result<(), Box<dyn std::error::Error>> {
         println!("---");
     }
 
-    log_success(&format!("Processed {} worktree(s), {} successful", processed_count, success_count));
+    log_success(&format!(
+        "Processed {} worktree(s), {} successful",
+        processed_count, success_count
+    ));
 
     Ok(())
 }

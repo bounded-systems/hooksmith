@@ -1,5 +1,5 @@
-use std::fs;
 use std::collections::HashMap;
+use std::fs;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🧪 Testing Comprehensive Documentation Generation with Checksum Validation");
@@ -29,8 +29,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("✅ Test files written");
 
     // Write checksum file (simplified)
-    let checksum_content = format!("{{\n  \"files\": {{\n{}}}\n}}", 
-        checksums.iter()
+    let checksum_content = format!(
+        "{{\n  \"files\": {{\n{}}}\n}}",
+        checksums
+            .iter()
             .map(|(k, v)| format!("    \"{}\": \"{}\"", k, v))
             .collect::<Vec<_>>()
             .join(",\n")
@@ -41,7 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("");
     println!("📄 Generated Documentation Files:");
     println!("================================");
-    
+
     for (file_path, _) in &docs {
         println!("📄 {}", file_path);
     }
@@ -105,7 +107,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 // Mock comprehensive documentation generation
-fn generate_comprehensive_documentation() -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
+fn generate_comprehensive_documentation(
+) -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
     let mut docs = HashMap::new();
 
     // Main README
@@ -124,52 +127,82 @@ fn generate_comprehensive_documentation() -> Result<HashMap<String, String>, Box
     docs.insert("test_API.md".to_string(), generate_test_api_docs()?);
 
     // Development Guide
-    docs.insert("test_DEVELOPMENT.md".to_string(), generate_test_dev_guide()?);
+    docs.insert(
+        "test_DEVELOPMENT.md".to_string(),
+        generate_test_dev_guide()?,
+    );
 
     // Testing Guide
-    docs.insert("test_TESTING.md".to_string(), generate_test_testing_guide()?);
+    docs.insert(
+        "test_TESTING.md".to_string(),
+        generate_test_testing_guide()?,
+    );
 
     // Contributing Guide
-    docs.insert("test_CONTRIBUTING.md".to_string(), generate_test_contributing_guide()?);
+    docs.insert(
+        "test_CONTRIBUTING.md".to_string(),
+        generate_test_contributing_guide()?,
+    );
 
     // Architecture Documentation
-    docs.insert("test_ARCHITECTURE.md".to_string(), generate_test_architecture_docs()?);
+    docs.insert(
+        "test_ARCHITECTURE.md".to_string(),
+        generate_test_architecture_docs()?,
+    );
 
     // Component READMEs
-    docs.insert("test_component_cli_core_README.md".to_string(), generate_test_component_readme("cli-core")?);
-    docs.insert("test_component_git_filter_README.md".to_string(), generate_test_component_readme("git-filter")?);
+    docs.insert(
+        "test_component_cli_core_README.md".to_string(),
+        generate_test_component_readme("cli-core")?,
+    );
+    docs.insert(
+        "test_component_git_filter_README.md".to_string(),
+        generate_test_component_readme("git-filter")?,
+    );
 
     // Checksum Report
-    docs.insert("test_CHECKSUM_REPORT.md".to_string(), generate_test_checksum_report()?);
+    docs.insert(
+        "test_CHECKSUM_REPORT.md".to_string(),
+        generate_test_checksum_report()?,
+    );
 
     Ok(docs)
 }
 
 // Mock checksum generation
-fn generate_checksums(docs: &HashMap<String, String>) -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
+fn generate_checksums(
+    docs: &HashMap<String, String>,
+) -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
     let mut checksums = HashMap::new();
-    
+
     for (file_path, content) in docs {
         let checksum = generate_simple_checksum(content);
         checksums.insert(file_path.clone(), checksum);
     }
-    
+
     Ok(checksums)
 }
 
 // Mock checksum validation
-fn validate_checksums(docs: &HashMap<String, String>, expected_checksums: &HashMap<String, String>) -> Result<(), Box<dyn std::error::Error>> {
+fn validate_checksums(
+    docs: &HashMap<String, String>,
+    expected_checksums: &HashMap<String, String>,
+) -> Result<(), Box<dyn std::error::Error>> {
     for (file_path, content) in docs {
         let actual_checksum = generate_simple_checksum(content);
-        let expected_checksum = expected_checksums.get(file_path)
+        let expected_checksum = expected_checksums
+            .get(file_path)
             .ok_or_else(|| format!("No checksum found for {}", file_path))?;
-        
+
         if &actual_checksum != expected_checksum {
-            return Err(format!("Checksum mismatch for {}: expected {}, got {}", 
-                file_path, expected_checksum, actual_checksum).into());
+            return Err(format!(
+                "Checksum mismatch for {}: expected {}, got {}",
+                file_path, expected_checksum, actual_checksum
+            )
+            .into());
         }
     }
-    
+
     Ok(())
 }
 
@@ -185,11 +218,14 @@ fn generate_simple_checksum(content: &str) -> String {
 // Mock documentation generators
 fn generate_test_readme() -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
-    content.push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
+    content
+        .push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
     content.push_str("<!-- Generated file: README.md -->\n");
     content.push_str("<!-- Do not edit this file manually - changes will be overwritten -->\n\n");
     content.push_str("# Hooksmith\n\n");
-    content.push_str("A CLI tool for building Rust binaries into Lefthook hooks with WASM components.\n\n");
+    content.push_str(
+        "A CLI tool for building Rust binaries into Lefthook hooks with WASM components.\n\n",
+    );
     content.push_str("## Features\n\n");
     content.push_str("- CLI interface\n");
     content.push_str("- WASM integration\n");
@@ -201,7 +237,8 @@ fn generate_test_readme() -> Result<String, Box<dyn std::error::Error>> {
 
 fn generate_test_cli_help() -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
-    content.push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
+    content
+        .push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
     content.push_str("<!-- Generated file: docs/CLI_HELP.md -->\n");
     content.push_str("<!-- Do not edit this file manually - changes will be overwritten -->\n\n");
     content.push_str("# CLI Help Documentation\n\n");
@@ -219,7 +256,8 @@ fn generate_test_cli_help() -> Result<String, Box<dyn std::error::Error>> {
 
 fn generate_test_structure() -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
-    content.push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
+    content
+        .push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
     content.push_str("<!-- Generated file: docs/STRUCTURE.md -->\n");
     content.push_str("<!-- Do not edit this file manually - changes will be overwritten -->\n\n");
     content.push_str("# Repository Structure\n\n");
@@ -237,7 +275,8 @@ fn generate_test_structure() -> Result<String, Box<dyn std::error::Error>> {
 
 fn generate_test_examples() -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
-    content.push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
+    content
+        .push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
     content.push_str("<!-- Generated file: docs/EXAMPLES.md -->\n");
     content.push_str("<!-- Do not edit this file manually - changes will be overwritten -->\n\n");
     content.push_str("# Code Examples\n\n");
@@ -252,7 +291,8 @@ fn generate_test_examples() -> Result<String, Box<dyn std::error::Error>> {
 
 fn generate_test_api_docs() -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
-    content.push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
+    content
+        .push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
     content.push_str("<!-- Generated file: docs/API.md -->\n");
     content.push_str("<!-- Do not edit this file manually - changes will be overwritten -->\n\n");
     content.push_str("# API Documentation\n\n");
@@ -265,7 +305,8 @@ fn generate_test_api_docs() -> Result<String, Box<dyn std::error::Error>> {
 
 fn generate_test_dev_guide() -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
-    content.push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
+    content
+        .push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
     content.push_str("<!-- Generated file: docs/DEVELOPMENT.md -->\n");
     content.push_str("<!-- Do not edit this file manually - changes will be overwritten -->\n\n");
     content.push_str("# Development Guide\n\n");
@@ -280,7 +321,8 @@ fn generate_test_dev_guide() -> Result<String, Box<dyn std::error::Error>> {
 
 fn generate_test_testing_guide() -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
-    content.push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
+    content
+        .push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
     content.push_str("<!-- Generated file: docs/TESTING.md -->\n");
     content.push_str("<!-- Do not edit this file manually - changes will be overwritten -->\n\n");
     content.push_str("# Testing Guide\n\n");
@@ -295,7 +337,8 @@ fn generate_test_testing_guide() -> Result<String, Box<dyn std::error::Error>> {
 
 fn generate_test_contributing_guide() -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
-    content.push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
+    content
+        .push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
     content.push_str("<!-- Generated file: docs/CONTRIBUTING.md -->\n");
     content.push_str("<!-- Do not edit this file manually - changes will be overwritten -->\n\n");
     content.push_str("# Contributing Guide\n\n");
@@ -311,7 +354,8 @@ fn generate_test_contributing_guide() -> Result<String, Box<dyn std::error::Erro
 
 fn generate_test_architecture_docs() -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
-    content.push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
+    content
+        .push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
     content.push_str("<!-- Generated file: docs/ARCHITECTURE.md -->\n");
     content.push_str("<!-- Do not edit this file manually - changes will be overwritten -->\n\n");
     content.push_str("# Architecture Documentation\n\n");
@@ -322,10 +366,17 @@ fn generate_test_architecture_docs() -> Result<String, Box<dyn std::error::Error
     Ok(content)
 }
 
-fn generate_test_component_readme(component_name: &str) -> Result<String, Box<dyn std::error::Error>> {
+fn generate_test_component_readme(
+    component_name: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
-    content.push_str(&format!("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n"));
-    content.push_str(&format!("<!-- Generated file: components/{}/README.md -->\n", component_name));
+    content.push_str(&format!(
+        "<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n"
+    ));
+    content.push_str(&format!(
+        "<!-- Generated file: components/{}/README.md -->\n",
+        component_name
+    ));
     content.push_str("<!-- Do not edit this file manually - changes will be overwritten -->\n\n");
     content.push_str(&format!("# {}\n\n", component_name));
     content.push_str(&format!("{} component for Hooksmith.\n\n", component_name));
@@ -336,7 +387,8 @@ fn generate_test_component_readme(component_name: &str) -> Result<String, Box<dy
 
 fn generate_test_checksum_report() -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
-    content.push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
+    content
+        .push_str("<!-- This file is auto-generated by `cargo xtask gen-docs-comprehensive` -->\n");
     content.push_str("<!-- Generated file: docs/CHECKSUM_REPORT.md -->\n");
     content.push_str("<!-- Do not edit this file manually - changes will be overwritten -->\n\n");
     content.push_str("# Documentation Checksum Report\n\n");
@@ -349,4 +401,4 @@ fn generate_test_checksum_report() -> Result<String, Box<dyn std::error::Error>>
     content.push_str("---\n\n");
     content.push_str("*This file is auto-generated by `cargo xtask gen-docs-comprehensive`. Do not edit manually - changes will be overwritten.*\n");
     Ok(content)
-} 
+}

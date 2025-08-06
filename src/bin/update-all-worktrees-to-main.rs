@@ -1,6 +1,6 @@
-use std::process::Command;
+use hooksmith::{log_error, log_header, log_info, log_success, log_warning, run_git_command};
 use std::env;
-use hooksmith::{log_info, log_warning, log_error, log_success, log_header, run_git_command};
+use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
@@ -85,9 +85,7 @@ fn check_dependencies() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn get_worktree_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    let output = Command::new("git")
-        .args(&["worktree", "list"])
-        .output()?;
+    let output = Command::new("git").args(&["worktree", "list"]).output()?;
 
     let worktree_list = String::from_utf8(output.stdout)?;
     let mut branches = Vec::new();
@@ -109,11 +107,19 @@ fn get_worktree_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
     Ok(branches)
 }
 
-fn update_worktree_to_main(worktree_path: &str, branch_name: &str, dry_run: bool, force: bool) -> Result<bool, Box<dyn std::error::Error>> {
+fn update_worktree_to_main(
+    worktree_path: &str,
+    branch_name: &str,
+    dry_run: bool,
+    force: bool,
+) -> Result<bool, Box<dyn std::error::Error>> {
     log_info(&format!("Processing worktree: {}", branch_name));
 
     if dry_run {
-        log_info(&format!("DRY RUN: Would update {} to origin/main", branch_name));
+        log_info(&format!(
+            "DRY RUN: Would update {} to origin/main",
+            branch_name
+        ));
         return Ok(true);
     }
 
@@ -128,16 +134,25 @@ fn update_worktree_to_main(worktree_path: &str, branch_name: &str, dry_run: bool
     let behind_count = get_behind_count()?;
 
     if behind_count == 0 {
-        log_info(&format!("Worktree {} is already up to date with origin/main", branch_name));
+        log_info(&format!(
+            "Worktree {} is already up to date with origin/main",
+            branch_name
+        ));
         env::set_current_dir(original_dir)?;
         return Ok(true);
     }
 
-    log_info(&format!("Worktree {} is {} commits behind origin/main", branch_name, behind_count));
+    log_info(&format!(
+        "Worktree {} is {} commits behind origin/main",
+        branch_name, behind_count
+    ));
 
     // Reset to origin/main
     if run_git_command(&["reset", "--hard", "origin/main"]).is_ok() {
-        log_success(&format!("Successfully updated {} to origin/main", branch_name));
+        log_success(&format!(
+            "Successfully updated {} to origin/main",
+            branch_name
+        ));
     } else {
         log_error(&format!("Failed to update {} to origin/main", branch_name));
         env::set_current_dir(original_dir)?;
@@ -173,7 +188,10 @@ fn get_behind_count() -> Result<u32, Box<dyn std::error::Error>> {
     Ok(count)
 }
 
-fn create_pr_for_worktree(branch_name: &str, dry_run: bool) -> Result<bool, Box<dyn std::error::Error>> {
+fn create_pr_for_worktree(
+    branch_name: &str,
+    dry_run: bool,
+) -> Result<bool, Box<dyn std::error::Error>> {
     log_info(&format!("Creating PR for branch: {}", branch_name));
 
     if dry_run {
@@ -183,7 +201,16 @@ fn create_pr_for_worktree(branch_name: &str, dry_run: bool) -> Result<bool, Box<
 
     // Check if PR already exists
     let output = Command::new("gh")
-        .args(&["pr", "list", "--head", branch_name, "--json", "number", "--jq", "length"])
+        .args(&[
+            "pr",
+            "list",
+            "--head",
+            branch_name,
+            "--json",
+            "number",
+            "--jq",
+            "length",
+        ])
         .output();
 
     if let Ok(output) = output {
@@ -214,7 +241,11 @@ fn create_pr_for_worktree(branch_name: &str, dry_run: bool) -> Result<bool, Box<
     }
 }
 
-fn update_all_worktrees(dry_run: bool, create_prs: bool, force: bool) -> Result<(), Box<dyn std::error::Error>> {
+fn update_all_worktrees(
+    dry_run: bool,
+    create_prs: bool,
+    force: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     log_header("UPDATING ALL WORKTREES TO MAIN");
 
     // Get list of worktree branches
@@ -231,7 +262,10 @@ fn update_all_worktrees(dry_run: bool, create_prs: bool, force: bool) -> Result<
         // Get worktree path
         let worktree_path = get_worktree_path(branch)?;
         if worktree_path.is_empty() {
-            log_error(&format!("Could not find worktree path for branch: {}", branch));
+            log_error(&format!(
+                "Could not find worktree path for branch: {}",
+                branch
+            ));
             failed_count += 1;
             continue;
         }
@@ -268,9 +302,7 @@ fn update_all_worktrees(dry_run: bool, create_prs: bool, force: bool) -> Result<
 }
 
 fn get_worktree_path(branch_name: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let output = Command::new("git")
-        .args(&["worktree", "list"])
-        .output()?;
+    let output = Command::new("git").args(&["worktree", "list"]).output()?;
 
     let worktree_list = String::from_utf8(output.stdout)?;
     for line in worktree_list.lines() {

@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use chrono::Utc;
-use std::process::Command;
 use std::path::Path;
+use std::process::Command;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -26,7 +26,9 @@ async fn main() -> Result<()> {
             println!("push-all          - Push all worktree branches to remote");
             println!("sync-all          - Commit and push all worktrees");
             println!("cleanup-worktrees - Remove worktrees that are already integrated");
-            println!("remove-worktree   - Remove a specific worktree (usage: remove-worktree <name>)");
+            println!(
+                "remove-worktree   - Remove a specific worktree (usage: remove-worktree <name>)"
+            );
             println!("help              - Show this help message");
             Ok(())
         }
@@ -69,7 +71,10 @@ async fn run_main_cleanup() -> Result<()> {
     }
 
     if !ahead_commits.is_empty() {
-        println!("⚠️  Main is ahead of origin/main by {} commit(s):", ahead_commits.len());
+        println!(
+            "⚠️  Main is ahead of origin/main by {} commit(s):",
+            ahead_commits.len()
+        );
         for commit in &ahead_commits {
             println!("   - {}", commit);
         }
@@ -113,7 +118,10 @@ async fn run_main_cleanup() -> Result<()> {
     reset_main()?;
 
     println!("✅ Main cleanup completed!");
-    println!("📁 Changes moved to worktree: worktree-{}", branch_name.replace('/', "-"));
+    println!(
+        "📁 Changes moved to worktree: worktree-{}",
+        branch_name.replace('/', "-")
+    );
     println!("🌿 Branch: {}", branch_name);
 
     // Return to original directory if we were in a worktree
@@ -185,7 +193,14 @@ fn create_worktree(branch_name: &str, worktree_name: &str) -> Result<()> {
 
     // Create worktree
     let output = Command::new("cargo")
-        .args(["xtask", "worktree", "create", "--branch", branch_name, "--switch"])
+        .args([
+            "xtask",
+            "worktree",
+            "create",
+            "--branch",
+            branch_name,
+            "--switch",
+        ])
         .output()
         .context("Failed to create worktree")?;
 
@@ -207,8 +222,10 @@ fn switch_to_worktree(worktree_name: &str) -> Result<()> {
     }
 
     // Change to worktree directory
-    std::env::set_current_dir(&worktree_path)
-        .context(format!("Failed to change to worktree directory: {}", worktree_path))?;
+    std::env::set_current_dir(&worktree_path).context(format!(
+        "Failed to change to worktree directory: {}",
+        worktree_path
+    ))?;
 
     Ok(())
 }
@@ -232,8 +249,7 @@ fn commit_changes(branch_name: &str) -> Result<()> {
 
 fn switch_to_main(main_repo_path: &std::path::Path) -> Result<()> {
     // Change back to main directory
-    std::env::set_current_dir(main_repo_path)
-        .context("Failed to change back to main directory")?;
+    std::env::set_current_dir(main_repo_path).context("Failed to change back to main directory")?;
 
     // Switch to main branch
     Command::new("git")
@@ -269,8 +285,11 @@ fn copy_changes_to_worktree(main_repo_path: &std::path::Path) -> Result<()> {
         }
 
         // Copy file
-        std::fs::copy(&main_file, &worktree_file)
-            .context(format!("Failed to copy {} to {}", main_file.display(), worktree_file))?;
+        std::fs::copy(&main_file, &worktree_file).context(format!(
+            "Failed to copy {} to {}",
+            main_file.display(),
+            worktree_file
+        ))?;
     }
 
     // Copy untracked files
@@ -297,8 +316,11 @@ fn copy_changes_to_worktree(main_repo_path: &std::path::Path) -> Result<()> {
         }
 
         // Copy file
-        std::fs::copy(&main_file, &worktree_file)
-            .context(format!("Failed to copy {} to {}", main_file.display(), worktree_file))?;
+        std::fs::copy(&main_file, &worktree_file).context(format!(
+            "Failed to copy {} to {}",
+            main_file.display(),
+            worktree_file
+        ))?;
     }
 
     Ok(())
@@ -314,7 +336,10 @@ async fn commit_all_worktrees() -> Result<()> {
         let worktree_path = &worktree.path;
         let branch = &worktree.branch;
 
-        println!("📁 Processing worktree: {} (branch: {})", worktree_path, branch);
+        println!(
+            "📁 Processing worktree: {} (branch: {})",
+            worktree_path, branch
+        );
 
         // Check if worktree has changes
         let has_changes = check_worktree_changes(worktree_path)?;
@@ -341,7 +366,10 @@ async fn push_all_worktrees() -> Result<()> {
         let worktree_path = &worktree.path;
         let branch = &worktree.branch;
 
-        println!("📁 Pushing worktree: {} (branch: {})", worktree_path, branch);
+        println!(
+            "📁 Pushing worktree: {} (branch: {})",
+            worktree_path, branch
+        );
 
         // Push the branch
         push_worktree_branch(worktree_path, branch)?;
@@ -414,7 +442,10 @@ fn get_worktree_list() -> Result<Vec<WorktreeInfo>> {
 fn check_worktree_changes(worktree_path: &str) -> Result<bool> {
     // Check if worktree directory exists
     if !std::path::Path::new(worktree_path).exists() {
-        println!("   ⚠️  Worktree directory does not exist: {}", worktree_path);
+        println!(
+            "   ⚠️  Worktree directory does not exist: {}",
+            worktree_path
+        );
         return Ok(false);
     }
 
@@ -450,7 +481,10 @@ fn commit_worktree_changes(worktree_path: &str, branch: &str) -> Result<()> {
 fn push_worktree_branch(worktree_path: &str, branch: &str) -> Result<()> {
     // Check if worktree directory exists
     if !std::path::Path::new(worktree_path).exists() {
-        println!("   ⚠️  Worktree directory does not exist: {}", worktree_path);
+        println!(
+            "   ⚠️  Worktree directory does not exist: {}",
+            worktree_path
+        );
         return Ok(());
     }
 
@@ -464,7 +498,10 @@ fn push_worktree_branch(worktree_path: &str, branch: &str) -> Result<()> {
         .args(["push", "origin", branch])
         .current_dir(worktree_path)
         .output()
-        .context(format!("Failed to push branch {} from {}", branch, worktree_path))?;
+        .context(format!(
+            "Failed to push branch {} from {}",
+            branch, worktree_path
+        ))?;
 
     Ok(())
 }
@@ -504,11 +541,17 @@ async fn cleanup_worktrees() -> Result<()> {
         // Check if branch is already merged into main
         let is_merged = check_if_branch_merged(branch)?;
         if is_merged {
-            println!("✅ Removing merged worktree: {} (branch: {})", worktree_path, branch);
+            println!(
+                "✅ Removing merged worktree: {} (branch: {})",
+                worktree_path, branch
+            );
             remove_worktree_internal(worktree_path, branch)?;
             removed_count += 1;
         } else {
-            println!("⏳ Keeping worktree: {} (branch: {}) - not yet merged", worktree_path, branch);
+            println!(
+                "⏳ Keeping worktree: {} (branch: {}) - not yet merged",
+                worktree_path, branch
+            );
         }
     }
 
@@ -528,9 +571,9 @@ async fn remove_worktree(worktree_name: Option<String>) -> Result<()> {
 
             // Find the worktree by name
             let worktrees = get_worktree_list()?;
-            let worktree = worktrees.iter().find(|w| {
-                w.path.contains(&name) || w.branch.contains(&name)
-            });
+            let worktree = worktrees
+                .iter()
+                .find(|w| w.path.contains(&name) || w.branch.contains(&name));
 
             match worktree {
                 Some(w) => {
@@ -560,8 +603,10 @@ fn remove_worktree_internal(worktree_path: &str, branch: &str) -> Result<()> {
 
     // Remove the worktree directory
     if std::path::Path::new(worktree_path).exists() {
-        std::fs::remove_dir_all(worktree_path)
-            .context(format!("Failed to remove worktree directory: {}", worktree_path))?;
+        std::fs::remove_dir_all(worktree_path).context(format!(
+            "Failed to remove worktree directory: {}",
+            worktree_path
+        ))?;
     }
 
     // Remove the worktree from git
@@ -569,7 +614,10 @@ fn remove_worktree_internal(worktree_path: &str, branch: &str) -> Result<()> {
         .args(["worktree", "remove", worktree_path])
         .current_dir(&main_repo_path)
         .output()
-        .context(format!("Failed to remove worktree from git: {}", worktree_path))?;
+        .context(format!(
+            "Failed to remove worktree from git: {}",
+            worktree_path
+        ))?;
 
     // Delete the branch if it exists and is not main
     if !branch.is_empty() && branch != "main" {

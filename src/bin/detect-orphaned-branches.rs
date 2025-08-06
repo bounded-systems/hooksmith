@@ -1,7 +1,9 @@
-use std::process::Command;
-use std::path::Path;
+use hooksmith::{
+    get_worktrees, log_error, log_header, log_info, log_success, log_warning, run_git_command,
+};
 use std::env;
-use hooksmith::{log_info, log_success, log_warning, log_error, log_header, run_git_command, get_worktrees};
+use std::path::Path;
+use std::process::Command;
 
 fn get_worktree_branches() -> Result<Vec<String>, String> {
     let worktrees_output = run_git_command(&["worktree", "list"])?;
@@ -28,7 +30,7 @@ fn get_local_branches() -> Result<Vec<String>, String> {
     let branches_output = run_git_command(&["branch", "--list"])?;
     let mut branches = Vec::new();
 
-        for line in branches_output.lines() {
+    for line in branches_output.lines() {
         let clean_line = line.trim();
 
         // Remove asterisk for current branch
@@ -71,7 +73,10 @@ fn create_worktree_for_branch(branch_name: &str, dry_run: bool) -> Result<bool, 
     log_info(&format!("Processing orphaned branch: {}", branch_name));
 
     if dry_run {
-        log_info(&format!("DRY RUN: Would create worktree for {}", branch_name));
+        log_info(&format!(
+            "DRY RUN: Would create worktree for {}",
+            branch_name
+        ));
         return Ok(true);
     }
 
@@ -94,16 +99,25 @@ fn create_worktree_for_branch(branch_name: &str, dry_run: bool) -> Result<bool, 
         .map_err(|e| format!("Failed to create worktree: {}", e))?;
 
     if output.status.success() {
-        log_success(&format!("Successfully created worktree for branch: {}", branch_name));
+        log_success(&format!(
+            "Successfully created worktree for branch: {}",
+            branch_name
+        ));
         Ok(true)
     } else {
-        log_error(&format!("Failed to create worktree for branch: {}", branch_name));
+        log_error(&format!(
+            "Failed to create worktree for branch: {}",
+            branch_name
+        ));
         Ok(false)
     }
 }
 
 fn delete_orphaned_branch(branch_name: &str, dry_run: bool) -> Result<bool, String> {
-    log_info(&format!("Processing orphaned branch for deletion: {}", branch_name));
+    log_info(&format!(
+        "Processing orphaned branch for deletion: {}",
+        branch_name
+    ));
 
     if dry_run {
         log_info(&format!("DRY RUN: Would delete branch {}", branch_name));
@@ -112,7 +126,9 @@ fn delete_orphaned_branch(branch_name: &str, dry_run: bool) -> Result<bool, Stri
 
     // Check if branch is merged
     let merged_branches = run_git_command(&["branch", "--merged", "main"])?;
-    let is_merged = merged_branches.lines().any(|line| line.trim() == branch_name);
+    let is_merged = merged_branches
+        .lines()
+        .any(|line| line.trim() == branch_name);
 
     if is_merged {
         log_info(&format!("Branch {} is merged, deleting...", branch_name));
@@ -122,21 +138,30 @@ fn delete_orphaned_branch(branch_name: &str, dry_run: bool) -> Result<bool, Stri
             .map_err(|e| format!("Failed to delete branch: {}", e))?;
 
         if output.status.success() {
-            log_success(&format!("Successfully deleted merged branch: {}", branch_name));
+            log_success(&format!(
+                "Successfully deleted merged branch: {}",
+                branch_name
+            ));
             Ok(true)
         } else {
             log_error(&format!("Failed to delete merged branch: {}", branch_name));
             Ok(false)
         }
     } else {
-        log_warning(&format!("Branch {} is not merged, force deleting", branch_name));
+        log_warning(&format!(
+            "Branch {} is not merged, force deleting",
+            branch_name
+        ));
         let output = Command::new("git")
             .args(&["branch", "-D", branch_name])
             .output()
             .map_err(|e| format!("Failed to force delete branch: {}", e))?;
 
         if output.status.success() {
-            log_success(&format!("Successfully force deleted branch: {}", branch_name));
+            log_success(&format!(
+                "Successfully force deleted branch: {}",
+                branch_name
+            ));
             Ok(true)
         } else {
             log_error(&format!("Failed to force delete branch: {}", branch_name));
@@ -145,7 +170,11 @@ fn delete_orphaned_branch(branch_name: &str, dry_run: bool) -> Result<bool, Stri
     }
 }
 
-fn handle_orphaned_branches(create_worktrees: bool, delete_branches: bool, dry_run: bool) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_orphaned_branches(
+    create_worktrees: bool,
+    delete_branches: bool,
+    dry_run: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     log_header("DETECTING ORPHANED BRANCHES");
 
     // Find orphaned branches
@@ -178,7 +207,6 @@ fn handle_orphaned_branches(create_worktrees: bool, delete_branches: bool, dry_r
         log_header("WORKTREE CREATION SUMMARY");
         log_success(&format!("Created: {}", created_count));
         log_error(&format!("Failed: {}", failed_count));
-
     } else if delete_branches {
         log_header("DELETING ORPHANED BRANCHES");
 
@@ -196,7 +224,6 @@ fn handle_orphaned_branches(create_worktrees: bool, delete_branches: bool, dry_r
         log_header("BRANCH DELETION SUMMARY");
         log_success(&format!("Deleted: {}", deleted_count));
         log_error(&format!("Failed: {}", failed_count));
-
     } else {
         log_header("ORPHANED BRANCHES DETECTED");
         log_info("Use --create-worktrees to create worktrees for these branches");
@@ -221,7 +248,9 @@ fn show_usage() {
     println!("Examples:");
     println!("  detect-orphaned-branches                    # Show orphaned branches");
     println!("  detect-orphaned-branches --dry-run         # Show what would be done");
-    println!("  detect-orphaned-branches --create-worktrees # Create worktrees for orphaned branches");
+    println!(
+        "  detect-orphaned-branches --create-worktrees # Create worktrees for orphaned branches"
+    );
     println!("  detect-orphaned-branches --delete-branches  # Delete orphaned branches");
     println!();
     println!("This script will:");
