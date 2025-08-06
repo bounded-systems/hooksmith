@@ -624,20 +624,20 @@ impl WorktreeManager {
     ) -> Result<String> {
         // Generate consistent branch name from slug
         let branch_name = format!("feature/{}", slug);
-        
+
         // Create worktree based on origin/main
         let worktree_path = self.create_worktree(&branch_name, base_dir, false).await?;
-        
+
         // Push and set upstream if requested
         if push_upstream {
             println!("🚀 Pushing feature branch and setting upstream...");
-            
+
             let push_output = Command::new("git")
                 .args(&["push", "-u", "origin", &branch_name])
                 .current_dir(&worktree_path)
                 .output()
                 .context("Failed to push feature branch")?;
-            
+
             if push_output.status.success() {
                 println!("✅ Feature branch pushed and upstream set");
             } else {
@@ -645,13 +645,13 @@ impl WorktreeManager {
                 eprintln!("⚠️  Warning: Failed to push feature branch: {}", error);
             }
         }
-        
+
         // Switch to worktree if requested
         if switch {
             println!("🔄 Switching to feature worktree...");
             println!("   cd {}", worktree_path);
         }
-        
+
         Ok(worktree_path)
     }
 
@@ -1678,6 +1678,123 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 }
             }
         }
+        WorktreeCommands::CreateFeature {
+            slug,
+            base_dir,
+            push_upstream,
+            switch,
+            open_cursor,
+        } => {
+            println!(
+                "{}",
+                style(&format!("Creating feature worktree for slug: {}", slug)).bold()
+            );
+
+            // Create the feature worktree
+            let worktree_path = manager
+                .create_feature_worktree(&slug, base_dir.as_deref(), push_upstream, switch)
+                .await?;
+
+            // Open worktree in Cursor if requested
+            if open_cursor {
+                println!("{}", style("Opening feature worktree in Cursor...").bold());
+
+                // Validate that the directory exists before opening Cursor
+                let worktree_path_buf = std::path::Path::new(&worktree_path);
+                if !worktree_path_buf.exists() {
+                    println!(
+                        "{}",
+                        style(&format!(
+                            "✗ Worktree directory does not exist: {}",
+                            worktree_path
+                        ))
+                        .red()
+                    );
+                    return Err(anyhow::anyhow!(
+                        "Worktree directory does not exist: {}",
+                        worktree_path
+                    ));
+                }
+
+                if !worktree_path_buf.is_dir() {
+                    println!(
+                        "{}",
+                        style(&format!(
+                            "✗ Path exists but is not a directory: {}",
+                            worktree_path
+                        ))
+                        .red()
+                    );
+                    return Err(anyhow::anyhow!(
+                        "Path is not a directory: {}",
+                        worktree_path
+                    ));
+                }
+
+                // Check if Cursor is available
+                let cursor_check = Command::new("which").arg("cursor").output();
+                if let Ok(output) = cursor_check {
+                    if output.status.success() {
+                        // Open worktree in Cursor
+                        let cursor_result = Command::new("cursor").arg(&worktree_path).spawn();
+
+                        match cursor_result {
+                            Ok(_) => {
+                                println!(
+                                    "{}",
+                                    style("✓ Opened feature worktree in Cursor").green()
+                                );
+                                println!(
+                                    "{}",
+                                    style(&format!("  - Path: {}", worktree_path)).dim()
+                                );
+                            }
+                            Err(e) => {
+                                println!(
+                                    "{}",
+                                    style(&format!("✗ Failed to open Cursor: {}", e)).red()
+                                );
+                                println!(
+                                    "{}",
+                                    style(&format!(
+                                        "  - You can manually open it with: cursor {}",
+                                        worktree_path
+                                    ))
+                                    .dim()
+                                );
+                            }
+                        }
+                    } else {
+                        println!("{}", style("✗ Cursor not found in PATH").red());
+                        println!(
+                            "{}",
+                            style("  - Please install Cursor or add it to your PATH").dim()
+                        );
+                        println!(
+                            "{}",
+                            style(&format!(
+                                "  - You can manually open it with: cursor {}",
+                                worktree_path
+                            ))
+                            .dim()
+                        );
+                    }
+                } else {
+                    println!(
+                        "{}",
+                        style("✗ Could not check for Cursor installation").red()
+                    );
+                    println!(
+                        "{}",
+                        style(&format!(
+                            "  - You can manually open it with: cursor {}",
+                            worktree_path
+                        ))
+                        .dim()
+                    );
+                }
+            }
+        }
         WorktreeCommands::Switch { worktree, tool } => {
             if let Some(ref _tool_name) = tool {
                 // Override preferred tool for this command
@@ -1881,6 +1998,59 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
 
             // Run the worktree sync strategy
             run_worktree_sync_command().await?;
+        }
+        WorktreeCommands::AuditContracts { detailed, format } => {
+            use crate::worktree_contract::audit_all_worktrees;
+
+            if detailed {
+                println!("🔍 Running detailed worktree contract audit...");
+            }
+
+            match format.as_str() {
+                "json" => {
+                    let contract = crate::worktree_contract::WorktreeContract::default();
+                    let results = contract.validate_all_worktrees()?;
+                    let json = serde_json::to_string_pretty(&results)?;
+                    println!("{}", json);
+                }
+                "summary" => {
+                    audit_all_worktrees()?;
+                }
+                _ => {
+                    audit_all_worktrees()?;
+                }
+            }
+        }
+        WorktreeCommands::ValidateContract { worktree_path, branch_name, strict } => {
+            use crate::worktree_contract::{validate_proposed_worktree, run_post_checkout_hook};
+
+            if let (Some(path), Some(branch)) = (worktree_path, branch_name) {
+                // Validate specific worktree
+                let result = validate_proposed_worktree(&path, &branch)?;
+
+                if result.is_valid {
+                    println!("✅ Worktree naming contract is valid");
+                    println!("   Path: {}", result.worktree_path);
+                    println!("   Branch: {}", result.branch_name);
+                    println!("   Directory: {}", result.actual_dir_name);
+                } else {
+                    println!("❌ Worktree naming contract violation");
+                    println!("   Path: {}", result.worktree_path);
+                    println!("   Branch: {}", result.branch_name);
+                    println!("   Actual directory: {}", result.actual_dir_name);
+                    println!("   Expected directory: {}", result.expected_dir_name);
+                    if let Some(suggestion) = result.suggestion {
+                        println!("   Suggestion: {}", suggestion);
+                    }
+
+                    if strict {
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                // Run post-checkout hook validation
+                run_post_checkout_hook()?;
+            }
         }
     }
 

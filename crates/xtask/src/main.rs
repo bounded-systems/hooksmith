@@ -588,6 +588,27 @@ enum WorktreeCommands {
         #[arg(long)]
         force: bool,
     },
+    /// Audit worktree naming contracts
+    AuditContracts {
+        /// Show detailed validation results
+        #[arg(long)]
+        detailed: bool,
+        /// Output format (text, json, summary)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    /// Validate worktree naming contract (for hooks)
+    ValidateContract {
+        /// Worktree path to validate
+        #[arg(long)]
+        worktree_path: Option<String>,
+        /// Branch name to validate
+        #[arg(long)]
+        branch_name: Option<String>,
+        /// Exit with error on violations
+        #[arg(long)]
+        strict: bool,
+    },
 }
 
 mod auto_push;
@@ -623,6 +644,7 @@ mod registry;
 mod workflow;
 mod worktree;
 mod worktree_sync;
+mod worktree_contract;
 mod unified_generator;
 mod repo_structure_validator;
 mod component_status;

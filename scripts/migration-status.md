@@ -141,4 +141,27 @@ rustc hooks/validate-file-extensions.rs -o validate-file-extensions
 - **Maintainability**: Easier to refactor and extend
 - **Error Handling**: More robust error handling and reporting
 - **Testing**: Easier to unit test Rust code
-- **Integration**: Better integration with the existing Rust codebase 
+- **Integration**: Better integration with the existing Rust codebase
+
+## New Features Added
+
+### Feature Worktree Creation
+We've added a new `create-feature` command to the worktree management system:
+
+```bash
+# Create a feature worktree with consistent naming
+cargo run --bin xtask worktree create-feature --slug my-feature --push-upstream --switch
+
+# This creates:
+# - Branch: feature/my-feature
+# - Worktree: worktree-feature-my-feature
+# - Pushes to origin and sets upstream
+# - Switches to the new worktree
+```
+
+**Features:**
+- Consistent naming pattern: `feature/{slug}`
+- Automatic upstream push and tracking
+- Integration with existing worktree tools
+- Cursor integration support
+- Based on origin/main but creates feature branch 
