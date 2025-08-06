@@ -1787,8 +1787,8 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                     println!(
                         "{}",
                         style(&format!(
-                            "  - You can manually open it with: cursor {}",
-                            worktree_path
+                                                    "  - You can manually open it with: cursor {}",
+                        worktree_path
                         ))
                         .dim()
                     );
