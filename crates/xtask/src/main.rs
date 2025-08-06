@@ -20,6 +20,7 @@ use json_comments::StripComments;
 use hook_state_machine::{HookContext, HookManager, HookType};
 use workflow::{run_dev_workflow, run_optimize, run_macos_optimize, run_security_check};
 use worktree::run_worktree_command;
+use worktree_sync::run_worktree_sync_command;
 
 /// CLI argument enum for hook types
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -557,6 +558,18 @@ enum WorktreeCommands {
         #[arg(long)]
         base_dir: Option<String>,
     },
+    /// Sync all worktrees using conflict-free strategy
+    SyncStrategy {
+        /// Validate sync readiness before proceeding
+        #[arg(long)]
+        validate: bool,
+        /// Generate sync report
+        #[arg(long)]
+        report: bool,
+        /// Force sync even with uncommitted changes
+        #[arg(long)]
+        force: bool,
+    },
 }
 
 mod auto_push;
@@ -591,6 +604,7 @@ mod checksum_registry;
 mod registry;
 mod workflow;
 mod worktree;
+mod worktree_sync;
 mod unified_generator;
 mod repo_structure_validator;
 mod component_status;
