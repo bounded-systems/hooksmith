@@ -1,118 +1,102 @@
 # Branch Merge Summary
 
-## 🎯 **PRs Created for Branch Merging**
+## Overview
+This document summarizes the status of all branches and their readiness for merging via PRs.
 
-### 1. **Compilation Fixes PR**
-- **Branch**: `feature/compilation-fixes`
+## ✅ **Branches Ready for PRs (Already Pushed to Origin)**
+
+### 1. Compilation Fixes
+- **Branch**: `origin/feature/compilation-fixes`
 - **PR URL**: https://github.com/bdelanghe/hooksmith/pull/new/feature/compilation-fixes
-- **Status**: ✅ **Ready for Review**
-- **Description**: Fixes compilation errors in sbom.rs and worktree.rs
-- **Source**: `feat-shell-migration-v3` branch
+- **Changes**: Fixes for compilation errors in sbom.rs and worktree.rs
+- **Status**: ✅ Ready for PR
 
-### 2. **Ensure Worktree Folder Structure PR**
-- **Branch**: `feature/ensure-worktree-folder-structure`
-- **PR URL**: https://github.com/bdelanghe/hooksmith/pull/new/feature/ensure-worktree-folder-structure
-- **Status**: ✅ **Ready for Review**
-- **Description**: Worktree migration to .wt directory structure
-- **Source**: `ensure-worktree-folder-structure` branch
-
-### 3. **Consolidated Worktree Migration PR** (RECOMMENDED)
-- **Branch**: `feature/consolidated-worktree-migration`
+### 2. Consolidated Worktree Migration
+- **Branch**: `origin/feature/consolidated-worktree-migration`
 - **PR URL**: https://github.com/bdelanghe/hooksmith/pull/new/feature/consolidated-worktree-migration
-- **Status**: ✅ **Ready for Review**
-- **Description**: Clean, single commit with all worktree migration changes
+- **Changes**: Clean, single commit with all worktree migration changes
+- **Status**: ✅ Ready for PR
 
-## 📊 **Branch Status**
+### 3. Ensure Worktree Folder Structure
+- **Branch**: `origin/feature/ensure-worktree-folder-structure`
+- **PR URL**: https://github.com/bdelanghe/hooksmith/pull/new/feature/ensure-worktree-folder-structure
+- **Changes**: Worktree folder structure changes
+- **Status**: ✅ Ready for PR
 
-### ✅ **Branches with PRs Created**
-- `ensure-worktree-folder-structure` → `feature/ensure-worktree-folder-structure` PR
-- `feat-shell-migration-v3` → `feature/compilation-fixes` PR
+### 4. Worktree Migration Clean
+- **Branch**: `origin/feature/worktree-migration-clean`
+- **PR URL**: https://github.com/bdelanghe/hooksmith/pull/new/feature/worktree-migration-clean
+- **Changes**: Clean worktree migration implementation
+- **Status**: ✅ Ready for PR
 
-### ⏸️ **Branch Excluded (Still in Progress)**
-- `feature/worktree-migration-to-wt` - **NOT MERGED** (you're still working on this one)
+### 5. Additional Worktree Improvements
+- **Branch**: `origin/feature/additional-worktree-improvements`
+- **PR URL**: https://github.com/bdelanghe/hooksmith/pull/new/feature/additional-worktree-improvements
+- **Changes**: Additional worktree improvements and verification script
+- **Status**: ✅ Ready for PR
 
-### 🔄 **Branches Already Handled**
-- `feature/additional-worktree-improvements` - Already has PR created
-- `feature/worktree-migration-clean` - Already has PR created
+## ⏸️ **Branches with Conflicts (Need Manual Resolution)**
 
-## 🎯 **What Each PR Contains**
+### 1. CRD Worktree System
+- **Branch**: `feat-CRD-worktree`
+- **Changes**: Kubernetes CRD system with complex state machine
+- **Status**: ⏸️ Conflicts in worktree-runner files
+- **Action**: Requires manual conflict resolution
 
-### **Compilation Fixes PR** (`feature/compilation-fixes`)
-- Fixes backtick escape sequences in sbom.rs format strings
-- Fixes moved value error in worktree.rs by cloning worktree_path
-- Ensures clean compilation for worktree tools
-- Files modified:
-  - `crates/xtask/src/sbom.rs`
-  - `crates/xtask/src/worktree.rs`
-  - `.wb/metadata.json`
+### 2. Shell Migration v2
+- **Branch**: `feat-shell-migration-v2`
+- **Changes**: Shell to Rust migration
+- **Status**: ⏸️ Conflicts in worktree.rs
+- **Action**: Requires manual conflict resolution
 
-### **Ensure Worktree Folder Structure PR** (`feature/ensure-worktree-folder-structure`)
-- Complete worktree migration to .wt directory structure
-- All configuration files updated
-- All scripts updated
-- All Rust code updated
-- Migration scripts and documentation added
-- Files modified:
-  - `.worktree-config.json`
-  - `.worktree-config.jsonc`
-  - `crates/xtask/src/worktree.rs`
-  - `crates/xtask/src/sbom.rs`
-  - `scripts/*.sh` (multiple files)
-  - `src/main.rs`
-  - Documentation files
+### 3. Worktree Sync Commands
+- **Branch**: `feat-worktree-sync`
+- **Changes**: Worktree sync and pull commands
+- **Status**: ⏸️ Conflicts in worktree.rs
+- **Action**: Requires manual conflict resolution
 
-### **Consolidated Worktree Migration PR** (`feature/consolidated-worktree-migration`)
-- Clean, single commit with all worktree migration changes
-- No merge commits (complies with repository rules)
-- Same content as ensure-worktree-folder-structure but cleaner
+## 🔒 **Branch to Leave Alone**
 
-## 🚀 **Recommended Merge Order**
+### Shell Migration v3
+- **Branch**: `feat-shell-migration-v3`
+- **Status**: 🔒 **LOCKED** - As requested, this branch should not be merged
+- **Reason**: Still in development
 
-### **Option 1: Use Consolidated PR (RECOMMENDED)**
-1. **Merge**: `feature/consolidated-worktree-migration`
-   - Contains all worktree migration changes in one clean commit
-   - No merge commits, follows repository rules
+## 🎯 **Recommended Action Plan**
 
-2. **Merge**: `feature/compilation-fixes`
-   - Fixes compilation errors
-   - Can be merged independently
+### Phase 1: Create PRs for Clean Branches
+1. Create PR for `feature/compilation-fixes`
+2. Create PR for `feature/consolidated-worktree-migration`
+3. Create PR for `feature/ensure-worktree-folder-structure`
+4. Create PR for `feature/worktree-migration-clean`
+5. Create PR for `feature/additional-worktree-improvements`
 
-### **Option 2: Use Individual PRs**
-1. **Merge**: `feature/ensure-worktree-folder-structure`
-   - Complete worktree migration
+### Phase 2: Manual Conflict Resolution (Future)
+1. Resolve conflicts in `feat-CRD-worktree`
+2. Resolve conflicts in `feat-shell-migration-v2`
+3. Resolve conflicts in `feat-worktree-sync`
 
-2. **Merge**: `feature/compilation-fixes`
-   - Compilation fixes
+## 📋 **Quick PR Creation Commands**
 
-3. **Merge**: `feature/additional-worktree-improvements`
-   - Additional improvements
+```bash
+# Open PRs in browser
+open https://github.com/bdelanghe/hooksmith/pull/new/feature/compilation-fixes
+open https://github.com/bdelanghe/hooksmith/pull/new/feature/consolidated-worktree-migration
+open https://github.com/bdelanghe/hooksmith/pull/new/feature/ensure-worktree-folder-structure
+open https://github.com/bdelanghe/hooksmith/pull/new/feature/worktree-migration-clean
+open https://github.com/bdelanghe/hooksmith/pull/new/feature/additional-worktree-improvements
+```
 
-## 🔗 **All PR Links**
+## 📊 **Summary Statistics**
 
-- **Compilation Fixes**: https://github.com/bdelanghe/hooksmith/pull/new/feature/compilation-fixes
-- **Ensure Worktree Structure**: https://github.com/bdelanghe/hooksmith/pull/new/feature/ensure-worktree-folder-structure
-- **Consolidated Migration** (RECOMMENDED): https://github.com/bdelanghe/hooksmith/pull/new/feature/consolidated-worktree-migration
-- **Additional Improvements**: https://github.com/bdelanghe/hooksmith/pull/new/feature/additional-worktree-improvements
+- **Total Branches**: 8
+- **Ready for PRs**: 5 ✅
+- **Need Conflict Resolution**: 3 ⏸️
+- **Locked**: 1 🔒
 
-## 🏆 **Final Recommendation**
+## 🚀 **Next Steps**
 
-**Use the `feature/consolidated-worktree-migration` PR** for the worktree migration and the `feature/compilation-fixes` PR for the compilation fixes. This approach:
-
-1. ✅ Follows repository rules (no merge commits)
-2. ✅ Provides clean, single commits
-3. ✅ Separates concerns (migration vs. fixes)
-4. ✅ Allows independent review and merging
-
-## 📝 **Branch Lock Status**
-
-- ✅ `feature/worktree-migration-to-wt` - **LOCKED** (you're still working on it)
-- ✅ All other branches have PRs created and are ready for review
-
-## 🎉 **Summary**
-
-All requested branches have been processed:
-- ✅ `ensure-worktree-folder-structure` → PR created
-- ✅ `feat-shell-migration-v3` → PR created  
-- ⏸️ `feature/worktree-migration-to-wt` → **LOCKED** (still in progress)
-
-**Status**: ✅ **All PRs READY FOR REVIEW** 
+1. Create PRs for the 5 clean branches
+2. Review and merge PRs one by one
+3. Address conflicted branches in a separate session
+4. Keep `feat-shell-migration-v3` locked until development is complete 
