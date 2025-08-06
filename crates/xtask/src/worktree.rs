@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs;
 
-use crate::WorktreeCommands;
+use crate::{WorktreeCommands, worktree_sync::run_worktree_sync_command};
 
 /// Worktree configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
