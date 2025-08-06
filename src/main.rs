@@ -212,7 +212,7 @@ enum WorktreeCommands {
         #[arg(long)]
         tool: Option<String>,
         /// Base directory for worktrees
-        #[arg(long, default_value = "../worktrees")]
+        #[arg(long, default_value = ".wt")]
         base: String,
     },
     /// List all worktrees
@@ -250,6 +250,81 @@ enum WorktreeCommands {
     ///
     /// Lists all available worktree management tools on the system.
     Tools,
+    /// Ensure 1:1 relationship between local worktrees and remote branches
+    ///
+    /// Analyzes and maintains a perfect 1:1 relationship between local worktrees
+    /// and remote branches, creating missing worktrees and removing orphaned ones.
+    EnsureOneToOne {
+        /// Create worktrees for missing remote branches
+        #[arg(long)]
+        create_missing: bool,
+        /// Remove worktrees for deleted remote branches
+        #[arg(long)]
+        remove_orphaned: bool,
+        /// Force operations without confirmation
+        #[arg(long)]
+        force: bool,
+        /// Show what would be done without making changes
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Create pull requests for all worktrees
+    ///
+    /// Automatically creates pull requests for all worktrees to merge changes into main.
+    CreatePullRequests {
+        /// Create PRs for all worktrees
+        #[arg(long)]
+        all: bool,
+        /// Specific worktree to create PR for
+        worktree_name: Option<String>,
+        /// Title template for PRs
+        #[arg(long, default_value = "feat: {branch} changes")]
+        title_template: String,
+        /// Body template for PRs
+        #[arg(long, default_value = "Automated PR for {branch} branch")]
+        body_template: String,
+        /// Force creation even if PR already exists
+        #[arg(long)]
+        force: bool,
+        /// Draft PRs
+        #[arg(long)]
+        draft: bool,
+    },
+    /// Merge all worktree changes into main
+    ///
+    /// Merges all worktree changes into the main branch using specified strategy.
+    MergeToMain {
+        /// Merge all worktrees into main
+        #[arg(long)]
+        all: bool,
+        /// Specific worktree to merge
+        worktree_name: Option<String>,
+        /// Merge strategy (squash, rebase, merge)
+        #[arg(long, default_value = "squash")]
+        strategy: String,
+        /// Delete branch after merge
+        #[arg(long)]
+        delete_branch: bool,
+        /// Force merge even with conflicts
+        #[arg(long)]
+        force: bool,
+    },
+    /// Sync worktrees with remote and create PRs
+    ///
+    /// Syncs all worktrees with remote and automatically creates pull requests.
+    SyncAndPr {
+        /// Sync all worktrees and create PRs
+        #[arg(long)]
+        all: bool,
+        /// Specific worktree to sync and create PR for
+        worktree_name: Option<String>,
+        /// Auto-merge PRs if possible
+        #[arg(long)]
+        auto_merge: bool,
+        /// Create draft PRs
+        #[arg(long)]
+        draft: bool,
+    },
 }
 
 /// WASM component management commands

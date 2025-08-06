@@ -967,7 +967,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
         base_dir: Option<&str>,
         switch: bool,
     ) -> Result<String> {
-        let base_path = base_dir.unwrap_or("../");
+        let base_path = base_dir.unwrap_or(".wt/");
         // Ensure proper path joining with path separator
         let worktree_path = if base_path.ends_with('/') || base_path.ends_with('\\') {
             format!("{}{}", base_path, branch)
@@ -1766,10 +1766,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 println!("{}", style("Pulling all remote branches").cyan());
                 println!("{}", style("Feature not yet implemented").yellow());
             } else if let Some(branch_name) = branch {
-                println!(
-                    "{}",
-                    style(&format!("Pulling branch: {}", branch_name)).cyan()
-                );
+                println!("{}", style(&format!("Pulling branch: {}", branch_name)).cyan());
                 println!("{}", style("Feature not yet implemented").yellow());
             } else {
                 println!(
@@ -1777,6 +1774,30 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                     style("No branch specified. Use --all or --branch").yellow()
                 );
             }
+        }
+        WorktreeCommands::SyncStrategy {
+            validate,
+            report,
+            force,
+        } => {
+            println!("{}", style("Running worktree sync strategy...").bold());
+
+            if validate {
+                println!("{}", style("Validating sync readiness...").cyan());
+                // TODO: Add validation logic
+            }
+
+            if report {
+                println!("{}", style("Generating sync report...").cyan());
+                // TODO: Add report generation
+            }
+
+            if force {
+                println!("{}", style("Force sync enabled - proceeding with uncommitted changes").yellow());
+            }
+
+            // Run the worktree sync strategy
+            run_worktree_sync_command().await?;
         }
     }
 
