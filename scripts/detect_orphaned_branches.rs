@@ -4,18 +4,18 @@
 
 use std::collections::HashSet;
 use std::env;
-use std::process::{Command, ExitCode};
-use std::str::FromStr;
+use std::process::{Command, Stdio};
+use std::io::{self, Write};
 
-/// Colors for output
+// Colors for output
 const RED: &str = "\x1b[0;31m";
 const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[1;33m";
 const BLUE: &str = "\x1b[0;34m";
 const PURPLE: &str = "\x1b[0;35m";
-const NC: &str = "\x1b[0m";
+const NC: &str = "\x1b[0m"; // No Color
 
-/// Logging functions
+// Logging functions
 fn log_info(message: &str) {
     println!("{}[INFO]{} {}", BLUE, NC, message);
 }
@@ -36,10 +36,10 @@ fn log_header(message: &str) {
     println!("{}=== {} ==={}", PURPLE, message, NC);
 }
 
-/// Show usage information
-fn show_usage() {
+// Function to show usage
+fn show_usage(program_name: &str) {
     println!(
-        r#"Detect Orphaned Branches
+        "Detect Orphaned Branches
 
 Usage: {} [options]
 
@@ -59,44 +59,44 @@ This script will:
 1. Find local branches that aren't in worktrees
 2. Exclude main branch from orphaned list
 3. Provide options to create worktrees or delete branches
-4. Show summary of actions taken"#,
-        env::args().next().unwrap_or_else(|| "script".to_string()),
-        env::args().next().unwrap_or_else(|| "script".to_string()),
-        env::args().next().unwrap_or_else(|| "script".to_string()),
-        env::args().next().unwrap_or_else(|| "script".to_string()),
-        env::args().next().unwrap_or_else(|| "script".to_string()),
+4. Show summary of actions taken",
+        program_name, program_name, program_name, program_name, program_name
     );
 }
 
-/// Check if git is available
+// Function to check dependencies
 fn check_dependencies() -> Result<(), Box<dyn std::error::Error>> {
-    let output = Command::new("git").arg("--version").output()?;
+    let output = Command::new("git")
+        .arg("--version")
+        .output()?;
+
     if !output.status.success() {
         log_error("Git is required but not installed");
-        return Err("Git not found".into());
+        std::process::exit(1);
     }
+
     Ok(())
 }
 
-/// Get worktree branches
+// Function to get worktree branches
 fn get_worktree_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    let output = Command::new("git").args(["worktree", "list"]).output()?;
+    let output = Command::new("git")
+        .arg("worktree")
+        .arg("list")
+        .output()?;
 
     if !output.status.success() {
-        return Err("Failed to list worktrees".into());
+        return Err("Failed to get worktree list".into());
     }
 
     let output_str = String::from_utf8(output.stdout)?;
     let mut branches = Vec::new();
 
     for line in output_str.lines() {
-        // Extract branch name from worktree list using regex-like parsing
-        if let Some(branch_start) = line.find('[') {
-            if let Some(branch_end) = line[branch_start..].find(']') {
-                let branch_name = &line[branch_start + 1..branch_start + branch_end];
-                if !branch_name.is_empty() {
-                    branches.push(branch_name.to_string());
-                }
+        // Extract branch name from worktree list using regex
+        if let Some(branch_name) = extract_branch_from_worktree_line(line) {
+            if !branch_name.is_empty() {
+                branches.push(branch_name);
             }
         }
     }
@@ -104,24 +104,36 @@ fn get_worktree_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
     Ok(branches)
 }
 
-/// Get all local branches
+// Helper function to extract branch name from worktree line
+fn extract_branch_from_worktree_line(line: &str) -> Option<String> {
+    // Look for pattern like "[branch-name]" in the line
+    if let Some(start) = line.find('[') {
+        if let Some(end) = line.find(']') {
+            if start < end {
+                return Some(line[start + 1..end].to_string());
+            }
+        }
+    }
+    None
+}
+
+// Function to get all local branches
 fn get_local_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    let output = Command::new("git").args(["branch", "--list"]).output()?;
+    let output = Command::new("git")
+        .arg("branch")
+        .arg("--list")
+        .output()?;
 
     if !output.status.success() {
-        return Err("Failed to list local branches".into());
+        return Err("Failed to get local branches".into());
     }
 
     let output_str = String::from_utf8(output.stdout)?;
     let mut branches = Vec::new();
 
     for line in output_str.lines() {
+        // Clean the line and extract branch name
         let clean_line = line.trim();
-
-        // Skip empty lines
-        if clean_line.is_empty() {
-            continue;
-        }
 
         // Remove asterisk for current branch
         let branch_name = if clean_line.starts_with("* ") {
@@ -130,18 +142,16 @@ fn get_local_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
             clean_line
         };
 
-        // Skip malformed lines
-        if branch_name.is_empty() || branch_name.starts_with('+') {
-            continue;
+        // Skip empty branch names and malformed lines
+        if !branch_name.is_empty() && !branch_name.starts_with('+') {
+            branches.push(branch_name.to_string());
         }
-
-        branches.push(branch_name.to_string());
     }
 
     Ok(branches)
 }
 
-/// Find orphaned branches
+// Function to find orphaned branches
 fn find_orphaned_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let worktree_branches = get_worktree_branches()?;
     let local_branches = get_local_branches()?;
@@ -164,7 +174,7 @@ fn find_orphaned_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
     Ok(orphaned)
 }
 
-/// Create worktree for orphaned branch
+// Function to create worktree for orphaned branch
 fn create_worktree_for_branch(branch_name: &str, dry_run: bool) -> Result<bool, Box<dyn std::error::Error>> {
     log_info(&format!("Processing orphaned branch: {}", branch_name));
 
@@ -176,9 +186,12 @@ fn create_worktree_for_branch(branch_name: &str, dry_run: bool) -> Result<bool, 
     }
 
     // Check if worktree already exists
-    let output = Command::new("git").args(["worktree", "list"]).output()?;
-    let output_str = String::from_utf8(output.stdout)?;
+    let output = Command::new("git")
+        .arg("worktree")
+        .arg("list")
+        .output()?;
 
+    let output_str = String::from_utf8(output.stdout)?;
     if output_str.contains(&worktree_path) {
         log_warning(&format!("Worktree already exists at: {}", worktree_path));
         return Ok(false);
@@ -189,7 +202,10 @@ fn create_worktree_for_branch(branch_name: &str, dry_run: bool) -> Result<bool, 
     log_info(&format!("Worktree path: {}", worktree_path));
 
     let status = Command::new("git")
-        .args(["worktree", "add", &worktree_path, branch_name])
+        .arg("worktree")
+        .arg("add")
+        .arg(&worktree_path)
+        .arg(branch_name)
         .status()?;
 
     if status.success() {
@@ -201,7 +217,7 @@ fn create_worktree_for_branch(branch_name: &str, dry_run: bool) -> Result<bool, 
     }
 }
 
-/// Delete orphaned branch
+// Function to delete orphaned branch
 fn delete_orphaned_branch(branch_name: &str, dry_run: bool) -> Result<bool, Box<dyn std::error::Error>> {
     log_info(&format!("Processing orphaned branch for deletion: {}", branch_name));
 
@@ -211,17 +227,21 @@ fn delete_orphaned_branch(branch_name: &str, dry_run: bool) -> Result<bool, Box<
     }
 
     // Check if branch is merged
-    let merged_output = Command::new("git")
-        .args(["branch", "--merged", "main"])
+    let output = Command::new("git")
+        .arg("branch")
+        .arg("--merged")
+        .arg("main")
         .output()?;
 
-    let merged_str = String::from_utf8(merged_output.stdout)?;
-    let is_merged = merged_str.lines().any(|line| line.trim() == branch_name);
+    let output_str = String::from_utf8(output.stdout)?;
+    let is_merged = output_str.lines().any(|line| line.trim() == branch_name);
 
     if is_merged {
         log_info(&format!("Branch {} is merged, deleting...", branch_name));
         let status = Command::new("git")
-            .args(["branch", "-d", branch_name])
+            .arg("branch")
+            .arg("-d")
+            .arg(branch_name)
             .status()?;
 
         if status.success() {
@@ -234,7 +254,9 @@ fn delete_orphaned_branch(branch_name: &str, dry_run: bool) -> Result<bool, Box<
     } else {
         log_warning(&format!("Branch {} is not merged, use -D to force delete", branch_name));
         let status = Command::new("git")
-            .args(["branch", "-D", branch_name])
+            .arg("branch")
+            .arg("-D")
+            .arg(branch_name)
             .status()?;
 
         if status.success() {
@@ -247,12 +269,8 @@ fn delete_orphaned_branch(branch_name: &str, dry_run: bool) -> Result<bool, Box<
     }
 }
 
-/// Handle orphaned branches
-fn handle_orphaned_branches(
-    create_worktrees: bool,
-    delete_branches: bool,
-    dry_run: bool,
-) -> Result<(), Box<dyn std::error::Error>> {
+// Function to handle orphaned branches
+fn handle_orphaned_branches(create_worktrees: bool, delete_branches: bool, dry_run: bool) -> Result<(), Box<dyn std::error::Error>> {
     log_header("DETECTING ORPHANED BRANCHES");
 
     // Find orphaned branches
@@ -314,8 +332,9 @@ fn handle_orphaned_branches(
     Ok(())
 }
 
-fn main() -> ExitCode {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
+    let program_name = &args[0];
 
     // Parse command line arguments
     let mut create_worktrees = false;
@@ -328,28 +347,22 @@ fn main() -> ExitCode {
             "--delete-branches" => delete_branches = true,
             "--dry-run" => dry_run = true,
             "--help" => {
-                show_usage();
-                return ExitCode::SUCCESS;
+                show_usage(program_name);
+                return Ok(());
             }
             _ => {
                 log_error(&format!("Unknown option: {}", arg));
-                show_usage();
-                return ExitCode::FAILURE;
+                show_usage(program_name);
+                std::process::exit(1);
             }
         }
     }
 
     // Check dependencies
-    if let Err(e) = check_dependencies() {
-        log_error(&format!("Dependency check failed: {}", e));
-        return ExitCode::FAILURE;
-    }
+    check_dependencies()?;
 
     // Handle orphaned branches
-    if let Err(e) = handle_orphaned_branches(create_worktrees, delete_branches, dry_run) {
-        log_error(&format!("Failed to handle orphaned branches: {}", e));
-        return ExitCode::FAILURE;
-    }
+    handle_orphaned_branches(create_worktrees, delete_branches, dry_run)?;
 
-    ExitCode::SUCCESS
+    Ok(())
 }
