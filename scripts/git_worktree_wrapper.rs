@@ -7,7 +7,7 @@ use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().skip(1).collect();
-    
+
     // Colors for output
     let red = "\x1b[0;31m";
     let green = "\x1b[0;32m";
@@ -16,9 +16,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let purple = "\x1b[0;35m";
     let cyan = "\x1b[0;36m";
     let nc = "\x1b[0m"; // No Color
-    
+
     show_worktree_guidance(&red, &green, &yellow, &blue, &purple, &cyan, &nc);
-    
+
     // Check if any arguments were passed
     if args.is_empty() {
         println!();
@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{}git wtr{}  - Remove worktree", cyan, nc);
         println!();
     }
-    
+
     Ok(())
 }
 
@@ -66,14 +66,14 @@ fn show_worktree_guidance(red: &str, green: &str, yellow: &str, blue: &str, purp
 fn show_worktree_status(blue: &str, cyan: &str, yellow: &str) {
     println!("{}📊 Current Worktree Status:{}", blue, "");
     println!("{}========================{}", blue, "");
-    
+
     // Check if cargo is available
     if Command::new("cargo").arg("--version").output().is_ok() {
         println!("{}Running: cargo xtask worktree list{}", cyan, "");
         let output = Command::new("cargo")
             .args(["xtask", "worktree", "list"])
             .output();
-        
+
         match output {
             Ok(output) => {
                 if output.status.success() {
@@ -90,16 +90,16 @@ fn show_worktree_status(blue: &str, cyan: &str, yellow: &str) {
     } else {
         println!("{}⚠️  Cargo not available{}", yellow, "");
     }
-    
+
     println!();
     println!("{}📁 .wt Directory Contents:{}", blue, "");
-    
+
     // Check if .wt directory exists
     if std::path::Path::new(".wt").exists() {
         let output = Command::new("ls")
             .args(["-la", ".wt/"])
             .output();
-        
+
         match output {
             Ok(output) => {
                 if output.status.success() {
@@ -116,4 +116,4 @@ fn show_worktree_status(blue: &str, cyan: &str, yellow: &str) {
     } else {
         println!("{}⚠️  .wt directory not found{}", yellow, "");
     }
-} 
+}
