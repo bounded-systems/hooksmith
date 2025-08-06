@@ -310,8 +310,8 @@ run_create() {
         return 0
     fi
     
-    # Create worktree directory path
-    local worktree_path="worktrees/${branch_name//\//\/}"
+    # Create worktree directory path - use .wt/ prefix for clean paths
+    local worktree_path=".wt/${branch_name//\//-}"
     
     log_info "Creating worktree for branch: $branch_name"
     log_info "Worktree path: $worktree_path"

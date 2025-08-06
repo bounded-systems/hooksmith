@@ -33,10 +33,63 @@
   },
   "version": "1.0",
   "worktrees": {
+    "feat-cleanup-test": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T21:23:03.224084+00:00"
+    },
     "feat-shell-to-rust": {
       "action": "created",
       "labels": [],
-      "timestamp": "2025-08-05T20:56:02.769038+00:00"
+      "timestamp": "2025-08-05T20:59:48.511919+00:00"
+    },
+    "feat-test-cursor": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T20:56:45.294724+00:00"
+    },
+    "feat-test-cursor-fix": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T20:57:44.027935+00:00"
+    },
+    "feat-test-final": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T21:42:07.350212+00:00"
+    },
+    "feat-test-new-branch": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T20:59:58.635157+00:00"
+    },
+    "feat-test-push-remote": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T20:59:14.747429+00:00"
+    },
+    "feat-test-with-changes": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T21:24:36.670387+00:00"
+    },
+    "feat-worktree-sync": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T21:44:38.836381+00:00"
+    },
+    "feature/test-with-slash": {
+      "action": "created",
+      "labels": [
+        "feature",
+        "development"
+      ],
+      "timestamp": "2025-08-05T20:56:58.827552+00:00"
+    },
+    "test-cursor-feature": {
+      "action": "created",
+      "labels": [],
+      "timestamp": "2025-08-05T20:52:10.797909+00:00"
     },
     "test-cursor-integration": {
       "action": "created",

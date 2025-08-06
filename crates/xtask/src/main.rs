@@ -524,6 +524,39 @@ enum WorktreeCommands {
         #[arg(long, default_value = "table")]
         format: String,
     },
+    /// Sync worktrees with remote
+    Sync {
+        /// Sync all worktrees
+        #[arg(long)]
+        all: bool,
+        /// Specific worktree to sync
+        #[arg(long)]
+        worktree: Option<String>,
+        /// Force sync even if there are conflicts
+        #[arg(long)]
+        force: bool,
+        /// Pull remote changes
+        #[arg(long)]
+        pull: bool,
+        /// Push local changes
+        #[arg(long)]
+        push: bool,
+    },
+    /// Pull remote branches into worktrees
+    Pull {
+        /// Pull all remote branches
+        #[arg(long)]
+        all: bool,
+        /// Specific branch to pull
+        #[arg(long)]
+        branch: Option<String>,
+        /// Create worktrees for new branches
+        #[arg(long)]
+        create_worktrees: bool,
+        /// Base directory for new worktrees
+        #[arg(long)]
+        base_dir: Option<String>,
+    },
 }
 
 mod auto_push;
@@ -562,6 +595,7 @@ mod unified_generator;
 mod repo_structure_validator;
 mod component_status;
 mod schema_registry;
+mod sbom;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -1394,6 +1428,12 @@ enum Commands {
         #[command(subcommand)]
         command: WorktreeCommands,
     },
+    /// SBOM generation and management
+    Sbom {
+        /// SBOM command to execute
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
+    },
 }
 
 /// WIT schema for function definition
@@ -2171,6 +2211,9 @@ async fn main() -> Result<()> {
         }
         Commands::Worktree { command } => {
             run_worktree_command(command).await?;
+        }
+        Commands::Sbom { args } => {
+            sbom::handle_sbom_command(&args).await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
