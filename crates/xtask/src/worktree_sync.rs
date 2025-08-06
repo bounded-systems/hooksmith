@@ -276,8 +276,8 @@ impl WorktreeSyncManager {
             .context("Failed to check if ahead of main")?;
 
         let is_ahead_of_main = if ahead_output.status.success() {
-            let count = String::from_utf8_lossy(&ahead_output.stdout).trim();
-            count != "0"
+            let count = String::from_utf8_lossy(&ahead_output.stdout);
+            count.trim() != "0"
         } else {
             false
         };
@@ -290,8 +290,8 @@ impl WorktreeSyncManager {
             .context("Failed to check unmerged main commits")?;
 
         let has_unmerged_main = if unmerged_output.status.success() {
-            let count = String::from_utf8_lossy(&unmerged_output.stdout).trim();
-            count != "0"
+            let count = String::from_utf8_lossy(&unmerged_output.stdout);
+            count.trim() != "0"
         } else {
             false
         };
