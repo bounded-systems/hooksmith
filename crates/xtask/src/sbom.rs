@@ -222,7 +222,6 @@ impl SbomGenerator {
                 report.push_str(&format!("- Status: ✅ Generated\n\n"));
             } else {
                 report.push_str(&format!("## {}\n", name));
-<<<<<<< HEAD
                 report.push_str(&format!(r"- File: `{}`n", file));            }
         }
 
