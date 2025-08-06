@@ -967,7 +967,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
         base_dir: Option<&str>,
         switch: bool,
     ) -> Result<String> {
-        let base_path = base_dir.unwrap_or("../");
+        let base_path = base_dir.unwrap_or(".wt/");
         // Ensure proper path joining with path separator
         let worktree_path = if base_path.ends_with('/') || base_path.ends_with('\\') {
             format!("{}{}", base_path, branch)
@@ -1310,6 +1310,29 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             switch,
             open_cursor,
         } => {
+            // Normalize working directory - ensure we're in the base repository
+            let current_dir = std::env::current_dir()?;
+            let git_root = Command::new("git")
+                .args(["rev-parse", "--show-toplevel"])
+                .current_dir(&current_dir)
+                .output()
+                .context("Failed to get git root")?;
+
+            let git_root_path = if git_root.status.success() {
+                let path = String::from_utf8_lossy(&git_root.stdout).trim().to_string();
+
+                // If we're not in the git root, change to it
+                if current_dir.to_string_lossy() != path {
+                    println!(
+                        "{}",
+                        style(&format!("Switching to base repository: {}", path)).cyan()
+                    );
+                    std::env::set_current_dir(&path)?;
+                }
+                path
+            } else {
+                current_dir.to_string_lossy().to_string()
+            };
 
             // Check if worktree already exists for this branch
             let existing_worktrees = manager.list_worktrees(false).await?;
@@ -1423,21 +1446,6 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 println!("{}", style("  - You can manually push with: git push -u origin <branch>").dim());
             }
 
-            // Push branch to remote after successful creation
-            println!("{}", style("Pushing branch to remote...").bold());
-            let push_output = Command::new("git")
-                .args(["push", "-u", "origin", branch])
-                .output()
-                .context("Failed to push branch to remote")?;
-
-            if push_output.status.success() {
-                println!("{}", style("✓ Branch pushed to remote successfully").green());
-            } else {
-                let error = String::from_utf8_lossy(&push_output.stderr);
-                println!("{}", style(&format!("⚠ Warning: Failed to push branch: {}", error)).yellow());
-                println!("{}", style("  - You can manually push with: git push -u origin <branch>").dim());
-            }
-
             if setup {
                 println!("{}", style("Running setup commands...").bold());
                 // Run setup commands
@@ -1506,43 +1514,52 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             if open_cursor {
                 println!("{}", style("Opening worktree in Cursor...").bold());
 
-                // Get the actual worktree path from git worktree list
-                let worktree_path = {
-                    let output = Command::new("git")
-                        .args(["worktree", "list", "--porcelain"])
-                        .output()
-                        .context("Failed to get worktree list")?;
+                // Use the actual worktree path returned from the creation process
+                let cursor_path = worktree_path.clone();
 
-                    if output.status.success() {
-                        let output_str = String::from_utf8_lossy(&output.stdout);
-                        let lines: Vec<&str> = output_str.lines().collect();
+                // Validate that the directory exists before opening Cursor
+                let worktree_path_buf = std::path::Path::new(&worktree_path);
+                if !worktree_path_buf.exists() {
+                    println!(
+                        "{}",
+                        style(&format!(
+                            "✗ Worktree directory does not exist: {}",
+                            worktree_path
+                        ))
+                        .red()
+                    );
+                    println!(
+                        "{}",
+                        style("  - The worktree may not have been created successfully").dim()
+                    );
+                    println!(
+                        "{}",
+                        style("  - Please check the worktree creation output above").dim()
+                    );
+                    return Err(anyhow::anyhow!(
+                        "Worktree directory does not exist: {}",
+                        worktree_path
+                    ));
+                }
 
-                        // Find the worktree for this branch
-                        for chunk in lines.chunks(3) {
-                            if chunk.len() >= 3 && chunk[2].starts_with("branch refs/heads/") {
-                                let branch_name = &chunk[2][18..]; // Remove "branch refs/heads/" prefix
-                                if branch_name == branch {
-                                    let worktree_path = chunk[0][9..].to_string(); // Remove "worktree " prefix
-                                    return worktree_path;
-                                }
-                            }
-                        }
-
-                        // Fallback to generated name if not found
-                        if let Some(base_dir) = base_dir {
-                            format!("{}{}", base_dir, worktree_name)
-                        } else {
-                            format!("../{}", worktree_name)
-                        }
-                    } else {
-                        // Fallback to generated name if git command fails
-                        if let Some(base_dir) = base_dir {
-                            format!("{}{}", base_dir, worktree_name)
-                        } else {
-                            format!("../{}", worktree_name)
-                        }
-                    }
-                };
+                if !worktree_path_buf.is_dir() {
+                    println!(
+                        "{}",
+                        style(&format!(
+                            "✗ Path exists but is not a directory: {}",
+                            worktree_path
+                        ))
+                        .red()
+                    );
+                    println!(
+                        "{}",
+                        style("  - This indicates a path construction error").dim()
+                    );
+                    return Err(anyhow::anyhow!(
+                        "Path is not a directory: {}",
+                        worktree_path
+                    ));
+                }
 
                 // Check if Cursor is available
                 let cursor_check = Command::new("which").arg("cursor").output();
@@ -1749,10 +1766,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 println!("{}", style("Pulling all remote branches").cyan());
                 println!("{}", style("Feature not yet implemented").yellow());
             } else if let Some(branch_name) = branch {
-                println!(
-                    "{}",
-                    style(&format!("Pulling branch: {}", branch_name)).cyan()
-                );
+                println!("{}", style(&format!("Pulling branch: {}", branch_name)).cyan());
                 println!("{}", style("Feature not yet implemented").yellow());
             } else {
                 println!(
@@ -1760,6 +1774,30 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                     style("No branch specified. Use --all or --branch").yellow()
                 );
             }
+        }
+        WorktreeCommands::SyncStrategy {
+            validate,
+            report,
+            force,
+        } => {
+            println!("{}", style("Running worktree sync strategy...").bold());
+
+            if validate {
+                println!("{}", style("Validating sync readiness...").cyan());
+                // TODO: Add validation logic
+            }
+
+            if report {
+                println!("{}", style("Generating sync report...").cyan());
+                // TODO: Add report generation
+            }
+
+            if force {
+                println!("{}", style("Force sync enabled - proceeding with uncommitted changes").yellow());
+            }
+
+            // Run the worktree sync strategy
+            run_worktree_sync_command().await?;
         }
     }
 

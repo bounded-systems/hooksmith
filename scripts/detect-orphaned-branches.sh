@@ -151,7 +151,7 @@ find_orphaned_branches() {
 create_worktree_for_branch() {
     local branch_name="$1"
     local dry_run="$2"
-    local worktree_path="worktrees/${branch_name//\//\/}"
+    local worktree_path=".wt/${branch_name//\//\/}"
     
     log_info "Processing orphaned branch: $branch_name"
     
