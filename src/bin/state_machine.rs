@@ -71,20 +71,20 @@ impl WorktreeStateMachine {
 
         // Get current branch
         let current_branch = get_current_branch().unwrap_or_else(|_| "unknown".to_string());
-        
+
         // Get status
         let status = get_git_status().unwrap_or_else(|_| "".to_string());
         let is_clean = status.is_empty();
-        
+
         // Check if rebasing
         let is_rebasing = is_rebasing().unwrap_or(false);
-        
+
         // Check if merged into main
         let is_merged = is_merged_into_main(&current_branch).unwrap_or(false);
-        
+
         // Get commit counts
         let (ahead, behind) = get_commit_counts("main").unwrap_or((0, 0));
-        
+
         // Restore original directory
         std::env::set_current_dir(original_dir).unwrap();
         
@@ -106,7 +106,7 @@ impl WorktreeStateMachine {
 
     fn transition_state(&self, worktree_path: &str, branch_name: &str, current_state: &WorktreeState, target_state: &WorktreeState) -> Result<(), Box<dyn std::error::Error>> {
         log_info(&format!("Transitioning {}: {} → {}", branch_name, current_state.to_string(), target_state.to_string()));
-        
+
         match target_state {
             WorktreeState::Resolving => {
                 let original_dir = std::env::current_dir()?;
