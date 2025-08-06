@@ -79,6 +79,10 @@ tests/*.disabled
 worktree-*/
 
 # Rust binary files
-build_xtask
+build_xtask*
 git_worktree_wrapper
-update_worktrees
+update_worktrees*
+safe_worktree_cleanup_rs
+verify_worktree_1to1_rs
+validate-file-extensions
+*.rs.bin
