@@ -609,6 +609,27 @@ enum WorktreeCommands {
         #[arg(long)]
         strict: bool,
     },
+    /// Create PR for a worktree
+    CreatePr {
+        /// Worktree path
+        #[arg(long)]
+        worktree_path: String,
+        /// Branch name
+        #[arg(long)]
+        branch_name: String,
+        /// Auto-lock worktree after PR creation
+        #[arg(long)]
+        auto_lock: bool,
+    },
+    /// Merge PR and cleanup worktree
+    MergePr {
+        /// Branch name
+        #[arg(long)]
+        branch_name: String,
+        /// Worktree path
+        #[arg(long)]
+        worktree_path: String,
+    },
 }
 
 mod auto_push;

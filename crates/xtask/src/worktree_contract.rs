@@ -16,6 +16,12 @@ pub struct WorktreeContract {
     pub underscore_to_hyphen: bool,
     /// Custom mapping rules (branch_name -> expected_dir_name)
     pub custom_mappings: HashMap<String, String>,
+    /// PR title template
+    pub pr_title_template: Option<String>,
+    /// Whether to auto-create PRs
+    pub auto_create_pr: bool,
+    /// Whether to auto-lock worktrees
+    pub auto_lock_worktree: bool,
 }
 
 impl Default for WorktreeContract {
@@ -34,6 +40,9 @@ impl Default for WorktreeContract {
             normalize_case: true,
             underscore_to_hyphen: true,
             custom_mappings: HashMap::new(),
+            pr_title_template: Some("{branch_name} - {description}".to_string()),
+            auto_create_pr: false,
+            auto_lock_worktree: true,
         }
     }
 }
@@ -52,6 +61,9 @@ impl WorktreeContract {
             normalize_case,
             underscore_to_hyphen,
             custom_mappings: HashMap::new(),
+            pr_title_template: Some("{branch_name} - {description}".to_string()),
+            auto_create_pr: false,
+            auto_lock_worktree: true,
         }
     }
 
@@ -59,6 +71,21 @@ impl WorktreeContract {
     pub fn add_mapping(&mut self, branch_name: &str, expected_dir_name: &str) {
         self.custom_mappings
             .insert(branch_name.to_string(), expected_dir_name.to_string());
+    }
+
+    /// Set PR title template
+    pub fn set_pr_title_template(&mut self, template: &str) {
+        self.pr_title_template = Some(template.to_string());
+    }
+
+    /// Enable/disable auto PR creation
+    pub fn set_auto_create_pr(&mut self, enabled: bool) {
+        self.auto_create_pr = enabled;
+    }
+
+    /// Enable/disable auto worktree locking
+    pub fn set_auto_lock_worktree(&mut self, enabled: bool) {
+        self.auto_lock_worktree = enabled;
     }
 
     /// Get the expected directory name for a branch
@@ -91,6 +118,189 @@ impl WorktreeContract {
         }
 
         name
+    }
+
+    /// Generate PR title from branch name
+    pub fn generate_pr_title(&self, branch_name: &str) -> String {
+        if let Some(template) = &self.pr_title_template {
+            let description = self.generate_description_from_branch(branch_name);
+            template
+                .replace("{branch_name}", branch_name)
+                .replace("{description}", &description)
+        } else {
+            branch_name.to_string()
+        }
+    }
+
+    /// Generate description from branch name
+    fn generate_description_from_branch(&self, branch_name: &str) -> String {
+        let mut description = branch_name.to_string();
+
+        // Strip prefixes for description
+        for prefix in &self.prefixes {
+            if description.starts_with(prefix) {
+                description = description[prefix.len()..].to_string();
+                break;
+            }
+        }
+
+        // Convert to title case
+        description = description
+            .split('-')
+            .map(|word| {
+                let mut chars = word.chars();
+                match chars.next() {
+                    None => String::new(),
+                    Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        description
+    }
+
+    /// Create a PR for a worktree
+    pub fn create_pr_for_worktree(&self, worktree_path: &str, branch_name: &str) -> Result<()> {
+        let pr_title = self.generate_pr_title(branch_name);
+
+        println!("🚀 Creating PR for worktree: {}", worktree_path);
+        println!("   Branch: {}", branch_name);
+        println!("   Title: {}", pr_title);
+
+        // Check if gh CLI is available
+        let gh_check = Command::new("gh")
+            .args(["version"])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+
+        if gh_check.is_err() {
+            return Err(anyhow::anyhow!(
+                "GitHub CLI (gh) is not installed or not in PATH"
+            ));
+        }
+
+        // Create PR using gh CLI
+        let output = Command::new("gh")
+            .args([
+                "pr",
+                "create",
+                "--title",
+                &pr_title,
+                "--body",
+                &format!("Worktree: {}\nBranch: {}", worktree_path, branch_name),
+                "--base",
+                "main",
+                "--head",
+                branch_name,
+            ])
+            .current_dir(worktree_path)
+            .output()
+            .context("Failed to create PR")?;
+
+        if output.status.success() {
+            let pr_url = String::from_utf8_lossy(&output.stdout);
+            println!("✅ PR created successfully!");
+            println!("   URL: {}", pr_url.trim());
+
+            // Lock the worktree if auto-lock is enabled
+            if self.auto_lock_worktree {
+                self.lock_worktree(worktree_path)?;
+            }
+        } else {
+            let error = String::from_utf8_lossy(&output.stderr);
+            return Err(anyhow::anyhow!("Failed to create PR: {}", error));
+        }
+
+        Ok(())
+    }
+
+    /// Lock a worktree
+    pub fn lock_worktree(&self, worktree_path: &str) -> Result<()> {
+        println!("🔒 Locking worktree: {}", worktree_path);
+
+        let output = Command::new("git")
+            .args(["worktree", "lock", worktree_path])
+            .output()
+            .context("Failed to lock worktree")?;
+
+        if output.status.success() {
+            println!("✅ Worktree locked successfully");
+        } else {
+            let error = String::from_utf8_lossy(&output.stderr);
+            return Err(anyhow::anyhow!("Failed to lock worktree: {}", error));
+        }
+
+        Ok(())
+    }
+
+    /// Unlock a worktree
+    pub fn unlock_worktree(&self, worktree_path: &str) -> Result<()> {
+        println!("🔓 Unlocking worktree: {}", worktree_path);
+
+        let output = Command::new("git")
+            .args(["worktree", "unlock", worktree_path])
+            .output()
+            .context("Failed to unlock worktree")?;
+
+        if output.status.success() {
+            println!("✅ Worktree unlocked successfully");
+        } else {
+            let error = String::from_utf8_lossy(&output.stderr);
+            return Err(anyhow::anyhow!("Failed to unlock worktree: {}", error));
+        }
+
+        Ok(())
+    }
+
+    /// Merge PR and cleanup worktree
+    pub fn merge_pr_and_cleanup(&self, branch_name: &str, worktree_path: &str) -> Result<()> {
+        println!("🔄 Merging PR and cleaning up worktree: {}", worktree_path);
+
+        // Check if gh CLI is available
+        let gh_check = Command::new("gh")
+            .args(["version"])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+
+        if gh_check.is_err() {
+            return Err(anyhow::anyhow!(
+                "GitHub CLI (gh) is not installed or not in PATH"
+            ));
+        }
+
+        // Merge PR using gh CLI
+        let merge_output = Command::new("gh")
+            .args(["pr", "merge", branch_name, "--squash", "--delete-branch"])
+            .output()
+            .context("Failed to merge PR")?;
+
+        if !merge_output.status.success() {
+            let error = String::from_utf8_lossy(&merge_output.stderr);
+            return Err(anyhow::anyhow!("Failed to merge PR: {}", error));
+        }
+
+        println!("✅ PR merged successfully");
+
+        // Unlock worktree
+        self.unlock_worktree(worktree_path)?;
+
+        // Remove worktree
+        let remove_output = Command::new("git")
+            .args(["worktree", "remove", worktree_path])
+            .output()
+            .context("Failed to remove worktree")?;
+
+        if remove_output.status.success() {
+            println!("✅ Worktree removed successfully");
+        } else {
+            let error = String::from_utf8_lossy(&remove_output.stderr);
+            return Err(anyhow::anyhow!("Failed to remove worktree: {}", error));
+        }
+
+        Ok(())
     }
 
     /// Validate a worktree's naming contract
@@ -138,20 +348,23 @@ impl WorktreeContract {
         for line in worktree_list.lines() {
             if line.starts_with("worktree ") {
                 if let Some((path, branch)) = current_worktree.take() {
-                    results.push(self.validate_worktree(&path, &branch)?);
+                    if !branch.is_empty() {
+                        results.push(self.validate_worktree(&path, &branch)?);
+                    }
                 }
                 let path = line[9..].trim();
                 current_worktree = Some((path.to_string(), String::new()));
             } else if line.starts_with("branch ") {
                 if let Some((path, _)) = &mut current_worktree {
                     let branch = line[8..].trim();
-                    // Strip refs/heads/ prefix if present
+                    // Strip refs/heads/ prefix if present (handle both refs and efs typos)
                     let clean_branch = if branch.starts_with("refs/heads/") {
                         &branch[11..]
+                    } else if branch.starts_with("efs/heads/") {
+                        &branch[10..]
                     } else {
                         branch
                     };
-                    *path = path.clone();
                     current_worktree = Some((path.clone(), clean_branch.to_string()));
                 }
             }
@@ -159,7 +372,9 @@ impl WorktreeContract {
 
         // Handle the last worktree
         if let Some((path, branch)) = current_worktree {
-            results.push(self.validate_worktree(&path, &branch)?);
+            if !branch.is_empty() {
+                results.push(self.validate_worktree(&path, &branch)?);
+            }
         }
 
         Ok(results)
@@ -342,4 +557,16 @@ pub fn validate_proposed_worktree(
 pub fn generate_valid_worktree_path(branch_name: &str, base_dir: &str) -> String {
     let contract = WorktreeContract::default();
     contract.generate_valid_path(branch_name, base_dir)
+}
+
+/// Create PR for a worktree
+pub fn create_pr_for_worktree(worktree_path: &str, branch_name: &str) -> Result<()> {
+    let contract = WorktreeContract::default();
+    contract.create_pr_for_worktree(worktree_path, branch_name)
+}
+
+/// Merge PR and cleanup worktree
+pub fn merge_pr_and_cleanup(branch_name: &str, worktree_path: &str) -> Result<()> {
+    let contract = WorktreeContract::default();
+    contract.merge_pr_and_cleanup(branch_name, worktree_path)
 }

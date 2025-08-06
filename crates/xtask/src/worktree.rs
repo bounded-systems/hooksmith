@@ -2021,8 +2021,12 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 }
             }
         }
-        WorktreeCommands::ValidateContract { worktree_path, branch_name, strict } => {
-            use crate::worktree_contract::{validate_proposed_worktree, run_post_checkout_hook};
+        WorktreeCommands::ValidateContract {
+            worktree_path,
+            branch_name,
+            strict,
+        } => {
+            use crate::worktree_contract::{run_post_checkout_hook, validate_proposed_worktree};
 
             if let (Some(path), Some(branch)) = (worktree_path, branch_name) {
                 // Validate specific worktree
@@ -2051,6 +2055,27 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 // Run post-checkout hook validation
                 run_post_checkout_hook()?;
             }
+        }
+        WorktreeCommands::CreatePr { worktree_path, branch_name, auto_lock } => {
+            use crate::worktree_contract::{create_pr_for_worktree, WorktreeContract};
+
+            let mut contract = WorktreeContract::default();
+            contract.set_auto_lock_worktree(auto_lock);
+
+            println!("🚀 Creating PR for worktree: {}", worktree_path);
+            println!("   Branch: {}", branch_name);
+
+            contract.create_pr_for_worktree(&worktree_path, &branch_name)?;
+        }
+        WorktreeCommands::MergePr { branch_name, worktree_path } => {
+            use crate::worktree_contract::{merge_pr_and_cleanup, WorktreeContract};
+
+            let contract = WorktreeContract::default();
+
+            println!("🔄 Merging PR and cleaning up worktree: {}", worktree_path);
+            println!("   Branch: {}", branch_name);
+
+            contract.merge_pr_and_cleanup(&branch_name, &worktree_path)?;
         }
     }
 
