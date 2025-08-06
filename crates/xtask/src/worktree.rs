@@ -1515,7 +1515,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 println!("{}", style("Opening worktree in Cursor...").bold());
 
                 // Use the actual worktree path returned from the creation process
-                let cursor_path = worktree_path;
+                let cursor_path = worktree_path.clone();
 
                 // Validate that the directory exists before opening Cursor
                 let worktree_path_buf = std::path::Path::new(&worktree_path);
