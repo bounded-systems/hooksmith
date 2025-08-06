@@ -1225,12 +1225,12 @@ refactor = ["cleanup", "improvement", "technical-debt"]
     /// Try to get the actual worktree path from git worktree list
     async fn get_worktree_path_from_git(&self, branch: &str) -> Result<String> {
         let worktrees = self.list_with_git(false).await?;
-        
+
         // First try to find by branch name
         if let Some(wt) = worktrees.iter().find(|w| w.branch == branch) {
             return Ok(wt.path.clone());
         }
-        
+
         // If not found by branch name, try to find by path name (last part of path)
         // This handles detached HEAD worktrees that don't have branch names
         for wt in &worktrees {
@@ -1240,8 +1240,11 @@ refactor = ["cleanup", "improvement", "technical-debt"]
                 }
             }
         }
-        
-        Err(anyhow::anyhow!("Worktree '{}' not found in git worktree list", branch))
+
+        Err(anyhow::anyhow!(
+            "Worktree '{}' not found in git worktree list",
+            branch
+        ))
     }
 }
 
@@ -1325,8 +1328,18 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
 
                 // Check if the specified tool is available
                 if !tool.is_available() {
-                    println!("{}", style(&format!("✗ Tool '{}' is not available", tool_name)).red());
-                    println!("{}", style(&format!("  - Please install {} or use a different tool", tool_name)).dim());
+                    println!(
+                        "{}",
+                        style(&format!("✗ Tool '{}' is not available", tool_name)).red()
+                    );
+                    println!(
+                        "{}",
+                        style(&format!(
+                            "  - Please install {} or use a different tool",
+                            tool_name
+                        ))
+                        .dim()
+                    );
                     return Err(anyhow::anyhow!("Tool '{}' is not available", tool_name));
                 }
 
@@ -1334,8 +1347,16 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
 
                 // Create worktree with the specified tool
                 match tool {
-                    WorktreeTool::Workbloom => manager.create_with_workbloom(&branch, base_dir.as_deref(), switch).await?,
-                    WorktreeTool::Git => manager.create_with_git(&branch, base_dir.as_deref(), switch).await?,
+                    WorktreeTool::Workbloom => {
+                        manager
+                            .create_with_workbloom(&branch, base_dir.as_deref(), switch)
+                            .await?
+                    }
+                    WorktreeTool::Git => {
+                        manager
+                            .create_with_git(&branch, base_dir.as_deref(), switch)
+                            .await?
+                    }
                 }
             } else {
                 // Use the best available tool
@@ -1432,16 +1453,45 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 // Validate that the directory exists before opening Cursor
                 let worktree_path_buf = std::path::Path::new(&worktree_path);
                 if !worktree_path_buf.exists() {
-                    println!("{}", style(&format!("✗ Worktree directory does not exist: {}", worktree_path)).red());
-                    println!("{}", style("  - The worktree may not have been created successfully").dim());
-                    println!("{}", style("  - Please check the worktree creation output above").dim());
-                    return Err(anyhow::anyhow!("Worktree directory does not exist: {}", worktree_path));
+                    println!(
+                        "{}",
+                        style(&format!(
+                            "✗ Worktree directory does not exist: {}",
+                            worktree_path
+                        ))
+                        .red()
+                    );
+                    println!(
+                        "{}",
+                        style("  - The worktree may not have been created successfully").dim()
+                    );
+                    println!(
+                        "{}",
+                        style("  - Please check the worktree creation output above").dim()
+                    );
+                    return Err(anyhow::anyhow!(
+                        "Worktree directory does not exist: {}",
+                        worktree_path
+                    ));
                 }
 
                 if !worktree_path_buf.is_dir() {
-                    println!("{}", style(&format!("✗ Path exists but is not a directory: {}", worktree_path)).red());
-                    println!("{}", style("  - This indicates a path construction error").dim());
-                    return Err(anyhow::anyhow!("Path is not a directory: {}", worktree_path));
+                    println!(
+                        "{}",
+                        style(&format!(
+                            "✗ Path exists but is not a directory: {}",
+                            worktree_path
+                        ))
+                        .red()
+                    );
+                    println!(
+                        "{}",
+                        style("  - This indicates a path construction error").dim()
+                    );
+                    return Err(anyhow::anyhow!(
+                        "Path is not a directory: {}",
+                        worktree_path
+                    ));
                 }
 
                 // Check if Cursor is available
@@ -1449,28 +1499,59 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 if let Ok(output) = cursor_check {
                     if output.status.success() {
                         // Open worktree in Cursor
-                        let cursor_result = Command::new("cursor")
-                            .arg(&worktree_path)
-                            .spawn();
+                        let cursor_result = Command::new("cursor").arg(&worktree_path).spawn();
 
                         match cursor_result {
                             Ok(_) => {
                                 println!("{}", style("✓ Opened worktree in Cursor").green());
-                                println!("{}", style(&format!("  - Path: {}", worktree_path)).dim());
+                                println!(
+                                    "{}",
+                                    style(&format!("  - Path: {}", worktree_path)).dim()
+                                );
                             }
                             Err(e) => {
-                                println!("{}", style(&format!("✗ Failed to open Cursor: {}", e)).red());
-                                println!("{}", style(&format!("  - You can manually open it with: cursor {}", worktree_path)).dim());
+                                println!(
+                                    "{}",
+                                    style(&format!("✗ Failed to open Cursor: {}", e)).red()
+                                );
+                                println!(
+                                    "{}",
+                                    style(&format!(
+                                        "  - You can manually open it with: cursor {}",
+                                        worktree_path
+                                    ))
+                                    .dim()
+                                );
                             }
                         }
                     } else {
                         println!("{}", style("✗ Cursor not found in PATH").red());
-                        println!("{}", style("  - Please install Cursor or add it to your PATH").dim());
-                        println!("{}", style(&format!("  - You can manually open it with: cursor {}", worktree_path)).dim());
+                        println!(
+                            "{}",
+                            style("  - Please install Cursor or add it to your PATH").dim()
+                        );
+                        println!(
+                            "{}",
+                            style(&format!(
+                                "  - You can manually open it with: cursor {}",
+                                worktree_path
+                            ))
+                            .dim()
+                        );
                     }
                 } else {
-                    println!("{}", style("✗ Could not check for Cursor installation").red());
-                    println!("{}", style(&format!("  - You can manually open it with: cursor {}", worktree_path)).dim());
+                    println!(
+                        "{}",
+                        style("✗ Could not check for Cursor installation").red()
+                    );
+                    println!(
+                        "{}",
+                        style(&format!(
+                            "  - You can manually open it with: cursor {}",
+                            worktree_path
+                        ))
+                        .dim()
+                    );
                 }
             }
         }
@@ -1605,9 +1686,15 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 }
             }
         }
-        WorktreeCommands::Sync { all, worktree, force, pull, push } => {
+        WorktreeCommands::Sync {
+            all,
+            worktree,
+            force,
+            pull,
+            push,
+        } => {
             println!("{}", style("Syncing worktrees...").bold());
-            
+
             if all {
                 println!("{}", style("Syncing all worktrees").cyan());
                 println!("{}", style("Feature not yet implemented").yellow());
@@ -1615,22 +1702,36 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 println!("{}", style(&format!("Syncing worktree: {}", wt)).cyan());
                 println!("{}", style("Feature not yet implemented").yellow());
             } else {
-                println!("{}", style("No worktree specified. Use --all or --worktree").yellow());
+                println!(
+                    "{}",
+                    style("No worktree specified. Use --all or --worktree").yellow()
+                );
             }
-        },
-        WorktreeCommands::Pull { all, branch, create_worktrees, base_dir } => {
+        }
+        WorktreeCommands::Pull {
+            all,
+            branch,
+            create_worktrees,
+            base_dir,
+        } => {
             println!("{}", style("Pulling remote branches...").bold());
-            
+
             if all {
                 println!("{}", style("Pulling all remote branches").cyan());
                 println!("{}", style("Feature not yet implemented").yellow());
             } else if let Some(branch_name) = branch {
-                println!("{}", style(&format!("Pulling branch: {}", branch_name)).cyan());
+                println!(
+                    "{}",
+                    style(&format!("Pulling branch: {}", branch_name)).cyan()
+                );
                 println!("{}", style("Feature not yet implemented").yellow());
             } else {
-                println!("{}", style("No branch specified. Use --all or --branch").yellow());
+                println!(
+                    "{}",
+                    style("No branch specified. Use --all or --branch").yellow()
+                );
             }
-        },
+        }
     }
 
     Ok(())
