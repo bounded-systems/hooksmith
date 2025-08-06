@@ -27,15 +27,15 @@ fn update_worktree_to_main(worktree_path: &str, branch_name: &str) -> Result<boo
     let merged_branches = run_git_command_in_dir(&["branch", "--merged", "origin/main"], worktree_path)?;
     if merged_branches.lines().any(|line| line.trim() == format!("* {}", branch_name)) {
         log_info(&format!("Branch {} is merged - cleaning up", branch_name));
-
+        
         // Remove worktree
         let output = Command::new("git")
             .args(&["worktree", "remove", worktree_path])
             .output()
             .map_err(|e| format!("Failed to remove worktree: {}", e))?;
-
-        if !output.status.success() {
-            log_warning(&format!("Failed to remove worktree: {}", worktree_path));
+        
+        if output.status.success() {
+            log_success(&format!("Removed merged worktree: {}", branch_name));
         }
 
         // Delete branch
@@ -43,9 +43,9 @@ fn update_worktree_to_main(worktree_path: &str, branch_name: &str) -> Result<boo
             .args(&["branch", "-D", branch_name])
             .output()
             .map_err(|e| format!("Failed to delete branch: {}", e))?;
-
-        if !output.status.success() {
-            log_warning(&format!("Failed to delete branch: {}", branch_name));
+        
+        if output.status.success() {
+            log_success(&format!("Deleted merged branch: {}", branch_name));
         }
 
         return Ok(true);
@@ -53,36 +53,38 @@ fn update_worktree_to_main(worktree_path: &str, branch_name: &str) -> Result<boo
 
     // Try to rebase onto main
     log_info(&format!("Attempting to rebase {} onto main", branch_name));
-    match run_git_command_in_dir(&["rebase", "origin/main"], worktree_path) {
-        Ok(_) => {
-            log_success(&format!("Successfully rebased {} onto main", branch_name));
+    let output = Command::new("git")
+        .args(&["rebase", "origin/main"])
+        .current_dir(worktree_path)
+        .output()
+        .map_err(|e| format!("Failed to rebase: {}", e))?;
+
+    if output.status.success() {
+        log_success(&format!("Successfully rebased {} onto main", branch_name));
+        Ok(true)
+    } else {
+        log_warning(&format!("Rebase failed for {} - creating fresh branch", branch_name));
+        
+        // Remove old worktree and create fresh one
+        let _ = Command::new("git")
+            .args(&["worktree", "remove", worktree_path])
+            .output();
+
+        let _ = Command::new("git")
+            .args(&["branch", "-D", branch_name])
+            .output();
+
+        // Create new worktree based on main
+        let output = Command::new("git")
+            .args(&["worktree", "add", worktree_path, "-b", branch_name])
+            .output()
+            .map_err(|e| format!("Failed to create fresh worktree: {}", e))?;
+
+        if output.status.success() {
+            log_success(&format!("Created fresh worktree for {} based on main", branch_name));
             Ok(true)
-        }
-        Err(_) => {
-            log_warning(&format!("Rebase failed for {} - creating fresh branch", branch_name));
-
-            // Remove old worktree and create fresh one
-            let _ = Command::new("git")
-                .args(&["worktree", "remove", worktree_path])
-                .output();
-
-            let _ = Command::new("git")
-                .args(&["branch", "-D", branch_name])
-                .output();
-
-            // Create new worktree based on main
-            let output = Command::new("git")
-                .args(&["worktree", "add", worktree_path, "-b", branch_name])
-                .output()
-                .map_err(|e| format!("Failed to create worktree: {}", e))?;
-
-            if output.status.success() {
-                log_success(&format!("Created fresh worktree for {} based on main", branch_name));
-                Ok(true)
-            } else {
-                log_error(&format!("Failed to create fresh worktree for {}", branch_name));
-                Ok(false)
-            }
+        } else {
+            Err("Failed to create fresh worktree".to_string())
         }
     }
 }
@@ -117,6 +119,7 @@ fn process_all_worktrees() -> Result<(), Box<dyn std::error::Error>> {
 
     println!();
     log_success(&format!("Updated {} out of {} worktrees", updated_count, total_count));
+
     Ok(())
 }
 
@@ -164,9 +167,9 @@ fn show_usage() {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
-    let command = args.get(1).map(|s| s.as_str()).unwrap_or("help");
+    let command = args.get(1).unwrap_or(&"help".to_string());
 
-    match command {
+    match command.as_str() {
         "update" => {
             process_all_worktrees()?;
             println!();
