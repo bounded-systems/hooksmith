@@ -4,44 +4,46 @@ use std::path::PathBuf;
 use tempfile::tempdir;
 use tracing::{info, warn};
 
-use worktree_runner::{WorktreeRunner, ToolConfig, crd::WorktreeChangeRequest};
+use worktree_runner::{crd::WorktreeChangeRequest, ToolConfig, WorktreeRunner};
 
 /// Comprehensive demo of the Worktree CRD Lifecycle System
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize logging
     tracing_subscriber::fmt::init();
-    
+
     println!("🎭 Worktree CRD Lifecycle System Demo");
     println!("=====================================");
     println!();
-    
+
     // Create a temporary directory for the demo
     let temp_dir = tempdir()?;
     let repo_path = temp_dir.path().join("repo");
     let worktree_base = temp_dir.path().join("worktrees");
     let storage_dir = temp_dir.path().join(".worktree-state");
-    
+
     // Initialize the worktree runner
     let mut runner = WorktreeRunner::new();
-    
+
     // Initialize the CRD system
     info!("Initializing CRD system...");
-    runner.init_crd_system(
-        repo_path.clone(),
-        worktree_base.clone(),
-        storage_dir.clone(),
-        None, // No GitHub token for demo
-    ).await?;
-    
+    runner
+        .init_crd_system(
+            repo_path.clone(),
+            worktree_base.clone(),
+            storage_dir.clone(),
+            None, // No GitHub token for demo
+        )
+        .await?;
+
     println!("✅ CRD system initialized");
     println!();
-    
+
     // Demo 1: Create a new branch and worktree
     println!("1. Creating a new feature branch...");
     demo_create_feature_branch(&mut runner, "feature/new-feature").await?;
     println!();
-    
+
     // Demo 2: Show reconciliation
     println!("2. Running reconciliation...");
     let crds = runner.reconcile().await?;
@@ -50,7 +52,7 @@ async fn main() -> Result<()> {
         println!("   {}", crd.get_summary());
     }
     println!();
-    
+
     // Demo 3: Show status
     println!("3. Current status:");
     let status = runner.get_status().await?;
@@ -58,18 +60,17 @@ async fn main() -> Result<()> {
         println!("   {}", crd.get_summary());
     }
     println!();
-    
+
     // Demo 4: Export CRDs
     println!("4. Exporting CRDs...");
     let storage = runner.storage.as_ref().unwrap();
     let export_path = temp_dir.path().join("export.json");
-    storage.export_crds(
-        worktree_runner::storage::ExportFormat::Json,
-        &export_path,
-    ).await?;
+    storage
+        .export_crds(worktree_runner::storage::ExportFormat::Json, &export_path)
+        .await?;
     println!("   Exported to: {:?}", export_path);
     println!();
-    
+
     // Demo 5: Show storage statistics
     println!("5. Storage statistics:");
     let stats = storage.get_stats().await?;
@@ -79,12 +80,12 @@ async fn main() -> Result<()> {
     println!("   Failed CRDs: {}", stats.failed_crds);
     println!("   Storage size: {} bytes", stats.storage_size_bytes);
     println!();
-    
+
     // Demo 6: Simulate state transitions
     println!("6. Simulating state transitions...");
     demo_state_transitions(&mut runner).await?;
     println!();
-    
+
     // Demo 7: Show final status
     println!("7. Final status after transitions:");
     let final_status = runner.get_status().await?;
@@ -95,10 +96,10 @@ async fn main() -> Result<()> {
         }
     }
     println!();
-    
+
     println!("✅ Demo completed successfully!");
     println!("📁 Demo files are in: {:?}", temp_dir.path());
-    
+
     Ok(())
 }
 
@@ -106,13 +107,13 @@ async fn main() -> Result<()> {
 async fn demo_create_feature_branch(runner: &mut WorktreeRunner, branch_name: &str) -> Result<()> {
     // Create a new CRD for the branch
     let mut crd = WorktreeChangeRequest::new(branch_name);
-    
+
     // Simulate the branch being created
     crd.spec.domains.local.exists = true;
     crd.spec.domains.local.current = false;
     crd.spec.domains.local.ahead = 0;
     crd.spec.domains.local.behind = 0;
-    
+
     // Transition to developing state
     crd.transition_to(
         worktree_runner::crd::WorktreeState::Developing,
@@ -120,14 +121,14 @@ async fn demo_create_feature_branch(runner: &mut WorktreeRunner, branch_name: &s
         true,
         Some("Branch created successfully".to_string()),
     );
-    
+
     // Save the CRD
     let storage = runner.storage.as_ref().unwrap();
     storage.save_crd(&crd).await?;
-    
+
     println!("   Created CRD for branch: {}", branch_name);
     println!("   State: {:?}", crd.spec.state);
-    
+
     Ok(())
 }
 
@@ -135,10 +136,10 @@ async fn demo_create_feature_branch(runner: &mut WorktreeRunner, branch_name: &s
 async fn demo_state_transitions(runner: &mut WorktreeRunner) -> Result<()> {
     let storage = runner.storage.as_ref().unwrap();
     let crds = storage.load_all_crds().await?;
-    
+
     for (branch_name, mut crd) in crds {
         println!("   Processing branch: {}", branch_name);
-        
+
         // Simulate different state transitions based on current state
         match crd.spec.state {
             worktree_runner::crd::WorktreeState::Created => {
@@ -151,13 +152,13 @@ async fn demo_state_transitions(runner: &mut WorktreeRunner) -> Result<()> {
                 );
                 println!("     CREATED → DEVELOPING");
             }
-            
+
             worktree_runner::crd::WorktreeState::Developing => {
                 // Simulate worktree becoming clean and ready
                 crd.spec.domains.worktree.dirty = false;
                 crd.spec.domains.local.ahead = 2;
                 crd.spec.domains.local.behind = 0;
-                
+
                 crd.transition_to(
                     worktree_runner::crd::WorktreeState::Ready,
                     Some(worktree_runner::crd::WorktreeAction::PushBranch),
@@ -166,11 +167,11 @@ async fn demo_state_transitions(runner: &mut WorktreeRunner) -> Result<()> {
                 );
                 println!("     DEVELOPING → READY");
             }
-            
+
             worktree_runner::crd::WorktreeState::Ready => {
                 // Simulate pushing to remote
                 crd.spec.domains.remote.exists = true;
-                
+
                 crd.transition_to(
                     worktree_runner::crd::WorktreeState::PrCreated,
                     Some(worktree_runner::crd::WorktreeAction::CreatePr),
@@ -179,12 +180,12 @@ async fn demo_state_transitions(runner: &mut WorktreeRunner) -> Result<()> {
                 );
                 println!("     READY → PR_CREATED");
             }
-            
+
             worktree_runner::crd::WorktreeState::PrCreated => {
                 // Simulate PR being merged
                 crd.spec.domains.pr.exists = true;
                 crd.spec.domains.pr.state = Some(worktree_runner::crd::PrState::Merged);
-                
+
                 crd.transition_to(
                     worktree_runner::crd::WorktreeState::Merged,
                     Some(worktree_runner::crd::WorktreeAction::CleanupWorktree),
@@ -193,13 +194,13 @@ async fn demo_state_transitions(runner: &mut WorktreeRunner) -> Result<()> {
                 );
                 println!("     PR_CREATED → MERGED");
             }
-            
+
             worktree_runner::crd::WorktreeState::Merged => {
                 // Simulate cleanup
                 crd.spec.domains.worktree.exists = false;
                 crd.spec.domains.local.exists = false;
                 crd.spec.domains.remote.exists = false;
-                
+
                 crd.transition_to(
                     worktree_runner::crd::WorktreeState::Removed,
                     None,
@@ -208,16 +209,16 @@ async fn demo_state_transitions(runner: &mut WorktreeRunner) -> Result<()> {
                 );
                 println!("     MERGED → REMOVED");
             }
-            
+
             _ => {
                 println!("     No transition needed for state: {:?}", crd.spec.state);
             }
         }
-        
+
         // Save the updated CRD
         storage.save_crd(&crd).await?;
     }
-    
+
     Ok(())
 }
 
@@ -234,4 +235,4 @@ fn print_crd_details(crd: &WorktreeChangeRequest) {
         println!("  Next action: {:?}", action);
     }
     println!();
-} 
+}

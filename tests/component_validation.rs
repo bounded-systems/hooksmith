@@ -9,7 +9,7 @@
 //! Run with: cargo test component_validation
 
 use anyhow::Result;
-use event_types::{Event, HooksmithEvent, SystemEvent, ComputationEvent};
+use event_types::{ComputationEvent, Event, HooksmithEvent, SystemEvent};
 use serde_json::Value;
 use std::path::PathBuf;
 use std::time::Instant;
@@ -67,7 +67,11 @@ mod pure_logic_tests {
         let deserialized: ComputationEvent = serde_json::from_str(&serialized).unwrap();
 
         match deserialized {
-            ComputationEvent::ValidationRequest { contract_name, content, .. } => {
+            ComputationEvent::ValidationRequest {
+                contract_name,
+                content,
+                ..
+            } => {
                 assert_eq!(contract_name, "test-contract");
                 assert_eq!(content, TEST_CONTRACT_VALID);
             }
@@ -104,7 +108,7 @@ mod wit_bindings_tests {
     fn test_wit_interface_contract() {
         // This would test that Rust types match WIT interface definitions
         // In a real implementation, this would use wit-bindgen generated types
-        
+
         // Test that validation config matches WIT interface
         let config = event_types::ValidationConfig {
             strict: Some(true),
@@ -142,13 +146,14 @@ mod wit_bindings_tests {
 #[cfg(test)]
 mod compiled_artifact_tests {
     use super::*;
-    use wasmtime::{Engine, Store, Config};
     use wasmtime::component::{Component, Linker};
+    use wasmtime::{Config, Engine, Store};
 
     async fn load_validation_component() -> Result<Component> {
         let engine = Engine::default();
-        let component_path = PathBuf::from("target/wasm32-wasip2/release/validation_handler.component.wasm");
-        
+        let component_path =
+            PathBuf::from("target/wasm32-wasip2/release/validation_handler.component.wasm");
+
         if !component_path.exists() {
             anyhow::bail!("Validation component not found. Run 'cargo component build' first.");
         }
@@ -172,7 +177,8 @@ mod compiled_artifact_tests {
         assert!(valid_result.success);
 
         // Test invalid contract validation
-        let invalid_result = test_validation_call(&mut store, &instance, TEST_CONTRACT_INVALID).await?;
+        let invalid_result =
+            test_validation_call(&mut store, &instance, TEST_CONTRACT_INVALID).await?;
         assert!(!invalid_result.success);
         assert!(!invalid_result.errors.is_empty());
 
@@ -186,18 +192,22 @@ mod compiled_artifact_tests {
     ) -> Result<event_types::ValidationResult> {
         // This is a simplified test - in a real implementation, you would use
         // the generated bindings from wit-bindgen
-        
+
         // For now, we'll simulate the validation result
         let is_valid = serde_json::from_str::<Value>(contract_content).is_ok();
-        
+
         Ok(event_types::ValidationResult {
             success: is_valid,
-            errors: if is_valid { vec![] } else { vec!["Invalid JSON".to_string()] },
+            errors: if is_valid {
+                vec![]
+            } else {
+                vec!["Invalid JSON".to_string()]
+            },
             warnings: vec![],
-            details: Some(if is_valid { 
-                "Validation completed successfully".to_string() 
-            } else { 
-                "Validation failed".to_string() 
+            details: Some(if is_valid {
+                "Validation completed successfully".to_string()
+            } else {
+                "Validation failed".to_string()
             }),
             metadata: None,
         })
@@ -223,7 +233,7 @@ mod compiled_artifact_tests {
         let avg_time = duration.as_micros() as f64 / iterations as f64;
 
         println!("Average validation time: {:.2} μs", avg_time);
-        
+
         // Performance assertion (adjust based on your requirements)
         assert!(avg_time < 1000.0, "Validation too slow: {:.2} μs", avg_time);
 
@@ -240,7 +250,7 @@ mod integration_tests {
     #[tokio::test]
     async fn test_end_to_end_validation_flow() -> Result<()> {
         // Simulate the complete flow: file read → validation → result
-        
+
         // Step 1: File read event
         let file_read_event = Event::system(
             "test-actor".to_string(),
@@ -265,7 +275,8 @@ mod integration_tests {
                 }),
             },
             Some("session-123".to_string()),
-        ).with_correlation_id("corr-123".to_string());
+        )
+        .with_correlation_id("corr-123".to_string());
 
         // Step 3: Validation result event
         let result_event = Event::computation(
@@ -281,7 +292,8 @@ mod integration_tests {
                 },
             },
             Some("session-123".to_string()),
-        ).with_correlation_id("corr-123".to_string());
+        )
+        .with_correlation_id("corr-123".to_string());
 
         // Verify event correlation
         assert_eq!(
@@ -301,7 +313,7 @@ mod integration_tests {
     #[tokio::test]
     async fn test_event_bus_flow() -> Result<()> {
         // Test the complete event bus flow with multiple handlers
-        
+
         let events = vec![
             // File read request
             Event::system(
@@ -342,7 +354,7 @@ mod integration_tests {
         // Verify event flow
         for (i, event) in events.iter().enumerate() {
             assert_eq!(event.metadata.session_id, Some("session-456".to_string()));
-            
+
             match &event.payload {
                 HooksmithEvent::System(_) if i == 0 => {
                     // First event should be system event
@@ -360,14 +372,17 @@ mod integration_tests {
     #[tokio::test]
     async fn test_error_handling_flow() -> Result<()> {
         // Test error handling in the event flow
-        
+
         let error_event = Event::computation(
             "validation-handler".to_string(),
             ComputationEvent::ValidationResult {
                 contract_name: "invalid-contract".to_string(),
                 result: event_types::ValidationResult {
                     success: false,
-                    errors: vec!["Invalid JSON".to_string(), "Missing required field".to_string()],
+                    errors: vec![
+                        "Invalid JSON".to_string(),
+                        "Missing required field".to_string(),
+                    ],
                     warnings: vec!["Deprecated field used".to_string()],
                     details: Some("Validation failed due to multiple errors".to_string()),
                     metadata: None,
@@ -492,9 +507,13 @@ mod performance_tests {
         let avg_time = duration.as_nanos() as f64 / iterations as f64;
 
         println!("Average serialization time: {:.2} ns", avg_time);
-        
+
         // Performance assertion
-        assert!(avg_time < 1000.0, "Serialization too slow: {:.2} ns", avg_time);
+        assert!(
+            avg_time < 1000.0,
+            "Serialization too slow: {:.2} ns",
+            avg_time
+        );
     }
 
     #[test]
@@ -521,9 +540,13 @@ mod performance_tests {
         let avg_time = duration.as_nanos() as f64 / iterations as f64;
 
         println!("Average deserialization time: {:.2} ns", avg_time);
-        
+
         // Performance assertion
-        assert!(avg_time < 2000.0, "Deserialization too slow: {:.2} ns", avg_time);
+        assert!(
+            avg_time < 2000.0,
+            "Deserialization too slow: {:.2} ns",
+            avg_time
+        );
     }
 }
 
@@ -531,29 +554,29 @@ mod performance_tests {
 #[tokio::test]
 async fn test_all_validation_layers() -> Result<()> {
     println!("🧪 Running comprehensive component validation tests...");
-    
+
     // Layer 1: Pure logic tests
     println!("✅ Layer 1: Pure logic tests passed");
-    
+
     // Layer 2: WIT bindings tests
     println!("✅ Layer 2: WIT bindings tests passed");
-    
+
     // Layer 3: Compiled artifact tests (if component exists)
     if PathBuf::from("target/wasm32-wasip2/release/validation_handler.component.wasm").exists() {
         println!("✅ Layer 3: Compiled artifact tests passed");
     } else {
         println!("⚠️  Layer 3: Skipped (component not built)");
     }
-    
+
     // Layer 4: Integration tests
     println!("✅ Layer 4: Integration tests passed");
-    
+
     // Schema validation tests
     println!("✅ Schema validation tests passed");
-    
+
     // Performance tests
     println!("✅ Performance tests passed");
-    
+
     println!("🎉 All validation layers passed!");
     Ok(())
-} 
+}

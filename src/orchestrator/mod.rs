@@ -6,21 +6,21 @@
 
 pub mod components;
 pub mod config;
+pub mod event_bus;
 pub mod router;
 pub mod runtime;
-pub mod event_bus;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use wasmtime::{Engine, Linker, Store, component::Component};
+use wasmtime::{component::Component, Engine, Linker, Store};
 
 use self::components::ComponentHandle;
 use self::config::OrchestratorConfig;
+use self::event_bus::{EventBusManager, EventBusManagerBuilder};
 use self::router::CommandRouter;
 use self::runtime::WasmRuntime;
-use self::event_bus::{EventBusManager, EventBusManagerBuilder};
 
 // Import types from components for now (in a real implementation, these would come from WIT)
 /// Metadata about a build operation
@@ -204,13 +204,23 @@ impl HooksmithOrchestrator {
     }
 
     /// Register a component with the event bus
-    pub async fn register_component_with_event_bus(&mut self, name: String, component: ComponentHandle) {
-        self.event_bus.register_component(name.clone(), component.clone()).await;
+    pub async fn register_component_with_event_bus(
+        &mut self,
+        name: String,
+        component: ComponentHandle,
+    ) {
+        self.event_bus
+            .register_component(name.clone(), component.clone())
+            .await;
         self.components.insert(name, component);
     }
 
     /// Register a native handler with the event bus
-    pub async fn register_native_handler(&mut self, name: String, handler: Box<dyn event_types::EventHandler>) {
+    pub async fn register_native_handler(
+        &mut self,
+        name: String,
+        handler: Box<dyn event_types::EventHandler>,
+    ) {
         self.event_bus.register_native_handler(name, handler).await;
     }
 
@@ -228,7 +238,7 @@ impl HooksmithOrchestrator {
         strict: bool,
         store_proof: bool,
     ) -> Result<ValidationResult> {
-        use event_types::{Event, ComputationEvent, ValidationConfig as EventValidationConfig};
+        use event_types::{ComputationEvent, Event, ValidationConfig as EventValidationConfig};
         use uuid::Uuid;
 
         let request_id = Uuid::new_v4().to_string();
@@ -296,7 +306,11 @@ impl HooksmithOrchestrator {
     }
 
     /// Store validation proof using event-driven approach
-    pub async fn store_proof_via_events(&self, file_path: &str, validation_result: &ValidationResult) -> Result<()> {
+    pub async fn store_proof_via_events(
+        &self,
+        file_path: &str,
+        validation_result: &ValidationResult,
+    ) -> Result<()> {
         use event_types::{Event, SystemEvent};
         use uuid::Uuid;
 
@@ -339,17 +353,23 @@ impl HooksmithOrchestrator {
         let mut linker = self.linker.as_mut().unwrap();
 
         // Load validation-handler component (exports validation functions)
-        if let Ok(validation_component) = Component::from_file(engine, "validation-handler.component.wasm") {
+        if let Ok(validation_component) =
+            Component::from_file(engine, "validation-handler.component.wasm")
+        {
             // TODO: Fix component instantiation
             tracing::info!("Loaded validation component");
         }
 
         // Load contract-checker component (imports from validation-handler)
-        if let Ok(checker_component) = Component::from_file(engine, "contract-checker.component.wasm") {
+        if let Ok(checker_component) =
+            Component::from_file(engine, "contract-checker.component.wasm")
+        {
             // TODO: Create proper typed interface for contract-checker
             // For now, store as generic component
-            self.linked_components.insert("contract-checker".to_string(), 
-                Box::new(checker_component) as Box<dyn std::any::Any + Send + Sync>);
+            self.linked_components.insert(
+                "contract-checker".to_string(),
+                Box::new(checker_component) as Box<dyn std::any::Any + Send + Sync>,
+            );
         }
 
         Ok(())
@@ -361,11 +381,14 @@ impl HooksmithOrchestrator {
         if self.linked_components.contains_key("contract-checker") {
             // TODO: Implement proper typed interface call
             // For now, fall back to event-driven approach
-            return self.validate_contract_via_events("contract", "data", contract_data, true, false).await;
+            return self
+                .validate_contract_via_events("contract", "data", contract_data, true, false)
+                .await;
         }
 
         // Fallback to event-driven approach
-        self.validate_contract_via_events("contract", "data", contract_data, true, false).await
+        self.validate_contract_via_events("contract", "data", contract_data, true, false)
+            .await
     }
 
     /// Check if direct linking is available for a component

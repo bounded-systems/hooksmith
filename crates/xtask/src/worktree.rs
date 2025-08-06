@@ -1675,6 +1675,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                         ))
                         .dim()
                     );
+<<<<<<< HEAD
                 }
             }
         }
@@ -1792,6 +1793,8 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                         ))
                         .dim()
                     );
+=======
+>>>>>>> 249b587e (🎉 Complete Shell-to-Rust Migration - 100% Success --body-file pr_body.md --base main)
                 }
             }
         }

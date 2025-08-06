@@ -87,12 +87,14 @@ fn install_tools() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn generate_sample_events() -> String {
-    let events = [r#"{"timestamp":"2025-08-03T18:30:00Z","level":"info","tool":"hooksmith","action":"start","message":"Starting structured auto-push workflow","session_id":"demo-session-123"}"#,
+    let events = [
+        r#"{"timestamp":"2025-08-03T18:30:00Z","level":"info","tool":"hooksmith","action":"start","message":"Starting structured auto-push workflow","session_id":"demo-session-123"}"#,
         r#"{"timestamp":"2025-08-03T18:30:05Z","level":"info","tool":"cargo","action":"check","message":"Running cargo check","session_id":"demo-session-123"}"#,
         r#"{"timestamp":"2025-08-03T18:30:10Z","level":"warn","tool":"cargo","action":"clippy","message":"variables can be used directly in the `format!` string","code":"clippy::uninlined_format_args","file":"src/main.rs","line":42,"column":9,"session_id":"demo-session-123"}"#,
         r#"{"timestamp":"2025-08-03T18:30:15Z","level":"info","tool":"git","action":"status","message":"Checking git status","session_id":"demo-session-123"}"#,
         r#"{"timestamp":"2025-08-03T18:30:20Z","level":"error","tool":"cargo","action":"test","message":"test failed","code":"E0001","file":"tests/test.rs","line":15,"column":1,"session_id":"demo-session-123"}"#,
-        r#"{"timestamp":"2025-08-03T18:30:25Z","level":"info","tool":"hooksmith","action":"completion","message":"Workflow completed","details":{"duration_ms":25000,"success":false},"session_id":"demo-session-123"}"#];
+        r#"{"timestamp":"2025-08-03T18:30:25Z","level":"info","tool":"hooksmith","action":"completion","message":"Workflow completed","details":{"duration_ms":25000,"success":false},"session_id":"demo-session-123"}"#,
+    ];
 
     events.join("\n")
 }

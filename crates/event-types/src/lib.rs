@@ -8,8 +8,8 @@
 //! - Schema validation for events
 //! - Clear separation between system operations and pure computation
 
-use serde::{Deserialize, Serialize};
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 pub mod schema;
@@ -399,11 +399,7 @@ pub struct Event {
 
 impl Event {
     /// Create a new event
-    pub fn new(
-        actor: String,
-        payload: HooksmithEvent,
-        session_id: Option<String>,
-    ) -> Self {
+    pub fn new(actor: String, payload: HooksmithEvent, session_id: Option<String>) -> Self {
         Self {
             metadata: EventMetadata {
                 id: uuid::Uuid::new_v4().to_string(),
@@ -419,11 +415,7 @@ impl Event {
     }
 
     /// Create a new system event
-    pub fn system(
-        actor: String,
-        system_event: SystemEvent,
-        session_id: Option<String>,
-    ) -> Self {
+    pub fn system(actor: String, system_event: SystemEvent, session_id: Option<String>) -> Self {
         Self::new(actor, HooksmithEvent::System(system_event), session_id)
     }
 
@@ -433,7 +425,11 @@ impl Event {
         computation_event: ComputationEvent,
         session_id: Option<String>,
     ) -> Self {
-        Self::new(actor, HooksmithEvent::Computation(computation_event), session_id)
+        Self::new(
+            actor,
+            HooksmithEvent::Computation(computation_event),
+            session_id,
+        )
     }
 
     /// Set correlation ID for request/response pairs
@@ -529,7 +525,11 @@ mod tests {
         let deserialized: ComputationEvent = serde_json::from_str(&serialized).unwrap();
 
         match deserialized {
-            ComputationEvent::ValidationRequest { contract_name, content, config } => {
+            ComputationEvent::ValidationRequest {
+                contract_name,
+                content,
+                config,
+            } => {
                 assert_eq!(contract_name, "test-contract");
                 assert_eq!(content, r#"{"name": "test"}"#);
                 assert!(config.is_some());
@@ -545,12 +545,16 @@ mod tests {
             binary: None,
         };
 
-        let event = Event::system("test-actor".to_string(), system_event, Some("session-123".to_string()));
-        
+        let event = Event::system(
+            "test-actor".to_string(),
+            system_event,
+            Some("session-123".to_string()),
+        );
+
         assert_eq!(event.metadata.actor, "test-actor");
         assert!(event.metadata.session_id.is_some());
         assert_eq!(event.metadata.session_id.unwrap(), "session-123");
-        
+
         match event.payload {
             HooksmithEvent::System(SystemEvent::FileRead { path, .. }) => {
                 assert_eq!(path, "/tmp/test.txt");
@@ -572,4 +576,4 @@ mod tests {
 
         assert_eq!(event.metadata.correlation_id, Some("corr-123".to_string()));
     }
-} 
+}

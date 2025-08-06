@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("");
     println!("📄 Generated Files from Source Data:");
     println!("====================================");
-    
+
     let files = vec![
         "test_readme_from_source.md",
         "test_component_docs_from_source.md",
@@ -35,14 +35,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("");
         println!("📄 {}", file);
         println!("{}", "=".repeat(file.len() + 3));
-        
+
         let content = fs::read_to_string(file)?;
         let lines: Vec<&str> = content.lines().take(15).collect();
-        
+
         for line in lines {
             println!("{}", line);
         }
-        
+
         if content.lines().count() > 15 {
             println!("...");
         }
@@ -122,7 +122,9 @@ struct GitInfo {
 fn generate_test_source_data() -> Result<ProjectData, Box<dyn std::error::Error>> {
     Ok(ProjectData {
         name: "hooksmith".to_string(),
-        description: "A CLI tool for building Rust binaries into Lefthook hooks with WASM components".to_string(),
+        description:
+            "A CLI tool for building Rust binaries into Lefthook hooks with WASM components"
+                .to_string(),
         version: "0.1.0".to_string(),
         dependencies: vec![
             ("anyhow".to_string(), "1.0".to_string()),
@@ -147,7 +149,8 @@ fn generate_test_source_data() -> Result<ProjectData, Box<dyn std::error::Error>
 │   ├── hook-builder/
 │   └── worktree-runner/
 └── tests/
-    └── integration.rs"#.to_string(),
+    └── integration.rs"#
+            .to_string(),
         components: vec![
             ComponentData {
                 name: "cli-core".to_string(),
@@ -172,7 +175,9 @@ fn generate_test_source_data() -> Result<ProjectData, Box<dyn std::error::Error>
     })
 }
 
-fn generate_readme_from_source(project_data: &ProjectData) -> Result<String, Box<dyn std::error::Error>> {
+fn generate_readme_from_source(
+    project_data: &ProjectData,
+) -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
 
     // Title and description from Cargo.toml
@@ -262,11 +267,15 @@ fn generate_readme_from_source(project_data: &ProjectData) -> Result<String, Box
     Ok(content)
 }
 
-fn generate_component_docs_from_source(project_data: &ProjectData) -> Result<String, Box<dyn std::error::Error>> {
+fn generate_component_docs_from_source(
+    project_data: &ProjectData,
+) -> Result<String, Box<dyn std::error::Error>> {
     let mut content = String::new();
 
     content.push_str("# Component Documentation\n\n");
-    content.push_str("This document contains documentation for all components, generated from source data.\n\n");
+    content.push_str(
+        "This document contains documentation for all components, generated from source data.\n\n",
+    );
 
     for component in &project_data.components {
         content.push_str(&format!("## {}\n\n", component.name));
@@ -293,7 +302,10 @@ fn generate_component_docs_from_source(project_data: &ProjectData) -> Result<Str
         // Usage examples from actual source code
         content.push_str("### Usage\n\n");
         content.push_str("```rust\n");
-        content.push_str(&format!("use hooksmith::{};\n\n", component.name.replace('-', "_")));
+        content.push_str(&format!(
+            "use hooksmith::{};\n\n",
+            component.name.replace('-', "_")
+        ));
         content.push_str(&format!("// Use {} functionality\n", component.name));
         content.push_str("```\n\n");
 
@@ -310,4 +322,4 @@ fn generate_component_docs_from_source(project_data: &ProjectData) -> Result<Str
     }
 
     Ok(content)
-} 
+}

@@ -200,7 +200,11 @@ impl WorktreeSyncManager {
         if current_branch == "main" {
             println!(
                 "{}",
-                style(&format!("⚠️  Worktree is on main branch: {}", worktree_path)).yellow()
+                style(&format!(
+                    "⚠️  Worktree is on main branch: {}",
+                    worktree_path
+                ))
+                .yellow()
             );
             return Ok(());
         }
