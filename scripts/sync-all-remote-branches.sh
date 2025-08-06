@@ -119,7 +119,7 @@ get_remote_branches() {
 # Function to check if worktree exists
 worktree_exists() {
     local branch_name="$1"
-    local worktree_path="worktrees/${branch_name//\//\/}"
+    local worktree_path=".wt/${branch_name//\//\/}"
     
     if git worktree list | grep -q "$worktree_path"; then
         return 0  # Worktree exists
@@ -132,7 +132,7 @@ worktree_exists() {
 create_worktree() {
     local branch_name="$1"
     local force="$2"
-    local worktree_path="worktrees/${branch_name//\//\/}"
+    local worktree_path=".wt/${branch_name//\//\/}"
     
     log_info "Processing branch: $branch_name"
     
