@@ -13,6 +13,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tokio::fs;
 
+use crate::worktree_sync;
 use crate::WorktreeCommands;
 
 /// Worktree configuration
@@ -1111,7 +1112,12 @@ refactor = ["cleanup", "improvement", "technical-debt"]
         // Look for the worktree location line in Workbloom output
         for line in output.lines() {
             if line.contains("📍 Worktree location:") {
-                return Some(line.split("📍 Worktree location:").nth(1)?.trim().to_string());
+                return Some(
+                    line.split("📍 Worktree location:")
+                        .nth(1)?
+                        .trim()
+                        .to_string(),
+                );
             }
             // Also check for the alternative format without emoji
             if line.contains("Worktree location:") {
@@ -1345,15 +1351,19 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                     "{}",
                     style(&format!("  - Path: {}", existing.path)).yellow()
                 );
+                println!("{}", style("  - To switch to it, run:").yellow());
                 println!(
                     "{}",
-                    style("  - To switch to it, run:").yellow()
+                    style(&format!(
+                        "    cargo xtask worktree switch --worktree {}",
+                        branch
+                    ))
+                    .cyan()
                 );
-                println!(
-                    "{}",
-                    style(&format!("    cargo xtask worktree switch --worktree {}", branch)).cyan()
-                );
-                return Err(anyhow::anyhow!("Worktree already exists for branch: {}", branch));
+                return Err(anyhow::anyhow!(
+                    "Worktree already exists for branch: {}",
+                    branch
+                ));
             }
 
             // Generate worktree name according to specification
@@ -1439,11 +1449,20 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 .context("Failed to push branch to remote")?;
 
             if push_output.status.success() {
-                println!("{}", style("✓ Branch pushed to remote successfully").green());
+                println!(
+                    "{}",
+                    style("✓ Branch pushed to remote successfully").green()
+                );
             } else {
                 let error = String::from_utf8_lossy(&push_output.stderr);
-                println!("{}", style(&format!("⚠ Warning: Failed to push branch: {}", error)).yellow());
-                println!("{}", style("  - You can manually push with: git push -u origin <branch>").dim());
+                println!(
+                    "{}",
+                    style(&format!("⚠ Warning: Failed to push branch: {}", error)).yellow()
+                );
+                println!(
+                    "{}",
+                    style("  - You can manually push with: git push -u origin <branch>").dim()
+                );
             }
 
             if setup {
@@ -1515,7 +1534,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 println!("{}", style("Opening worktree in Cursor...").bold());
 
                 // Use the actual worktree path returned from the creation process
-                let cursor_path = worktree_path;
+                let cursor_path = worktree_path.clone();
 
                 // Validate that the directory exists before opening Cursor
                 let worktree_path_buf = std::path::Path::new(&worktree_path);
@@ -1566,9 +1585,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 if let Ok(output) = cursor_check {
                     if output.status.success() {
                         // Open worktree in Cursor
-                        let cursor_result = Command::new("cursor")
-                            .arg(&cursor_path)
-                            .spawn();
+                        let cursor_result = Command::new("cursor").arg(&cursor_path).spawn();
 
                         match cursor_result {
                             Ok(_) => {
@@ -1592,12 +1609,32 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                         }
                     } else {
                         println!("{}", style("✗ Cursor not found in PATH").red());
-                        println!("{}", style("  - Please install Cursor or add it to your PATH").dim());
-                        println!("{}", style(&format!("  - You can manually open it with: cursor {}", cursor_path)).dim());
+                        println!(
+                            "{}",
+                            style("  - Please install Cursor or add it to your PATH").dim()
+                        );
+                        println!(
+                            "{}",
+                            style(&format!(
+                                "  - You can manually open it with: cursor {}",
+                                cursor_path
+                            ))
+                            .dim()
+                        );
                     }
                 } else {
-                    println!("{}", style("✗ Could not check for Cursor installation").red());
-                    println!("{}", style(&format!("  - You can manually open it with: cursor {}", cursor_path)).dim());
+                    println!(
+                        "{}",
+                        style("✗ Could not check for Cursor installation").red()
+                    );
+                    println!(
+                        "{}",
+                        style(&format!(
+                            "  - You can manually open it with: cursor {}",
+                            cursor_path
+                        ))
+                        .dim()
+                    );
                 }
             }
         }
@@ -1796,11 +1833,14 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             }
 
             if force {
-                println!("{}", style("Force sync enabled - proceeding with uncommitted changes").yellow());
+                println!(
+                    "{}",
+                    style("Force sync enabled - proceeding with uncommitted changes").yellow()
+                );
             }
 
             // Run the worktree sync strategy
-            run_worktree_sync_command().await?;
+            worktree_sync::run_worktree_sync_command().await?;
         }
     }
 
