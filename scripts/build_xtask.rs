@@ -1,67 +1,67 @@
-#!/usr/bin/env rust-script
-//! Build xtask with platform-specific optimizations
-//! Auto-detects platform and uses appropriate target
+#!/usr/bin/env rustc
+//! Build script for xtask with platform auto-detection
 
 use std::process::{Command, Stdio};
 use std::env;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args: Vec<String> = env::args().skip(1).collect();
+
     // Get rustc version info to detect platform
     let rustc_output = Command::new("rustc")
-        .args(&["-vV"])
+        .args(["-vV"])
         .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .output()?;
 
     let rustc_info = String::from_utf8(rustc_output.stdout)?;
     let target = rustc_info
         .lines()
         .find(|line| line.contains("host"))
-        .and_then(|line| line.split_whitespace().nth(2))
+        .and_then(|line| line.split_whitespace().nth(1))
         .unwrap_or("unknown");
 
     println!("🔧 Building xtask for platform: {}", target);
 
-    // Get additional cargo arguments
-    let args: Vec<String> = env::args().skip(1).collect();
-
     // Build command based on platform
-    let mut cmd = Command::new("cargo");
-    cmd.args(&["build", "-p", "xtask"]);
+    let mut cargo_args = vec!["build", "-p", "xtask"];
+    cargo_args.extend(args.iter().map(|s| s.as_str()));
 
-    // Add platform-specific target if needed
-    match target {
+    let target_arg = match target {
         "aarch64-apple-darwin" => {
             println!("📱 Detected Apple Silicon Mac - using native target");
-            cmd.args(&["--target", "aarch64-apple-darwin"]);
-        }
+            Some("aarch64-apple-darwin")
+        },
         "x86_64-apple-darwin" => {
             println!("🖥️  Detected Intel Mac - using native target");
-            cmd.args(&["--target", "x86_64-apple-darwin"]);
-        }
+            Some("x86_64-apple-darwin")
+        },
         "x86_64-unknown-linux-gnu" => {
             println!("🐧 Detected Linux x86_64 - using native target");
-        }
+            None
+        },
         "aarch64-unknown-linux-gnu" => {
             println!("🐧 Detected Linux ARM64 - using native target");
-        }
+            None
+        },
         _ => {
             println!("🖥️  Using default target for platform: {}", target);
+            None
         }
+    };
+
+    if let Some(target_triple) = target_arg {
+        cargo_args.extend_from_slice(&["--target", target_triple]);
     }
 
-    // Add any additional arguments passed to the script
-    if !args.is_empty() {
-        cmd.args(&args);
-    }
+    let status = Command::new("cargo")
+        .args(&cargo_args)
+        .status()?;
 
-    // Execute the build command
-    let status = cmd.status()?;
-    
     if status.success() {
         println!("✅ xtask build completed successfully!");
         Ok(())
     } else {
-        eprintln!("❌ xtask build failed with exit code: {}", status);
         std::process::exit(status.code().unwrap_or(1));
     }
-} 
+}
