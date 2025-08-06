@@ -38,14 +38,24 @@ fn log_event(level: &str, action: &str, message: &str, details: Option<&str>) {
 
 fn main() {
     if let Err(e) = run_bootstrap() {
-        log_event("error", "bootstrap_failed", &format!("Bootstrap failed: {e}"), None);
+        log_event(
+            "error",
+            "bootstrap_failed",
+            &format!("Bootstrap failed: {e}"),
+            None,
+        );
         std::process::exit(1);
     }
 }
 
 fn run_bootstrap() -> Result<()> {
-    log_event("info", "bootstrap_start", "Starting bootstrap process", None);
-    
+    log_event(
+        "info",
+        "bootstrap_start",
+        "Starting bootstrap process",
+        None,
+    );
+
     // Watch for changes in key files/directories
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=Cargo.toml");
@@ -77,33 +87,63 @@ fn build_xtask() -> Result<()> {
     if !status.success() {
         anyhow::bail!("cargo build -p xtask failed");
     }
-    log_event("info", "build_xtask_success", "xtask built successfully", None);
+    log_event(
+        "info",
+        "build_xtask_success",
+        "xtask built successfully",
+        None,
+    );
     Ok(())
 }
 
 // --- Example stub functions ---
 fn generate_version_info() -> Result<()> {
-    log_event("info", "generate_version_info", "Generating version info", None);
+    log_event(
+        "info",
+        "generate_version_info",
+        "Generating version info",
+        None,
+    );
     // ... actual logic here ...
     Ok(())
 }
 fn generate_feature_flags() -> Result<()> {
-    log_event("info", "generate_feature_flags", "Generating feature flags", None);
+    log_event(
+        "info",
+        "generate_feature_flags",
+        "Generating feature flags",
+        None,
+    );
     // ... actual logic here ...
     Ok(())
 }
 fn generate_wit_bindings() -> Result<()> {
-    log_event("info", "generate_wit_bindings", "Generating WIT bindings", None);
+    log_event(
+        "info",
+        "generate_wit_bindings",
+        "Generating WIT bindings",
+        None,
+    );
     // ... actual logic here ...
     Ok(())
 }
 fn generate_doc_constants() -> Result<()> {
-    log_event("info", "generate_doc_constants", "Generating doc constants", None);
+    log_event(
+        "info",
+        "generate_doc_constants",
+        "Generating doc constants",
+        None,
+    );
     // ... actual logic here ...
     Ok(())
 }
 fn setup_conditional_compilation() -> Result<()> {
-    log_event("info", "setup_conditional_compilation", "Setting up conditional compilation", None);
+    log_event(
+        "info",
+        "setup_conditional_compilation",
+        "Setting up conditional compilation",
+        None,
+    );
     // ... actual logic here ...
     Ok(())
 }
