@@ -1766,10 +1766,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                 println!("{}", style("Pulling all remote branches").cyan());
                 println!("{}", style("Feature not yet implemented").yellow());
             } else if let Some(branch_name) = branch {
-                println!(
-                    "{}",
-                    style(&format!("Pulling branch: {}", branch_name)).cyan()
-                );
+                println!("{}", style(&format!("Pulling branch: {}", branch_name)).cyan());
                 println!("{}", style("Feature not yet implemented").yellow());
             } else {
                 println!(
