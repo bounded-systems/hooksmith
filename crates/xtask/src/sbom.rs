@@ -218,14 +218,12 @@ impl SbomGenerator {
                 let metadata = fs::metadata(&file_path).await?;
                 let size_kb = metadata.len() as f64 / 1024.0;
                 report.push_str(&format!("## {}\n", name));
-                report.push_str(&format!("- File: `{}`\n", file));
-                report.push_str(&format!("- Size: {:.2} KB\n", size_kb));
+                report.push_str(&format!(r"- File: `{}`n", file));                report.push_str(&format!("- Size: {:.2} KB\n", size_kb));
                 report.push_str(&format!("- Status: ✅ Generated\n\n"));
             } else {
                 report.push_str(&format!("## {}\n", name));
-                report.push_str(&format!("- File: `{}`\n", file));
-                report.push_str("Status: ❌ Not generated\n\n");
-            }
+<<<<<<< HEAD
+                report.push_str(&format!(r"- File: `{}`n", file));            }
         }
 
         // Add generation instructions
