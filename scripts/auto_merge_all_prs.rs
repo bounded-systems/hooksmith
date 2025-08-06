@@ -1,9 +1,8 @@
-#!/usr/bin/env rustx
+#!/usr/bin/env rust-script
 
+use std::process::{Command, Stdio};
 use std::collections::HashMap;
 use std::env;
-use std::process::{Command, Stdio};
-use std::str::FromStr;
 
 // Colors for output
 const RED: &str = "\x1b[0;31m";
@@ -57,10 +56,10 @@ This script will:
 2. Merge them using gh pr merge --delete-branch
 3. Skip main branch automatically
 4. Show summary of merged PRs"#,
-        env::args().next().unwrap_or_else(|| "auto_merge_all_prs".to_string()),
-        env::args().next().unwrap_or_else(|| "auto_merge_all_prs".to_string()),
-        env::args().next().unwrap_or_else(|| "auto_merge_all_prs".to_string()),
-        env::args().next().unwrap_or_else(|| "auto_merge_all_prs".to_string())
+        env::args().next().unwrap_or_else(|| "script".to_string()),
+        env::args().next().unwrap_or_else(|| "script".to_string()),
+        env::args().next().unwrap_or_else(|| "script".to_string()),
+        env::args().next().unwrap_or_else(|| "script".to_string())
     );
 }
 
@@ -68,20 +67,20 @@ This script will:
 fn check_dependencies() -> Result<(), Box<dyn std::error::Error>> {
     let mut missing_deps = Vec::new();
 
-    // Check git
+    // Check for git
     if Command::new("git").arg("--version").output().is_err() {
         missing_deps.push("git");
     }
 
-    // Check gh
+    // Check for gh
     if Command::new("gh").arg("--version").output().is_err() {
         log_error("GitHub CLI (gh) is required but not installed");
-        return Err("GitHub CLI not found".into());
+        std::process::exit(1);
     }
 
     if !missing_deps.is_empty() {
         log_error(&format!("Missing required dependencies: {}", missing_deps.join(", ")));
-        return Err("Missing dependencies".into());
+        std::process::exit(1);
     }
 
     Ok(())
@@ -101,7 +100,7 @@ fn get_worktree_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
         if let Some(branch_name) = extract_branch_name(line) {
             // Skip main branch
             if branch_name != "main" && !branch_name.is_empty() {
-                branches.push(branch_name.to_string());
+                branches.push(branch_name);
             }
         }
     }
@@ -110,11 +109,14 @@ fn get_worktree_branches() -> Result<Vec<String>, Box<dyn std::error::Error>> {
 }
 
 // Function to extract branch name from worktree list line
-fn extract_branch_name(line: &str) -> Option<&str> {
+fn extract_branch_name(line: &str) -> Option<String> {
     // Look for pattern like [branch-name] in the line
     if let Some(start) = line.find('[') {
         if let Some(end) = line[start..].find(']') {
-            return Some(&line[start + 1..start + end]);
+            let branch_name = line[start + 1..start + end].trim();
+            if !branch_name.is_empty() {
+                return Some(branch_name.to_string());
+            }
         }
     }
     None
@@ -124,7 +126,6 @@ fn extract_branch_name(line: &str) -> Option<&str> {
 fn branch_has_open_pr(branch_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
     let output = Command::new("gh")
         .args(&["pr", "list", "--head", branch_name, "--json", "number", "--jq", "length"])
-        .stderr(Stdio::null())
         .output()?;
 
     let output_str = String::from_utf8(output.stdout)?;
@@ -134,32 +135,33 @@ fn branch_has_open_pr(branch_name: &str) -> Result<bool, Box<dyn std::error::Err
 }
 
 // Function to get PR number for branch
-fn get_pr_number(branch_name: &str) -> Result<Option<i32>, Box<dyn std::error::Error>> {
+fn get_pr_number(branch_name: &str) -> Result<Option<String>, Box<dyn std::error::Error>> {
     let output = Command::new("gh")
         .args(&["pr", "list", "--head", branch_name, "--json", "number", "--jq", ".[0].number"])
-        .stderr(Stdio::null())
         .output()?;
 
     let output_str = String::from_utf8(output.stdout)?;
-    let trimmed = output_str.trim();
+    let pr_number = output_str.trim();
 
-    if trimmed == "null" || trimmed.is_empty() {
+    if pr_number.is_empty() || pr_number == "null" {
         Ok(None)
     } else {
-        Ok(Some(trimmed.parse::<i32>()?))
+        Ok(Some(pr_number.to_string()))
     }
 }
 
 // Function to merge PR
-fn merge_pr(pr_number: i32, branch_name: &str, force: bool) -> Result<bool, Box<dyn std::error::Error>> {
+fn merge_pr(pr_number: &str, branch_name: &str, force: bool) -> Result<bool, Box<dyn std::error::Error>> {
     log_info(&format!("Merging PR #{} for branch: {}", pr_number, branch_name));
 
-    let mut args = vec!["pr", "merge", &pr_number.to_string(), "--delete-branch"];
+    let mut args = vec!["pr", "merge", pr_number, "--delete-branch"];
     if force {
         args.push("--force");
     }
 
-    let status = Command::new("gh").args(&args).status()?;
+    let status = Command::new("gh")
+        .args(&args)
+        .status()?;
 
     if status.success() {
         log_success(&format!("Successfully merged PR #{} for branch: {}", pr_number, branch_name));
@@ -193,15 +195,12 @@ fn auto_merge_all_prs(dry_run: bool, force: bool) -> Result<(), Box<dyn std::err
                     log_info(&format!("DRY RUN: Would merge PR #{} for branch: {}", pr_number, branch));
                     merged_count += 1;
                 } else {
-                    if merge_pr(pr_number, branch, force)? {
+                    if merge_pr(&pr_number, branch, force)? {
                         merged_count += 1;
                     } else {
                         failed_count += 1;
                     }
                 }
-            } else {
-                log_info(&format!("No open PR found for branch: {}", branch));
-                skipped_count += 1;
             }
         } else {
             log_info(&format!("No open PR found for branch: {}", branch));
@@ -260,3 +259,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+

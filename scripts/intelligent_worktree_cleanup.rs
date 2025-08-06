@@ -1,9 +1,10 @@
-#!/usr/bin/env rustx
+#!/usr/bin/env rust-script
 
-use std::collections::HashMap;
+use std::process::{Command, Stdio};
 use std::env;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::collections::HashMap;
+use regex::Regex;
 
 // Colors for output
 const RED: &str = "\x1b[0;31m";
@@ -12,6 +13,13 @@ const YELLOW: &str = "\x1b[1;33m";
 const BLUE: &str = "\x1b[0;34m";
 const PURPLE: &str = "\x1b[0;35m";
 const NC: &str = "\x1b[0m"; // No Color
+
+#[derive(Debug, Clone)]
+enum Decision {
+    Remove,
+    Cleanup,
+    Keep,
+}
 
 fn print_status(state: &str, message: &str) {
     match state {
@@ -24,28 +32,9 @@ fn print_status(state: &str, message: &str) {
     }
 }
 
-#[derive(Debug, Clone)]
-enum Decision {
-    Remove,
-    Cleanup,
-    Keep,
-}
-
-impl std::fmt::Display for Decision {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Decision::Remove => write!(f, "REMOVE"),
-            Decision::Cleanup => write!(f, "CLEANUP"),
-            Decision::Keep => write!(f, "KEEP"),
-        }
-    }
-}
-
 // Function to analyze worktree and make decision
 fn analyze_worktree(worktree_path: &str) -> Result<Decision, Box<dyn std::error::Error>> {
-    let worktree_name = Path::new(worktree_path).file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or("unknown");
+    let worktree_name = Path::new(worktree_path).file_name().unwrap().to_str().unwrap();
 
     println!("=== ANALYZING: {} ===", worktree_name);
 
@@ -56,7 +45,8 @@ fn analyze_worktree(worktree_path: &str) -> Result<Decision, Box<dyn std::error:
 
     // Get branch name
     let branch_output = Command::new("git")
-        .args(&["-C", worktree_path, "branch", "--show-current"])
+        .args(&["branch", "--show-current"])
+        .current_dir(worktree_path)
         .output()?;
 
     let branch = if branch_output.status.success() {
@@ -68,24 +58,22 @@ fn analyze_worktree(worktree_path: &str) -> Result<Decision, Box<dyn std::error:
     print_status("INFO", &format!("Branch: {}", branch));
 
     // Check commit history
-    let commit_count_output = Command::new("git")
-        .args(&["-C", worktree_path, "log", "--oneline", "--since=1 week ago"])
+    let commit_output = Command::new("git")
+        .args(&["log", "--oneline", "--since=1 week ago"])
+        .current_dir(worktree_path)
         .output()?;
 
-    let commit_count = if commit_count_output.status.success() {
-        String::from_utf8(commit_count_output.stdout)?.lines().count()
-    } else {
-        0
-    };
+    let commit_count = String::from_utf8(commit_output.stdout)?.lines().count();
 
     let last_commit_output = Command::new("git")
-        .args(&["-C", worktree_path, "log", "--oneline", "-1"])
+        .args(&["log", "--oneline", "-1"])
+        .current_dir(worktree_path)
         .output()?;
 
     let last_commit = if last_commit_output.status.success() {
         String::from_utf8(last_commit_output.stdout)?.trim().to_string()
     } else {
-        "No commits".to_string()
+        String::new()
     };
 
     print_status("INFO", &format!("Recent commits: {}", commit_count));
@@ -93,41 +81,38 @@ fn analyze_worktree(worktree_path: &str) -> Result<Decision, Box<dyn std::error:
 
     // Check for conflicts
     let conflicts_output = Command::new("git")
-        .args(&["-C", worktree_path, "diff", "--name-only", "--diff-filter=U"])
-        .stderr(Stdio::null())
+        .args(&["diff", "--name-only", "--diff-filter=U"])
+        .current_dir(worktree_path)
+        .output();
+
+    let rebase_output = Command::new("git")
+        .args(&["status"])
+        .current_dir(worktree_path)
         .output()?;
 
-    let has_conflicts = conflicts_output.status.success() && !String::from_utf8(conflicts_output.stdout)?.trim().is_empty();
+    let has_conflicts = conflicts_output.is_ok() && !String::from_utf8(conflicts_output.unwrap().stdout)?.trim().is_empty();
+    let in_rebase = String::from_utf8(rebase_output.stdout)?.contains("rebase");
 
-    let rebase_status_output = Command::new("git")
-        .args(&["-C", worktree_path, "status"])
-        .output()?;
-
-    let has_rebase = if rebase_status_output.status.success() {
-        String::from_utf8(rebase_status_output.stdout)?.contains("rebase")
-    } else {
-        false
-    };
-
-    if has_conflicts || has_rebase {
+    if has_conflicts || in_rebase {
         print_status("WARNING", "Worktree has conflicts or is in rebase state");
 
         // Check if this worktree is from old development
-        if worktree_name.contains("202508") {
-            print_status("DECISION", "This appears to be an old worktree from 202508");
+        let date_regex = Regex::new(r"202508[0-9][0-9]")?;
+        if date_regex.is_match(worktree_name) {
+            print_status("DECISION", "This appears to be an old worktree from 202508xx");
             print_status("DECISION", "Recommendation: REMOVE (likely obsolete)");
             return Ok(Decision::Remove);
         }
     }
 
     // Check if branch is behind main
-    let behind_count_output = Command::new("git")
-        .args(&["-C", worktree_path, "rev-list", "--count", "HEAD..origin/main"])
-        .stderr(Stdio::null())
-        .output()?;
+    let behind_output = Command::new("git")
+        .args(&["rev-list", "--count", "HEAD..origin/main"])
+        .current_dir(worktree_path)
+        .output();
 
-    let behind_count = if behind_count_output.status.success() {
-        String::from_utf8(behind_count_output.stdout)?.trim().parse::<i32>().unwrap_or(0)
+    let behind_count = if behind_output.is_ok() {
+        String::from_utf8(behind_output.unwrap().stdout)?.trim().parse::<i32>().unwrap_or(0)
     } else {
         0
     };
@@ -139,40 +124,32 @@ fn analyze_worktree(worktree_path: &str) -> Result<Decision, Box<dyn std::error:
     }
 
     // Check if branch exists on origin
-    let remote_check = Command::new("git")
-        .args(&["-C", worktree_path, "ls-remote", "--heads", "origin", &branch])
+    let remote_output = Command::new("git")
+        .args(&["ls-remote", "--heads", "origin", &branch])
+        .current_dir(worktree_path)
         .output()?;
 
-    if remote_check.status.success() {
-        let remote_output = String::from_utf8(remote_check.stdout)?;
-        if remote_output.contains(&branch) {
-            print_status("INFO", "Branch exists on origin");
+    let exists_on_origin = remote_output.status.success() && !String::from_utf8(remote_output.stdout)?.trim().is_empty();
 
-            // Check if merged
-            let merged_check = Command::new("git")
-                .args(&["-C", worktree_path, "branch", "--merged", "origin/main"])
-                .output()?;
+    if exists_on_origin {
+        print_status("INFO", "Branch exists on origin");
 
-            if merged_check.status.success() {
-                let merged_output = String::from_utf8(merged_check.stdout)?;
-                if merged_output.contains(&branch) {
-                    print_status("SUCCESS", "Branch is merged");
-                    print_status("DECISION", "Recommendation: CLEANUP (merged)");
-                    return Ok(Decision::Cleanup);
-                } else {
-                    print_status("INFO", "Branch not merged");
-                    print_status("DECISION", "Recommendation: KEEP (active development)");
-                    return Ok(Decision::Keep);
-                }
-            } else {
-                print_status("INFO", "Branch not merged");
-                print_status("DECISION", "Recommendation: KEEP (active development)");
-                return Ok(Decision::Keep);
-            }
+        // Check if merged
+        let merged_output = Command::new("git")
+            .args(&["branch", "--merged", "origin/main"])
+            .current_dir(worktree_path)
+            .output()?;
+
+        let is_merged = String::from_utf8(merged_output.stdout)?.lines().any(|line| line.trim() == branch);
+
+        if is_merged {
+            print_status("SUCCESS", "Branch is merged");
+            print_status("DECISION", "Recommendation: CLEANUP (merged)");
+            return Ok(Decision::Cleanup);
         } else {
-            print_status("WARNING", "Branch does not exist on origin");
-            print_status("DECISION", "Recommendation: REMOVE (no remote branch)");
-            return Ok(Decision::Remove);
+            print_status("INFO", "Branch not merged");
+            print_status("DECISION", "Recommendation: KEEP (active development)");
+            return Ok(Decision::Keep);
         }
     } else {
         print_status("WARNING", "Branch does not exist on origin");
@@ -182,10 +159,8 @@ fn analyze_worktree(worktree_path: &str) -> Result<Decision, Box<dyn std::error:
 }
 
 // Function to execute decision
-fn execute_decision(worktree_path: &str, decision: &Decision) -> Result<(), Box<dyn std::error::Error>> {
-    let worktree_name = Path::new(worktree_path).file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or("unknown");
+fn execute_decision(worktree_path: &str, decision: Decision) -> Result<(), Box<dyn std::error::Error>> {
+    let worktree_name = Path::new(worktree_path).file_name().unwrap().to_str().unwrap();
 
     match decision {
         Decision::Remove => {
@@ -193,7 +168,8 @@ fn execute_decision(worktree_path: &str, decision: &Decision) -> Result<(), Box<
 
             // Get branch name
             let branch_output = Command::new("git")
-                .args(&["-C", worktree_path, "branch", "--show-current"])
+                .args(&["branch", "--show-current"])
+                .current_dir(worktree_path)
                 .output()?;
 
             let branch = if branch_output.status.success() {
@@ -204,27 +180,25 @@ fn execute_decision(worktree_path: &str, decision: &Decision) -> Result<(), Box<
 
             // Abort any ongoing operations
             let _ = Command::new("git")
-                .args(&["-C", worktree_path, "rebase", "--abort"])
-                .stderr(Stdio::null())
-                .status();
+                .args(&["rebase", "--abort"])
+                .current_dir(worktree_path)
+                .output();
 
             // Remove worktree
-            let worktree_remove = Command::new("git")
+            let remove_result = Command::new("git")
                 .args(&["worktree", "remove", worktree_name, "--force"])
-                .stderr(Stdio::null())
-                .status();
+                .output();
 
-            if worktree_remove.is_err() || !worktree_remove.unwrap().success() {
+            if remove_result.is_err() || !remove_result.unwrap().status.success() {
                 print_status("WARNING", "Could not remove worktree, trying to delete directory");
-                let _ = Command::new("rm").args(&["-rf", worktree_name]).status();
+                std::fs::remove_dir_all(worktree_path)?;
             }
 
             // Remove branch if it exists
             if !branch.is_empty() {
                 let _ = Command::new("git")
                     .args(&["branch", "-D", &branch])
-                    .stderr(Stdio::null())
-                    .status();
+                    .output();
             }
 
             print_status("SUCCESS", &format!("Removed worktree {}", worktree_name));
@@ -233,7 +207,8 @@ fn execute_decision(worktree_path: &str, decision: &Decision) -> Result<(), Box<
             print_status("INFO", &format!("Cleaning up merged worktree {}", worktree_name));
 
             let branch_output = Command::new("git")
-                .args(&["-C", worktree_path, "branch", "--show-current"])
+                .args(&["branch", "--show-current"])
+                .current_dir(worktree_path)
                 .output()?;
 
             let branch = if branch_output.status.success() {
@@ -245,12 +220,11 @@ fn execute_decision(worktree_path: &str, decision: &Decision) -> Result<(), Box<
             if !branch.is_empty() {
                 let _ = Command::new("git")
                     .args(&["worktree", "remove", worktree_name, "--force"])
-                    .status();
+                    .output();
 
                 let _ = Command::new("git")
                     .args(&["branch", "-d", &branch])
-                    .stderr(Stdio::null())
-                    .status();
+                    .output();
 
                 print_status("SUCCESS", &format!("Cleaned up worktree {}", worktree_name));
             }
@@ -275,7 +249,7 @@ fn create_prs_for_ready() -> Result<(), Box<dyn std::error::Error>> {
         .output()?;
 
     let worktrees_str = String::from_utf8(worktrees_output.stdout)?;
-    let current_dir = env::current_dir()?.to_string_lossy().to_string();
+    let current_dir = std::env::current_dir()?.to_str().unwrap();
 
     for line in worktrees_str.lines() {
         if line.starts_with("worktree") {
@@ -284,29 +258,27 @@ fn create_prs_for_ready() -> Result<(), Box<dyn std::error::Error>> {
                 let worktree_path = parts[1];
                 if worktree_path != current_dir && Path::new(worktree_path).exists() {
                     // Check if ready for PR
-                    let behind_count_output = Command::new("git")
-                        .args(&["-C", worktree_path, "rev-list", "--count", "HEAD..origin/main"])
-                        .stderr(Stdio::null())
-                        .output()?;
+                    let behind_output = Command::new("git")
+                        .args(&["rev-list", "--count", "HEAD..origin/main"])
+                        .current_dir(worktree_path)
+                        .output();
 
-                    let behind_count = if behind_count_output.status.success() {
-                        String::from_utf8(behind_count_output.stdout)?.trim().parse::<i32>().unwrap_or(0)
+                    let behind_count = if behind_output.is_ok() {
+                        String::from_utf8(behind_output.unwrap().stdout)?.trim().parse::<i32>().unwrap_or(0)
                     } else {
                         0
                     };
 
                     let uncommitted_output = Command::new("git")
-                        .args(&["-C", worktree_path, "status", "--porcelain"])
+                        .args(&["status", "--porcelain"])
+                        .current_dir(worktree_path)
                         .output()?;
 
-                    let has_uncommitted = if uncommitted_output.status.success() {
-                        !String::from_utf8(uncommitted_output.stdout)?.trim().is_empty()
-                    } else {
-                        true
-                    };
+                    let uncommitted = String::from_utf8(uncommitted_output.stdout)?.trim().to_string();
 
                     let branch_output = Command::new("git")
-                        .args(&["-C", worktree_path, "branch", "--show-current"])
+                        .args(&["branch", "--show-current"])
+                        .current_dir(worktree_path)
                         .output()?;
 
                     let branch = if branch_output.status.success() {
@@ -315,29 +287,25 @@ fn create_prs_for_ready() -> Result<(), Box<dyn std::error::Error>> {
                         String::new()
                     };
 
-                    if behind_count == 0 && !has_uncommitted && !branch.is_empty() {
-                        let remote_check = Command::new("git")
-                            .args(&["-C", worktree_path, "ls-remote", "--heads", "origin", &branch])
+                    if behind_count == 0 && uncommitted.is_empty() && !branch.is_empty() {
+                        let remote_output = Command::new("git")
+                            .args(&["ls-remote", "--heads", "origin", &branch])
+                            .current_dir(worktree_path)
                             .output()?;
 
-                        if remote_check.status.success() {
-                            let remote_output = String::from_utf8(remote_check.stdout)?;
-                            if remote_output.contains(&branch) {
-                                print_status("SUCCESS", &format!("Creating PR for {}", worktree_path));
+                        if remote_output.status.success() && !String::from_utf8(remote_output.stdout)?.trim().is_empty() {
+                            print_status("SUCCESS", &format!("Creating PR for {}", worktree_path));
 
-                                let url_output = Command::new("git")
-                                    .args(&["-C", worktree_path, "config", "--get", "remote.origin.url"])
-                                    .output()?;
+                            let url_output = Command::new("git")
+                                .args(&["config", "--get", "remote.origin.url"])
+                                .current_dir(worktree_path)
+                                .output()?;
 
-                                if url_output.status.success() {
-                                    let repo_url = String::from_utf8(url_output.stdout)?
-                                        .trim()
-                                        .replace(".git", "");
-
-                                    if repo_url.contains("github.com") {
-                                        let pr_url = format!("{}/compare/main...{}", repo_url, branch);
-                                        print_status("INFO", &format!("Create PR at: {}", pr_url));
-                                    }
+                            if url_output.status.success() {
+                                let repo_url = String::from_utf8(url_output.stdout)?.trim().replace(".git", "");
+                                if repo_url.contains("github.com") {
+                                    let pr_url = format!("{}/compare/main...{}", repo_url, branch);
+                                    print_status("INFO", &format!("Create PR at: {}", pr_url));
                                 }
                             }
                         }
@@ -352,10 +320,13 @@ fn create_prs_for_ready() -> Result<(), Box<dyn std::error::Error>> {
 
 // Function to run worktree status report
 fn run_worktree_status_report() -> Result<(), Box<dyn std::error::Error>> {
-    let status = Command::new("./scripts/worktree-status-report.sh").status()?;
+    let status = Command::new("./scripts/worktree-status-report.sh")
+        .status()?;
+
     if !status.success() {
-        print_status("WARNING", "Failed to run worktree status report");
+        print_status("WARNING", "Worktree status report failed");
     }
+
     Ok(())
 }
 
@@ -374,7 +345,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .output()?;
 
     let worktrees_str = String::from_utf8(worktrees_output.stdout)?;
-    let current_dir = env::current_dir()?.to_string_lossy().to_string();
+    let current_dir = std::env::current_dir()?.to_str().unwrap();
     let mut decisions = Vec::new();
 
     for line in worktrees_str.lines() {
@@ -394,10 +365,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("📋 DECISIONS SUMMARY");
     println!("====================");
     for (worktree_path, decision) in &decisions {
-        let worktree_name = Path::new(worktree_path).file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or("unknown");
-        print_status("INFO", &format!("{}: {}", worktree_name, decision));
+        let worktree_name = Path::new(worktree_path).file_name().unwrap().to_str().unwrap();
+        print_status("INFO", &format!("{}: {:?}", worktree_name, decision));
     }
 
     println!();
@@ -405,7 +374,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("======================");
 
     for (worktree_path, decision) in &decisions {
-        execute_decision(worktree_path, decision)?;
+        execute_decision(worktree_path, decision.clone())?;
     }
 
     // Create PRs for ready worktrees
