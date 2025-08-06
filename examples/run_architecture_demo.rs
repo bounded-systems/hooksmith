@@ -1,4 +1,4 @@
-#!/usr/bin/env rustx
+#!/usr/bin/env rustc --run
 
 use std::env;
 use std::fs;
