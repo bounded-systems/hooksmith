@@ -6,16 +6,15 @@ use std::collections::HashMap;
 use std::env;
 use std::path::Path;
 use std::process::{Command, Stdio};
-use std::io::{self, Write};
 
-// Colors for output
+/// Colors for output
 const RED: &str = "\x1b[0;31m";
 const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[1;33m";
 const BLUE: &str = "\x1b[0;34m";
-const NC: &str = "\x1b[0m"; // No Color
+const NC: &str = "\x1b[0m";
 
-// Logging functions
+/// Logging functions
 fn log_info(message: &str) {
     println!("{}[INFO]{} {}", BLUE, NC, message);
 }
@@ -32,39 +31,50 @@ fn log_error(message: &str) {
     eprintln!("{}[ERROR]{} {}", RED, NC, message);
 }
 
-// Function to check if we're in a rebase state
+/// Check if we're in a rebase state
 fn is_rebasing(worktree_path: &str) -> Result<bool, Box<dyn std::error::Error>> {
+    let current_dir = std::env::current_dir()?;
+    std::env::set_current_dir(worktree_path)?;
+
+    // Check for rebase state
     let status_output = Command::new("git")
         .arg("status")
         .arg("--porcelain")
-        .current_dir(worktree_path)
         .output()?;
 
-    let status_str = String::from_utf8(status_output.stdout)?;
+    let status = String::from_utf8(status_output.stdout)?;
+    let has_conflicts = status.lines().any(|line| {
+        line.starts_with("UU") || line.starts_with("AA") || line.starts_with("DD")
+    });
 
-    // Check for conflict markers
-    if status_str.lines().any(|line| line.starts_with("UU") || line.starts_with("AA") || line.starts_with("DD")) {
+    if has_conflicts {
+        std::env::set_current_dir(current_dir)?;
         return Ok(true);
     }
 
-    // Check for rebase in progress
-    let status_full_output = Command::new("git")
+    // Check for rebase in progress message
+    let git_status = Command::new("git")
         .arg("status")
-        .current_dir(worktree_path)
         .output()?;
 
-    let status_full_str = String::from_utf8(status_full_output.stdout)?;
-    Ok(status_full_str.contains("rebase in progress"))
+    let git_status_str = String::from_utf8(git_status.stdout)?;
+    let rebase_in_progress = git_status_str.contains("rebase in progress");
+
+    std::env::set_current_dir(current_dir)?;
+    Ok(rebase_in_progress)
 }
 
-// Function to safely abort rebase
+/// Safely abort rebase
 fn abort_rebase(worktree_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     log_info(&format!("Aborting rebase in {}", worktree_path));
 
+    let current_dir = std::env::current_dir()?;
+    std::env::set_current_dir(worktree_path)?;
+
     if is_rebasing(worktree_path)? {
         let status = Command::new("git")
-            .args(["rebase", "--abort"])
-            .current_dir(worktree_path)
+            .arg("rebase")
+            .arg("--abort")
             .status()?;
 
         if status.success() {
@@ -76,26 +86,32 @@ fn abort_rebase(worktree_path: &str) -> Result<(), Box<dyn std::error::Error>> {
         log_info("No rebase in progress");
     }
 
+    std::env::set_current_dir(current_dir)?;
     Ok(())
 }
 
-// Function to stash changes
+/// Stash changes
 fn stash_changes(worktree_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     log_info(&format!("Stashing changes in {}", worktree_path));
+
+    let current_dir = std::env::current_dir()?;
+    std::env::set_current_dir(worktree_path)?;
 
     // Check if there are changes to stash
     let diff_output = Command::new("git")
         .arg("diff")
         .arg("--quiet")
-        .current_dir(worktree_path)
-        .output()?;
+        .status();
 
-    if !diff_output.status.success() {
-        // There are changes to stash
+    let has_changes = diff_output.is_err() || !diff_output.unwrap().success();
+
+    if has_changes {
         let stash_message = format!("Auto-stash during conflict resolution {}", chrono::Utc::now());
         let status = Command::new("git")
-            .args(["stash", "push", "-m", &stash_message])
-            .current_dir(worktree_path)
+            .arg("stash")
+            .arg("push")
+            .arg("-m")
+            .arg(&stash_message)
             .status()?;
 
         if status.success() {
@@ -107,72 +123,91 @@ fn stash_changes(worktree_path: &str) -> Result<(), Box<dyn std::error::Error>> 
         log_info("No changes to stash");
     }
 
+    std::env::set_current_dir(current_dir)?;
     Ok(())
 }
 
-// Function to resolve conflicts in a worktree
+/// Resolve conflicts in a worktree
 fn resolve_worktree_conflicts(worktree_path: &str, branch_name: &str) -> Result<(), Box<dyn std::error::Error>> {
     log_info(&format!("Processing worktree: {} (branch: {})", worktree_path, branch_name));
 
-    if !Path::new(worktree_path).exists() {
+    if !std::path::Path::new(worktree_path).exists() {
         log_error(&format!("Worktree directory does not exist: {}", worktree_path));
-        return Err("Worktree directory does not exist".into());
+        return Ok(());
     }
+
+    let current_dir = std::env::current_dir()?;
+    std::env::set_current_dir(worktree_path)?;
 
     // Check current status
     let status_output = Command::new("git")
-        .args(["status", "--porcelain"])
-        .current_dir(worktree_path)
+        .arg("status")
+        .arg("--short")
         .output()?;
 
-    let status_str = String::from_utf8(status_output.stdout)?;
-    let is_rebase_state = is_rebasing(worktree_path)?;
+    let status = String::from_utf8(status_output.stdout)?;
+    log_info(&format!("Current status: {}", status.trim()));
 
-    log_info(&format!("Current status: {}", status_str.trim()));
-
-    if is_rebase_state {
+    // Check if in rebase state
+    if is_rebasing(worktree_path)? {
         log_warning("Rebase in progress - aborting to preserve state");
-        abort_rebase(worktree_path)?;
+        let abort_status = Command::new("git")
+            .arg("rebase")
+            .arg("--abort")
+            .status()?;
+
+        if abort_status.success() {
+            log_success("Rebase aborted");
+        } else {
+            log_warning("Failed to abort rebase");
+        }
     }
 
     // Stash any uncommitted changes
-    let diff_output = Command::new("git")
+    let diff_quiet = Command::new("git")
         .arg("diff")
         .arg("--quiet")
-        .current_dir(worktree_path)
-        .output()?;
+        .status();
 
-    if !diff_output.status.success() {
+    if diff_quiet.is_err() || !diff_quiet.unwrap().success() {
         stash_changes(worktree_path)?;
     }
 
     // Try to rebase onto main
     log_info("Attempting to rebase onto main");
     let rebase_status = Command::new("git")
-        .args(["rebase", "main"])
-        .current_dir(worktree_path)
-        .status()?;
+        .arg("rebase")
+        .arg("main")
+        .status();
 
-    if rebase_status.success() {
-        log_success("Rebase successful");
-    } else {
-        log_warning("Rebase failed - preserving worktree state");
-        Command::new("git")
-            .args(["rebase", "--abort"])
-            .current_dir(worktree_path)
-            .status()?;
+    match rebase_status {
+        Ok(status) if status.success() => {
+            log_success("Rebase successful");
+        }
+        _ => {
+            log_warning("Rebase failed - preserving worktree state");
+            let _ = Command::new("git")
+                .arg("rebase")
+                .arg("--abort")
+                .status();
+        }
     }
 
+    std::env::set_current_dir(current_dir)?;
     Ok(())
 }
 
-// Function to push worktree branch
+/// Push worktree branch
 fn push_worktree_branch(worktree_path: &str, branch_name: &str) -> Result<(), Box<dyn std::error::Error>> {
     log_info(&format!("Pushing branch {}", branch_name));
 
+    let current_dir = std::env::current_dir()?;
+    std::env::set_current_dir(worktree_path)?;
+
     let status = Command::new("git")
-        .args(["push", "origin", branch_name])
-        .current_dir(worktree_path)
+        .arg("push")
+        .arg("origin")
+        .arg(branch_name)
         .status()?;
 
     if status.success() {
@@ -181,17 +216,22 @@ fn push_worktree_branch(worktree_path: &str, branch_name: &str) -> Result<(), Bo
         log_warning("Push failed - branch may already be up to date");
     }
 
+    std::env::set_current_dir(current_dir)?;
     Ok(())
 }
 
-// Function to clean up merged worktrees
+/// Clean up merged worktrees
 fn cleanup_merged_worktree(worktree_path: &str, branch_name: &str) -> Result<(), Box<dyn std::error::Error>> {
     log_info(&format!("Checking if worktree {} is merged", branch_name));
 
+    let current_dir = std::env::current_dir()?;
+    std::env::set_current_dir(worktree_path)?;
+
     // Check if branch is merged into main
     let merged_output = Command::new("git")
-        .args(["branch", "--merged", "main"])
-        .current_dir(worktree_path)
+        .arg("branch")
+        .arg("--merged")
+        .arg("main")
         .output()?;
 
     let merged_str = String::from_utf8(merged_output.stdout)?;
@@ -200,33 +240,46 @@ fn cleanup_merged_worktree(worktree_path: &str, branch_name: &str) -> Result<(),
     if is_merged {
         log_info(&format!("Branch {} is merged - cleaning up", branch_name));
 
+        // Go back to main directory for worktree operations
+        std::env::set_current_dir(&current_dir)?;
+
         // Remove worktree
         let remove_status = Command::new("git")
-            .args(["worktree", "remove", worktree_path, "--force"])
-            .status()?;
+            .arg("worktree")
+            .arg("remove")
+            .arg(worktree_path)
+            .arg("--force")
+            .status();
 
-        if remove_status.success() {
-            // Delete branch from origin
-            Command::new("git")
-                .args(["push", "origin", "--delete", branch_name])
-                .output()
-                .ok(); // Ignore errors for remote deletion
-
-            log_success("Merged worktree cleaned up");
+        if remove_status.is_ok() && remove_status.unwrap().success() {
+            log_success("Worktree removed successfully");
         } else {
             log_warning("Failed to remove worktree");
         }
+
+        // Delete branch from origin
+        let _ = Command::new("git")
+            .arg("push")
+            .arg("origin")
+            .arg("--delete")
+            .arg(branch_name)
+            .status();
+
+        log_success("Merged worktree cleaned up");
     } else {
         log_info(&format!("Branch {} is not merged - keeping worktree", branch_name));
     }
 
+    std::env::set_current_dir(current_dir)?;
     Ok(())
 }
 
-// Function to get worktree list
-fn get_worktree_list() -> Result<Vec<(String, String)>, Box<dyn std::error::Error>> {
+/// Get worktrees
+fn get_worktrees() -> Result<Vec<(String, String)>, Box<dyn std::error::Error>> {
     let output = Command::new("git")
-        .args(["worktree", "list", "--porcelain"])
+        .arg("worktree")
+        .arg("list")
+        .arg("--porcelain")
         .output()?;
 
     let output_str = String::from_utf8(output.stdout)?;
@@ -239,8 +292,8 @@ fn get_worktree_list() -> Result<Vec<(String, String)>, Box<dyn std::error::Erro
                 let worktree_path = parts[1].to_string();
                 let branch_name = std::path::Path::new(&worktree_path)
                     .file_name()
-                    .unwrap_or_default()
-                    .to_string_lossy()
+                    .and_then(|name| name.to_str())
+                    .unwrap_or("unknown")
                     .to_string();
 
                 worktrees.push((worktree_path, branch_name));
@@ -255,7 +308,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     log_info("Starting comprehensive worktree conflict resolution");
 
     // Get list of worktrees
-    let worktrees = get_worktree_list()?;
+    let worktrees = get_worktrees()?;
 
     if worktrees.is_empty() {
         log_info("No worktrees found");
@@ -267,22 +320,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         log_info(&format!("Processing worktree: {}", worktree_path));
 
         // Resolve conflicts
-        if let Err(e) = resolve_worktree_conflicts(worktree_path, branch_name) {
-            log_error(&format!("Failed to resolve conflicts: {}", e));
-            continue;
-        }
+        resolve_worktree_conflicts(worktree_path, branch_name)?;
 
         // Push branch
-        if let Err(e) = push_worktree_branch(worktree_path, branch_name) {
-            log_error(&format!("Failed to push branch: {}", e));
-            continue;
-        }
+        push_worktree_branch(worktree_path, branch_name)?;
 
         // Check if merged and cleanup if needed
-        if let Err(e) = cleanup_merged_worktree(worktree_path, branch_name) {
-            log_error(&format!("Failed to cleanup worktree: {}", e));
-            continue;
-        }
+        cleanup_merged_worktree(worktree_path, branch_name)?;
 
         println!("---");
     }
