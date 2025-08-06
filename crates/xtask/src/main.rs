@@ -683,11 +683,6 @@ mod workflow;
 mod worktree;
 mod worktree_sync;
 mod worktree_contract;
-mod unified_generator;
-mod repo_structure_validator;
-mod component_status;
-mod schema_registry;
-mod sbom;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
