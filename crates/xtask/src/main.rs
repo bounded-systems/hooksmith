@@ -595,6 +595,7 @@ mod unified_generator;
 mod repo_structure_validator;
 mod component_status;
 mod schema_registry;
+mod sbom;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -1427,6 +1428,12 @@ enum Commands {
         #[command(subcommand)]
         command: WorktreeCommands,
     },
+    /// SBOM generation and management
+    Sbom {
+        /// SBOM command to execute
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
+    },
 }
 
 /// WIT schema for function definition
@@ -2204,6 +2211,9 @@ async fn main() -> Result<()> {
         }
         Commands::Worktree { command } => {
             run_worktree_command(command).await?;
+        }
+        Commands::Sbom { args } => {
+            sbom::handle_sbom_command(&args).await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
