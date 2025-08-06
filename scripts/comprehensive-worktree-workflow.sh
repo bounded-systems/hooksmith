@@ -38,7 +38,7 @@ log_header() {
 # Function to create a demo worktree
 create_demo_worktree() {
     local branch_name="$1"
-    local worktree_path="worktrees/$branch_name"
+    local worktree_path=".wt/$branch_name"
     
     log_info "Creating demo worktree: $branch_name"
     
