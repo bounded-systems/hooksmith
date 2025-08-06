@@ -52,7 +52,7 @@ impl SbomGenerator {
         }
 
         let output_path = format!("{}/sbom.cyclonedx.json", self.output_dir);
-        
+
         // Create output directory if it doesn't exist
         fs::create_dir_all(&self.output_dir).await?;
 
@@ -83,7 +83,7 @@ impl SbomGenerator {
         }
 
         let output_path = format!("{}/sbom.spdx.json", self.output_dir);
-        
+
         // Create output directory if it doesn't exist
         fs::create_dir_all(&self.output_dir).await?;
 
@@ -107,7 +107,7 @@ impl SbomGenerator {
     /// Generate raw Cargo metadata SBOM
     async fn generate_cargo_metadata_sbom(&self) -> Result<String> {
         let output_path = format!("{}/sbom.cargo-metadata.json", self.output_dir);
-        
+
         // Create output directory if it doesn't exist
         fs::create_dir_all(&self.output_dir).await?;
 
@@ -125,7 +125,7 @@ impl SbomGenerator {
 
         // Parse and format the metadata
         let metadata: Value = serde_json::from_slice(&output.stdout)?;
-        
+
         // Write to file
         let formatted_json = serde_json::to_string_pretty(&metadata)?;
         fs::write(&output_path, &formatted_json).await?;
@@ -135,9 +135,7 @@ impl SbomGenerator {
 
     /// Check if a command is available
     async fn is_command_available(&self, command: &str) -> Result<bool> {
-        let output = Command::new("which")
-            .arg(command)
-            .output();
+        let output = Command::new("which").arg(command).output();
 
         match output {
             Ok(output) => Ok(output.status.success()),
@@ -184,12 +182,10 @@ impl SbomGenerator {
             let file_path = format!("{}/{}", self.output_dir, file);
             if Path::new(&file_path).exists() {
                 match fs::read_to_string(&file_path).await {
-                    Ok(content) => {
-                        match serde_json::from_str::<Value>(&content) {
-                            Ok(_) => println!("✅ {} is valid JSON", file),
-                            Err(e) => println!("❌ {} has invalid JSON: {}", file, e),
-                        }
-                    }
+                    Ok(content) => match serde_json::from_str::<Value>(&content) {
+                        Ok(_) => println!("✅ {} is valid JSON", file),
+                        Err(e) => println!("❌ {} has invalid JSON: {}", file, e),
+                    },
                     Err(e) => println!("❌ Failed to read {}: {}", file, e),
                 }
             } else {
@@ -298,4 +294,4 @@ pub async fn handle_sbom_command(args: &[String]) -> Result<()> {
     }
 
     Ok(())
-} 
+}
