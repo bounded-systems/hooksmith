@@ -159,11 +159,7 @@ impl WorktreeSyncManager {
         if !worktree_path_buf.exists() {
             println!(
                 "{}",
-                style(&format!(
-                    "⚠️  Worktree path does not exist: {}",
-                    worktree_path
-                ))
-                .yellow()
+                style(&format!("⚠️  Worktree path does not exist: {}", worktree_path)).yellow()
             );
             return Ok(());
         }
@@ -180,18 +176,15 @@ impl WorktreeSyncManager {
                 "{}",
                 style(&format!("⚠️  Uncommitted changes in {}", worktree_path)).yellow()
             );
-
+            
             // Offer to commit or stash
             println!("{}", style("Options:").bold());
             println!("  1. Commit changes: git commit -am 'WIP'");
             println!("  2. Stash changes: git stash -u");
             println!("  3. Skip this worktree");
-
+            
             // For now, we'll skip worktrees with uncommitted changes
-            println!(
-                "{}",
-                style("Skipping worktree with uncommitted changes").yellow()
-            );
+            println!("{}", style("Skipping worktree with uncommitted changes").yellow());
             return Ok(());
         }
 
@@ -215,11 +208,7 @@ impl WorktreeSyncManager {
         if merge_result.status.success() {
             println!(
                 "{}",
-                style(&format!(
-                    "✅ Fast-forward merge successful for {}",
-                    current_branch
-                ))
-                .green()
+                style(&format!("✅ Fast-forward merge successful for {}", current_branch)).green()
             );
         } else {
             // Try regular merge if fast-forward fails
@@ -238,19 +227,13 @@ impl WorktreeSyncManager {
                 let error = String::from_utf8_lossy(&regular_merge_result.stderr);
                 println!(
                     "{}",
-                    style(&format!(
-                        "❌ Merge failed for {}: {}",
-                        current_branch, error
-                    ))
-                    .red()
+                    style(&format!("❌ Merge failed for {}: {}", current_branch, error)).red()
                 );
             }
         }
 
         // Update sync state
-        let sync_state = self
-            .get_worktree_sync_state(worktree_path, &current_branch)
-            .await?;
+        let sync_state = self.get_worktree_sync_state(worktree_path, &current_branch).await?;
         self.worktree_states.insert(current_branch, sync_state);
 
         Ok(())
@@ -284,11 +267,7 @@ impl WorktreeSyncManager {
     }
 
     /// Get worktree sync state
-    async fn get_worktree_sync_state(
-        &self,
-        worktree_path: &str,
-        branch: &str,
-    ) -> Result<WorktreeSyncState> {
+    async fn get_worktree_sync_state(&self, worktree_path: &str, branch: &str) -> Result<WorktreeSyncState> {
         // Check if ahead of main
         let ahead_output = Command::new("git")
             .args(["rev-list", "--count", "main..HEAD"])
@@ -345,21 +324,16 @@ impl WorktreeSyncManager {
     /// Generate sync report
     async fn generate_sync_report(&self) -> Result<()> {
         let report_path = self.git_root.join("contract.report.worktrees.jsonc");
-
+        
         let report = serde_json::to_string_pretty(&self.worktree_states)
             .context("Failed to serialize sync report")?;
 
-        tokio::fs::write(&report_path, report)
-            .await
+        tokio::fs::write(&report_path, report).await
             .context("Failed to write sync report")?;
 
         println!(
             "{}",
-            style(&format!(
-                "📊 Sync report written to: {}",
-                report_path.display()
-            ))
-            .cyan()
+            style(&format!("📊 Sync report written to: {}", report_path.display())).cyan()
         );
 
         // Print summary
@@ -421,10 +395,7 @@ impl WorktreeSyncManager {
         if all_clean {
             println!("{}", style("✅ All worktrees are ready for sync").green());
         } else {
-            println!(
-                "{}",
-                style("❌ Some worktrees have uncommitted changes").red()
-            );
+            println!("{}", style("❌ Some worktrees have uncommitted changes").red());
         }
 
         Ok(all_clean)
@@ -450,10 +421,7 @@ pub async fn run_worktree_sync_command() -> Result<()> {
     // Validate sync readiness
     let is_ready = sync_manager.validate_sync_readiness().await?;
     if !is_ready {
-        println!(
-            "{}",
-            style("Please commit or stash changes before syncing").yellow()
-        );
+        println!("{}", style("Please commit or stash changes before syncing").yellow());
         return Ok(());
     }
 
@@ -461,4 +429,4 @@ pub async fn run_worktree_sync_command() -> Result<()> {
     sync_manager.sync_all_worktrees().await?;
 
     Ok(())
-}
+} 

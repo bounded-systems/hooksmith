@@ -76,3 +76,4 @@ tests/*.disabled
 
 # Git worktree directories
 /.wt/
+worktree-*/
