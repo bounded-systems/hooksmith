@@ -1,5 +1,5 @@
 {
-  "worktree_base": "worktrees",
+  "worktree_base": ".wt",
   "worktree_template": "{branch}",
   "run_setup": true,
   "setup_commands": [
@@ -16,22 +16,22 @@
     "wt": "worktree"
   },
   "existing_worktrees": {
-    "feature/spin-integration": "worktrees/spin-integration",
-    "feature/spin-integration-v2": "worktrees/spin-integration-v2"
+    "feature/spin-integration": ".wt/spin-integration",
+    "feature/spin-integration-v2": ".wt/spin-integration-v2"
   },
   "branch_patterns": {
     "feature/*": {
-      "template": "worktrees/{branch}",
+      "template": ".wt/{branch}",
       "setup": ["cargo build"],
       "labels": ["feature", "development"]
     },
     "bugfix/*": {
-      "template": "worktrees/{branch}",
+      "template": ".wt/{branch}",
       "setup": ["cargo build"],
       "labels": ["bugfix", "maintenance"]
     },
     "hotfix/*": {
-      "template": "worktrees/{branch}",
+      "template": ".wt/{branch}",
       "setup": ["cargo build"],
       "labels": ["hotfix", "urgent"]
     }
