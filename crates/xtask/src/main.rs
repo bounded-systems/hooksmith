@@ -477,6 +477,24 @@ enum WorktreeCommands {
         #[arg(long)]
         open_cursor: bool,
     },
+    /// Create a new feature worktree with consistent naming
+    CreateFeature {
+        /// Feature slug (e.g., "add-logging", "fix-bug-123")
+        #[arg(long)]
+        slug: String,
+        /// Base directory for worktrees
+        #[arg(long)]
+        base_dir: Option<String>,
+        /// Whether to push and set upstream
+        #[arg(long, default_value = "true")]
+        push_upstream: bool,
+        /// Whether to switch to the new worktree
+        #[arg(long, default_value = "true")]
+        switch: bool,
+        /// Whether to open the worktree in Cursor after creation
+        #[arg(long)]
+        open_cursor: bool,
+    },
     /// Switch to a worktree
     Switch {
         /// Name of the worktree to switch to
