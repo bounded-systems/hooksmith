@@ -212,7 +212,7 @@ enum WorktreeCommands {
         #[arg(long)]
         tool: Option<String>,
         /// Base directory for worktrees
-        #[arg(long, default_value = "../worktrees")]
+        #[arg(long, default_value = ".wt")]
         base: String,
     },
     /// List all worktrees
