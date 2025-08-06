@@ -27,13 +27,13 @@ fn update_worktree_to_main(worktree_path: &str, branch_name: &str) -> Result<boo
     let merged_branches = run_git_command_in_dir(&["branch", "--merged", "origin/main"], worktree_path)?;
     if merged_branches.lines().any(|line| line.trim() == format!("* {}", branch_name)) {
         log_info(&format!("Branch {} is merged - cleaning up", branch_name));
-        
+
         // Remove worktree
         let output = Command::new("git")
             .args(&["worktree", "remove", worktree_path])
             .output()
             .map_err(|e| format!("Failed to remove worktree: {}", e))?;
-        
+
         if output.status.success() {
             log_success(&format!("Removed merged worktree: {}", branch_name));
         }
@@ -43,7 +43,7 @@ fn update_worktree_to_main(worktree_path: &str, branch_name: &str) -> Result<boo
             .args(&["branch", "-D", branch_name])
             .output()
             .map_err(|e| format!("Failed to delete branch: {}", e))?;
-        
+
         if output.status.success() {
             log_success(&format!("Deleted merged branch: {}", branch_name));
         }
@@ -64,7 +64,7 @@ fn update_worktree_to_main(worktree_path: &str, branch_name: &str) -> Result<boo
         Ok(true)
     } else {
         log_warning(&format!("Rebase failed for {} - creating fresh branch", branch_name));
-        
+
         // Remove old worktree and create fresh one
         let _ = Command::new("git")
             .args(&["worktree", "remove", worktree_path])
