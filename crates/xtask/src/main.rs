@@ -524,6 +524,39 @@ enum WorktreeCommands {
         #[arg(long, default_value = "table")]
         format: String,
     },
+    /// Sync worktrees with remote
+    Sync {
+        /// Sync all worktrees
+        #[arg(long)]
+        all: bool,
+        /// Specific worktree to sync
+        #[arg(long)]
+        worktree: Option<String>,
+        /// Force sync even if there are conflicts
+        #[arg(long)]
+        force: bool,
+        /// Pull remote changes
+        #[arg(long)]
+        pull: bool,
+        /// Push local changes
+        #[arg(long)]
+        push: bool,
+    },
+    /// Pull remote branches into worktrees
+    Pull {
+        /// Pull all remote branches
+        #[arg(long)]
+        all: bool,
+        /// Specific branch to pull
+        #[arg(long)]
+        branch: Option<String>,
+        /// Create worktrees for new branches
+        #[arg(long)]
+        create_worktrees: bool,
+        /// Base directory for new worktrees
+        #[arg(long)]
+        base_dir: Option<String>,
+    },
 }
 
 mod auto_push;
