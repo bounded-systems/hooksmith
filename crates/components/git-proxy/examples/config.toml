@@ -1,0 +1,119 @@
+# Git Proxy Configuration Example
+# 
+# This file demonstrates the configuration options available for the Git proxy server.
+# Copy this file and modify it according to your needs.
+
+# Upstream repository URL (required)
+# This is the repository that the proxy will forward operations to
+upstream_url = "https://github.com/user/repo.git"
+
+# Local proxy repository path (required)
+# This is where the proxy will store its local copy of the repository
+proxy_repo_path = "./proxy.git"
+
+# Authentication configuration
+[auth]
+# GitHub personal access token for HTTPS authentication
+# Generate this at: https://github.com/settings/tokens
+github_token = "ghp_your_token_here"
+
+# SSH key path for SSH authentication (alternative to GitHub token)
+# ssh_key_path = "~/.ssh/id_rsa"
+
+# Username for authentication (optional)
+username = "git"
+
+# Validation rules configuration
+[validation]
+# Enable pre-push validation
+enable_pre_push = true
+
+# Enable commit message validation
+enable_commit_validation = true
+
+# Enable file size validation
+enable_file_size_validation = true
+
+# Maximum file size in bytes (10MB)
+max_file_size = 10485760
+
+# Blocked file patterns (files that cannot be pushed)
+blocked_patterns = [
+    "*.key",
+    "*.pem", 
+    "*.p12",
+    "*.pfx",
+    "id_rsa",
+    "id_ed25519",
+    "*.crt",
+    "*.csr",
+    "secrets.json",
+    ".env",
+    ".env.local",
+    ".env.production"
+]
+
+# Required commit message patterns (conventional commits)
+required_patterns = [
+    "feat:",
+    "fix:", 
+    "docs:",
+    "style:",
+    "refactor:",
+    "test:",
+    "chore:",
+    "BREAKING CHANGE:",
+    "revert:"
+]
+
+# Server configuration
+[server]
+# HTTP server settings
+http_port = 8080
+http_host = "127.0.0.1"
+enable_http = true
+
+# SSH server settings  
+ssh_port = 2222
+ssh_host = "127.0.0.1"
+enable_ssh = false
+
+# Logging configuration
+[logging]
+# Log level: error, warn, info, debug, trace
+level = "info"
+
+# Log file path (optional)
+file_path = "logs/git-proxy.log"
+
+# Enable structured logging
+structured = true
+
+# Sync configuration (optional - uses defaults if not specified)
+[sync]
+# Sync interval in seconds (5 minutes)
+interval_seconds = 300
+
+# Enable automatic sync
+auto_sync = true
+
+# Maximum number of retries on failure
+max_retries = 3
+
+# Retry delay in seconds
+retry_delay_seconds = 60
+
+# Enable force push detection
+detect_force_pushes = true
+
+# Enable branch deletion detection  
+detect_deletions = true
+
+# Enable PR branch tracking
+track_pr_branches = true
+
+# Enable audit logging
+audit_logging = true
+
+# Maximum number of refs to track
+max_refs = 1000

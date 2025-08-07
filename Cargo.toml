@@ -11,6 +11,7 @@ members = [
     ".",
     "crates/components/cli-core",
     "crates/components/worktree-runner",
+    "crates/components/git-proxy",
     "crates/xtask",
     "scripts/ensure-clean-main",
                     "crates/tree",
