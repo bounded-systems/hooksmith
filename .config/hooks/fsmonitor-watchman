@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Fsmonitor-watchman hook stub that calls the Rust binary
-# This hook calls the fsmonitor-watchman binary from the hooks crate
+# Hook stub that calls the Rust binary
+# This hook calls the binary from the main crate
 
 # Get the project root using git rev-parse (works for worktrees)
 PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
@@ -12,5 +12,5 @@ if [ -z "$PROJECT_ROOT" ]; then
     PROJECT_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
 fi
 
-# Call the Rust fsmonitor-watchman binary
-exec "$PROJECT_ROOT/target/debug/fsmonitor-watchman" "$@"
+# Call the Rust binary
+exec "$PROJECT_ROOT/target/debug/$(basename "$0")" "$@"

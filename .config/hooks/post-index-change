@@ -1,11 +1,16 @@
 #!/bin/sh
 
-# Post-index-change hook stub that calls the Rust binary
-# This hook calls the post-index-change binary from the hooks crate
+# Hook stub that calls the Rust binary
+# This hook calls the binary from the main crate
 
-# Get the directory where this script is located
-HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
+# Get the project root using git rev-parse (works for worktrees)
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
 
-# Call the Rust post-index-change binary
-exec "$PROJECT_ROOT/target/debug/post-index-change" "$@"
+# Fallback to old method if git rev-parse fails
+if [ -z "$PROJECT_ROOT" ]; then
+    HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+    PROJECT_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
+fi
+
+# Call the Rust binary
+exec "$PROJECT_ROOT/target/debug/$(basename "$0")" "$@"

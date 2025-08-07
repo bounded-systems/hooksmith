@@ -1,5 +1,6 @@
 use hooksmith::{get_worktrees, log_error, log_info, log_success, log_warning, run_git_command};
 use rayon::prelude::*;
+use rayon::iter::IntoParallelRefIterator;
 use std::env;
 use std::path::Path;
 use std::process::Command;
@@ -181,12 +182,10 @@ fn process_worktree(worktree_path: &Path) -> WorktreeResult {
         ));
 
         // Only log changes if we're in verbose mode (avoid string formatting overhead)
-        if log::log_enabled!(log::Level::Info) {
-            log_info("   Changes:");
-            for line in status.lines() {
-                if !line.trim().is_empty() {
-                    log_info(&format!("   {}", line));
-                }
+        log_info("   Changes:");
+        for line in status.lines() {
+            if !line.trim().is_empty() {
+                log_info(&format!("   {}", line));
             }
         }
 
