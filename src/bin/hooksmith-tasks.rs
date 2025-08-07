@@ -23,6 +23,7 @@ fn main() -> Result<()> {
         "build" => build_binaries()?,
         "docker-build" => docker_build()?,
         "docker-run" => docker_run()?,
+        "docker-test" => docker_test()?,
         "act-test" => act_test()?,
         "act-validate" => act_validate()?,
         "clean" => clean()?,
@@ -44,7 +45,8 @@ fn print_help() {
     println!("");
     println!("Available commands:");
     println!("  build          - Build Hooksmith binaries");
-    println!("  docker-build   - Build Docker image");
+    println!("  docker-build   - Build Docker image with Bake");
+    println!("  docker-test    - Test Docker image with Bake");
     println!("  docker-run     - Run Hooksmith in Docker");
     println!("  act-test       - Test GitHub Actions with act");
     println!("  act-validate   - Validate workflow syntax");
@@ -73,16 +75,61 @@ fn build_binaries() -> Result<()> {
 }
 
 fn docker_build() -> Result<()> {
-    println!("🐳 Building Hooksmith Docker image...");
+    println!("🐳 Building Hooksmith Docker image with Bake...");
+    
+    // Check if docker-bake.hcl exists
+    if !Path::new("docker-bake.hcl").exists() {
+        println!("⚠️  docker-bake.hcl not found, falling back to regular Docker build");
+        let status = Command::new("docker")
+            .args(&["build", "-t", "hooksmith:latest", "."])
+            .stdin(Stdio::inherit())
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .status()?;
+        
+        if status.success() {
+            println!("✅ Docker build successful!");
+        } else {
+            std::process::exit(status.code().unwrap_or(1));
+        }
+        return Ok(());
+    }
+    
+    // Use Bake for optimized builds
     let status = Command::new("docker")
-        .args(&["build", "-t", "hooksmith:latest", "."])
+        .args(&["buildx", "bake", "-f", "docker-bake.hcl", "hooksmith"])
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()?;
     
     if status.success() {
-        println!("✅ Docker build successful!");
+        println!("✅ Docker Bake build successful!");
+    } else {
+        std::process::exit(status.code().unwrap_or(1));
+    }
+    Ok(())
+}
+
+fn docker_test() -> Result<()> {
+    println!("🧪 Testing Hooksmith Docker image...");
+    
+    // Check if docker-bake.hcl exists
+    if !Path::new("docker-bake.hcl").exists() {
+        println!("⚠️  docker-bake.hcl not found, skipping Docker tests");
+        return Ok(());
+    }
+    
+    // Build test target with Bake
+    let status = Command::new("docker")
+        .args(&["buildx", "bake", "-f", "docker-bake.hcl", "test"])
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()?;
+    
+    if status.success() {
+        println!("✅ Docker tests successful!");
     } else {
         std::process::exit(status.code().unwrap_or(1));
     }
