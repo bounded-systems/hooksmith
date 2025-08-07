@@ -394,6 +394,9 @@ mod tests {
         assert!(bindings.validate_concern_gix("note", "test-note").is_ok());
         assert!(bindings.validate_concern_gix("attr", ".gitattributes").is_ok());
         assert!(bindings.validate_concern_gix("index", "").is_ok());
+        assert!(bindings.validate_concern_gix("stash", "refs/stash").is_ok());
+        assert!(bindings.validate_concern_gix("worktree", "feature-branch").is_ok());
+        assert!(bindings.validate_concern_gix("remote", "origin").is_ok());
         
         // Test invalid concern
         assert!(bindings.validate_concern_gix("invalid", "test").is_err());
