@@ -192,8 +192,6 @@ pub enum HookConcern {
     Diff,
     /// Git status operations
     Status,
-    /// Git stash operations
-    Stash,
     /// Git patch operations
     Patch,
     /// Git debug operations
