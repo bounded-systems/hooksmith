@@ -232,6 +232,17 @@ pub enum RuleSeverity {
     Critical,
 }
 
+impl std::fmt::Display for RuleSeverity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RuleSeverity::Info => write!(f, "info"),
+            RuleSeverity::Warning => write!(f, "warning"),
+            RuleSeverity::Error => write!(f, "error"),
+            RuleSeverity::Critical => write!(f, "critical"),
+        }
+    }
+}
+
 /// Contract rule definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContractRule {
