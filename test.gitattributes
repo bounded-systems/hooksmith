@@ -10,6 +10,10 @@
 # =============================================================================
 # Generated from hyperpolyglot analysis of repository files
 
+# Shell files
+hooks/pre-commit-main-cleanup linguist-language=Shell
+scripts/convert-shell-to-rust.sh linguist-language=Shell
+
 # Rust files
 crates/components/cli-core/src/lib.rs linguist-language=Rust
 crates/components/git-filter/src/bindings.rs linguist-language=Rust
@@ -238,10 +242,6 @@ test_sbom.rs linguist-language=Rust
 tests/component_validation.rs linguist-language=Rust
 tests/hooks_test.rs linguist-language=Rust
 tests/integration.rs linguist-language=Rust
-
-# Shell files
-hooks/pre-commit-main-cleanup linguist-language=Shell
-scripts/convert-shell-to-rust.sh linguist-language=Shell
 
 # =============================================================================
 # COMMON EXCLUSIONS AND OVERRIDES

@@ -64,7 +64,7 @@ chrono = { version = "0.4", features = ["serde"] }
 # JSON Schema validation
 jsonschema = "0.17"
 schemars = "0.8"
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11", features = ["json", "blocking"] }
 
 # Cryptographic hashing
 sha2 = "0.10"
@@ -79,9 +79,11 @@ tempfile = "3.0"
 # Async runtime
 regex = "1.0"
 futures-io = "0.3"
+num_cpus = "1.0"
 
 # Additional dependencies
 uuid = { version = "1.0", features = ["v4"] }
+hyperpolyglot = "0.1.0"
 
 [[bin]]
 name = "hooksmith"
@@ -100,7 +102,6 @@ console.workspace = true
 indicatif.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-serde_yaml.workspace = true
 toml.workspace = true
 git2.workspace = true
 which.workspace = true
@@ -122,9 +123,13 @@ thiserror.workspace = true
 
 # Async runtime
 regex.workspace = true
+num_cpus.workspace = true
 
 # Additional dependencies
 uuid.workspace = true
+hyperpolyglot.workspace = true
+serde_yaml.workspace = true
+reqwest.workspace = true
 
 # WASM and WIT support
 wasmtime.workspace = true
