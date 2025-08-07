@@ -247,6 +247,9 @@ tests/component_validation.rs linguist-language=Rust
 tests/hooks_test.rs linguist-language=Rust
 tests/integration.rs linguist-language=Rust
 
+# Shell files
+scripts/ci-gitattributes.sh linguist-language=Shell
+
 # =============================================================================
 # COMMON EXCLUSIONS AND OVERRIDES
 # =============================================================================
