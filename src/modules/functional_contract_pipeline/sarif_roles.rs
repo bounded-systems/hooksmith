@@ -1,10 +1,43 @@
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, ContractSymbol, HookEvent, RuleSeverity};
-use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ExpectedSnapshot, ValidationDiff};
-use serde_sarif::sarif::{ArtifactLocation, Location, Message, PhysicalLocation, Result as SarifResult, Run, Tool, ToolComponent, PropertyBag, ResultLevel};
-use serde_sarif::sarif::SarifLog;
+use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ExpectedSnapshot};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
+
+/// Simplified SARIF result for our architecture
+#[derive(Debug, Clone)]
+pub struct SarifResult {
+    /// The rule identifier
+    pub rule_id: String,
+    /// The severity level (error, warning, note)
+    pub level: String,
+    /// The human-readable message
+    pub message: String,
+    /// The locations where this result applies
+    pub locations: Vec<String>,
+    /// Additional properties for filtering and querying
+    pub properties: HashMap<String, String>,
+}
+
+/// Simplified SARIF log for our architecture
+#[derive(Debug, Clone)]
+pub struct SarifLog {
+    /// The SARIF version
+    pub version: String,
+    /// The runs in this log
+    pub runs: Vec<SarifRun>,
+}
+
+/// Simplified SARIF run
+#[derive(Debug, Clone)]
+pub struct SarifRun {
+    /// The name of the tool that generated this run
+    pub tool_name: String,
+    /// The version of the tool
+    pub tool_version: String,
+    /// The results from this run
+    pub results: Vec<SarifResult>,
+}
 
 /// SARIF-first validation roles as defined in the slot-based schema
 pub mod roles {
@@ -12,7 +45,9 @@ pub mod roles {
 
     /// Hook role: Triggers concern collection (never fails)
     pub struct Hook {
+        /// The hook event that triggered this role
         pub event: HookEvent,
+        /// The concerns collected for this hook
         pub concerns: Vec<ConcernSymbol>,
     }
 
@@ -34,7 +69,9 @@ pub mod roles {
 
     /// Concern role: Extracts Git object snapshots (never fails)
     pub struct Concern {
+        /// The concern symbol being processed
         pub symbol: ConcernSymbol,
+        /// The snapshot of the concern (if taken)
         pub snapshot: Option<ConcernSnapshot>,
     }
 
@@ -55,6 +92,7 @@ pub mod roles {
 
     /// Specifier role: Generates contract expectations (never fails)
     pub struct Specifier {
+        /// The contracts being processed
         pub contracts: Vec<ContractSymbol>,
     }
 
@@ -77,6 +115,7 @@ pub mod roles {
 
     /// Verifier role: Compares snapshots to contracts, emits SARIF (never fails)
     pub struct Verifier {
+        /// The diffing strategy to use for comparison
         pub strategy: crate::modules::functional_contract_pipeline::high_performance_diff::DiffStrategy,
     }
 
@@ -107,59 +146,46 @@ pub mod roles {
             let mut results = Vec::new();
 
             for diff in &diff_set.diffs {
-                // Create properties map
                 let mut properties = HashMap::new();
-                properties.insert("concern".to_string(), serde_json::Value::String(diff.concern.name().to_string()));
-                properties.insert("diff_type".to_string(), serde_json::Value::String(diff.diff_type.name().to_string()));
-                properties.insert("origin".to_string(), serde_json::Value::String(format!("hook/{:?}", hook_event)));
-                properties.insert("severity".to_string(), serde_json::Value::String(diff.severity.to_string()));
+                properties.insert("concern".to_string(), diff.concern.name().to_string());
+                properties.insert("diff_type".to_string(), diff.diff_type.name().to_string());
+                properties.insert("origin".to_string(), format!("hook/{:?}", hook_event));
+                properties.insert("severity".to_string(), diff.severity.to_string());
 
-                let result = SarifResult::builder()
-                    .rule_id(format!("{}-{}", diff.concern.name(), diff.diff_type.name()))
-                    .level(match diff.severity {
-                        RuleSeverity::Error => ResultLevel::Error,
-                        RuleSeverity::Warning => ResultLevel::Warning,
-                        RuleSeverity::Info => ResultLevel::Note,
-                        RuleSeverity::Critical => ResultLevel::Error,
-                    })
-                    .message(Message::builder()
-                        .text(diff.description.clone())
-                        .build())
-                    .locations(vec![Location::builder()
-                        .physical_location(PhysicalLocation::builder()
-                            .artifact_location(ArtifactLocation::builder()
-                                .uri(format!("git://concern/{}", diff.concern.name()))
-                                .build())
-                            .build())
-                        .build()])
-                    .properties(PropertyBag::new(properties))
-                    .build();
+                let result = SarifResult {
+                    rule_id: format!("{}-{}", diff.concern.name(), diff.diff_type.name()),
+                    level: match diff.severity {
+                        RuleSeverity::Error => "error".to_string(),
+                        RuleSeverity::Warning => "warning".to_string(),
+                        RuleSeverity::Info => "note".to_string(),
+                        RuleSeverity::Critical => "error".to_string(),
+                    },
+                    message: diff.description.clone(),
+                    locations: vec![format!("git://concern/{}", diff.concern.name())],
+                    properties,
+                };
 
                 results.push(result);
             }
 
-            let tool = Tool::builder()
-                .driver(ToolComponent::builder()
-                    .name("Hooksmith Contract Validator")
-                    .version("1.0.0")
-                    .build())
-                .build();
+            let run = SarifRun {
+                tool_name: "Hooksmith Contract Validator".to_string(),
+                tool_version: "1.0.0".to_string(),
+                results,
+            };
 
-            let run = Run::builder()
-                .tool(tool)
-                .results(results)
-                .build();
-
-            SarifLog::builder()
-                .version("2.1.0")
-                .runs(vec![run])
-                .build()
+            SarifLog {
+                version: "2.1.0".to_string(),
+                runs: vec![run],
+            }
         }
     }
 
     /// Stegrapher role: Logs and indexes SARIF entries with provenance (never fails)
     pub struct Stegrapher {
+        /// The indexed SARIF entries
         pub indexed_entries: HashMap<String, SarifResult>,
+        /// The provenance metadata for each entry
         pub provenance_map: HashMap<String, HashMap<String, String>>,
     }
 
@@ -185,7 +211,7 @@ pub mod roles {
                     
                     // Add provenance metadata
                     let mut provenance = HashMap::new();
-                    provenance.insert("entry_id".to_string(), entry_id);
+                    provenance.insert("entry_id".to_string(), entry_id.clone());
                     provenance.insert("commit_hash".to_string(), git_metadata.commit_hash.clone());
                     provenance.insert("tree_hash".to_string(), git_metadata.tree_hash.clone());
                     provenance.insert("timestamp".to_string(), git_metadata.timestamp.to_string());
@@ -195,10 +221,8 @@ pub mod roles {
                     
                     // Create indexed result with provenance
                     let mut indexed_result = result.clone();
-                    if let Some(props) = indexed_result.properties.as_mut() {
-                        for (key, value) in provenance {
-                            props.insert(key, value);
-                        }
+                    for (key, value) in provenance {
+                        indexed_result.properties.insert(key, value);
                     }
                     
                     indexed_results.push(indexed_result);
@@ -206,22 +230,16 @@ pub mod roles {
             }
 
             // Create new SARIF log with indexed entries
-            let tool = Tool::builder()
-                .driver(ToolComponent::builder()
-                    .name("Hooksmith Stegrapher")
-                    .version("1.0.0")
-                    .build())
-                .build();
+            let run = SarifRun {
+                tool_name: "Hooksmith Stegrapher".to_string(),
+                tool_version: "1.0.0".to_string(),
+                results: indexed_results,
+            };
 
-            let run = Run::builder()
-                .tool(tool)
-                .results(indexed_results)
-                .build();
-
-            SarifLog::builder()
-                .version("2.1.0")
-                .runs(vec![run])
-                .build()
+            SarifLog {
+                version: "2.1.0".to_string(),
+                runs: vec![run],
+            }
         }
 
         /// Query indexed entries by criteria
@@ -234,28 +252,26 @@ pub mod roles {
 
         /// Check if a result matches query criteria
         fn matches_criteria(&self, result: &SarifResult, criteria: &QueryCriteria) -> bool {
-            if let Some(props) = &result.properties {
-                if let Some(concern) = &criteria.concern {
-                    if let Some(result_concern) = props.additional_properties.get("concern") {
-                        if result_concern.as_str() != Some(concern) {
-                            return false;
-                        }
+            if let Some(concern) = &criteria.concern {
+                if let Some(result_concern) = result.properties.get("concern") {
+                    if result_concern != concern {
+                        return false;
                     }
                 }
-                
-                if let Some(severity) = &criteria.severity {
-                    if let Some(result_severity) = props.additional_properties.get("severity") {
-                        if result_severity.as_str() != Some(&severity.to_string()) {
-                            return false;
-                        }
+            }
+            
+            if let Some(severity) = &criteria.severity {
+                if let Some(result_severity) = result.properties.get("severity") {
+                    if result_severity != &severity.to_string() {
+                        return false;
                     }
                 }
-                
-                if let Some(hook_event) = &criteria.hook_event {
-                    if let Some(result_hook) = props.additional_properties.get("hook_event") {
-                        if result_hook.as_str() != Some(hook_event) {
-                            return false;
-                        }
+            }
+            
+            if let Some(hook_event) = &criteria.hook_event {
+                if let Some(result_hook) = result.properties.get("hook_event") {
+                    if result_hook != hook_event {
+                        return false;
                     }
                 }
             }
@@ -266,6 +282,7 @@ pub mod roles {
 
     /// Auditor role: Queries SARIF logs and determines pass/fail (can fail)
     pub struct Auditor {
+        /// The audit policies to apply
         pub policies: Vec<AuditPolicy>,
     }
 
@@ -314,7 +331,7 @@ pub mod roles {
         }
 
         /// Query SARIF logs with custom criteria
-        pub fn query_sarif(&self, sarif_log: &SarifLog, criteria: &QueryCriteria) -> Vec<&SarifResult> {
+        pub fn query_sarif<'a>(&self, sarif_log: &'a SarifLog, criteria: &QueryCriteria) -> Vec<&'a SarifResult> {
             sarif_log.runs
                 .iter()
                 .flat_map(|run| &run.results)
@@ -324,28 +341,26 @@ pub mod roles {
 
         /// Check if a result matches query criteria
         fn matches_criteria(&self, result: &SarifResult, criteria: &QueryCriteria) -> bool {
-            if let Some(props) = &result.properties {
-                if let Some(concern) = &criteria.concern {
-                    if let Some(result_concern) = props.additional_properties.get("concern") {
-                        if result_concern.as_str() != Some(concern) {
-                            return false;
-                        }
+            if let Some(concern) = &criteria.concern {
+                if let Some(result_concern) = result.properties.get("concern") {
+                    if result_concern != concern {
+                        return false;
                     }
                 }
-                
-                if let Some(severity) = &criteria.severity {
-                    if let Some(result_severity) = props.additional_properties.get("severity") {
-                        if result_severity.as_str() != Some(&severity.to_string()) {
-                            return false;
-                        }
+            }
+            
+            if let Some(severity) = &criteria.severity {
+                if let Some(result_severity) = result.properties.get("severity") {
+                    if result_severity != &severity.to_string() {
+                        return false;
                     }
                 }
-                
-                if let Some(hook_event) = &criteria.hook_event {
-                    if let Some(result_hook) = props.additional_properties.get("hook_event") {
-                        if result_hook.as_str() != Some(hook_event) {
-                            return false;
-                        }
+            }
+            
+            if let Some(hook_event) = &criteria.hook_event {
+                if let Some(result_hook) = result.properties.get("hook_event") {
+                    if result_hook != hook_event {
+                        return false;
                     }
                 }
             }
@@ -358,10 +373,15 @@ pub mod roles {
 /// Git metadata for provenance tracking
 #[derive(Debug, Clone)]
 pub struct GitMetadata {
+    /// The commit hash
     pub commit_hash: String,
+    /// The tree hash
     pub tree_hash: String,
+    /// The timestamp of the operation
     pub timestamp: u64,
+    /// The hook event that triggered this
     pub hook_event: String,
+    /// The repository path
     pub repository: String,
 }
 
@@ -381,9 +401,13 @@ impl GitMetadata {
 /// Query criteria for filtering SARIF results
 #[derive(Debug, Clone)]
 pub struct QueryCriteria {
+    /// Filter by concern name
     pub concern: Option<String>,
+    /// Filter by severity level
     pub severity: Option<RuleSeverity>,
+    /// Filter by hook event
     pub hook_event: Option<String>,
+    /// Filter by diff type
     pub diff_type: Option<String>,
 }
 
@@ -426,9 +450,13 @@ impl QueryCriteria {
 /// Audit policy for the Auditor role
 #[derive(Debug, Clone)]
 pub struct AuditPolicy {
+    /// The name of the policy
     pub name: String,
+    /// The description of the policy
     pub description: String,
+    /// The criteria for this policy
     pub criteria: QueryCriteria,
+    /// The action to take when criteria match
     pub action: AuditAction,
 }
 
@@ -445,28 +473,26 @@ impl AuditPolicy {
 
     /// Check if a SARIF result matches this policy
     pub fn matches(&self, result: &SarifResult) -> bool {
-        if let Some(props) = &result.properties {
-            if let Some(concern) = &self.criteria.concern {
-                if let Some(result_concern) = props.additional_properties.get("concern") {
-                    if result_concern.as_str() != Some(concern) {
-                        return false;
-                    }
+        if let Some(concern) = &self.criteria.concern {
+            if let Some(result_concern) = result.properties.get("concern") {
+                if result_concern != concern {
+                    return false;
                 }
             }
-            
-            if let Some(severity) = &self.criteria.severity {
-                if let Some(result_severity) = props.additional_properties.get("severity") {
-                    if result_severity.as_str() != Some(&severity.to_string()) {
-                        return false;
-                    }
+        }
+        
+        if let Some(severity) = &self.criteria.severity {
+            if let Some(result_severity) = result.properties.get("severity") {
+                if result_severity != &severity.to_string() {
+                    return false;
                 }
             }
-            
-            if let Some(hook_event) = &self.criteria.hook_event {
-                if let Some(result_hook) = props.additional_properties.get("hook_event") {
-                    if result_hook.as_str() != Some(hook_event) {
-                        return false;
-                    }
+        }
+        
+        if let Some(hook_event) = &self.criteria.hook_event {
+            if let Some(result_hook) = result.properties.get("hook_event") {
+                if result_hook != hook_event {
+                    return false;
                 }
             }
         }
@@ -478,19 +504,27 @@ impl AuditPolicy {
 /// Audit action types
 #[derive(Debug, Clone, PartialEq)]
 pub enum AuditAction {
+    /// Fail the audit
     Fail,
+    /// Warn but don't fail
     Warn,
+    /// Just log the information
     Info,
 }
 
 /// Audit result from the Auditor role
 #[derive(Debug, Clone)]
 pub enum AuditResult {
+    /// Audit passed
     Pass {
+        /// Any warnings that occurred
         warnings: Vec<SarifResult>,
     },
+    /// Audit failed
     Fail {
+        /// The violations that caused the failure
         violations: Vec<SarifResult>,
+        /// Any warnings that occurred
         warnings: Vec<SarifResult>,
     },
 }
@@ -520,11 +554,17 @@ impl AuditResult {
 
 /// Enhanced pipeline with SARIF-first architecture
 pub struct SarifFirstPipeline {
+    /// The hook role
     pub hook: roles::Hook,
+    /// The concern role
     pub concern: roles::Concern,
+    /// The specifier role
     pub specifier: roles::Specifier,
+    /// The verifier role
     pub verifier: roles::Verifier,
+    /// The stegrapher role
     pub stegrapher: roles::Stegrapher,
+    /// The auditor role
     pub auditor: roles::Auditor,
 }
 
@@ -609,10 +649,10 @@ mod tests {
         auditor.add_policy(policy);
         
         // Test with empty SARIF log
-        let empty_sarif = SarifLog::builder()
-            .version("2.1.0")
-            .runs(vec![])
-            .build();
+        let empty_sarif = SarifLog {
+            version: "2.1.0".to_string(),
+            runs: vec![],
+        };
         
         let result = auditor.audit_sarif(&empty_sarif);
         assert!(result.is_pass());

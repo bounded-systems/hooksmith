@@ -55,6 +55,12 @@ pub mod verifier;
 pub mod high_performance_diff;
 /// SARIF-first validation roles and architecture
 pub mod sarif_roles;
+/// Contract templates for reusable contract definitions
+pub mod contract_templates;
+/// Hashed store for content-addressable caching
+pub mod hashed_store;
+/// SARIF merge utilities for parallel processing
+pub mod sarif_merge;
 
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, HookEvent};
 use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ExpectedSnapshot};
@@ -354,7 +360,7 @@ pub fn run_sarif_first_pipeline(
     hook_event: HookEvent,
     commit_hash: String,
     tree_hash: String,
-) -> (serde_sarif::sarif::SarifLog, crate::modules::functional_contract_pipeline::sarif_roles::AuditResult) {
+) -> (crate::modules::functional_contract_pipeline::sarif_roles::SarifLog, crate::modules::functional_contract_pipeline::sarif_roles::AuditResult) {
     let mut pipeline = crate::modules::functional_contract_pipeline::sarif_roles::SarifFirstPipeline::new();
     let git_metadata = crate::modules::functional_contract_pipeline::sarif_roles::GitMetadata::new(
         commit_hash,
@@ -393,6 +399,39 @@ pub fn create_audit_policy(
         criteria,
         action,
     )
+}
+
+/// Convenience function to create contract template registry with predefined templates
+pub fn create_template_registry() -> crate::modules::functional_contract_pipeline::contract_templates::ContractTemplateRegistry {
+    let mut registry = crate::modules::functional_contract_pipeline::contract_templates::ContractTemplateRegistry::new();
+    
+    // Register predefined templates
+    registry.register_template(crate::modules::functional_contract_pipeline::contract_templates::predefined::file_mode_template());
+    registry.register_template(crate::modules::functional_contract_pipeline::contract_templates::predefined::line_ending_template());
+    registry.register_template(crate::modules::functional_contract_pipeline::contract_templates::predefined::file_size_template());
+    registry.register_template(crate::modules::functional_contract_pipeline::contract_templates::predefined::file_extension_template());
+    
+    registry
+}
+
+/// Convenience function to create hashed store
+pub fn create_hashed_store() -> crate::modules::functional_contract_pipeline::hashed_store::HashedStore {
+    crate::modules::functional_contract_pipeline::hashed_store::HashedStore::new()
+}
+
+/// Convenience function to merge SARIF logs
+pub fn merge_sarif_logs(
+    logs: Vec<crate::modules::functional_contract_pipeline::sarif_roles::SarifLog>,
+    strategy: crate::modules::functional_contract_pipeline::sarif_merge::MergeStrategy,
+) -> crate::modules::functional_contract_pipeline::sarif_roles::SarifLog {
+    let options = crate::modules::functional_contract_pipeline::sarif_merge::MergeOptions {
+        strategy,
+        deduplicate: true,
+        sort: true,
+        custom_merge: None,
+    };
+    
+    crate::modules::functional_contract_pipeline::sarif_merge::SarifMerger::merge_logs(logs, &options)
 }
 
 #[cfg(test)]
