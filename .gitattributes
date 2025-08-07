@@ -165,6 +165,7 @@ scripts/create_worktree_pr.rs linguist-language=Rust
 scripts/detect_orphaned_branches.rs linguist-language=Rust
 scripts/ensure-clean-main.rs linguist-language=Rust
 scripts/ensure-clean-main/src/main.rs linguist-language=Rust
+scripts/generate-gitattributes.rs linguist-language=Rust
 scripts/git_worktree_wrapper.rs linguist-language=Rust
 scripts/intelligent_worktree_cleanup.rs linguist-language=Rust
 scripts/migrate-shell-scripts.rs linguist-language=Rust
@@ -182,21 +183,27 @@ scripts/update_worktrees_to_main.rs linguist-language=Rust
 scripts/verify_worktree_1to1.rs linguist-language=Rust
 scripts/worktree_state_machine.rs linguist-language=Rust
 scripts/worktree_status_report.rs linguist-language=Rust
+src/bin/attr-scan.rs linguist-language=Rust
 src/bin/auto-merge-all-prs.rs linguist-language=Rust
 src/bin/build_xtask.rs linguist-language=Rust
 src/bin/build_xtask_cross.rs linguist-language=Rust
 src/bin/cleanup-old-worktrees.rs linguist-language=Rust
 src/bin/comprehensive-worktree-workflow.rs linguist-language=Rust
 src/bin/conflict_resolver.rs linguist-language=Rust
+src/bin/convert-shell-to-rust.rs linguist-language=Rust
 src/bin/create-worktree-pr.rs linguist-language=Rust
 src/bin/detect-orphaned-branches.rs linguist-language=Rust
 src/bin/dev-workflow.rs linguist-language=Rust
 src/bin/ensure-clean-main.rs linguist-language=Rust
+src/bin/file-type-report.rs linguist-language=Rust
 src/bin/generate-cargo-toml.rs linguist-language=Rust
+src/bin/generate-gitattributes.rs linguist-language=Rust
 src/bin/git-worktree-wrapper.rs linguist-language=Rust
 src/bin/intelligent-worktree-cleanup.rs linguist-language=Rust
+src/bin/language-reconciliation.rs linguist-language=Rust
 src/bin/migrate-worktrees-to-wt.rs linguist-language=Rust
 src/bin/pr_creator.rs linguist-language=Rust
+src/bin/pre-commit-main-cleanup.rs linguist-language=Rust
 src/bin/resolve-worktree-conflicts.rs linguist-language=Rust
 src/bin/run_architecture_demo.rs linguist-language=Rust
 src/bin/safe-worktree-cleanup.rs linguist-language=Rust
@@ -208,6 +215,7 @@ src/bin/update-all-worktrees-to-main.rs linguist-language=Rust
 src/bin/update-worktrees-to-main.rs linguist-language=Rust
 src/bin/update-worktrees.rs linguist-language=Rust
 src/bin/validate-file-extensions.rs linguist-language=Rust
+src/bin/validate-file-types.rs linguist-language=Rust
 src/bin/verify-worktree-1to1.rs linguist-language=Rust
 src/bin/worktree-lifecycle.rs linguist-language=Rust
 src/bin/worktree-state-machine.rs linguist-language=Rust
@@ -238,10 +246,6 @@ test_sbom.rs linguist-language=Rust
 tests/component_validation.rs linguist-language=Rust
 tests/hooks_test.rs linguist-language=Rust
 tests/integration.rs linguist-language=Rust
-
-# Shell files
-hooks/pre-commit-main-cleanup linguist-language=Shell
-scripts/convert-shell-to-rust.sh linguist-language=Shell
 
 # =============================================================================
 # COMMON EXCLUSIONS AND OVERRIDES
