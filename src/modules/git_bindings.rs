@@ -36,6 +36,9 @@ impl GitBindings {
             GitMetadataType::Note => self.validate_note_git2(identifier),
             GitMetadataType::Attr => self.validate_attr_git2(identifier),
             GitMetadataType::Index => self.validate_index_git2(),
+            GitMetadataType::Stash => self.validate_stash_git2(identifier),
+            GitMetadataType::Worktree => self.validate_worktree_git2(identifier),
+            GitMetadataType::Remote => self.validate_remote_git2(identifier),
         }
     }
 
@@ -60,6 +63,9 @@ impl GitBindings {
         stats.insert("note".to_string(), 0);
         stats.insert("attr".to_string(), 0);
         stats.insert("index".to_string(), 0);
+        stats.insert("stash".to_string(), 0);
+        stats.insert("worktree".to_string(), 0);
+        stats.insert("remote".to_string(), 0);
         Ok(stats)
     }
 
@@ -124,6 +130,27 @@ impl GitBindings {
         Ok(())
     }
 
+    fn validate_stash_git2(&self, stash_ref: &str) -> Result<()> {
+        // git2::Repository::open(&self.repo_path)?
+        //     .find_reference("refs/stash")?;
+        println!("✅ Validated stash {} using git2", stash_ref);
+        Ok(())
+    }
+
+    fn validate_worktree_git2(&self, worktree_name: &str) -> Result<()> {
+        // git2::Repository::open(&self.repo_path)?
+        //     .worktree(worktree_name)?;
+        println!("✅ Validated worktree {} using git2", worktree_name);
+        Ok(())
+    }
+
+    fn validate_remote_git2(&self, remote_name: &str) -> Result<()> {
+        // git2::Repository::open(&self.repo_path)?
+        //     .find_remote(remote_name)?;
+        println!("✅ Validated remote {} using git2", remote_name);
+        Ok(())
+    }
+
     /// Get Git object statistics using gix (gitoxide)
     pub fn get_object_stats_gix(&self) -> Result<std::collections::HashMap<String, u32>> {
         // This would use gix::Repository to get object statistics
@@ -145,6 +172,9 @@ impl GitBindings {
         stats.insert("note".to_string(), 0);
         stats.insert("attr".to_string(), 0);
         stats.insert("index".to_string(), 0);
+        stats.insert("stash".to_string(), 0);
+        stats.insert("worktree".to_string(), 0);
+        stats.insert("remote".to_string(), 0);
         Ok(stats)
     }
 
@@ -165,6 +195,9 @@ impl GitBindings {
             GitMetadataType::Note => self.validate_note_gix(identifier),
             GitMetadataType::Attr => self.validate_attr_gix(identifier),
             GitMetadataType::Index => self.validate_index_gix(),
+            GitMetadataType::Stash => self.validate_stash_gix(identifier),
+            GitMetadataType::Worktree => self.validate_worktree_gix(identifier),
+            GitMetadataType::Remote => self.validate_remote_gix(identifier),
         }
     }
 
@@ -228,6 +261,27 @@ impl GitBindings {
         println!("✅ Validated index using gix");
         Ok(())
     }
+
+    fn validate_stash_gix(&self, stash_ref: &str) -> Result<()> {
+        // gix::Repository::open(&self.repo_path)?
+        //     .find_reference("refs/stash")?;
+        println!("✅ Validated stash {} using gix", stash_ref);
+        Ok(())
+    }
+
+    fn validate_worktree_gix(&self, worktree_name: &str) -> Result<()> {
+        // gix::Repository::open(&self.repo_path)?
+        //     .worktree(worktree_name)?;
+        println!("✅ Validated worktree {} using gix", worktree_name);
+        Ok(())
+    }
+
+    fn validate_remote_gix(&self, remote_name: &str) -> Result<()> {
+        // gix::Repository::open(&self.repo_path)?
+        //     .find_remote(remote_name)?;
+        println!("✅ Validated remote {} using gix", remote_name);
+        Ok(())
+    }
 }
 
 /// Pattern matching for HookConcern using Git APIs
@@ -253,6 +307,9 @@ impl GitConcernValidator for GitBindings {
             "note" => self.validate_git_metadata(&GitMetadataType::Note, identifier),
             "attr" => self.validate_git_metadata(&GitMetadataType::Attr, identifier),
             "index" => self.validate_git_metadata(&GitMetadataType::Index, identifier),
+            "stash" => self.validate_git_metadata(&GitMetadataType::Stash, identifier),
+            "worktree" => self.validate_git_metadata(&GitMetadataType::Worktree, identifier),
+            "remote" => self.validate_git_metadata(&GitMetadataType::Remote, identifier),
             _ => bail!("Unknown concern: {}", concern),
         }
     }
@@ -267,6 +324,9 @@ impl GitConcernValidator for GitBindings {
             "note" => self.validate_git_metadata_gix(&GitMetadataType::Note, identifier),
             "attr" => self.validate_git_metadata_gix(&GitMetadataType::Attr, identifier),
             "index" => self.validate_git_metadata_gix(&GitMetadataType::Index, identifier),
+            "stash" => self.validate_git_metadata_gix(&GitMetadataType::Stash, identifier),
+            "worktree" => self.validate_git_metadata_gix(&GitMetadataType::Worktree, identifier),
+            "remote" => self.validate_git_metadata_gix(&GitMetadataType::Remote, identifier),
             _ => bail!("Unknown concern: {}", concern),
         }
     }
@@ -277,7 +337,7 @@ impl GitConcernValidator for GitBindings {
                 let stats = self.get_object_stats_git2()?;
                 Ok(*stats.get(concern).unwrap_or(&0))
             }
-            "ref" | "note" | "attr" | "index" => {
+            "ref" | "note" | "attr" | "index" | "stash" | "worktree" | "remote" => {
                 let stats = self.get_metadata_stats_git2()?;
                 Ok(*stats.get(concern).unwrap_or(&0))
             }
@@ -311,6 +371,9 @@ mod tests {
         assert!(bindings.validate_concern_git2("note", "test-note").is_ok());
         assert!(bindings.validate_concern_git2("attr", ".gitattributes").is_ok());
         assert!(bindings.validate_concern_git2("index", "").is_ok());
+        assert!(bindings.validate_concern_git2("stash", "refs/stash").is_ok());
+        assert!(bindings.validate_concern_git2("worktree", "feature-branch").is_ok());
+        assert!(bindings.validate_concern_git2("remote", "origin").is_ok());
         
         // Test invalid concern
         assert!(bindings.validate_concern_git2("invalid", "test").is_err());

@@ -32,7 +32,10 @@
           "ref",
           "note",
           "attr",
-          "index"
+          "index",
+          "stash",
+          "worktree",
+          "remote"
         ]
       }
     },

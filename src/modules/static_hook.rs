@@ -55,6 +55,12 @@ pub enum HookConcern {
     Attr,
     /// Git index (staging area)
     Index,
+    /// Git stash (pseudo-refs for uncommitted work)
+    Stash,
+    /// Git worktree (linked working directories)
+    Worktree,
+    /// Git remote (remote repository configurations)
+    Remote,
 }
 
 impl StaticHook {

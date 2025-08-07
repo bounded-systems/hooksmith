@@ -25,6 +25,12 @@ pub enum GitMetadataType {
     Attr,
     /// Index (staging area) - tracked in .git/index
     Index,
+    /// Stash (pseudo-refs for uncommitted work) - tracked in .git/refs/stash
+    Stash,
+    /// Worktree (linked working directories) - tracked in .git/worktrees/
+    Worktree,
+    /// Remote (remote repository configurations) - tracked in .git/config
+    Remote,
 }
 
 /// Git-native validation context
@@ -82,6 +88,9 @@ impl GitNativeValidator {
             "note" => Some(GitMetadataType::Note),
             "attr" => Some(GitMetadataType::Attr),
             "index" => Some(GitMetadataType::Index),
+            "stash" => Some(GitMetadataType::Stash),
+            "worktree" => Some(GitMetadataType::Worktree),
+            "remote" => Some(GitMetadataType::Remote),
             _ => None,
         }
     }
@@ -93,7 +102,7 @@ impl GitNativeValidator {
 
     /// Get canonical Git metadata type names
     pub fn canonical_metadata_types() -> Vec<&'static str> {
-        vec!["ref", "note", "attr", "index"]
+        vec!["ref", "note", "attr", "index", "stash", "worktree", "remote"]
     }
 
     /// Validate that all concerns are Git-native
@@ -143,6 +152,9 @@ mod tests {
         assert_eq!(GitNativeValidator::map_metadata_type("note"), Some(GitMetadataType::Note));
         assert_eq!(GitNativeValidator::map_metadata_type("attr"), Some(GitMetadataType::Attr));
         assert_eq!(GitNativeValidator::map_metadata_type("index"), Some(GitMetadataType::Index));
+        assert_eq!(GitNativeValidator::map_metadata_type("stash"), Some(GitMetadataType::Stash));
+        assert_eq!(GitNativeValidator::map_metadata_type("worktree"), Some(GitMetadataType::Worktree));
+        assert_eq!(GitNativeValidator::map_metadata_type("remote"), Some(GitMetadataType::Remote));
         assert_eq!(GitNativeValidator::map_metadata_type("invalid"), None);
     }
 
