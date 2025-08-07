@@ -29,7 +29,7 @@ pub enum HookScope {
 }
 
 /// Hook concerns enum - what the hook validates
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Ord, PartialOrd)]
 #[serde(rename_all = "kebab-case")]
 pub enum HookConcern {
     Blob,
@@ -96,11 +96,8 @@ impl StaticHook {
 pub fn load_static_hook(path: &Path) -> Result<StaticHook> {
     let content = std::fs::read_to_string(path)?;
     
-    // Parse JSONC (JSON with comments)
-    let json_value = jsonc_parser::parse_to_serde_value(&content)
-        .map_err(|e| anyhow::anyhow!("Failed to parse JSONC: {}", e))?;
-    
-    let hook: StaticHook = serde_json::from_value(json_value)?;
+    // For now, parse as regular JSON (we can add JSONC support later)
+    let hook: StaticHook = serde_json::from_str(&content)?;
     hook.validate()?;
     
     Ok(hook)
