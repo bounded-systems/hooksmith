@@ -4,20 +4,17 @@ on:
   push:
     branches: [main, develop]
     paths-ignore:
-      - '.gitattributes'
-      - 'docs/**'
+      - .gitattributes
+      - docs/**
       - '*.md'
   pull_request:
     paths-ignore:
-      - 'docs/**'
+      - docs/**
       - '*.md'
   workflow_dispatch:
-    inputs:
-      force:
-        description: 'Force update .gitattributes'
-        required: false
-        type: boolean
-        default: false
+
+permissions:
+  contents: write
 
 jobs:
   update-gitattributes:
@@ -29,10 +26,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+        uses: dtolnay/rust-toolchain@stable
 
       # Cache step temporarily disabled due to Node.js compatibility issues with act
       # - name: Cache Rust dependencies
@@ -54,7 +48,7 @@ jobs:
           fi
 
       - name: Update .gitattributes
-        if: steps.check-update.outputs.needs_update == 'true' || github.event.inputs.force == 'true'
+        if: steps.check-update.outputs.needs_update == 'true'
         run: |
           ./target/release/generate-gitattributes
           git config --local user.email "action@github.com"
@@ -72,10 +66,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+        uses: dtolnay/rust-toolchain@stable
 
       # Cache step temporarily disabled due to Node.js compatibility issues with act
       # - name: Cache Rust dependencies
