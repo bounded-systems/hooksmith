@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// Static hook definition with zero dynamic resolution
 #[derive(Debug, Serialize, Deserialize)]
@@ -71,7 +71,12 @@ impl StaticHook {
         }
 
         // Validate binary exists
-        let path = Path::new(&self.bin);
+        let path = if self.bin.starts_with('/') || self.bin.starts_with("target/") {
+            PathBuf::from(&self.bin)
+        } else {
+            PathBuf::from("target/release").join(&self.bin)
+        };
+        
         if !path.exists() {
             bail!("Missing hook binary: {}", path.display());
         }

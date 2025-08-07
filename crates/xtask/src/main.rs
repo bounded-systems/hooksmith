@@ -705,6 +705,18 @@ enum GitConfigCommands {
 
 /// Git attributes management commands
 #[derive(Debug, Clone, clap::Subcommand)]
+enum GitHooksCommands {
+    /// Validate Git hooks configuration
+    Validate {
+        /// Whether to exit with error on validation failures
+        #[arg(long)]
+        strict: bool,
+        /// Show detailed validation output
+        #[arg(long)]
+        verbose: bool,
+    },
+}
+
 enum GitAttributesCommands {
     /// Convert .gitattributes to JSONC format
     Convert {
@@ -2666,6 +2678,14 @@ async fn main() -> Result<()> {
                     if strict {
                         anyhow::bail!("Git configuration validation failed");
                     }
+                }
+            }
+        },
+        Commands::GitHooks { command } => match command {
+            GitHooksCommands::Validate { strict, verbose } => {
+                println!("Git hooks validation not yet implemented");
+                if strict {
+                    anyhow::bail!("Git hooks validation failed");
                 }
             }
         },

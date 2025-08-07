@@ -6,5 +6,5 @@
     "tree",
     "contract-violation"
   ],
-  "bin": "target/release/pre-commit"
+  "bin": "hooksmith-validate-tree"
 }
