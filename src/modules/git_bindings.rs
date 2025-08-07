@@ -39,6 +39,9 @@ impl GitBindings {
             GitMetadataType::Stash => self.validate_stash_git2(identifier),
             GitMetadataType::Worktree => self.validate_worktree_git2(identifier),
             GitMetadataType::Remote => self.validate_remote_git2(identifier),
+            GitMetadataType::Branch => self.validate_branch_git2(identifier),
+            GitMetadataType::Head => self.validate_head_git2(identifier),
+            GitMetadataType::Reflog => self.validate_reflog_git2(identifier),
         }
     }
 
@@ -198,6 +201,9 @@ impl GitBindings {
             GitMetadataType::Stash => self.validate_stash_gix(identifier),
             GitMetadataType::Worktree => self.validate_worktree_gix(identifier),
             GitMetadataType::Remote => self.validate_remote_gix(identifier),
+            GitMetadataType::Branch => self.validate_branch_gix(identifier),
+            GitMetadataType::Head => self.validate_head_gix(identifier),
+            GitMetadataType::Reflog => self.validate_reflog_gix(identifier),
         }
     }
 

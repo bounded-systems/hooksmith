@@ -239,7 +239,12 @@ impl GitNativeValidator {
     pub fn validate_concerns(concerns: &[String]) -> Result<()> {
         let canonical_objects = Self::canonical_object_types();
         let canonical_metadata = Self::canonical_metadata_types();
-        let all_canonical: Vec<&str> = canonical_objects.iter().chain(canonical_metadata.iter()).cloned().collect();
+        let canonical_configs = Self::canonical_config_types();
+        let all_canonical: Vec<&str> = canonical_objects.iter()
+            .chain(canonical_metadata.iter())
+            .chain(canonical_configs.iter())
+            .cloned()
+            .collect();
         
         let mut errors = Vec::new();
         
@@ -285,7 +290,22 @@ mod tests {
         assert_eq!(GitNativeValidator::map_metadata_type("stash"), Some(GitMetadataType::Stash));
         assert_eq!(GitNativeValidator::map_metadata_type("worktree"), Some(GitMetadataType::Worktree));
         assert_eq!(GitNativeValidator::map_metadata_type("remote"), Some(GitMetadataType::Remote));
+        assert_eq!(GitNativeValidator::map_metadata_type("branch"), Some(GitMetadataType::Branch));
+        assert_eq!(GitNativeValidator::map_metadata_type("head"), Some(GitMetadataType::Head));
+        assert_eq!(GitNativeValidator::map_metadata_type("reflog"), Some(GitMetadataType::Reflog));
         assert_eq!(GitNativeValidator::map_metadata_type("invalid"), None);
+    }
+
+    #[test]
+    fn test_map_config_type() {
+        assert_eq!(GitNativeValidator::map_config_type("config-user"), Some(GitConfigType::ConfigUser));
+        assert_eq!(GitNativeValidator::map_config_type("config-core"), Some(GitConfigType::ConfigCore));
+        assert_eq!(GitNativeValidator::map_config_type("config-branch"), Some(GitConfigType::ConfigBranch));
+        assert_eq!(GitNativeValidator::map_config_type("config-remote"), Some(GitConfigType::ConfigRemote));
+        assert_eq!(GitNativeValidator::map_config_type("config-commit"), Some(GitConfigType::ConfigCommit));
+        assert_eq!(GitNativeValidator::map_config_type("config-push"), Some(GitConfigType::ConfigPush));
+        assert_eq!(GitNativeValidator::map_config_type("config-worktree"), Some(GitConfigType::ConfigWorktree));
+        assert_eq!(GitNativeValidator::map_config_type("invalid"), None);
     }
 
     #[test]
