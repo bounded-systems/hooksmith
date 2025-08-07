@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::env;
+use std::path::Path;
 use std::process::{Command, Stdio};
 
 /// Hooksmith Task Runner - Pure Rust Implementation

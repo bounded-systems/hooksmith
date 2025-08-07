@@ -6,6 +6,9 @@ authors = ["Pushd Team"]
 description = "CLI tools for Git worktree management and safety"
 license = "MIT"
 
+[features]
+build-deps = []
+
 [workspace]
 members = [
     ".",
@@ -180,3 +183,6 @@ event-types = { path = "crates/event-types" }
 
 [dev-dependencies]
 tempfile = "3.0"
+
+[build-dependencies]
+serde_json = "1.0"

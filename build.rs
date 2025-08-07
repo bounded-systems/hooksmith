@@ -1,6 +1,8 @@
 use std::path::Path;
 use std::process;
 
+// Add serde dependencies for build script
+
 fn main() {
     println!("cargo:rerun-if-changed=.hooksmith/hooks/");
     println!("cargo:rerun-if-changed=target/release/");
@@ -32,7 +34,7 @@ fn validate_static_hooks() -> Result<(), Box<dyn std::error::Error>> {
         let scope_path = scope_entry.path();
         
         if scope_path.is_dir() {
-            let scope_name = scope_path.file_name().unwrap().to_string_lossy();
+            let _scope_name = scope_path.file_name().unwrap().to_string_lossy();
             
             // Walk through all hook files in this scope
             for hook_entry in std::fs::read_dir(&scope_path)? {
@@ -74,64 +76,57 @@ fn validate_static_hooks() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn validate_single_hook(hook_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    // Read and parse the hook definition
+    // Read the hook definition file
     let content = std::fs::read_to_string(hook_path)?;
-    let hook: StaticHook = serde_json::from_str(&content)?;
     
-    // Validate the hook structure
-    hook.validate()?;
+    // Simple JSON parsing without serde (for build script compatibility)
+    let json: serde_json::Value = serde_json::from_str(&content)?;
+    
+    // Extract required fields
+    let name = json["name"].as_str().ok_or("Missing 'name' field")?;
+    let scope = json["scope"].as_str().ok_or("Missing 'scope' field")?;
+    let bin = json["bin"].as_str().ok_or("Missing 'bin' field")?;
+    
+    // Validate name format
+    if !name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+        return Err(format!("Invalid hook name '{}': must contain only alphanumeric characters, underscores, and hyphens", name).into());
+    }
+    
+    // Validate scope
+    let valid_scopes = ["git", "github", "fsmonitor", "reference", "email", "patch"];
+    if !valid_scopes.contains(&scope) {
+        return Err(format!("Invalid scope '{}': must be one of {:?}", scope, valid_scopes).into());
+    }
+    
+    // Validate concerns
+    let concerns = json["concerns"].as_array().ok_or("Missing 'concerns' field")?;
+    let valid_concerns = ["blob", "tree", "ref", "note", "attr", "contract-violation", "symbol-analysis"];
+    for concern in concerns {
+        let concern_str = concern.as_str().ok_or("Invalid concern format")?;
+        if !valid_concerns.contains(&concern_str) {
+            return Err(format!("Invalid concern '{}': must be one of {:?}", concern_str, valid_concerns).into());
+        }
+    }
+    
+    // Check for duplicate concerns
+    let mut concern_strings: Vec<&str> = concerns.iter()
+        .filter_map(|c| c.as_str())
+        .collect();
+    concern_strings.sort();
+    concern_strings.dedup();
+    if concern_strings.len() != concerns.len() {
+        return Err(format!("Duplicate concerns found in hook '{}'", name).into());
+    }
     
     // Check if binary exists in target/release/
-    let binary_path = Path::new("target/release").join(&hook.bin);
+    let binary_path = Path::new("target/release").join(bin);
     if !binary_path.exists() {
-        return Err(format!("Binary '{}' not found in target/release/", hook.bin).into());
+        return Err(format!("Binary '{}' not found in target/release/", bin).into());
     }
     
     if !binary_path.is_file() {
-        return Err(format!("Binary '{}' is not a file", hook.bin).into());
+        return Err(format!("Binary '{}' is not a file", bin).into());
     }
     
     Ok(())
-}
-
-// Static hook definition (simplified for build script)
-#[derive(serde::Deserialize)]
-struct StaticHook {
-    name: String,
-    scope: String,
-    concerns: Vec<String>,
-    bin: String,
-}
-
-impl StaticHook {
-    fn validate(&self) -> Result<(), Box<dyn std::error::Error>> {
-        // Validate name format
-        if !self.name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
-            return Err(format!("Invalid hook name '{}': must contain only alphanumeric characters, underscores, and hyphens", self.name).into());
-        }
-        
-        // Validate scope
-        let valid_scopes = ["git", "github", "fsmonitor", "reference", "email", "patch"];
-        if !valid_scopes.contains(&self.scope.as_str()) {
-            return Err(format!("Invalid scope '{}': must be one of {:?}", self.scope, valid_scopes).into());
-        }
-        
-        // Validate concerns
-        let valid_concerns = ["blob", "tree", "ref", "note", "attr", "contract-violation", "symbol-analysis"];
-        for concern in &self.concerns {
-            if !valid_concerns.contains(&concern.as_str()) {
-                return Err(format!("Invalid concern '{}': must be one of {:?}", concern, valid_concerns).into());
-            }
-        }
-        
-        // Check for duplicate concerns
-        let mut concerns = self.concerns.clone();
-        concerns.sort();
-        concerns.dedup();
-        if concerns.len() != self.concerns.len() {
-            return Err(format!("Duplicate concerns found in hook '{}'", self.name).into());
-        }
-        
-        Ok(())
-    }
 }
