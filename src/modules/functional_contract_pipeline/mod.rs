@@ -354,7 +354,7 @@ pub fn run_sarif_first_pipeline(
     hook_event: HookEvent,
     commit_hash: String,
     tree_hash: String,
-) -> (serde_sarif::SarifLog, crate::modules::functional_contract_pipeline::sarif_roles::AuditResult) {
+) -> (serde_sarif::sarif::SarifLog, crate::modules::functional_contract_pipeline::sarif_roles::AuditResult) {
     let mut pipeline = crate::modules::functional_contract_pipeline::sarif_roles::SarifFirstPipeline::new();
     let git_metadata = crate::modules::functional_contract_pipeline::sarif_roles::GitMetadata::new(
         commit_hash,

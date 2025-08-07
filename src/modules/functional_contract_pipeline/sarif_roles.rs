@@ -1,7 +1,7 @@
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, ContractSymbol, HookEvent, RuleSeverity};
 use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ExpectedSnapshot, ValidationDiff};
-use serde_sarif::sarif::{ArtifactLocation, Location, Message, PhysicalLocation, Result as SarifResult, Run, Tool, ToolComponent};
-use serde_sarif::SarifLog;
+use serde_sarif::sarif::{ArtifactLocation, Location, Message, PhysicalLocation, Result as SarifResult, Run, Tool, ToolComponent, PropertyBag, ResultLevel};
+use serde_sarif::sarif::SarifLog;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
@@ -117,10 +117,10 @@ pub mod roles {
                 let result = SarifResult::builder()
                     .rule_id(format!("{}-{}", diff.concern.name(), diff.diff_type.name()))
                     .level(match diff.severity {
-                        RuleSeverity::Error => "error",
-                        RuleSeverity::Warning => "warning",
-                        RuleSeverity::Info => "note",
-                        RuleSeverity::Critical => "error",
+                        RuleSeverity::Error => ResultLevel::Error,
+                        RuleSeverity::Warning => ResultLevel::Warning,
+                        RuleSeverity::Info => ResultLevel::Note,
+                        RuleSeverity::Critical => ResultLevel::Error,
                     })
                     .message(Message::builder()
                         .text(diff.description.clone())
@@ -132,7 +132,7 @@ pub mod roles {
                                 .build())
                             .build())
                         .build()])
-                    .properties(serde_sarif::PropertyBag::new(properties))
+                    .properties(PropertyBag::new(properties))
                     .build();
 
                 results.push(result);
