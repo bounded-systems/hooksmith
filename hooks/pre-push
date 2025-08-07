@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+
+echo "🔍 Running pre-push validation..."
+
+# Run Rust-based pre-push hook
+if ! cargo run -p git-hooks -- pre-push; then
+    echo "❌ Pre-push validation failed"
+    exit 1
+fi
+
+echo "✅ Pre-push validation passed"

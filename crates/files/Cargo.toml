@@ -1,0 +1,10 @@
+[package]
+name = "dircheck-files"
+version = "0.1.0"
+edition = "2021"
+authors = ["Pushd Team"]
+description = "Validate file structure using git ls-files"
+license = "MIT"
+
+[dependencies]
+dircheck-core = { path = "../core" }

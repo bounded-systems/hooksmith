@@ -13,7 +13,25 @@ members = [
     "crates/components/worktree-runner",
     "crates/xtask",
     "scripts/ensure-clean-main",
+                    "crates/tree",
+                "crates/files",
+                "crates/core",
+                "crates/snapshot",
+                "crates/inspector",
+                "crates/hooks",
 ]
+
+[profile.dev]
+opt-level = 1
+debug = false
+incremental = true
+
+[profile.release]
+opt-level = "z"
+strip = "debuginfo"
+lto = true
+codegen-units = 1
+panic = "abort"
 
 [workspace.package]
 version = "0.1.0"
@@ -88,6 +106,18 @@ hyperpolyglot = "0.1.0"
 [[bin]]
 name = "hooksmith"
 path = "src/main.rs"
+
+[[bin]]
+name = "dircheck-tree"
+path = "src/bin/dircheck-tree.rs"
+
+[[bin]]
+name = "dircheck-files"
+path = "src/bin/dircheck-files.rs"
+
+[[bin]]
+name = "dircheck"
+path = "src/bin/dircheck.rs"
 
 [lib]
 name = "hooksmith"
