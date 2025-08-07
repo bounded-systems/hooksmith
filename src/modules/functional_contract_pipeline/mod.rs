@@ -63,10 +63,16 @@ pub mod hashed_store;
 pub mod sarif_merge;
 /// Repair planning system with Triage Officer, Investigator, Dispatcher, and Fixers
 pub mod repair_planning;
+pub mod repair_core;
 
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, HookEvent};
 use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ExpectedSnapshot};
 use crate::modules::functional_contract_pipeline::repair_planning::{TriageOfficer, Violation, RepairPlan};
+use crate::modules::functional_contract_pipeline::repair_core::{
+    RepairPlan as CoreRepairPlan, RepairAction, ActionResult, PlanValidator, MermaidExporter,
+    Violation as CoreViolation, RootCause as CoreRootCause, Fixer, RepairResult,
+    ReplaceRootStarFixer, LintIgnoreOrderFixer,
+};
 use anyhow::Result;
 use std::collections::HashMap;
 use std::path::Path;
@@ -169,6 +175,61 @@ impl FunctionalContractPipeline {
         }
         
         Ok(repair_plans)
+    }
+
+    /// Creates a repair plan using the core repair system
+    pub fn create_core_repair_plan(&self, concern: &ConcernSymbol, contract: &str, violation_msg: &str) -> RepairResult<CoreRepairPlan> {
+        let violation = CoreViolation {
+            concern: concern.clone(),
+            contract: contract.to_string(),
+            message: violation_msg.to_string(),
+            location: format!("{:?}", concern),
+            severity: repair_core::ViolationSeverity::Error,
+        };
+
+        let root_cause = CoreRootCause {
+            primary_cause: "Contract violation detected".to_string(),
+            factors: vec!["Automated analysis".to_string()],
+            fix_categories: vec![repair_core::FixCategory::Formatting],
+            confidence: 0.9,
+        };
+
+        let mut actions = Vec::new();
+        
+        // Add example fixers
+        let fixers: Vec<Box<dyn Fixer>> = vec![
+            Box::new(ReplaceRootStarFixer),
+            Box::new(LintIgnoreOrderFixer),
+        ];
+
+        for fixer in fixers {
+            if let Ok(Some(action)) = fixer.plan(&violation, &root_cause) {
+                actions.push(action);
+            }
+        }
+
+        let plan = CoreRepairPlan {
+            id: format!("plan-{:?}-{}", concern, contract).replace(":", "-").replace("\"", ""),
+            concern: concern.clone(),
+            contract: contract.to_string(),
+            violation,
+            root_cause,
+            dispatcher: "core-dispatcher".to_string(),
+            actions,
+            is_complete: true,
+            metadata: std::collections::HashMap::new(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        };
+
+        // Validate the plan
+        PlanValidator::validate(&plan)?;
+
+        Ok(plan)
+    }
+
+    /// Exports a repair plan as a Mermaid diagram
+    pub fn export_repair_plan_mermaid(&self, plan: &CoreRepairPlan) -> String {
+        MermaidExporter::export_plan(plan)
     }
 
     /// Find snapshot for a specific concern

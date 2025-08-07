@@ -197,18 +197,19 @@ impl ContractTemplateRegistry {
     }
 }
 
-/// Template error types
+/// Errors that can occur during template operations
 #[derive(Debug, thiserror::Error)]
 pub enum TemplateError {
+    /// Template not found
     #[error("Template not found: {0}")]
     TemplateNotFound(String),
-    
+    /// Missing required parameter
     #[error("Missing required parameter: {0}")]
     MissingRequiredParameter(String),
-    
-    #[error("Invalid parameter type for {0}: expected {1}")]
+    /// Invalid parameter type
+    #[error("Invalid parameter type: expected {1}, got {0}")]
     InvalidParameterType(String, String),
-    
+    /// Template instantiation failed
     #[error("Template instantiation failed: {0}")]
     InstantiationFailed(String),
 }

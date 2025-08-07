@@ -1149,7 +1149,7 @@ mod tests {
         let violation = Violation {
             concern: ConcernSymbol::TreeFile,
             contract: "format".to_string(),
-            message: "Formatting violation detected".to_string(),
+            message: "Rust formatting violation: inconsistent indentation".to_string(),
             location: Some("src/main.rs".to_string()),
             severity: RuleSeverity::Error,
             details: HashMap::new(),

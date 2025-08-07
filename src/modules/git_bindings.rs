@@ -4,46 +4,72 @@ use std::collections::HashMap;
 /// Git object types
 #[derive(Debug, Clone, PartialEq)]
 pub enum GitObjectType {
+    /// Git blob object
     Blob,
+    /// Git tree object
     Tree,
+    /// Git commit object
     Commit,
+    /// Git tag object
     Tag,
 }
 
 /// Git tree entry types
 #[derive(Debug, Clone, PartialEq)]
 pub enum GitTreeEntryType {
+    /// Regular file
     File,
+    /// Executable file
     Executable,
+    /// Symbolic link
     Symlink,
+    /// Directory
     Directory,
+    /// Git submodule
     Submodule,
 }
 
 /// Git metadata types
 #[derive(Debug, Clone, PartialEq)]
 pub enum GitMetadataType {
+    /// Git reference
     Ref,
+    /// Git note
     Note,
+    /// Git attributes
     Attr,
+    /// Git index
     Index,
+    /// Git stash
     Stash,
+    /// Git worktree
     Worktree,
+    /// Git remote
     Remote,
+    /// Git branch
     Branch,
+    /// Git HEAD
     Head,
+    /// Git reflog
     Reflog,
 }
 
 /// Git attribute types
 #[derive(Debug, Clone, PartialEq)]
 pub enum GitAttributeType {
+    /// Line ending normalization
     LineEndingNormalization,
+    /// Diff strategy
     DiffStrategy,
+    /// Merge strategy
     MergeStrategy,
+    /// Export control
     ExportControl,
+    /// Filter driver
     FilterDriver,
+    /// External tool hint
     ExternalToolHint,
+    /// Locking hint
     LockingHint,
 }
 
