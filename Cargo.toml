@@ -103,9 +103,6 @@ tempfile = "3.0"
 # Async runtime
 regex = "1.0"
 futures-io = "0.3"
-
-# Parallel processing
-rayon = "1.8"
 num_cpus = "1.0"
 
 # Additional dependencies
@@ -183,7 +180,9 @@ cli-core = { path = "crates/components/cli-core" }
 event-types = { path = "crates/event-types" }
 json-patch = "4.0.0"
 sonic-rs = "0.5.3"
-diffx = "0.5.21"
+json_fast = "0.1.0"
+jzon = "0.12.5"
+ajson = "0.3.1"
 
 [dev-dependencies]
 tempfile = "3.0"
