@@ -196,12 +196,8 @@ pub enum HookConcern {
     ConfigSystem,
 
     // Git Reference Concerns (Detailed Ref Types)
-    /// Git branch references (refs/heads/*)
-    RefBranch,
     /// Git remote references (refs/remotes/*)
     RefRemote,
-    /// Git tag references (refs/tags/*)
-    RefTag,
     /// Git note references (refs/notes/*)
     RefNote,
     /// Git stash references (refs/stash)
@@ -210,12 +206,8 @@ pub enum HookConcern {
     RefWorktree,
     /// Git symbolic references (HEAD -> refs/heads/main)
     RefSym,
-    /// Git HEAD pointer
-    HeadPointer,
     /// Git packed references (.git/packed-refs)
     PackedRefs,
-    /// Git fetch HEAD pointer
-    FetchHeadPointer,
     /// Git merge HEAD pointer
     MergeHeadPointer,
     /// Git cherry-pick HEAD pointer
@@ -224,8 +216,6 @@ pub enum HookConcern {
     RevertHeadPointer,
     /// Git original HEAD pointer
     OrigHead,
-    /// Git reflog entries
-    RefLogEntry,
 
     // Git Storage Concerns (Object Database)
     /// Git packfile index files

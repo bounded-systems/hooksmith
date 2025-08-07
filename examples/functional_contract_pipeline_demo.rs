@@ -1,5 +1,5 @@
 use hooksmith::modules::functional_contract_pipeline::{
-    ConcernSymbol, ContractRule, ContractSpec, FunctionalContractPipeline, HookEvent, RuleSeverity, RuleType
+    FunctionalContractPipeline, HookEvent, ConcernSymbol, ContractSymbol
 };
 use std::collections::HashMap;
 
@@ -11,157 +11,154 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a new pipeline for the current repository
     let mut pipeline = FunctionalContractPipeline::new(".");
 
-    // Register contracts for different concerns
-    register_example_contracts(&mut pipeline)?;
-
     // Demonstrate the pipeline with different hook events
     demonstrate_pipeline(&pipeline)?;
 
+    // Demonstrate individual components
+    demonstrate_components()?;
+
+    // Demonstrate custom validation scenarios
+    demonstrate_custom_validation(&pipeline)?;
+
+    println!("✅ Demo completed successfully!");
     Ok(())
 }
 
-/// Register example contracts for demonstration
-fn register_example_contracts(pipeline: &mut FunctionalContractPipeline) -> Result<(), Box<dyn std::error::Error>> {
-    println!("📝 Registering example contracts...");
-
-    // Contract for Index concern (pre-commit)
-    let index_contract = ContractSpec {
-        name: "index-validation".to_string(),
-        version: "1.0".to_string(),
-        concern: ConcernSymbol::Index,
-        rules: vec![
-            ContractRule {
-                name: "no-unstaged-changes".to_string(),
-                description: Some("Ensure no unstaged changes before commit".to_string()),
-                rule_type: RuleType::Custom,
-                parameters: HashMap::new(),
-                required: true,
-                severity: RuleSeverity::Error,
-            },
-            ContractRule {
-                name: "no-untracked-files".to_string(),
-                description: Some("Ensure no untracked files before commit".to_string()),
-                rule_type: RuleType::Custom,
-                parameters: HashMap::new(),
-                required: false,
-                severity: RuleSeverity::Warning,
-            },
-        ],
-        metadata: HashMap::new(),
-    };
-
-    // Contract for line ending normalization (pre-commit)
-    let line_ending_contract = ContractSpec {
-        name: "line-ending-normalization".to_string(),
-        version: "1.0".to_string(),
-        concern: ConcernSymbol::AttrLineEndingNormalization,
-        rules: vec![
-            ContractRule {
-                name: "text-files-normalized".to_string(),
-                description: Some("Ensure text files have normalized line endings".to_string()),
-                rule_type: RuleType::Pattern,
-                parameters: {
-                    let mut params = HashMap::new();
-                    params.insert("pattern".to_string(), serde_json::json!("text"));
-                    params
-                },
-                required: true,
-                severity: RuleSeverity::Error,
-            },
-        ],
-        metadata: HashMap::new(),
-    };
-
-    // Contract for executable files (pre-push)
-    let executable_contract = ContractSpec {
-        name: "executable-file-validation".to_string(),
-        version: "1.0".to_string(),
-        concern: ConcernSymbol::TreeExecutable,
-        rules: vec![
-            ContractRule {
-                name: "no-new-executables".to_string(),
-                description: Some("Prevent new executable files from being pushed".to_string()),
-                rule_type: RuleType::Custom,
-                parameters: HashMap::new(),
-                required: true,
-                severity: RuleSeverity::Error,
-            },
-        ],
-        metadata: HashMap::new(),
-    };
-
-    // Register all contracts
-    pipeline.register_contract(index_contract)?;
-    pipeline.register_contract(line_ending_contract)?;
-    pipeline.register_contract(executable_contract)?;
-
-    println!("✅ Registered 3 example contracts");
-    println!();
-
-    Ok(())
-}
-
-/// Demonstrate the pipeline with different hook events
+/// Demonstrate the full pipeline
 fn demonstrate_pipeline(pipeline: &FunctionalContractPipeline) -> Result<(), Box<dyn std::error::Error>> {
-    println!("🚀 Demonstrating pipeline execution...\n");
+    println!("📋 Pipeline Demonstration");
+    println!("-------------------------");
 
-    // Test pre-commit hook
-    println!("📋 Testing PreCommit hook:");
-    let pre_commit_result = pipeline.execute_pipeline(&HookEvent::PreCommit)?;
-    print_pipeline_result(&pre_commit_result);
+    let hooks = vec![
+        HookEvent::PreCommit,
+        HookEvent::PrePush,
+        HookEvent::PreReceive,
+    ];
 
-    println!();
-
-    // Test pre-push hook
-    println!("📤 Testing PrePush hook:");
-    let pre_push_result = pipeline.execute_pipeline(&HookEvent::PrePush)?;
-    print_pipeline_result(&pre_push_result);
-
-    println!();
-
-    // Test individual pipeline steps
-    println!("🔍 Demonstrating individual pipeline steps:");
-    demonstrate_individual_steps(pipeline)?;
+    for hook in hooks {
+        println!("\n🔍 Testing hook: {:?}", hook);
+        
+        // Run with detailed diffs to see what's happening
+        let diff_set = pipeline.run_hook_with_diffs(hook);
+        
+        if diff_set.is_valid() {
+            println!("  ✅ Validation passed");
+            if diff_set.diff_count() > 0 {
+                println!("  ⚠️  {} warnings found", diff_set.warnings().len());
+            }
+        } else {
+            println!("  ❌ Validation failed");
+            println!("  Errors: {}", diff_set.errors().len());
+            println!("  Warnings: {}", diff_set.warnings().len());
+        }
+    }
 
     Ok(())
 }
 
-/// Print pipeline result in a formatted way
-fn print_pipeline_result(result: &hooksmith::modules::functional_contract_pipeline::DiffSet) {
-    println!("   Result: {}", result.summary);
-    println!("   Valid: {}", result.is_valid);
-    println!("   Differences: {}", result.diffs.len());
+/// Demonstrate individual components
+fn demonstrate_components() -> Result<(), Box<dyn std::error::Error>> {
+    println!("\n🧩 Component Demonstration");
+    println!("-------------------------");
+
+    // 1. Hook to Concerns
+    println!("\n1️⃣ Hook → Concerns");
+    let hook = HookEvent::PreCommit;
+    let concerns = hooksmith::modules::functional_contract_pipeline::hooks::get_concerns(&hook);
+    println!("  Hook: {:?}", hook);
+    println!("  Concerns: {:?}", concerns);
+
+    // 2. Concerns to Snapshots
+    println!("\n2️⃣ Concerns → Snapshots");
+    for concern in &concerns {
+        let snapshot = hooksmith::modules::functional_contract_pipeline::concerns::snapshot_concern(concern);
+        println!("  {:?}: {}", concern, snapshot.hash);
+    }
+
+    // 3. Concerns to Contracts
+    println!("\n3️⃣ Concerns → Contracts");
+    for concern in &concerns {
+        let contracts = hooksmith::modules::functional_contract_pipeline::contracts::get_contracts(concern);
+        println!("  {:?}: {:?}", concern, contracts);
+    }
+
+    // 4. Contracts to Expectations
+    println!("\n4️⃣ Contracts → Expectations");
+    let all_contracts = hooksmith::modules::functional_contract_pipeline::contracts::get_all_contracts(&concerns);
+    for contract in &all_contracts {
+        let expectation = hooksmith::modules::functional_contract_pipeline::specifier::build_expectation(contract);
+        println!("  {}: {:?}", contract.name(), expectation.symbol);
+    }
+
+    Ok(())
+}
+
+/// Demonstrate custom validation scenarios
+fn demonstrate_custom_validation(pipeline: &FunctionalContractPipeline) -> Result<(), Box<dyn std::error::Error>> {
+    println!("\n🎯 Custom Validation Scenarios");
+    println!("-----------------------------");
+
+    // Custom severity mapping
+    println!("\n1️⃣ Custom Severity Mapping");
+    let mut severity_map = HashMap::new();
+    severity_map.insert(ConcernSymbol::Index, hooksmith::modules::functional_contract_pipeline::symbols::RuleSeverity::Warning);
+    severity_map.insert(ConcernSymbol::TreeExecutable, hooksmith::modules::functional_contract_pipeline::symbols::RuleSeverity::Error);
     
-    for (i, diff) in result.diffs.iter().enumerate() {
-        println!("   {}. {} ({:?})", i + 1, diff.description, diff.severity);
+    let diff_set = pipeline.run_hook_with_severity(HookEvent::PrePush, &severity_map);
+    println!("  PrePush with custom severity: {} diffs", diff_set.diff_count());
+
+    // Tolerance fields
+    println!("\n2️⃣ Tolerance Fields");
+    let mut tolerance_fields = HashMap::new();
+    tolerance_fields.insert(ConcernSymbol::Index, vec!["timestamp".to_string()]);
+    
+    // This would be used with verify_with_tolerance in a real scenario
+    println!("  Tolerance configured for Index timestamp field");
+
+    // Custom comparison
+    println!("\n3️⃣ Custom Comparison");
+    println!("  Custom comparison functions available for specialized validation");
+
+    Ok(())
+}
+
+/// Demonstrate contract registration
+fn demonstrate_contract_registration() {
+    println!("\n📝 Contract Registration");
+    println!("------------------------");
+
+    // Show how contracts are mapped to concerns
+    let concerns = vec![
+        ConcernSymbol::Index,
+        ConcernSymbol::TreeExecutable,
+        ConcernSymbol::AttrLineEndingNormalization,
+    ];
+
+    for concern in &concerns {
+        let contracts = hooksmith::modules::functional_contract_pipeline::contracts::get_contracts(concern);
+        println!("  {:?}:", concern);
+        for contract in &contracts {
+            println!("    - {}", contract.name());
+        }
     }
 }
 
-/// Demonstrate individual pipeline steps
-fn demonstrate_individual_steps(pipeline: &FunctionalContractPipeline) -> Result<(), Box<dyn std::error::Error>> {
-    let hook = &HookEvent::PreCommit;
+/// Demonstrate hook event mapping
+fn demonstrate_hook_mapping() {
+    println!("\n🪝 Hook Event Mapping");
+    println!("----------------------");
 
-    println!("   1. Identifying concerns...");
-    let concerns = pipeline.identify_concerns(hook);
-    println!("      Found {} concerns: {:?}", concerns.len(), concerns);
+    let hooks = vec![
+        HookEvent::PreCommit,
+        HookEvent::PrePush,
+        HookEvent::PreReceive,
+        HookEvent::PostMerge,
+    ];
 
-    println!("   2. Archiving concerns...");
-    let observed = pipeline.archive_concerns(&concerns)?;
-    println!("      Archived {} concerns", observed.snapshots.len());
-
-    println!("   3. Mapping contracts...");
-    let contracts = pipeline.map_contracts(&concerns);
-    println!("      Mapped {} contracts", contracts.len());
-
-    println!("   4. Specifying expectations...");
-    let expected = pipeline.specify_expectations(&contracts)?;
-    println!("      Generated {} expectations", expected.snapshots.len());
-
-    println!("   5. Verifying...");
-    let diff = pipeline.verify(&observed, &expected)?;
-    println!("      Verification complete: {}", diff.summary);
-
-    Ok(())
+    for hook in &hooks {
+        let concerns = hooksmith::modules::functional_contract_pipeline::hooks::get_concerns(hook);
+        println!("  {:?}: {:?}", hook, concerns);
+    }
 }
 
 #[cfg(test)]
@@ -171,28 +168,28 @@ mod tests {
     #[test]
     fn test_pipeline_creation() {
         let pipeline = FunctionalContractPipeline::new(".");
-        assert!(pipeline.identify_concerns(&HookEvent::PreCommit).len() > 0);
+        assert_eq!(pipeline.repo_path(), ".");
     }
 
     #[test]
-    fn test_contract_registration() {
-        let mut pipeline = FunctionalContractPipeline::new(".");
-        
-        let contract = ContractSpec {
-            name: "test".to_string(),
-            version: "1.0".to_string(),
-            concern: ConcernSymbol::Index,
-            rules: vec![],
-            metadata: HashMap::new(),
-        };
-        
-        assert!(pipeline.register_contract(contract).is_ok());
+    fn test_hook_concerns() {
+        let concerns = hooksmith::modules::functional_contract_pipeline::hooks::get_concerns(&HookEvent::PreCommit);
+        assert!(!concerns.is_empty());
+        assert!(concerns.contains(&ConcernSymbol::Index));
     }
 
     #[test]
-    fn test_pipeline_execution() {
-        let pipeline = FunctionalContractPipeline::new(".");
-        let result = pipeline.execute_pipeline(&HookEvent::PreCommit);
-        assert!(result.is_ok());
+    fn test_contract_mapping() {
+        let contracts = hooksmith::modules::functional_contract_pipeline::contracts::get_contracts(&ConcernSymbol::Index);
+        assert!(!contracts.is_empty());
+        assert!(contracts.iter().any(|c| c.name() == "must-exist"));
+    }
+
+    #[test]
+    fn test_expectation_building() {
+        let contract = ContractSymbol::new("must-exist");
+        let expectation = hooksmith::modules::functional_contract_pipeline::specifier::build_expectation(&contract);
+        assert_eq!(expectation.symbol, ConcernSymbol::Index);
+        assert_eq!(expectation.contract, "must-exist");
     }
 }

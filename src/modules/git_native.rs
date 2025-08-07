@@ -396,6 +396,86 @@ impl GitNativeValidator {
         }
     }
 
+    /// Map string storage types to Git-native enums
+    pub fn map_storage_type(storage_type: &str) -> Option<GitStorageType> {
+        match storage_type {
+            "head-pointer" => Some(GitStorageType::HeadPointer),
+            "index-entry" => Some(GitStorageType::IndexEntry),
+            "index-file" => Some(GitStorageType::IndexFile),
+            "index-stage" => Some(GitStorageType::IndexStage),
+            "ref-branch" => Some(GitStorageType::RefBranch),
+            "ref-remote-branch" => Some(GitStorageType::RefRemoteBranch),
+            "ref-tag" => Some(GitStorageType::RefTag),
+            "ref-packed" => Some(GitStorageType::RefPacked),
+            "note-ref" => Some(GitStorageType::NoteRef),
+            "attr-repo-only" => Some(GitStorageType::AttrRepoOnly),
+            "ignore-repo-only" => Some(GitStorageType::IgnoreRepoOnly),
+            "config-local" => Some(GitStorageType::ConfigLocal),
+            "hook-script" => Some(GitStorageType::HookScript),
+            "hook-lifecycle" => Some(GitStorageType::HookLifecycle),
+            "ref-log" => Some(GitStorageType::RefLog),
+            "ref-log-entry" => Some(GitStorageType::RefLogEntry),
+            "worktree-meta" => Some(GitStorageType::WorktreeMeta),
+            "worktree-lock" => Some(GitStorageType::WorktreeLock),
+            "rebase-plan" => Some(GitStorageType::RebasePlan),
+            "rr-cache-entry" => Some(GitStorageType::RRCacheEntry),
+            "merge-state" => Some(GitStorageType::MergeState),
+            "merge-head" => Some(GitStorageType::MergeHead),
+            "orig-head-pointer" => Some(GitStorageType::OrigHeadPointer),
+            "commit-message-draft" => Some(GitStorageType::CommitMessageDraft),
+            "fetch-head-pointer" => Some(GitStorageType::FetchHeadPointer),
+            "repo-description" => Some(GitStorageType::RepoDescription),
+            "fs-monitor-state" => Some(GitStorageType::FsMonitorState),
+            "shallow-clone-depth" => Some(GitStorageType::ShallowCloneDepth),
+            _ => None,
+        }
+    }
+
+    /// Map string pattern types to Git-native enums
+    pub fn map_pattern_type(pattern_type: &str) -> Option<GitPatternType> {
+        match pattern_type {
+            "tree-ignore-pattern" => Some(GitPatternType::TreeIgnorePattern),
+            "ignore-global-pattern" => Some(GitPatternType::IgnoreGlobalPattern),
+            "attr-pattern" => Some(GitPatternType::AttrPattern),
+            "attr-global" => Some(GitPatternType::AttrGlobal),
+            _ => None,
+        }
+    }
+
+    /// Map string remote types to Git-native enums
+    pub fn map_remote_type(remote_type: &str) -> Option<GitRemoteType> {
+        match remote_type {
+            "remote-origin" => Some(GitRemoteType::RemoteOrigin),
+            "remote-config" => Some(GitRemoteType::RemoteConfig),
+            "push-strategy-config" => Some(GitRemoteType::PushStrategyConfig),
+            "credential-helper-config" => Some(GitRemoteType::CredentialHelperConfig),
+            "remote-url-alias" => Some(GitRemoteType::RemoteURLAlias),
+            _ => None,
+        }
+    }
+
+    /// Map string state types to Git-native enums
+    pub fn map_state_type(state_type: &str) -> Option<GitStateType> {
+        match state_type {
+            "stash-entry" => Some(GitStateType::StashEntry),
+            "stash-ref" => Some(GitStateType::StashRef),
+            "stash-meta" => Some(GitStateType::StashMeta),
+            "rebase-step" => Some(GitStateType::RebaseStep),
+            "merge-conflict-marker" => Some(GitStateType::MergeConflictMarker),
+            "bisect-state" => Some(GitStateType::BisectState),
+            "bisect-log" => Some(GitStateType::BisectLog),
+            "tag-object" => Some(GitStateType::TagObject),
+            "worktree-index" => Some(GitStateType::WorktreeIndex),
+            "worktree-branch-link" => Some(GitStateType::WorktreeBranchLink),
+            "hook-trigger" => Some(GitStateType::HookTrigger),
+            "index-conflict" => Some(GitStateType::IndexConflict),
+            "index-mode" => Some(GitStateType::IndexMode),
+            "config-global" => Some(GitStateType::ConfigGlobal),
+            "config-system" => Some(GitStateType::ConfigSystem),
+            _ => None,
+        }
+    }
+
     /// Get canonical Git object type names
     pub fn canonical_object_types() -> Vec<&'static str> {
         vec!["blob", "tree", "commit", "tag"]
@@ -432,6 +512,40 @@ impl GitNativeValidator {
         ]
     }
 
+    /// Get canonical Git storage type names
+    pub fn canonical_storage_types() -> Vec<&'static str> {
+        vec![
+            "head-pointer", "index-entry", "index-file", "index-stage", "ref-branch", "ref-remote-branch",
+            "ref-tag", "ref-packed", "note-ref", "attr-repo-only", "ignore-repo-only", "config-local",
+            "hook-script", "hook-lifecycle", "ref-log", "ref-log-entry", "worktree-meta", "worktree-lock",
+            "rebase-plan", "rr-cache-entry", "merge-state", "merge-head", "orig-head-pointer",
+            "commit-message-draft", "fetch-head-pointer", "repo-description", "fs-monitor-state", "shallow-clone-depth"
+        ]
+    }
+
+    /// Get canonical Git pattern type names
+    pub fn canonical_pattern_types() -> Vec<&'static str> {
+        vec![
+            "tree-ignore-pattern", "ignore-global-pattern", "attr-pattern", "attr-global"
+        ]
+    }
+
+    /// Get canonical Git remote type names
+    pub fn canonical_remote_types() -> Vec<&'static str> {
+        vec![
+            "remote-origin", "remote-config", "push-strategy-config", "credential-helper-config", "remote-url-alias"
+        ]
+    }
+
+    /// Get canonical Git state type names
+    pub fn canonical_state_types() -> Vec<&'static str> {
+        vec![
+            "stash-entry", "stash-ref", "stash-meta", "rebase-step", "merge-conflict-marker",
+            "bisect-state", "bisect-log", "tag-object", "worktree-index", "worktree-branch-link",
+            "hook-trigger", "index-conflict", "index-mode", "config-global", "config-system"
+        ]
+    }
+
     /// Validate that all concerns are Git-native
     pub fn validate_concerns(concerns: &[String]) -> Result<()> {
         let canonical_objects = Self::canonical_object_types();
@@ -439,11 +553,19 @@ impl GitNativeValidator {
         let canonical_metadata = Self::canonical_metadata_types();
         let canonical_configs = Self::canonical_config_types();
         let canonical_attributes = Self::canonical_attribute_types();
+        let canonical_storage = Self::canonical_storage_types();
+        let canonical_patterns = Self::canonical_pattern_types();
+        let canonical_remotes = Self::canonical_remote_types();
+        let canonical_states = Self::canonical_state_types();
         let all_canonical: Vec<&str> = canonical_objects.iter()
             .chain(canonical_tree_entries.iter())
             .chain(canonical_metadata.iter())
             .chain(canonical_configs.iter())
             .chain(canonical_attributes.iter())
+            .chain(canonical_storage.iter())
+            .chain(canonical_patterns.iter())
+            .chain(canonical_remotes.iter())
+            .chain(canonical_states.iter())
             .cloned()
             .collect();
         
@@ -529,6 +651,48 @@ mod tests {
         assert_eq!(GitNativeValidator::map_attribute_type("attr-external-tool-hint"), Some(GitAttributeType::AttrExternalToolHint));
         assert_eq!(GitNativeValidator::map_attribute_type("attr-locking-hint"), Some(GitAttributeType::AttrLockingHint));
         assert_eq!(GitNativeValidator::map_attribute_type("invalid"), None);
+    }
+
+    #[test]
+    fn test_map_storage_type() {
+        assert_eq!(GitNativeValidator::map_storage_type("head-pointer"), Some(GitStorageType::HeadPointer));
+        assert_eq!(GitNativeValidator::map_storage_type("index-entry"), Some(GitStorageType::IndexEntry));
+        assert_eq!(GitNativeValidator::map_storage_type("index-file"), Some(GitStorageType::IndexFile));
+        assert_eq!(GitNativeValidator::map_storage_type("ref-branch"), Some(GitStorageType::RefBranch));
+        assert_eq!(GitNativeValidator::map_storage_type("ref-remote-branch"), Some(GitStorageType::RefRemoteBranch));
+        assert_eq!(GitNativeValidator::map_storage_type("merge-state"), Some(GitStorageType::MergeState));
+        assert_eq!(GitNativeValidator::map_storage_type("invalid"), None);
+    }
+
+    #[test]
+    fn test_map_pattern_type() {
+        assert_eq!(GitNativeValidator::map_pattern_type("tree-ignore-pattern"), Some(GitPatternType::TreeIgnorePattern));
+        assert_eq!(GitNativeValidator::map_pattern_type("ignore-global-pattern"), Some(GitPatternType::IgnoreGlobalPattern));
+        assert_eq!(GitNativeValidator::map_pattern_type("attr-pattern"), Some(GitPatternType::AttrPattern));
+        assert_eq!(GitNativeValidator::map_pattern_type("attr-global"), Some(GitPatternType::AttrGlobal));
+        assert_eq!(GitNativeValidator::map_pattern_type("invalid"), None);
+    }
+
+    #[test]
+    fn test_map_remote_type() {
+        assert_eq!(GitNativeValidator::map_remote_type("remote-origin"), Some(GitRemoteType::RemoteOrigin));
+        assert_eq!(GitNativeValidator::map_remote_type("remote-config"), Some(GitRemoteType::RemoteConfig));
+        assert_eq!(GitNativeValidator::map_remote_type("push-strategy-config"), Some(GitRemoteType::PushStrategyConfig));
+        assert_eq!(GitNativeValidator::map_remote_type("credential-helper-config"), Some(GitRemoteType::CredentialHelperConfig));
+        assert_eq!(GitNativeValidator::map_remote_type("remote-url-alias"), Some(GitRemoteType::RemoteURLAlias));
+        assert_eq!(GitNativeValidator::map_remote_type("invalid"), None);
+    }
+
+    #[test]
+    fn test_map_state_type() {
+        assert_eq!(GitNativeValidator::map_state_type("stash-entry"), Some(GitStateType::StashEntry));
+        assert_eq!(GitNativeValidator::map_state_type("stash-ref"), Some(GitStateType::StashRef));
+        assert_eq!(GitNativeValidator::map_state_type("rebase-step"), Some(GitStateType::RebaseStep));
+        assert_eq!(GitNativeValidator::map_state_type("merge-conflict-marker"), Some(GitStateType::MergeConflictMarker));
+        assert_eq!(GitNativeValidator::map_state_type("bisect-state"), Some(GitStateType::BisectState));
+        assert_eq!(GitNativeValidator::map_state_type("tag-object"), Some(GitStateType::TagObject));
+        assert_eq!(GitNativeValidator::map_state_type("config-global"), Some(GitStateType::ConfigGlobal));
+        assert_eq!(GitNativeValidator::map_state_type("invalid"), None);
     }
 
     #[test]
