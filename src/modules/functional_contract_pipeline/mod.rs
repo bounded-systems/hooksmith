@@ -51,6 +51,8 @@ pub mod contracts;
 pub mod specifier;
 /// Validation and verification logic
 pub mod verifier;
+/// High-performance diffing strategies
+pub mod high_performance_diff;
 
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, HookEvent};
 use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ExpectedSnapshot};
@@ -152,6 +154,142 @@ impl FunctionalContractPipeline {
         verifier::verify_with_severity(&snapshots, &expectations, severity_map)
     }
 
+    /// Run the pipeline with JSON Patch diff generation
+    pub fn run_hook_with_json_patch(
+        &self,
+        hook: HookEvent,
+    ) -> crate::modules::functional_contract_pipeline::types::DiffSet {
+        // 1. Identify concerns for the hook
+        let concerns = hooks::get_concerns(&hook);
+        
+        // 2. Archive snapshots of concerns
+        let snapshots: Vec<ConcernSnapshot> = concerns
+            .iter()
+            .map(|concern| concerns::snapshot_concern(concern))
+            .collect();
+        
+        // 3. Get contracts for concerns
+        let contracts = contracts::get_all_contracts(&concerns);
+        
+        // 4. Build expectations from contracts
+        let expectations: Vec<ExpectedSnapshot> = contracts
+            .iter()
+            .map(|contract| specifier::build_expectation(contract))
+            .collect();
+        
+        // 5. Verify with JSON Patch
+        verifier::verify_with_json_patch(&snapshots, &expectations)
+    }
+
+    /// Generate JSON Patch for the entire pipeline
+pub fn generate_pipeline_patch(
+    &self,
+    hook: HookEvent,
+) -> json_patch::Patch {
+    // 1. Identify concerns for the hook
+    let concerns = hooks::get_concerns(&hook);
+    
+    // 2. Archive snapshots of concerns
+    let snapshots: Vec<ConcernSnapshot> = concerns
+        .iter()
+        .map(|concern| concerns::snapshot_concern(concern))
+        .collect();
+    
+    // 3. Get contracts for concerns
+    let contracts = contracts::get_all_contracts(&concerns);
+    
+    // 4. Build expectations from contracts
+    let expectations: Vec<ExpectedSnapshot> = contracts
+        .iter()
+        .map(|contract| specifier::build_expectation(contract))
+        .collect();
+    
+    // 5. Generate JSON Patch
+    verifier::generate_json_patch(&snapshots, &expectations)
+}
+
+/// Run the pipeline with high-performance diffing and automatic strategy selection
+pub fn run_hook_with_high_performance_diff(
+    &self,
+    hook: HookEvent,
+) -> (crate::modules::functional_contract_pipeline::types::DiffSet, crate::modules::functional_contract_pipeline::high_performance_diff::DiffMetrics) {
+    // 1. Identify concerns for the hook
+    let concerns = hooks::get_concerns(&hook);
+    
+    // 2. Archive snapshots of concerns
+    let snapshots: Vec<ConcernSnapshot> = concerns
+        .iter()
+        .map(|concern| concerns::snapshot_concern(concern))
+        .collect();
+    
+    // 3. Get contracts for concerns
+    let contracts = contracts::get_all_contracts(&concerns);
+    
+    // 4. Build expectations from contracts
+    let expectations: Vec<ExpectedSnapshot> = contracts
+        .iter()
+        .map(|contract| specifier::build_expectation(contract))
+        .collect();
+    
+    // 5. Use high-performance diffing with automatic strategy selection
+    high_performance_diff::convenience::auto_diff(&snapshots, &expectations)
+}
+
+/// Run the pipeline with specified high-performance diffing strategy
+pub fn run_hook_with_diff_strategy(
+    &self,
+    hook: HookEvent,
+    strategy: crate::modules::functional_contract_pipeline::high_performance_diff::DiffStrategy,
+) -> (crate::modules::functional_contract_pipeline::types::DiffSet, crate::modules::functional_contract_pipeline::high_performance_diff::DiffMetrics) {
+    // 1. Identify concerns for the hook
+    let concerns = hooks::get_concerns(&hook);
+    
+    // 2. Archive snapshots of concerns
+    let snapshots: Vec<ConcernSnapshot> = concerns
+        .iter()
+        .map(|concern| concerns::snapshot_concern(concern))
+        .collect();
+    
+    // 3. Get contracts for concerns
+    let contracts = contracts::get_all_contracts(&concerns);
+    
+    // 4. Build expectations from contracts
+    let expectations: Vec<ExpectedSnapshot> = contracts
+        .iter()
+        .map(|contract| specifier::build_expectation(contract))
+        .collect();
+    
+    // 5. Use specified high-performance diffing strategy
+    high_performance_diff::convenience::diff_with_strategy(strategy, &snapshots, &expectations)
+}
+
+/// Benchmark all diffing strategies for a hook
+pub fn benchmark_hook_strategies(
+    &self,
+    hook: HookEvent,
+) -> String {
+    // 1. Identify concerns for the hook
+    let concerns = hooks::get_concerns(&hook);
+    
+    // 2. Archive snapshots of concerns
+    let snapshots: Vec<ConcernSnapshot> = concerns
+        .iter()
+        .map(|concern| concerns::snapshot_concern(concern))
+        .collect();
+    
+    // 3. Get contracts for concerns
+    let contracts = contracts::get_all_contracts(&concerns);
+    
+    // 4. Build expectations from contracts
+    let expectations: Vec<ExpectedSnapshot> = contracts
+        .iter()
+        .map(|contract| specifier::build_expectation(contract))
+        .collect();
+    
+    // 5. Generate benchmark report
+    high_performance_diff::convenience::benchmark_report(&snapshots, &expectations)
+}
+
     /// Get repository path
     pub fn repo_path(&self) -> &str {
         &self.repo_path
@@ -173,6 +311,40 @@ pub fn run_hook(hook: HookEvent, repo_path: &str) -> Result<()> {
 pub fn run_hook_with_diffs(hook: HookEvent, repo_path: &str) -> crate::modules::functional_contract_pipeline::types::DiffSet {
     let pipeline = FunctionalContractPipeline::new(repo_path);
     pipeline.run_hook_with_diffs(hook)
+}
+
+/// Convenience function to run a hook validation with JSON Patch
+pub fn run_hook_with_json_patch(hook: HookEvent, repo_path: &str) -> crate::modules::functional_contract_pipeline::types::DiffSet {
+    let pipeline = FunctionalContractPipeline::new(repo_path);
+    pipeline.run_hook_with_json_patch(hook)
+}
+
+/// Convenience function to generate JSON Patch for a hook
+pub fn generate_hook_patch(hook: HookEvent, repo_path: &str) -> json_patch::Patch {
+    let pipeline = FunctionalContractPipeline::new(repo_path);
+    pipeline.generate_pipeline_patch(hook)
+}
+
+/// Convenience function to run hook with high-performance diffing
+pub fn run_hook_with_high_performance_diff(hook: HookEvent, repo_path: &str) -> (crate::modules::functional_contract_pipeline::types::DiffSet, crate::modules::functional_contract_pipeline::high_performance_diff::DiffMetrics) {
+    let pipeline = FunctionalContractPipeline::new(repo_path);
+    pipeline.run_hook_with_high_performance_diff(hook)
+}
+
+/// Convenience function to run hook with specified diff strategy
+pub fn run_hook_with_diff_strategy(
+    hook: HookEvent, 
+    repo_path: &str,
+    strategy: crate::modules::functional_contract_pipeline::high_performance_diff::DiffStrategy,
+) -> (crate::modules::functional_contract_pipeline::types::DiffSet, crate::modules::functional_contract_pipeline::high_performance_diff::DiffMetrics) {
+    let pipeline = FunctionalContractPipeline::new(repo_path);
+    pipeline.run_hook_with_diff_strategy(hook, strategy)
+}
+
+/// Convenience function to benchmark hook strategies
+pub fn benchmark_hook_strategies(hook: HookEvent, repo_path: &str) -> String {
+    let pipeline = FunctionalContractPipeline::new(repo_path);
+    pipeline.benchmark_hook_strategies(hook)
 }
 
 #[cfg(test)]
