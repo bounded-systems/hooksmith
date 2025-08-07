@@ -130,7 +130,8 @@ pub fn verify_with_tolerance(
 
     for ex in expected {
         if let Some(obs) = observed.iter().find(|o| o.symbol == ex.symbol) {
-            let tolerance = tolerance_fields.get(&ex.symbol).unwrap_or(&Vec::new());
+            let empty_vec = Vec::new();
+            let tolerance = tolerance_fields.get(&ex.symbol).unwrap_or(&empty_vec);
             
             if !compare_with_tolerance(&obs.data, &ex.expectation, tolerance) {
                 diffs.push(ValidationDiff::new(
