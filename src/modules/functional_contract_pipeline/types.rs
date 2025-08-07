@@ -52,7 +52,7 @@ pub struct ValidationDiff {
 }
 
 /// Types of validation differences
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum DiffType {
     /// Missing expected concern
     Missing,
