@@ -1,16 +1,16 @@
 use anyhow::Result;
 use std::env;
 
-/// Pre push Hook for Hooksmith
+/// Post workflow_call Hook for Hooksmith
 ///
-/// This hook handles pre push events:
-/// Push commits or tags
+/// This hook handles post workflow_call events:
+/// Workflow called by another workflow
 ///
-/// Event: push
-/// Hook Type: pre
+/// Event: workflow_call
+/// Hook Type: post
 /// Status: Stub (ready for implementation)
 fn main() -> Result<()> {
-    println!("✅ pre-push hook (stub mode) - would handle pre push events");
+    println!("✅ post-workflow_call hook (stub mode) - would handle post workflow_call events");
 
     // Read GitHub event data
     if let Ok(event_path) = env::var("GITHUB_EVENT_PATH") {
@@ -29,13 +29,13 @@ fn main() -> Result<()> {
         println!("🌿 Ref: {}", ref_name);
     }
 
-    // TODO: Implement pre push validation logic
+    // TODO: Implement post workflow_call validation logic
     // - Validate event payload
     // - Check permissions and security
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 pre push validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 post workflow_call validation completed successfully", hook_type_capitalized, event_name);
     Ok(())
 }
 
@@ -52,7 +52,7 @@ mod tests {
     #[test]
     fn test_event_name_validation() {
         // Test event name validation logic
-        let event_name = "push";
+        let event_name = "workflow_call";
         assert!(!event_name.is_empty());
     }
 }

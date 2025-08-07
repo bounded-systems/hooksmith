@@ -1,16 +1,16 @@
 use anyhow::Result;
 use std::env;
 
-/// Pre push Hook for Hooksmith
+/// Post team_add Hook for Hooksmith
 ///
-/// This hook handles pre push events:
-/// Push commits or tags
+/// This hook handles post team_add events:
+/// Team added to repository
 ///
-/// Event: push
-/// Hook Type: pre
+/// Event: team_add
+/// Hook Type: post
 /// Status: Stub (ready for implementation)
 fn main() -> Result<()> {
-    println!("✅ pre-push hook (stub mode) - would handle pre push events");
+    println!("✅ post-team_add hook (stub mode) - would handle post team_add events");
 
     // Read GitHub event data
     if let Ok(event_path) = env::var("GITHUB_EVENT_PATH") {
@@ -29,13 +29,13 @@ fn main() -> Result<()> {
         println!("🌿 Ref: {}", ref_name);
     }
 
-    // TODO: Implement pre push validation logic
+    // TODO: Implement post team_add validation logic
     // - Validate event payload
     // - Check permissions and security
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 pre push validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 post team_add validation completed successfully", hook_type_capitalized, event_name);
     Ok(())
 }
 
@@ -52,7 +52,7 @@ mod tests {
     #[test]
     fn test_event_name_validation() {
         // Test event name validation logic
-        let event_name = "push";
+        let event_name = "team_add";
         assert!(!event_name.is_empty());
     }
 }
