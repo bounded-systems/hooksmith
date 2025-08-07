@@ -1,29 +1,34 @@
 # syntax=docker/dockerfile:1.4
 
 ########## Builder Stage ##########
-FROM rust:1.77-slim as builder
+FROM rust:1.88-bookworm as builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /hooksmith
 
-# Copy full source code
-COPY . .
+# Copy only essential files for building
+COPY Cargo.toml Cargo.lock* ./
+COPY src/ ./src/
+COPY crates/ ./crates/
 
-# Build Hooksmith binaries
-RUN cargo build --release
+# Build only the main Hooksmith binary and entrypoint
+RUN cargo build --release --bin hooksmith --bin docker-entrypoint
 
 ########## Runtime Stage ##########
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 # Install minimal dependencies
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# Copy binary
+# Copy binaries
 COPY --from=builder /hooksmith/target/release/hooksmith /usr/local/bin/hooksmith
-
-# Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY --from=builder /hooksmith/target/release/docker-entrypoint /usr/local/bin/docker-entrypoint
 
 # Use exec form for clean argument passing
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint"]
 CMD ["hooksmith", "--help"]
