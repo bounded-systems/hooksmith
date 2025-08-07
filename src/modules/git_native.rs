@@ -14,6 +14,21 @@ pub enum GitObjectType {
     Tag,
 }
 
+/// Git tree entry types (specific file modes)
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum GitTreeEntryType {
+    /// Regular file (100644) - Blob
+    TreeFile,
+    /// Executable file (100755) - Blob
+    TreeExecutable,
+    /// Symlink (120000) - Blob
+    TreeSymlink,
+    /// Directory (040000) - Tree
+    TreeDirectory,
+    /// Submodule (160000) - Commit (gitlink)
+    TreeSubmodule,
+}
+
 /// Git namespaced metadata types (not objects but tracked by Git)
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum GitMetadataType {
@@ -156,6 +171,18 @@ impl GitNativeValidator {
         }
     }
 
+    /// Map string tree entry types to Git-native enums
+    pub fn map_tree_entry_type(tree_entry_type: &str) -> Option<GitTreeEntryType> {
+        match tree_entry_type {
+            "tree-file" => Some(GitTreeEntryType::TreeFile),
+            "tree-executable" => Some(GitTreeEntryType::TreeExecutable),
+            "tree-symlink" => Some(GitTreeEntryType::TreeSymlink),
+            "tree-directory" => Some(GitTreeEntryType::TreeDirectory),
+            "tree-submodule" => Some(GitTreeEntryType::TreeSubmodule),
+            _ => None,
+        }
+    }
+
     /// Map string metadata types to Git-native enums
     pub fn map_metadata_type(metadata_type: &str) -> Option<GitMetadataType> {
         match metadata_type {
@@ -217,6 +244,11 @@ impl GitNativeValidator {
         vec!["blob", "tree", "commit", "tag"]
     }
 
+    /// Get canonical Git tree entry type names
+    pub fn canonical_tree_entry_types() -> Vec<&'static str> {
+        vec!["tree-file", "tree-executable", "tree-symlink", "tree-directory", "tree-submodule"]
+    }
+
     /// Get canonical Git metadata type names
     pub fn canonical_metadata_types() -> Vec<&'static str> {
         vec!["ref", "note", "attr", "index", "stash", "worktree", "remote", "branch", "head", "reflog"]
@@ -238,9 +270,11 @@ impl GitNativeValidator {
     /// Validate that all concerns are Git-native
     pub fn validate_concerns(concerns: &[String]) -> Result<()> {
         let canonical_objects = Self::canonical_object_types();
+        let canonical_tree_entries = Self::canonical_tree_entry_types();
         let canonical_metadata = Self::canonical_metadata_types();
         let canonical_configs = Self::canonical_config_types();
         let all_canonical: Vec<&str> = canonical_objects.iter()
+            .chain(canonical_tree_entries.iter())
             .chain(canonical_metadata.iter())
             .chain(canonical_configs.iter())
             .cloned()
@@ -279,6 +313,16 @@ mod tests {
         assert_eq!(GitNativeValidator::map_object_type("commit"), Some(GitObjectType::Commit));
         assert_eq!(GitNativeValidator::map_object_type("tag"), Some(GitObjectType::Tag));
         assert_eq!(GitNativeValidator::map_object_type("invalid"), None);
+    }
+
+    #[test]
+    fn test_map_tree_entry_type() {
+        assert_eq!(GitNativeValidator::map_tree_entry_type("tree-file"), Some(GitTreeEntryType::TreeFile));
+        assert_eq!(GitNativeValidator::map_tree_entry_type("tree-executable"), Some(GitTreeEntryType::TreeExecutable));
+        assert_eq!(GitNativeValidator::map_tree_entry_type("tree-symlink"), Some(GitTreeEntryType::TreeSymlink));
+        assert_eq!(GitNativeValidator::map_tree_entry_type("tree-directory"), Some(GitTreeEntryType::TreeDirectory));
+        assert_eq!(GitNativeValidator::map_tree_entry_type("tree-submodule"), Some(GitTreeEntryType::TreeSubmodule));
+        assert_eq!(GitNativeValidator::map_tree_entry_type("invalid"), None);
     }
 
     #[test]

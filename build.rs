@@ -106,8 +106,8 @@ fn validate_single_hook(hook_path: &Path) -> Result<(), Box<dyn std::error::Erro
     // Validate concerns (Git-native only)
     let concerns = json["concerns"].as_array().ok_or("Missing 'concerns' field")?;
     let valid_concerns = [
-        "blob", "tree", "commit", "tag", "ref", "note", "attr", "index", "stash", "worktree", "remote",
-        "branch", "head", "reflog",
+        "blob", "tree", "commit", "tag", "tree-file", "tree-executable", "tree-symlink", "tree-directory", "tree-submodule",
+        "ref", "note", "attr", "index", "stash", "worktree", "remote", "branch", "head", "reflog",
         "config-user", "config-core", "config-branch", "config-remote", "config-init", "config-color",
         "config-alias", "config-diff", "config-merge", "config-gpg", "config-commit", "config-pull",
         "config-push", "config-rebase", "config-fetch", "config-status", "config-tar", "config-rerere",

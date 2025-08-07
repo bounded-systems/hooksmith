@@ -1,0 +1,372 @@
+{
+  "hooks": [
+    {
+      "name": "pre-commit-file-validation",
+      "scope": "git",
+      "concerns": [
+        "blob",
+        "tree",
+        "commit"
+      ],
+      "bin": "./target/debug/hook-file-validate",
+      "description": "Validates file contents, structure, and commit metadata before commit"
+    },
+    {
+      "name": "pre-push-security-scan",
+      "scope": "git",
+      "concerns": [
+        "push",
+        "protocol-https",
+        "ref-branch",
+        "remote"
+      ],
+      "bin": "./target/debug/hook-security-scan",
+      "description": "Scans for security issues before pushing to remote repositories"
+    },
+    {
+      "name": "post-merge-validation",
+      "scope": "git",
+      "concerns": [
+        "merge",
+        "commit",
+        "tree",
+        "ref-branch"
+      ],
+      "bin": "./target/debug/hook-merge-validate",
+      "description": "Validates merge results and ensures consistency"
+    },
+    {
+      "name": "pre-rebase-safety",
+      "scope": "git",
+      "concerns": [
+        "rebase",
+        "commit",
+        "ref-branch",
+        "reflog"
+      ],
+      "bin": "./target/debug/hook-rebase-safety",
+      "description": "Ensures rebase operations are safe and reversible"
+    },
+    {
+      "name": "post-gc-maintenance",
+      "scope": "git",
+      "concerns": [
+        "gc-lifecycle",
+        "packfile-data",
+        "loose-object",
+        "object-database"
+      ],
+      "bin": "./target/debug/hook-maintenance",
+      "description": "Validates repository integrity after garbage collection"
+    },
+    {
+      "name": "pre-fetch-validation",
+      "scope": "git",
+      "concerns": [
+        "fetch",
+        "protocol-https",
+        "ref-remote",
+        "refspec"
+      ],
+      "bin": "./target/debug/hook-fetch-validate",
+      "description": "Validates remote data before fetching"
+    },
+    {
+      "name": "commit-message-format",
+      "scope": "git",
+      "concerns": [
+        "commit",
+        "config-commit"
+      ],
+      "bin": "./target/debug/hook-commit-msg",
+      "description": "Validates commit message format and content"
+    },
+    {
+      "name": "pre-stash-validation",
+      "scope": "git",
+      "concerns": [
+        "stash",
+        "index",
+        "worktree"
+      ],
+      "bin": "./target/debug/hook-stash-validate",
+      "description": "Validates working directory state before stashing"
+    },
+    {
+      "name": "post-checkout-hooks",
+      "scope": "git",
+      "concerns": [
+        "branch",
+        "head",
+        "worktree",
+        "config-branch"
+      ],
+      "bin": "./target/debug/hook-checkout",
+      "description": "Runs after checkout to set up branch-specific configurations"
+    },
+    {
+      "name": "pre-merge-commit",
+      "scope": "git",
+      "concerns": [
+        "merge",
+        "commit",
+        "tree",
+        "ref-branch",
+        "merge-head-pointer"
+      ],
+      "bin": "./target/debug/hook-merge-commit",
+      "description": "Validates merge commit creation and metadata"
+    },
+    {
+      "name": "post-receive-validation",
+      "scope": "git",
+      "concerns": [
+        "blob",
+        "tree",
+        "commit",
+        "ref-branch",
+        "packfile-data"
+      ],
+      "bin": "./target/debug/hook-receive-validate",
+      "description": "Validates received objects and references"
+    },
+    {
+      "name": "pre-auto-gc",
+      "scope": "git",
+      "concerns": [
+        "gc-lifecycle",
+        "packfile-data",
+        "loose-object",
+        "config-gc"
+      ],
+      "bin": "./target/debug/hook-pre-gc",
+      "description": "Validates repository state before automatic garbage collection"
+    },
+    {
+      "name": "post-rewrite-hooks",
+      "scope": "git",
+      "concerns": [
+        "commit",
+        "reflog",
+        "ref-branch",
+        "orig-head"
+      ],
+      "bin": "./target/debug/hook-rewrite",
+      "description": "Handles commit history rewrites (rebase, amend, etc.)"
+    },
+    {
+      "name": "pre-applypatch",
+      "scope": "patch",
+      "concerns": [
+        "patch",
+        "blob",
+        "tree"
+      ],
+      "bin": "./target/debug/hook-applypatch",
+      "description": "Validates patches before application"
+    },
+    {
+      "name": "pre-receive-security",
+      "scope": "git",
+      "concerns": [
+        "blob",
+        "commit",
+        "ref-branch",
+        "protocol-ssh"
+      ],
+      "bin": "./target/debug/hook-receive-security",
+      "description": "Security validation for received objects"
+    },
+    {
+      "name": "post-update-notification",
+      "scope": "git",
+      "concerns": [
+        "ref-branch",
+        "ref-tag",
+        "remote"
+      ],
+      "bin": "./target/debug/hook-update-notify",
+      "description": "Sends notifications when references are updated"
+    },
+    {
+      "name": "pre-commit-signing",
+      "scope": "git",
+      "concerns": [
+        "commit",
+        "config-gpg",
+        "config-user"
+      ],
+      "bin": "./target/debug/hook-sign-commit",
+      "description": "Ensures commits are properly signed"
+    },
+    {
+      "name": "pre-push-branch-protection",
+      "scope": "git",
+      "concerns": [
+        "push",
+        "ref-branch",
+        "config-branch",
+        "config-push"
+      ],
+      "bin": "./target/debug/hook-branch-protect",
+      "description": "Protects important branches from direct pushes"
+    },
+    {
+      "name": "post-merge-conflict-resolution",
+      "scope": "git",
+      "concerns": [
+        "merge",
+        "index",
+        "config-merge",
+        "config-rerere"
+      ],
+      "bin": "./target/debug/hook-conflict-resolve",
+      "description": "Handles merge conflict resolution and cleanup"
+    },
+    {
+      "name": "pre-rebase-interactive",
+      "scope": "git",
+      "concerns": [
+        "rebase",
+        "commit",
+        "config-rebase",
+        "config-interactive"
+      ],
+      "bin": "./target/debug/hook-rebase-interactive",
+      "description": "Validates interactive rebase operations"
+    },
+    {
+      "name": "post-checkout-dependencies",
+      "scope": "git",
+      "concerns": [
+        "branch",
+        "worktree",
+        "config-submodule",
+        "config-filter"
+      ],
+      "bin": "./target/debug/hook-checkout-deps",
+      "description": "Sets up dependencies and filters after checkout"
+    },
+    {
+      "name": "pre-commit-lint",
+      "scope": "git",
+      "concerns": [
+        "blob",
+        "tree",
+        "commit",
+        "config-core"
+      ],
+      "bin": "./target/debug/hook-lint",
+      "description": "Runs linting and code quality checks"
+    },
+    {
+      "name": "pre-push-deployment",
+      "scope": "git",
+      "concerns": [
+        "push",
+        "ref-branch",
+        "protocol-https",
+        "config-remote"
+      ],
+      "bin": "./target/debug/hook-deploy",
+      "description": "Triggers deployment pipelines on push"
+    },
+    {
+      "name": "post-commit-documentation",
+      "scope": "git",
+      "concerns": [
+        "commit",
+        "blob",
+        "tree",
+        "config-commit"
+      ],
+      "bin": "./target/debug/hook-docs",
+      "description": "Updates documentation based on commit changes"
+    },
+    {
+      "name": "pre-receive-compliance",
+      "scope": "git",
+      "concerns": [
+        "blob",
+        "commit",
+        "ref-branch",
+        "config-safe"
+      ],
+      "bin": "./target/debug/hook-compliance",
+      "description": "Ensures compliance with organizational policies"
+    },
+    {
+      "name": "post-merge-testing",
+      "scope": "git",
+      "concerns": [
+        "merge",
+        "commit",
+        "tree",
+        "worktree"
+      ],
+      "bin": "./target/debug/hook-test",
+      "description": "Runs tests after merge operations"
+    },
+    {
+      "name": "pre-commit-formatting",
+      "scope": "git",
+      "concerns": [
+        "blob",
+        "config-diff",
+        "config-color"
+      ],
+      "bin": "./target/debug/hook-format",
+      "description": "Ensures consistent code formatting"
+    },
+    {
+      "name": "post-receive-backup",
+      "scope": "git",
+      "concerns": [
+        "blob",
+        "commit",
+        "ref-branch",
+        "packfile-data"
+      ],
+      "bin": "./target/debug/hook-backup",
+      "description": "Creates backups of received objects"
+    },
+    {
+      "name": "pre-push-performance",
+      "scope": "git",
+      "concerns": [
+        "push",
+        "blob",
+        "tree",
+        "packfile-data"
+      ],
+      "bin": "./target/debug/hook-performance",
+      "description": "Analyzes performance impact of push"
+    },
+    {
+      "name": "post-commit-notification",
+      "scope": "git",
+      "concerns": [
+        "commit",
+        "ref-branch",
+        "config-user",
+        "config-remote"
+      ],
+      "bin": "./target/debug/hook-notify",
+      "description": "Sends notifications about new commits"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Comprehensive example of HookConcern usage across all Git operations",
+    "git_internals_mapping": {
+      "core_objects": ["blob", "tree", "commit", "tag", "ref", "note", "attr"],
+      "references": ["ref-branch", "ref-remote", "ref-tag", "ref-note", "ref-stash", "head-pointer"],
+      "storage": ["packfile-data", "packfile-index", "loose-object", "object-database"],
+      "transport": ["protocol-https", "protocol-ssh", "refspec"],
+      "environment": ["git-dir-override", "work-tree-override", "index-file-override"],
+      "maintenance": ["gc-lifecycle", "fsck-check", "prune-orphaned"],
+      "commands": ["push", "pull", "fetch", "merge", "rebase", "stash"],
+      "config": ["config-user", "config-core", "config-branch", "config-remote"]
+    }
+  }
+}

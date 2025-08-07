@@ -39,7 +39,7 @@ pub enum HookScope {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Ord, PartialOrd)]
 #[serde(rename_all = "kebab-case")]
 pub enum HookConcern {
-    // Git Object Concerns
+    // Git Object Concerns (Core Objects)
     /// Git blob objects (file contents)
     Blob,
     /// Git tree objects (directory structure)
@@ -54,6 +54,54 @@ pub enum HookConcern {
     Note,
     /// Git attributes (file-based config)
     Attr,
+
+    // Git Reference Concerns (Detailed Ref Types)
+    /// Git branch references (refs/heads/*)
+    RefBranch,
+    /// Git remote references (refs/remotes/*)
+    RefRemote,
+    /// Git tag references (refs/tags/*)
+    RefTag,
+    /// Git note references (refs/notes/*)
+    RefNote,
+    /// Git stash references (refs/stash)
+    RefStash,
+    /// Git worktree references (worktrees/*/HEAD)
+    RefWorktree,
+    /// Git symbolic references (HEAD -> refs/heads/main)
+    RefSym,
+    /// Git HEAD pointer
+    HeadPointer,
+    /// Git packed references (.git/packed-refs)
+    PackedRefs,
+    /// Git fetch HEAD pointer
+    FetchHeadPointer,
+    /// Git merge HEAD pointer
+    MergeHeadPointer,
+    /// Git cherry-pick HEAD pointer
+    CherryPickPointer,
+    /// Git revert HEAD pointer
+    RevertHeadPointer,
+    /// Git original HEAD pointer
+    OrigHead,
+    /// Git reflog entries
+    RefLogEntry,
+
+    // Git Storage Concerns (Object Database)
+    /// Git packfile index files
+    PackfileIndex,
+    /// Git packfile data files
+    PackfileData,
+    /// Git packfile bitmap files
+    PackfileBitmap,
+    /// Git packfile keep files
+    PackfileKeep,
+    /// Git packfile promisor files
+    PackfilePromisor,
+    /// Git loose objects
+    LooseObject,
+    /// Git object database
+    ObjectDatabase,
 
     // Git Local State Concerns
     /// Git stash (pseudo-refs for uncommitted work)
@@ -70,6 +118,96 @@ pub enum HookConcern {
     Head,
     /// Git reflog (reference history)
     Reflog,
+
+    // Git Transport & Protocol Concerns
+    /// Git local filesystem protocol
+    ProtocolLocal,
+    /// Git protocol (git://)
+    ProtocolGit,
+    /// Git HTTP protocol
+    ProtocolHttp,
+    /// Git HTTPS protocol
+    ProtocolHttps,
+    /// Git SSH protocol
+    ProtocolSsh,
+    /// Git refspec mappings
+    Refspec,
+    /// Git protocol packets
+    ProtocolPacket,
+
+    // Git Runtime & Environment Concerns
+    /// Git directory override
+    GitDirOverride,
+    /// Git worktree override
+    WorkTreeOverride,
+    /// Git index file override
+    IndexFileOverride,
+    /// Git object directory override
+    ObjectDirectoryOverride,
+    /// Git alternate object databases
+    AlternateObjectDatabase,
+    /// Git config override
+    GitConfigOverride,
+    /// Git trace override
+    TraceOverride,
+    /// Git author override
+    AuthorOverride,
+    /// Git UI override
+    UiOverride,
+
+    // Git Maintenance & Recovery Concerns
+    /// Git filesystem consistency check
+    FsckCheck,
+    /// Git prune orphaned objects
+    PruneOrphaned,
+    /// Git repack packfiles
+    RepackPackfile,
+    /// Git garbage collection lifecycle
+    GcLifecycle,
+    /// Git reflog repair
+    ReflogRepair,
+    /// Git index recovery
+    IndexRecovery,
+
+    // Git Command & Operation Concerns
+    /// Git initialization operations
+    Init,
+    /// Git snapshot operations (add, commit)
+    Snapshot,
+    /// Git branching operations
+    Branch,
+    /// Git merge operations
+    Merge,
+    /// Git rebase operations
+    Rebase,
+    /// Git push operations
+    Push,
+    /// Git pull operations
+    Pull,
+    /// Git fetch operations
+    Fetch,
+    /// Git log operations
+    Log,
+    /// Git diff operations
+    Diff,
+    /// Git status operations
+    Status,
+    /// Git stash operations
+    Stash,
+    /// Git patch operations
+    Patch,
+    /// Git debug operations
+    Debug,
+    /// Git blame operations
+    Blame,
+    /// Git plumbing operations
+    Plumbing,
+    /// Git object database operations
+    ObjectDb,
+    /// Git transport operations
+    Transport,
+    /// Git project initialization
+    ProjectInit,
 
     // Git Config Concerns (first-class)
     /// Git config user settings
