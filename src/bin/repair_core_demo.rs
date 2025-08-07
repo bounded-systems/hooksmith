@@ -7,14 +7,14 @@
 //! - Example fixer implementations
 
 use hooksmith::modules::functional_contract_pipeline::{
-    FunctionalContractPipeline, RepairPlanningPipeline,
+    FunctionalContractPipeline,
 };
 use hooksmith::modules::functional_contract_pipeline::repair_core::{
     RepairPlan, RepairAction, ActionType, PlanValidator, MermaidExporter,
     Violation, RootCause, FixCategory, ViolationSeverity, Fixer,
     ReplaceRootStarFixer, LintIgnoreOrderFixer, RepairResult,
 };
-use hooksmith::modules::symbols::ConcernSymbol;
+use hooksmith::modules::functional_contract_pipeline::symbols::ConcernSymbol;
 use std::collections::HashMap;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("========================\n");
 
     // Create a functional contract pipeline
-    let pipeline = FunctionalContractPipeline::new();
+    let pipeline = FunctionalContractPipeline::new(".");
     
     // Demo 1: Create a repair plan using the core system
     demo_core_repair_plan(&pipeline)?;
@@ -67,7 +67,7 @@ fn demo_plan_validation() -> RepairResult<()> {
     println!("--------------------------");
     
     // Create a valid plan
-    let valid_plan = create_valid_plan()?;
+    let _valid_plan = create_valid_plan()?;
     println!("✅ Valid plan validation: PASS");
     
     // Create a plan with circular dependencies
