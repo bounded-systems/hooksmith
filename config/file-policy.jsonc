@@ -24,6 +24,14 @@
     "envrc"
   ],
 
+  // Linguist-generated extensions that should have GitHub linguist attributes
+  "linguistGeneratedExtensions": [
+    "yaml",
+    "txt",
+    "workbloom",
+    "LICENSE"
+  ],
+
   // Use .gitignore for ignoring files instead of manual list
   "useGitignore": true,
 
@@ -84,6 +92,22 @@
     "envrc": {
       "prefix": "#",
       "suffix": ""
+    },
+    "yaml": {
+      "prefix": "#",
+      "suffix": ""
+    },
+    "txt": {
+      "prefix": "#",
+      "suffix": ""
+    },
+    "workbloom": {
+      "prefix": "#",
+      "suffix": ""
+    },
+    "LICENSE": {
+      "prefix": "#",
+      "suffix": ""
     }
   },
 
@@ -103,6 +127,10 @@
     "wit": "xtask gen-wit",
     "makefile": "xtask gen-config",
     "editorconfig": "xtask gen-config",
-    "envrc": "xtask gen-config"
+    "envrc": "xtask gen-config",
+    "yaml": "xtask gen-config",
+    "txt": "xtask gen-docs",
+    "workbloom": "xtask gen-config",
+    "LICENSE": "xtask gen-config"
   }
 } 
