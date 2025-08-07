@@ -49,7 +49,7 @@ pub struct GitAttributesMetadata {
 }
 
 /// Categories for organizing Git attributes
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash)]
 pub enum AttributeCategory {
     /// Text/binary handling
     TextHandling,
@@ -120,7 +120,7 @@ impl GitAttributes {
                     let mut attributes_map = HashMap::new();
 
                     for attr in attrs {
-                        if let Some((key, value)) = Self::parse_attribute(attr) {
+                        if let Some((key, value)) = Self::parse_attribute(&attr) {
                             attributes_map.insert(key, value);
                         }
                     }
@@ -151,7 +151,7 @@ impl GitAttributes {
         }
 
         let pattern = parts[0].to_string();
-        let attributes = parts[1..].to_vec();
+        let attributes = parts[1..].iter().map(|s| s.to_string()).collect();
 
         Some((pattern, attributes))
     }

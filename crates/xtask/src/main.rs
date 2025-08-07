@@ -703,8 +703,8 @@ enum GitConfigCommands {
     },
 }
 
-/// Git attributes management commands
-#[derive(Debug, Clone, clap::Subcommand)]
+/// Git hooks management commands
+#[derive(Debug, Clone, PartialEq, clap::Subcommand)]
 enum GitHooksCommands {
     /// Validate Git hooks configuration
     Validate {
@@ -717,6 +717,7 @@ enum GitHooksCommands {
     },
 }
 
+/// Git attributes management commands
 #[derive(Debug, Clone, clap::Subcommand)]
 enum GitAttributesCommands {
     /// Convert .gitattributes to JSONC format
@@ -2673,105 +2674,6 @@ async fn main() -> Result<()> {
                 println!("✅ Converted {input} to {format}: {output}");
             }
         },
-        Commands::GitConfig { command } => match command {
-            GitConfigCommands::Convert {
-                input,
-                output,
-                validate,
-            } => {
-                let config = git_config::parse_git_config(&input)?;
-                let jsonc = git_config::convert_to_jsonc(&config)?;
-                fs::write(&output, jsonc)?;
-                println!("✅ Converted .git/config to JSONC: {output}");
-
-                if validate {
-                    let schema = git_config::load_schema()?;
-                    let validation_result = git_config::validate_jsonc(&output, &schema)?;
-                    if validation_result {
-                        println!("✅ JSONC configuration is valid");
-                    } else {
-                        println!("❌ JSONC configuration is invalid");
-                        anyhow::bail!("JSONC validation failed");
-                    }
-                }
-            }
-            GitConfigCommands::Template {
-                output,
-                comprehensive,
-            } => {
-                let template = if comprehensive {
-                    git_config::generate_comprehensive_template()?
-                } else {
-                    git_config::generate_template()?
-                };
-                fs::write(&output, template)?;
-                println!("✅ Generated Git config template: {output}");
-            }
-            GitConfigCommands::Analyze {
-                input,
-                format,
-                detailed,
-            } => {
-                let config = git_config::parse_git_config(&input)?;
-                let analysis = git_config::analyze_config(&config, detailed)?;
-                match format.as_str() {
-                    "text" => {
-                        println!("{}", analysis);
-                    }
-                    "json" => {
-                        let json = serde_json::to_string_pretty(&analysis)?;
-                        println!("{}", json);
-                    }
-                    "summary" => {
-                        let summary = git_config::summarize_analysis(&analysis)?;
-                        println!("{}", summary);
-                    }
-                    _ => {
-                        anyhow::bail!("Invalid output format: {format}");
-                    }
-                }
-            }
-            GitConfigCommands::Export {
-                input,
-                format,
-                output,
-            } => {
-                let config = git_config::parse_git_config(&input)?;
-                let exported = match format.as_str() {
-                    "jsonc" => git_config::convert_to_jsonc(&config)?,
-                    "json" => {
-                        let json = serde_json::to_string_pretty(&config)?;
-                        json
-                    }
-                    "yaml" => {
-                        let yaml = serde_yaml::to_string(&config)?;
-                        yaml
-                    }
-                    "toml" => {
-                        let toml = toml::to_string_pretty(&config)?;
-                        toml
-                    }
-                    _ => {
-                        anyhow::bail!("Invalid output format: {format}");
-                    }
-                };
-                fs::write(&output, exported)?;
-                println!("✅ Exported .git/config to {format}: {output}");
-            }
-            GitConfigCommands::Validate { input, strict } => {
-                let config = git_config::parse_git_config(&input)?;
-                let schema = git_config::load_schema()?;
-                let validation_result = git_config::validate_config(&config, &schema)?;
-                if validation_result {
-                    println!("✅ Git configuration is valid");
-                } else {
-                    println!("❌ Git configuration is invalid");
-                    if strict {
-                        anyhow::bail!("Git configuration validation failed");
-                    }
-                }
-            }
-        },
         Commands::GitHooks { command } => match command {
             GitHooksCommands::Validate { strict, verbose } => {
                 println!("Git hooks validation not yet implemented");
@@ -2794,10 +2696,13 @@ async fn main() -> Result<()> {
                 if validate {
                     let schema = git_attributes::load_schema()?;
                     let validation_result = git_attributes::validate_jsonc(&output, &schema)?;
-                    if validation_result {
+                    if validation_result.is_valid {
                         println!("✅ JSONC attributes are valid");
                     } else {
-                        println!("❌ JSONC attributes are invalid");
+                        println!("❌ JSONC attributes are invalid:");
+                        for error in validation_result.errors {
+                            println!("  - {error}");
+                        }
                         anyhow::bail!("JSONC validation failed");
                     }
                 }
@@ -2807,9 +2712,9 @@ async fn main() -> Result<()> {
                 comprehensive,
             } => {
                 let template = if comprehensive {
-                    git_attributes::generate_comprehensive_template()?
+                    git_attributes::generate_comprehensive_template()
                 } else {
-                    git_attributes::generate_template()?
+                    git_attributes::generate_template()
                 };
                 fs::write(&output, template)?;
                 println!("✅ Generated Git attributes template: {output}");
@@ -2820,7 +2725,7 @@ async fn main() -> Result<()> {
                 detailed,
             } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
-                let analysis = git_attributes::analyze_attributes(&attributes, detailed)?;
+                let analysis = git_attributes::analyze_attributes(&attributes, detailed);
                 match format.as_str() {
                     "text" => {
                         println!("{}", analysis);
@@ -2830,7 +2735,7 @@ async fn main() -> Result<()> {
                         println!("{}", json);
                     }
                     "summary" => {
-                        let summary = git_attributes::summarize_analysis(&analysis)?;
+                        let summary = git_attributes::summarize_analysis(&analysis);
                         println!("{}", summary);
                     }
                     _ => {
@@ -2845,7 +2750,9 @@ async fn main() -> Result<()> {
             } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 let exported = match format.as_str() {
-                    "jsonc" => git_attributes::convert_to_jsonc(&attributes)?,
+                    "jsonc" => {
+                        git_attributes::convert_to_jsonc(&attributes)?
+                    }
                     "json" => {
                         let json = serde_json::to_string_pretty(&attributes)?;
                         json
@@ -2869,20 +2776,29 @@ async fn main() -> Result<()> {
                 fs::write(&output, exported)?;
                 println!("✅ Exported .gitattributes to {format}: {output}");
             }
-            GitAttributesCommands::Validate { input, strict } => {
+            GitAttributesCommands::Validate {
+                input,
+                strict,
+            } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 let schema = git_attributes::load_schema()?;
                 let validation_result = git_attributes::validate_attributes(&attributes, &schema)?;
-                if validation_result {
+                if validation_result.is_valid {
                     println!("✅ Git attributes are valid");
                 } else {
-                    println!("❌ Git attributes are invalid");
+                    println!("❌ Git attributes are invalid:");
+                    for error in validation_result.errors {
+                        println!("  - {error}");
+                    }
                     if strict {
                         anyhow::bail!("Git attributes validation failed");
                     }
                 }
             }
-            GitAttributesCommands::TestMatching { input, files } => {
+            GitAttributesCommands::TestMatching {
+                input,
+                files,
+            } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 for file in files {
                     let matched_attributes = git_attributes::match_attributes(&attributes, &file);

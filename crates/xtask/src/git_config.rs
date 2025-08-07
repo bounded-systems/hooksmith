@@ -29,7 +29,7 @@ pub struct GitConfig {
 }
 
 /// Categories for organizing Git configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash)]
 pub enum ConfigCategory {
     /// User identity and commit behavior
     Identity,
