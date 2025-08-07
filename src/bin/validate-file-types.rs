@@ -269,18 +269,21 @@ fn get_pr_changed_files() -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
 }
 
 fn print_results(result: &ValidationResult, context: &str) {
-    println!("\n📊 File Type Validation Results ({context}):");
+    println!("🔍 File Type Policy Validation");
+    println!("=============================");
+    println!();
+    println!("Policy:");
+    println!("  ✅ ALLOWED: .rs, .jsonc files");
+    println!("  ❌ BLOCKED: Shell files and other programming languages");
+    println!("  ⚠️  WARNED: Other file types");
     println!();
 
-    if !result.allowed_files.is_empty() {
-        println!("✅ Allowed files ({}):", result.allowed_files.len());
-        for file in &result.allowed_files {
-            println!("   {}", file.display());
-        }
-        println!();
-    }
+    // Only show violations and warnings
+    let mut has_violations = false;
+    let mut has_warnings = false;
 
     if !result.blocked_files.is_empty() {
+        has_violations = true;
         println!("❌ BLOCKED files ({}):", result.blocked_files.len());
         for file in &result.blocked_files {
             println!("   {}", file.display());
@@ -288,32 +291,66 @@ fn print_results(result: &ValidationResult, context: &str) {
         println!();
     }
 
-    if !result.linguist_generated_files.is_empty() {
-        println!("🔧 Linguist-generated files ({}):", result.linguist_generated_files.len());
-        for file in &result.linguist_generated_files {
-            println!("   {}", file.display());
-        }
-        println!();
-    }
-
-    if !result.other_files.is_empty() {
-        println!("⚠️  Other files ({}):", result.other_files.len());
-        for file in &result.other_files {
-            if let Some(ext) = get_file_extension(file) {
-                println!("   {} ({})", file.display(), ext);
-            } else {
-                println!("   {}", file.display());
-            }
-        }
-        println!();
-    }
-
     if !result.no_extension_files.is_empty() {
+        has_warnings = true;
         println!("⚠️  Files with no extension ({}):", result.no_extension_files.len());
         for file in &result.no_extension_files {
             println!("   {}", file.display());
         }
         println!();
+    }
+
+    // Show summary of other categories without listing all files
+    if !result.allowed_files.is_empty() {
+        println!("✅ Allowed files: {} files", result.allowed_files.len());
+    }
+
+    if !result.linguist_generated_files.is_empty() {
+        println!("🔧 Linguist-generated files: {} files", result.linguist_generated_files.len());
+    }
+
+    if !result.other_files.is_empty() {
+        has_warnings = true;
+        println!("⚠️  Other files: {} files", result.other_files.len());
+
+        // Group by extension for better overview
+        let mut extension_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+        for file in &result.other_files {
+            if let Some(ext) = get_file_extension(file) {
+                *extension_counts.entry(ext).or_insert(0) += 1;
+            }
+        }
+
+        // Show top extensions
+        let mut sorted_extensions: Vec<_> = extension_counts.iter().collect();
+        sorted_extensions.sort_by(|a, b| b.1.cmp(a.1));
+
+        for (ext, count) in sorted_extensions.iter().take(5) {
+            println!("   {} files ({})", count, ext);
+        }
+        if sorted_extensions.len() > 5 {
+            println!("   ... and {} more extensions", sorted_extensions.len() - 5);
+        }
+        println!();
+    }
+
+    // Summary
+    println!("📋 Summary:");
+    if has_violations {
+        println!("❌ File type policy violations found!");
+        println!();
+        println!("💡 To fix violations:");
+        println!("   • Remove blocked files");
+        println!("   • Convert shell scripts to Rust");
+        println!("   • Use .jsonc for configuration files");
+    } else if has_warnings {
+        println!("⚠️  File type policy warnings found!");
+        println!();
+        println!("💡 To address warnings:");
+        println!("   • Add linguist-generated attributes to non-extension files");
+        println!("   • Consider converting other file types to allowed formats");
+    } else {
+        println!("✅ All files comply with file type policy!");
     }
 }
 
