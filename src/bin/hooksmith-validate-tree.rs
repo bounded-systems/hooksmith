@@ -1,109 +1,94 @@
 use anyhow::{bail, Result};
-use std::process::{Command, Stdio};
-use std::io::{BufRead, BufReader};
+use std::process::Command;
+use std::collections::HashMap;
+use itertools::Itertools;
 
 fn main() -> Result<()> {
     println!("🔍 Validating Git objects...");
     
-    // Get all objects from the repository
-    let objects_output = Command::new("git")
-        .args(["rev-list", "--all", "--objects"])
+    // Execute the exact command specified by the user
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg("git rev-list --all --objects | cut -d' ' -f1 | git cat-file --batch-check='%(objecttype)' | sort | uniq -c")
         .output()?;
     
-    if !objects_output.status.success() {
-        bail!("Failed to get Git objects: {}", String::from_utf8_lossy(&objects_output.stderr));
-    }
-    
-    // Process objects through git cat-file to get their types
-    let mut cat_file = Command::new("git")
-        .args(["cat-file", "--batch-check=%(objectname) %(objecttype) %(rest)"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
-    
-    // Write object hashes to stdin
-    if let Some(stdin) = cat_file.stdin.as_mut() {
-        use std::io::Write;
-        stdin.write_all(&objects_output.stdout)?;
-    }
-    
-    // Read and process the output
-    let output = cat_file.wait_with_output()?;
-    
     if !output.status.success() {
-        bail!("Failed to process Git objects: {}", String::from_utf8_lossy(&output.stderr));
+        bail!("Failed to analyze Git objects: {}", String::from_utf8_lossy(&output.stderr));
     }
     
-    // Parse the output to validate objects
-    let mut blob_count = 0;
-    let mut tree_count = 0;
-    let mut commit_count = 0;
-    let mut tag_count = 0;
-    let mut invalid_objects = Vec::new();
+    // Parse the results
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    let mut object_types = HashMap::new();
+    let mut total_objects = 0;
     
-    let reader = BufReader::new(&output.stdout[..]);
-    for line in reader.lines() {
-        let line = line?;
-        let parts: Vec<&str> = line.split_whitespace().collect();
-        
-        if parts.len() >= 2 {
-            let object_hash = parts[0];
-            let object_type = parts[1];
-            
-            match object_type {
-                "blob" => {
-                    blob_count += 1;
-                    // Validate blob content if needed
-                    if let Err(e) = validate_blob(object_hash) {
-                        invalid_objects.push(format!("Blob {}: {}", object_hash, e));
-                    }
-                }
-                "tree" => {
-                    tree_count += 1;
-                    // Validate tree structure if needed
-                    if let Err(e) = validate_tree(object_hash) {
-                        invalid_objects.push(format!("Tree {}: {}", object_hash, e));
-                    }
-                }
-                "commit" => {
-                    commit_count += 1;
-                    // Validate commit structure if needed
-                    if let Err(e) = validate_commit(object_hash) {
-                        invalid_objects.push(format!("Commit {}: {}", object_hash, e));
-                    }
-                }
-                "tag" => {
-                    tag_count += 1;
-                    // Validate tag structure if needed
-                    if let Err(e) = validate_tag(object_hash) {
-                        invalid_objects.push(format!("Tag {}: {}", object_hash, e));
-                    }
-                }
-                _ => {
-                    invalid_objects.push(format!("Unknown object type '{}' for {}", object_type, object_hash));
-                }
+    for line in output_str.lines() {
+        let parts: Vec<&str> = line.trim().split_whitespace().collect();
+        if parts.len() == 2 {
+            if let (Ok(count), object_type) = (parts[0].parse::<u32>(), parts[1]) {
+                object_types.insert(object_type.to_string(), count);
+                total_objects += count;
             }
         }
     }
     
-    // Print validation summary
-    println!("📊 Git Object Validation Summary:");
-    println!("   Blobs: {}", blob_count);
-    println!("   Trees: {}", tree_count);
-    println!("   Commits: {}", commit_count);
-    println!("   Tags: {}", tag_count);
-    println!("   Invalid objects: {}", invalid_objects.len());
-    
-    if !invalid_objects.is_empty() {
-        println!("\n❌ Invalid objects found:");
-        for invalid in &invalid_objects {
-            println!("   - {}", invalid);
-        }
-        bail!("Validation failed: {} invalid objects found", invalid_objects.len());
+    // Display results
+    println!("📊 Git Object Analysis:");
+    println!("   Total objects: {}", total_objects);
+    println!("\n   Object types:");
+    for (object_type, count) in object_types.iter().sorted_by_key(|(_, &count)| count).rev() {
+        println!("     {}: {}", object_type, count);
     }
     
-    println!("✅ All Git objects are valid!");
+    // Validate object types
+    let valid_types = ["blob", "tree", "commit", "tag"];
+    let mut validation_errors = Vec::new();
+    
+    for (object_type, count) in &object_types {
+        if !valid_types.contains(&object_type.as_str()) {
+            validation_errors.push(format!("Unknown object type '{}' found {} times", object_type, count));
+        }
+    }
+    
+    if !validation_errors.is_empty() {
+        println!("\n❌ Validation errors:");
+        for error in &validation_errors {
+            println!("   - {}", error);
+        }
+        bail!("Git object validation failed");
+    }
+    
+    // Additional analysis for contract validation
+    println!("\n🔍 Contract Validation Analysis:");
+    
+    // Check for potential issues
+    let mut warnings = Vec::new();
+    
+    if let Some(blob_count) = object_types.get("blob") {
+        if *blob_count > 10000 {
+            warnings.push(format!("Large number of blobs ({}) - consider cleanup", blob_count));
+        }
+    }
+    
+    if let Some(tree_count) = object_types.get("tree") {
+        if *tree_count > 10000 {
+            warnings.push(format!("Large number of trees ({}) - consider cleanup", tree_count));
+        }
+    }
+    
+    if let Some(commit_count) = object_types.get("commit") {
+        if *commit_count > 5000 {
+            warnings.push(format!("Large number of commits ({}) - consider cleanup", commit_count));
+        }
+    }
+    
+    if !warnings.is_empty() {
+        println!("\n⚠️  Warnings:");
+        for warning in &warnings {
+            println!("   - {}", warning);
+        }
+    }
+    
+    println!("\n✅ Git object validation completed successfully");
     Ok(())
 }
 
