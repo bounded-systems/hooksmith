@@ -4,22 +4,39 @@ use std::collections::HashMap;
 /// Hook event that triggers the validation pipeline
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum HookEvent {
+    /// Pre-commit hook event
     PreCommit,
+    /// Pre-push hook event
     PrePush,
+    /// Pre-receive hook event
     PreReceive,
+    /// Post-receive hook event
     PostReceive,
+    /// Update hook event
     Update,
+    /// Post-update hook event
     PostUpdate,
+    /// Pre-auto-gc hook event
     PreAutoGc,
+    /// Post-merge hook event
     PostMerge,
+    /// Pre-rebase hook event
     PreRebase,
+    /// Post-checkout hook event
     PostCheckout,
+    /// Post-commit hook event
     PostCommit,
+    /// Pre-apply-patch hook event
     PreApplyPatch,
+    /// Post-apply-patch hook event
     PostApplyPatch,
+    /// Post-rebase hook event
     PostRebase,
+    /// Pre-commit-msg hook event
     PreCommitMsg,
+    /// Commit-msg hook event
     CommitMsg,
+    /// Post-commit-msg hook event
     PostCommitMsg,
 }
 
@@ -27,75 +44,135 @@ pub enum HookEvent {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ConcernSymbol {
     // Git Objects
+    /// Git blob objects (file contents)
     Blob,
+    /// Git tree objects (directory structure)
     Tree,
+    /// Git commit objects (commit history)
     Commit,
+    /// Git tag objects (annotated tags)
     Tag,
     
     // Tree Entries
+    /// Tree entry: Regular file (100644)
     TreeFile,
+    /// Tree entry: Executable file (100755)
     TreeExecutable,
+    /// Tree entry: Symlink (120000)
     TreeSymlink,
+    /// Tree entry: Directory (040000)
     TreeDirectory,
+    /// Tree entry: Submodule (160000)
     TreeSubmodule,
     
     // Metadata
+    /// Git references (heads, tags, etc.)
     Ref,
+    /// Git notes (commit-attached metadata)
     Note,
+    /// Git attributes (file-based config)
     Attr,
+    /// Git index (staging area)
     Index,
+    /// Git stash (pseudo-refs for uncommitted work)
     Stash,
+    /// Git worktree (linked working directories)
     Worktree,
+    /// Git remote (remote repository configurations)
     Remote,
+    /// Git branch (branch-specific configurations)
     Branch,
+    /// Git HEAD (current branch reference)
     Head,
+    /// Git reflog (reference history)
     Reflog,
     
     // Config Sections
+    /// Git config user settings
     ConfigUser,
+    /// Git config core settings
     ConfigCore,
+    /// Git config branch settings
     ConfigBranch,
+    /// Git config remote settings
     ConfigRemote,
+    /// Git config init settings
     ConfigInit,
+    /// Git config color settings
     ConfigColor,
+    /// Git config alias settings
     ConfigAlias,
+    /// Git config diff settings
     ConfigDiff,
+    /// Git config merge settings
     ConfigMerge,
+    /// Git config GPG settings
     ConfigGpg,
+    /// Git config commit settings
     ConfigCommit,
+    /// Git config pull settings
     ConfigPull,
+    /// Git config push settings
     ConfigPush,
+    /// Git config rebase settings
     ConfigRebase,
+    /// Git config fetch settings
     ConfigFetch,
+    /// Git config status settings
     ConfigStatus,
+    /// Git config tar settings
     ConfigTar,
+    /// Git config rerere settings
     ConfigRerere,
+    /// Git config advice settings
     ConfigAdvice,
+    /// Git config interactive settings
     ConfigInteractive,
+    /// Git config submodule settings
     ConfigSubmodule,
+    /// Git config filter settings
     ConfigFilter,
+    /// Git config include settings
     ConfigInclude,
+    /// Git config credential settings
     ConfigCredential,
+    /// Git config HTTP settings
     ConfigHttp,
+    /// Git config URL settings
     ConfigUrl,
+    /// Git config safe settings
     ConfigSafe,
+    /// Git config notes settings
     ConfigNotes,
+    /// Git config garbage collection settings
     ConfigGc,
+    /// Git config maintenance settings
     ConfigMaintenance,
+    /// Git config pager settings
     ConfigPager,
+    /// Git config worktree settings
     ConfigWorktree,
     
     // Attributes
+    /// Attribute: Line ending normalization (text, eol=lf, eol=crlf)
     AttrLineEndingNormalization,
+    /// Attribute: Diff strategy (diff, binary)
     AttrDiffStrategy,
+    /// Attribute: Merge strategy (merge=...)
     AttrMergeStrategy,
+    /// Attribute: Export control (export-ignore, export-subst)
     AttrExportControl,
+    /// Attribute: Filter driver (filter=...)
     AttrFilterDriver,
+    /// Attribute: External tool hints (linguist-language, linguist-vendored)
     AttrExternalToolHint,
+    /// Attribute: Locking hints (lockable for Git LFS)
     AttrLockingHint,
     
     // Ignore Patterns
+    /// Git tree ignore patterns
     IgnorePatternTree,
+    /// Git blob ignore patterns
     IgnorePatternBlob,
 }
 
@@ -143,7 +220,7 @@ pub enum RuleType {
 }
 
 /// Rule severity levels
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum RuleSeverity {
     /// Information only
     Info,

@@ -37,12 +37,19 @@
 //! }
 //! ```
 
+/// Symbols and enums for the functional contract validation pipeline
 pub mod symbols;
+/// Types and data structures for the functional contract validation pipeline
 pub mod types;
+/// Hook event handlers and concern mapping
 pub mod hooks;
+/// Concern snapshot implementations
 pub mod concerns;
+/// Contract definitions and mapping
 pub mod contracts;
+/// Contract to expectation specification
 pub mod specifier;
+/// Validation and verification logic
 pub mod verifier;
 
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, HookEvent};

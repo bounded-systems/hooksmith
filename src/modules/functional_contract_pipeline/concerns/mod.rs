@@ -36,6 +36,7 @@ pub fn snapshot_concern(symbol: &ConcernSymbol) -> ConcernSnapshot {
 pub mod index {
     use super::*;
 
+    /// Create a snapshot of the Git index
     pub fn snapshot() -> ConcernSnapshot {
         // This would use git2 or gix to read the index
         let data = serde_json::json!({
@@ -55,6 +56,7 @@ pub mod index {
 pub mod attr_line_ending {
     use super::*;
 
+    /// Create a snapshot of line ending normalization attributes
     pub fn snapshot() -> ConcernSnapshot {
         // This would read .gitattributes and analyze files
         let data = serde_json::json!({
@@ -74,6 +76,7 @@ pub mod attr_line_ending {
 pub mod attr_diff_strategy {
     use super::*;
 
+    /// Create a snapshot of diff strategy attributes
     pub fn snapshot() -> ConcernSnapshot {
         // This would read .gitattributes for diff rules
         let data = serde_json::json!({
@@ -92,6 +95,7 @@ pub mod attr_diff_strategy {
 pub mod ref_mod {
     use super::*;
 
+    /// Create a snapshot of Git references
     pub fn snapshot() -> ConcernSnapshot {
         // This would read .git/refs
         let data = serde_json::json!({
@@ -111,6 +115,7 @@ pub mod ref_mod {
 pub mod branch {
     use super::*;
 
+    /// Create a snapshot of Git branches
     pub fn snapshot() -> ConcernSnapshot {
         // This would read branch information
         let data = serde_json::json!({
@@ -129,6 +134,7 @@ pub mod branch {
 pub mod remote {
     use super::*;
 
+    /// Create a snapshot of Git remotes
     pub fn snapshot() -> ConcernSnapshot {
         // This would read remote configuration
         let data = serde_json::json!({
@@ -146,6 +152,7 @@ pub mod remote {
 pub mod tree_executable {
     use super::*;
 
+    /// Create a snapshot of executable files
     pub fn snapshot() -> ConcernSnapshot {
         // This would scan for executable files
         let data = serde_json::json!({
@@ -163,6 +170,7 @@ pub mod tree_executable {
 pub mod commit {
     use super::*;
 
+    /// Create a snapshot of Git commits
     pub fn snapshot() -> ConcernSnapshot {
         // This would read commit information
         let data = serde_json::json!({
@@ -180,6 +188,7 @@ pub mod commit {
 pub mod tree {
     use super::*;
 
+    /// Create a snapshot of Git trees
     pub fn snapshot() -> ConcernSnapshot {
         // This would read tree information
         let data = serde_json::json!({
@@ -197,6 +206,7 @@ pub mod tree {
 pub mod head {
     use super::*;
 
+    /// Create a snapshot of Git HEAD
     pub fn snapshot() -> ConcernSnapshot {
         // This would read HEAD
         let data = serde_json::json!({
@@ -214,6 +224,7 @@ pub mod head {
 pub mod config_commit {
     use super::*;
 
+    /// Create a snapshot of Git commit configuration
     pub fn snapshot() -> ConcernSnapshot {
         // This would read commit config
         let data = serde_json::json!({
@@ -231,6 +242,7 @@ pub mod config_commit {
 pub mod config_user {
     use super::*;
 
+    /// Create a snapshot of Git user configuration
     pub fn snapshot() -> ConcernSnapshot {
         // This would read user config
         let data = serde_json::json!({
@@ -248,6 +260,7 @@ pub mod config_user {
 pub mod config_gc {
     use super::*;
 
+    /// Create a snapshot of Git garbage collection configuration
     pub fn snapshot() -> ConcernSnapshot {
         // This would read gc config
         let data = serde_json::json!({
@@ -265,6 +278,7 @@ pub mod config_gc {
 pub mod config_rebase {
     use super::*;
 
+    /// Create a snapshot of Git rebase configuration
     pub fn snapshot() -> ConcernSnapshot {
         // This would read rebase config
         let data = serde_json::json!({
