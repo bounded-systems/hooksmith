@@ -1,6 +1,7 @@
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, ContractSymbol, HookEvent, RuleSeverity};
 use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ExpectedSnapshot, ValidationDiff};
-use serde_sarif::sarif::{ArtifactLocation, Location, Message, PhysicalLocation, Result as SarifResult, Run, SarifLog, Tool, ToolComponent};
+use serde_sarif::sarif::{ArtifactLocation, Location, Message, PhysicalLocation, Result as SarifResult, Run, Tool, ToolComponent};
+use serde_sarif::SarifLog;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;

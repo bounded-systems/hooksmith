@@ -66,6 +66,19 @@ pub enum DiffType {
     RuleViolation,
 }
 
+impl DiffType {
+    /// Get the name of the diff type
+    pub fn name(&self) -> &'static str {
+        match self {
+            DiffType::Missing => "missing",
+            DiffType::Unexpected => "unexpected",
+            DiffType::Mismatch => "mismatch",
+            DiffType::SchemaViolation => "schema_violation",
+            DiffType::RuleViolation => "rule_violation",
+        }
+    }
+}
+
 /// Set of validation differences
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffSet {
