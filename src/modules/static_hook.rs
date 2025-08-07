@@ -55,6 +55,34 @@ pub enum HookConcern {
     /// Git attributes (file-based config)
     Attr,
 
+    // Git Tree Entry Concerns (specific file types)
+    /// Tree entry: Regular file (100644)
+    TreeFile,
+    /// Tree entry: Executable file (100755)
+    TreeExecutable,
+    /// Tree entry: Symlink (120000)
+    TreeSymlink,
+    /// Tree entry: Directory (040000)
+    TreeDirectory,
+    /// Tree entry: Submodule (160000)
+    TreeSubmodule,
+
+    // Git Attribute Concerns (structured behavior mappings)
+    /// Attribute: Line ending normalization (text, eol=lf, eol=crlf)
+    AttrLineEndingNormalization,
+    /// Attribute: Diff strategy (diff, binary)
+    AttrDiffStrategy,
+    /// Attribute: Merge strategy (merge=...)
+    AttrMergeStrategy,
+    /// Attribute: Export control (export-ignore, export-subst)
+    AttrExportControl,
+    /// Attribute: Filter driver (filter=...)
+    AttrFilterDriver,
+    /// Attribute: External tool hints (linguist-language, linguist-vendored)
+    AttrExternalToolHint,
+    /// Attribute: Locking hints (lockable for Git LFS)
+    AttrLockingHint,
+
     // Git Reference Concerns (Detailed Ref Types)
     /// Git branch references (refs/heads/*)
     RefBranch,

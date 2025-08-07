@@ -108,6 +108,7 @@ fn validate_single_hook(hook_path: &Path) -> Result<(), Box<dyn std::error::Erro
     let valid_concerns = [
         "blob", "tree", "commit", "tag", "tree-file", "tree-executable", "tree-symlink", "tree-directory", "tree-submodule",
         "ref", "note", "attr", "index", "stash", "worktree", "remote", "branch", "head", "reflog",
+        "attr-line-ending-normalization", "attr-diff-strategy", "attr-merge-strategy", "attr-export-control", "attr-filter-driver", "attr-external-tool-hint", "attr-locking-hint",
         "config-user", "config-core", "config-branch", "config-remote", "config-init", "config-color",
         "config-alias", "config-diff", "config-merge", "config-gpg", "config-commit", "config-pull",
         "config-push", "config-rebase", "config-fetch", "config-status", "config-tar", "config-rerere",

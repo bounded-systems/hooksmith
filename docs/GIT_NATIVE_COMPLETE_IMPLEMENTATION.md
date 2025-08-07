@@ -2,9 +2,9 @@
 
 ## 🎯 **Mission Accomplished**
 
-We have successfully implemented a **zero-dynamic-resolution**, **schema-validated** static hook definition system with mandatory binary existence validation, using **only Git-native object types** that map directly to `git2` and `gix` (gitoxide) enums, now expanded to include **all 50+ Git-native concerns**.
+We have successfully implemented a **zero-dynamic-resolution**, **schema-validated** static hook definition system with mandatory binary existence validation, using **only Git-native object types** that map directly to `git2` and `gix` (gitoxide) enums, now expanded to include **all 55+ Git-native concerns**.
 
-## 🔒 **Complete Git-Native Object Types (50+ Total)**
+## 🔒 **Complete Git-Native Object Types (55+ Total)**
 
 ### Core Git Objects (from `.git/objects/`)
 
@@ -14,6 +14,16 @@ We have successfully implemented a **zero-dynamic-resolution**, **schema-validat
 | `tree` | Directory structure | ✅ Tree | ✅ Tree | `.git/objects/` |
 | `commit` | Commit history | ✅ Commit | ✅ Commit | `.git/objects/` |
 | `tag` | Annotated tag | ✅ Tag | ✅ Tag | `.git/objects/` |
+
+### Git Tree Entry Types (specific file modes)
+
+| Tree Entry | Mode | Git Object Type | Description | Backing Location |
+|------------|------|-----------------|-------------|------------------|
+| `tree-file` | 100644 | Blob | Regular file | `.git/objects/` |
+| `tree-executable` | 100755 | Blob | Executable file | `.git/objects/` |
+| `tree-symlink` | 120000 | Blob | Symlink | `.git/objects/` |
+| `tree-directory` | 040000 | Tree | Directory | `.git/objects/` |
+| `tree-submodule` | 160000 | Commit | Submodule (gitlink) | `.git/objects/` |
 
 ### Git Metadata Types (tracked by Git)
 
@@ -86,6 +96,13 @@ pub enum HookConcern {
     Note,      // Notes (commit-attached metadata)
     Attr,      // Attributes (file-based config)
 
+    // Git Tree Entry Concerns (specific file types)
+    TreeFile,        // Regular file (100644)
+    TreeExecutable,  // Executable file (100755)
+    TreeSymlink,     // Symlink (120000)
+    TreeDirectory,   // Directory (040000)
+    TreeSubmodule,   // Submodule (160000)
+
     // Git Local State Concerns
     Stash,     // Stash (pseudo-refs for uncommitted work)
     Worktree,  // Worktree (linked working directories)
@@ -143,9 +160,11 @@ impl GitNativeValidator {
     /// Validate that all concerns are Git-native
     pub fn validate_concerns(concerns: &[String]) -> Result<()> {
         let canonical_objects = Self::canonical_object_types();
+        let canonical_tree_entries = Self::canonical_tree_entry_types();
         let canonical_metadata = Self::canonical_metadata_types();
         let canonical_configs = Self::canonical_config_types();
         let all_canonical: Vec<&str> = canonical_objects.iter()
+            .chain(canonical_tree_entries.iter())
             .chain(canonical_metadata.iter())
             .chain(canonical_configs.iter())
             .cloned()
@@ -179,19 +198,14 @@ impl GitBindings {
         }
     }
 
-    /// Validate Git metadata using git2
-    pub fn validate_git_metadata(&self, metadata_type: &GitMetadataType, identifier: &str) -> Result<()> {
-        match metadata_type {
-            GitMetadataType::Ref => self.validate_ref_git2(identifier),
-            GitMetadataType::Note => self.validate_note_git2(identifier),
-            GitMetadataType::Attr => self.validate_attr_git2(identifier),
-            GitMetadataType::Index => self.validate_index_git2(),
-            GitMetadataType::Stash => self.validate_stash_git2(identifier),
-            GitMetadataType::Worktree => self.validate_worktree_git2(identifier),
-            GitMetadataType::Remote => self.validate_remote_git2(identifier),
-            GitMetadataType::Branch => self.validate_branch_git2(identifier),
-            GitMetadataType::Head => self.validate_head_git2(identifier),
-            GitMetadataType::Reflog => self.validate_reflog_git2(identifier),
+    /// Validate a Git tree entry using git2
+    pub fn validate_git_tree_entry(&self, tree_entry_type: &GitTreeEntryType, entry_path: &str) -> Result<()> {
+        match tree_entry_type {
+            GitTreeEntryType::TreeFile => self.validate_tree_file_git2(entry_path),
+            GitTreeEntryType::TreeExecutable => self.validate_tree_executable_git2(entry_path),
+            GitTreeEntryType::TreeSymlink => self.validate_tree_symlink_git2(entry_path),
+            GitTreeEntryType::TreeDirectory => self.validate_tree_directory_git2(entry_path),
+            GitTreeEntryType::TreeSubmodule => self.validate_tree_submodule_git2(entry_path),
         }
     }
 }
@@ -221,9 +235,9 @@ pub trait GitConcernValidator {
   "name": "pre-commit",
   "scope": "git",
   "concerns": [
-    "blob",
-    "tree", 
-    "commit"
+    "tree-file",
+    "tree-executable",
+    "tree-directory"
   ],
   "bin": "hooksmith-validate-tree"
 }
@@ -276,8 +290,8 @@ pub trait GitConcernValidator {
       "items": {
         "type": "string",
         "enum": [
-          "blob", "tree", "commit", "tag", "ref", "note", "attr", "index", "stash", "worktree", "remote",
-          "branch", "head", "reflog",
+          "blob", "tree", "commit", "tag", "tree-file", "tree-executable", "tree-symlink", "tree-directory", "tree-submodule",
+          "ref", "note", "attr", "index", "stash", "worktree", "remote", "branch", "head", "reflog",
           "config-user", "config-core", "config-branch", "config-remote", "config-init", "config-color",
           "config-alias", "config-diff", "config-merge", "config-gpg", "config-commit", "config-pull",
           "config-push", "config-rebase", "config-fetch", "config-status", "config-tar", "config-rerere",
@@ -306,8 +320,8 @@ fn validate_single_hook(hook_path: &Path) -> Result<(), Box<dyn std::error::Erro
     // Validate concerns (Git-native only)
     let concerns = json["concerns"].as_array().ok_or("Missing 'concerns' field")?;
     let valid_concerns = [
-        "blob", "tree", "commit", "tag", "ref", "note", "attr", "index", "stash", "worktree", "remote",
-        "branch", "head", "reflog",
+        "blob", "tree", "commit", "tag", "tree-file", "tree-executable", "tree-symlink", "tree-directory", "tree-submodule",
+        "ref", "note", "attr", "index", "stash", "worktree", "remote", "branch", "head", "reflog",
         "config-user", "config-core", "config-branch", "config-remote", "config-init", "config-color",
         "config-alias", "config-diff", "config-merge", "config-gpg", "config-commit", "config-pull",
         "config-push", "config-rebase", "config-fetch", "config-status", "config-tar", "config-rerere",
@@ -414,6 +428,16 @@ fn test_map_object_type() {
 }
 
 #[test]
+fn test_map_tree_entry_type() {
+    assert_eq!(GitNativeValidator::map_tree_entry_type("tree-file"), Some(GitTreeEntryType::TreeFile));
+    assert_eq!(GitNativeValidator::map_tree_entry_type("tree-executable"), Some(GitTreeEntryType::TreeExecutable));
+    assert_eq!(GitNativeValidator::map_tree_entry_type("tree-symlink"), Some(GitTreeEntryType::TreeSymlink));
+    assert_eq!(GitNativeValidator::map_tree_entry_type("tree-directory"), Some(GitTreeEntryType::TreeDirectory));
+    assert_eq!(GitNativeValidator::map_tree_entry_type("tree-submodule"), Some(GitTreeEntryType::TreeSubmodule));
+    assert_eq!(GitNativeValidator::map_tree_entry_type("invalid"), None);
+}
+
+#[test]
 fn test_map_metadata_type() {
     assert_eq!(GitNativeValidator::map_metadata_type("ref"), Some(GitMetadataType::Ref));
     assert_eq!(GitNativeValidator::map_metadata_type("note"), Some(GitMetadataType::Note));
@@ -460,10 +484,12 @@ fn test_validate_concerns() {
 6. **Type Alignment**: Each concern corresponds to real, queryable Git data types via git2 or gix
 7. **Tooling Integration**: Implement logic in hooksmith that can operate on the actual Git data types
 8. **Scalability**: Easy to extend HookConcern in future, e.g., adding "RefPacked" or "Stash" if needed
-9. **Comprehensive Coverage**: All 50+ Git-native types supported
+9. **Comprehensive Coverage**: All 55+ Git-native types supported
 10. **Pattern Matching**: Context-aware logic based on well-defined constructs
 11. **Config Integration**: First-class support for Git configuration sections
 12. **Complete Git Coverage**: From objects to metadata to configuration
+13. **Granular Tree Entry Control**: Specific file type validation (regular files, executables, symlinks, directories, submodules)
+14. **Mode-Specific Validation**: Different validation logic for each Git tree entry mode (100644, 100755, 120000, 040000, 160000)
 
 ## 🚫 **Removed Concepts**
 
@@ -476,7 +502,7 @@ These can be added later in a separate `ValidationConcern` or `ProjectConcern` e
 
 ## 🔄 **Migration**
 
-Existing hook definitions using non-Git-native concerns will fail validation and must be updated to use only the 50+ canonical Git-native types: `blob`, `tree`, `commit`, `tag`, `ref`, `note`, `attr`, `index`, `stash`, `worktree`, `remote`, `branch`, `head`, `reflog`, and all `config-*` sections.
+Existing hook definitions using non-Git-native concerns will fail validation and must be updated to use only the 55+ canonical Git-native types: `blob`, `tree`, `commit`, `tag`, `tree-file`, `tree-executable`, `tree-symlink`, `tree-directory`, `tree-submodule`, `ref`, `note`, `attr`, `index`, `stash`, `worktree`, `remote`, `branch`, `head`, `reflog`, and all `config-*` sections.
 
 ## ✅ **Validation Results**
 
@@ -489,14 +515,28 @@ Existing hook definitions using non-Git-native concerns will fail validation and
 - **Git API integration**: ✅ Pattern matching with git2/gix APIs
 - **New concerns validation**: ✅ All metadata types working
 - **Config concerns validation**: ✅ All config sections working
+- **Tree entry concerns validation**: ✅ All tree entry types working
 
 ## 🎉 **Complete Success**
 
-The system is now **strictly Git-native**, **zero-dynamic-resolution**, and **mandatory binary existence validated** with **all 50+ Git-native concerns** as requested. Every component enforces the Git-native contract with no runtime surprises, and each concern maps directly to real Git data types that can be queried and validated using git2 and gix APIs.
+The system is now **strictly Git-native**, **zero-dynamic-resolution**, and **mandatory binary existence validated** with **all 55+ Git-native concerns** as requested. Every component enforces the Git-native contract with no runtime surprises, and each concern maps directly to real Git data types that can be queried and validated using git2 and gix APIs.
 
 The expanded HookConcern enum now includes:
 - **Core Objects**: `blob`, `tree`, `commit`, `tag`
+- **Tree Entry Types**: `tree-file`, `tree-executable`, `tree-symlink`, `tree-directory`, `tree-submodule`
 - **Metadata Types**: `ref`, `note`, `attr`, `index`, `stash`, `worktree`, `remote`, `branch`, `head`, `reflog`
 - **Config Sections**: All 30+ Git configuration sections as first-class concerns
 
 This provides comprehensive coverage of all Git-native constructs while maintaining strict type safety and zero dynamic resolution, exactly as you specified!
+
+## 🌟 **Tree Entry Concerns - Granular Control**
+
+The new tree entry concerns provide **granular control** over Git file types:
+
+- **`tree-file` (100644)**: Regular files - validate content, encoding, size limits
+- **`tree-executable` (100755)**: Executable files - validate permissions, security checks
+- **`tree-symlink` (120000)**: Symlinks - validate target paths, security implications
+- **`tree-directory` (040000)**: Directories - validate structure, naming conventions
+- **`tree-submodule` (160000)**: Submodules - validate references, update policies
+
+This allows hooks to be **highly specific** about what types of Git objects they validate, providing **fine-grained control** over the validation process while maintaining **strict Git-native adherence**.

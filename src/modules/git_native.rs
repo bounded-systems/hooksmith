@@ -123,6 +123,25 @@ pub enum GitConfigType {
     ConfigWorktree,
 }
 
+/// Git attribute behavior types (structured concerns)
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum GitAttributeType {
+    /// Line ending normalization (text, eol=lf, eol=crlf)
+    AttrLineEndingNormalization,
+    /// Diff strategy (diff, binary)
+    AttrDiffStrategy,
+    /// Merge strategy (merge=...)
+    AttrMergeStrategy,
+    /// Export control (export-ignore, export-subst)
+    AttrExportControl,
+    /// Filter driver (filter=...)
+    AttrFilterDriver,
+    /// External tool hints (linguist-language, linguist-vendored)
+    AttrExternalToolHint,
+    /// Locking hints (lockable for Git LFS)
+    AttrLockingHint,
+}
+
 /// Git-native validation context
 pub struct GitNativeValidator {
     object_counts: HashMap<GitObjectType, u32>,
@@ -239,6 +258,20 @@ impl GitNativeValidator {
         }
     }
 
+    /// Map string attribute types to Git-native enums
+    pub fn map_attribute_type(attribute_type: &str) -> Option<GitAttributeType> {
+        match attribute_type {
+            "attr-line-ending-normalization" => Some(GitAttributeType::AttrLineEndingNormalization),
+            "attr-diff-strategy" => Some(GitAttributeType::AttrDiffStrategy),
+            "attr-merge-strategy" => Some(GitAttributeType::AttrMergeStrategy),
+            "attr-export-control" => Some(GitAttributeType::AttrExportControl),
+            "attr-filter-driver" => Some(GitAttributeType::AttrFilterDriver),
+            "attr-external-tool-hint" => Some(GitAttributeType::AttrExternalToolHint),
+            "attr-locking-hint" => Some(GitAttributeType::AttrLockingHint),
+            _ => None,
+        }
+    }
+
     /// Get canonical Git object type names
     pub fn canonical_object_types() -> Vec<&'static str> {
         vec!["blob", "tree", "commit", "tag"]
@@ -267,16 +300,26 @@ impl GitNativeValidator {
         ]
     }
 
+    /// Get canonical Git attribute type names
+    pub fn canonical_attribute_types() -> Vec<&'static str> {
+        vec![
+            "attr-line-ending-normalization", "attr-diff-strategy", "attr-merge-strategy",
+            "attr-export-control", "attr-filter-driver", "attr-external-tool-hint", "attr-locking-hint"
+        ]
+    }
+
     /// Validate that all concerns are Git-native
     pub fn validate_concerns(concerns: &[String]) -> Result<()> {
         let canonical_objects = Self::canonical_object_types();
         let canonical_tree_entries = Self::canonical_tree_entry_types();
         let canonical_metadata = Self::canonical_metadata_types();
         let canonical_configs = Self::canonical_config_types();
+        let canonical_attributes = Self::canonical_attribute_types();
         let all_canonical: Vec<&str> = canonical_objects.iter()
             .chain(canonical_tree_entries.iter())
             .chain(canonical_metadata.iter())
             .chain(canonical_configs.iter())
+            .chain(canonical_attributes.iter())
             .cloned()
             .collect();
         
@@ -350,6 +393,18 @@ mod tests {
         assert_eq!(GitNativeValidator::map_config_type("config-push"), Some(GitConfigType::ConfigPush));
         assert_eq!(GitNativeValidator::map_config_type("config-worktree"), Some(GitConfigType::ConfigWorktree));
         assert_eq!(GitNativeValidator::map_config_type("invalid"), None);
+    }
+
+    #[test]
+    fn test_map_attribute_type() {
+        assert_eq!(GitNativeValidator::map_attribute_type("attr-line-ending-normalization"), Some(GitAttributeType::AttrLineEndingNormalization));
+        assert_eq!(GitNativeValidator::map_attribute_type("attr-diff-strategy"), Some(GitAttributeType::AttrDiffStrategy));
+        assert_eq!(GitNativeValidator::map_attribute_type("attr-merge-strategy"), Some(GitAttributeType::AttrMergeStrategy));
+        assert_eq!(GitNativeValidator::map_attribute_type("attr-export-control"), Some(GitAttributeType::AttrExportControl));
+        assert_eq!(GitNativeValidator::map_attribute_type("attr-filter-driver"), Some(GitAttributeType::AttrFilterDriver));
+        assert_eq!(GitNativeValidator::map_attribute_type("attr-external-tool-hint"), Some(GitAttributeType::AttrExternalToolHint));
+        assert_eq!(GitNativeValidator::map_attribute_type("attr-locking-hint"), Some(GitAttributeType::AttrLockingHint));
+        assert_eq!(GitNativeValidator::map_attribute_type("invalid"), None);
     }
 
     #[test]
