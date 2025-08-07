@@ -41,3 +41,5 @@ pub mod static_hook;
 pub mod git_native;
 /// Git-native API bindings (git2/gix)
 pub mod git_bindings;
+/// Functional Contract Pipeline functionality
+pub mod functional_contract_pipeline;

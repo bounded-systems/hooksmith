@@ -1,0 +1,413 @@
+# Functional Contract Validation Pipeline Configuration
+# This file defines contracts for different Git concerns and hook events
+
+# Hook event to concern mapping
+hook_concerns:
+  pre-commit:
+    - index
+    - attr_line_ending_normalization
+    - attr_diff_strategy
+  pre-push:
+    - ref
+    - branch
+    - remote
+    - tree_executable
+    - attr_line_ending_normalization
+  pre-receive:
+    - ref
+    - branch
+    - remote
+  post-receive:
+    - ref
+    - branch
+    - remote
+  update:
+    - ref
+    - branch
+  post-update:
+    - ref
+    - branch
+  pre-auto-gc:
+    - config_gc
+  post-merge:
+    - commit
+    - tree
+    - ref
+  pre-rebase:
+    - ref
+    - branch
+    - config_rebase
+  post-checkout:
+    - head
+    - ref
+    - index
+  post-commit:
+    - commit
+    - ref
+    - head
+  pre-apply-patch:
+    - index
+    - attr_diff_strategy
+  post-apply-patch:
+    - index
+    - commit
+  pre-rebase:
+    - ref
+    - branch
+    - config_rebase
+  post-rebase:
+    - ref
+    - branch
+    - commit
+  pre-commit-msg:
+    - config_commit
+    - config_user
+  commit-msg:
+    - config_commit
+    - config_user
+  post-commit-msg:
+    - commit
+    - ref
+
+# Contract definitions
+contracts:
+  # Index validation contract
+  index-validation:
+    name: "index-validation"
+    version: "1.0"
+    concern: "index"
+    description: "Validates Git index state during pre-commit"
+    rules:
+      - name: "no-unstaged-changes"
+        description: "Ensure no unstaged changes before commit"
+        type: "custom"
+        required: true
+        severity: "error"
+        parameters:
+          check_unstaged: true
+          check_untracked: false
+      
+      - name: "no-untracked-files"
+        description: "Ensure no untracked files before commit"
+        type: "custom"
+        required: false
+        severity: "warning"
+        parameters:
+          check_untracked: true
+          ignore_patterns:
+            - "*.tmp"
+            - "*.log"
+            - ".DS_Store"
+
+  # Line ending normalization contract
+  line-ending-normalization:
+    name: "line-ending-normalization"
+    version: "1.0"
+    concern: "attr_line_ending_normalization"
+    description: "Ensures proper line ending normalization"
+    rules:
+      - name: "text-files-normalized"
+        description: "Ensure text files have normalized line endings"
+        type: "pattern"
+        required: true
+        severity: "error"
+        parameters:
+          pattern: "text"
+          auto_normalize: true
+          allowed_endings:
+            - "lf"
+            - "crlf"
+      
+      - name: "binary-files-identified"
+        description: "Ensure binary files are properly identified"
+        type: "pattern"
+        required: false
+        severity: "warning"
+        parameters:
+          pattern: "binary"
+          check_extensions:
+            - "*.png"
+            - "*.jpg"
+            - "*.pdf"
+            - "*.zip"
+
+  # Executable file validation contract
+  executable-file-validation:
+    name: "executable-file-validation"
+    version: "1.0"
+    concern: "tree_executable"
+    description: "Validates executable files during pre-push"
+    rules:
+      - name: "no-new-executables"
+        description: "Prevent new executable files from being pushed"
+        type: "custom"
+        required: true
+        severity: "error"
+        parameters:
+          check_permissions: true
+          allowed_executables:
+            - "scripts/*.sh"
+            - "scripts/*.py"
+            - "bin/*"
+      
+      - name: "executable-safety-check"
+        description: "Check executable files for safety"
+        type: "custom"
+        required: false
+        severity: "warning"
+        parameters:
+          check_shebang: true
+          check_permissions: true
+          max_file_size: 1048576  # 1MB
+
+  # Reference validation contract
+  ref-validation:
+    name: "ref-validation"
+    version: "1.0"
+    concern: "ref"
+    description: "Validates Git references during push operations"
+    rules:
+      - name: "ref-naming-convention"
+        description: "Ensure references follow naming conventions"
+        type: "pattern"
+        required: true
+        severity: "error"
+        parameters:
+          pattern: "^refs/(heads|tags|remotes)/[a-zA-Z0-9_-]+$"
+          forbidden_patterns:
+            - "refs/heads/master"
+            - "refs/heads/main"
+      
+      - name: "ref-safety-check"
+        description: "Check references for safety"
+        type: "custom"
+        required: false
+        severity: "warning"
+        parameters:
+          check_force_push: true
+          check_deletion: true
+
+  # Branch validation contract
+  branch-validation:
+    name: "branch-validation"
+    version: "1.0"
+    concern: "branch"
+    description: "Validates branch operations"
+    rules:
+      - name: "branch-naming-convention"
+        description: "Ensure branches follow naming conventions"
+        type: "pattern"
+        required: true
+        severity: "error"
+        parameters:
+          pattern: "^[a-z0-9_-]+(/[a-z0-9_-]+)*$"
+          min_length: 3
+          max_length: 50
+      
+      - name: "protected-branches"
+        description: "Protect important branches"
+        type: "custom"
+        required: true
+        severity: "error"
+        parameters:
+          protected_branches:
+            - "main"
+            - "master"
+            - "develop"
+          protection_rules:
+            require_review: true
+            require_tests: true
+            prevent_force_push: true
+
+  # Remote validation contract
+  remote-validation:
+    name: "remote-validation"
+    version: "1.0"
+    concern: "remote"
+    description: "Validates remote repository configurations"
+    rules:
+      - name: "remote-url-validation"
+        description: "Ensure remote URLs are valid and secure"
+        type: "custom"
+        required: true
+        severity: "error"
+        parameters:
+          allowed_protocols:
+            - "https"
+            - "ssh"
+          forbidden_patterns:
+            - "file://"
+            - "git://"
+      
+      - name: "remote-authentication"
+        description: "Check remote authentication"
+        type: "custom"
+        required: false
+        severity: "warning"
+        parameters:
+          check_credentials: true
+          check_ssh_keys: true
+
+# Rule type definitions
+rule_types:
+  custom:
+    description: "Custom validation function"
+    parameters:
+      - name: "function_name"
+        type: "string"
+        description: "Name of the custom validation function"
+      - name: "parameters"
+        type: "object"
+        description: "Parameters passed to the validation function"
+  
+  pattern:
+    description: "Pattern matching validation"
+    parameters:
+      - name: "pattern"
+        type: "string"
+        description: "Regex pattern to match against"
+      - name: "flags"
+        type: "array"
+        description: "Regex flags (case_insensitive, multiline, etc.)"
+  
+  json_schema:
+    description: "JSON Schema validation"
+    parameters:
+      - name: "schema"
+        type: "object"
+        description: "JSON Schema definition"
+      - name: "strict"
+        type: "boolean"
+        description: "Whether to use strict validation"
+  
+  file_size:
+    description: "File size validation"
+    parameters:
+      - name: "max_size"
+        type: "number"
+        description: "Maximum file size in bytes"
+      - name: "min_size"
+        type: "number"
+        description: "Minimum file size in bytes"
+  
+  file_extension:
+    description: "File extension validation"
+    parameters:
+      - name: "allowed_extensions"
+        type: "array"
+        description: "List of allowed file extensions"
+      - name: "forbidden_extensions"
+        type: "array"
+        description: "List of forbidden file extensions"
+
+# Severity levels
+severity_levels:
+  info:
+    description: "Informational message only"
+    exit_code: 0
+  warning:
+    description: "Warning message, may indicate potential issues"
+    exit_code: 0
+  error:
+    description: "Error that prevents the operation"
+    exit_code: 1
+  critical:
+    description: "Critical error that requires immediate attention"
+    exit_code: 2
+
+# Pipeline configuration
+pipeline:
+  # Whether to run pipeline in parallel
+  parallel: true
+  
+  # Maximum number of concurrent operations
+  max_concurrency: 4
+  
+  # Timeout for individual operations (seconds)
+  timeout: 30
+  
+  # Whether to continue on warnings
+  continue_on_warnings: true
+  
+  # Whether to fail fast on first error
+  fail_fast: false
+  
+  # Output format for results
+  output_format: "json"  # json, text, summary
+  
+  # Whether to include detailed diffs
+  include_diffs: true
+  
+  # Whether to include metadata in results
+  include_metadata: true
+
+# Logging configuration
+logging:
+  level: "info"  # debug, info, warn, error
+  format: "json"  # json, text
+  include_timestamps: true
+  include_metadata: true
+  
+  # File logging
+  file:
+    enabled: true
+    path: "logs/functional-contracts.log"
+    max_size: "10MB"
+    max_files: 5
+  
+  # Console logging
+  console:
+    enabled: true
+    colored: true
+    compact: false
+
+# Metrics configuration
+metrics:
+  enabled: true
+  
+  # Metrics collection
+  collection:
+    pipeline_execution_time: true
+    concern_processing_time: true
+    contract_validation_time: true
+    error_counts: true
+    warning_counts: true
+  
+  # Metrics export
+  export:
+    format: "prometheus"  # prometheus, statsd, json
+    endpoint: "localhost:9090"
+    interval: 60  # seconds
+
+# Integration configuration
+integrations:
+  # Git hooks integration
+  git_hooks:
+    enabled: true
+    auto_install: false
+    hook_types:
+      - "pre-commit"
+      - "pre-push"
+      - "commit-msg"
+  
+  # Lefthook integration
+  lefthook:
+    enabled: true
+    config_file: "lefthook.yml"
+    auto_generate: true
+  
+  # CI/CD integration
+  ci_cd:
+    enabled: true
+    providers:
+      - "github"
+      - "gitlab"
+      - "jenkins"
+      - "circleci"
+    
+    # GitHub Actions specific
+    github_actions:
+      enabled: true
+      workflow_file: ".github/workflows/contract-validation.yml"
+      matrix_strategy: true
+      cache_dependencies: true

@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use std::path::Path;
-use crate::modules::git_native::{GitObjectType, GitMetadataType, GitTreeEntryType};
+use crate::modules::git_native::{GitObjectType, GitMetadataType, GitTreeEntryType, GitAttributeType};
 
 /// Git-native API bindings for hook concerns
 /// 
@@ -326,6 +326,36 @@ impl GitBindings {
         Ok(stats)
     }
 
+    /// Get Git attribute statistics using git2
+    pub fn get_attribute_stats_git2(&self) -> Result<std::collections::HashMap<String, u32>> {
+        // This would use git2::Repository to get attribute statistics
+        // For now, return a placeholder
+        let mut stats = std::collections::HashMap::new();
+        stats.insert("attr-line-ending-normalization".to_string(), 0);
+        stats.insert("attr-diff-strategy".to_string(), 0);
+        stats.insert("attr-merge-strategy".to_string(), 0);
+        stats.insert("attr-export-control".to_string(), 0);
+        stats.insert("attr-filter-driver".to_string(), 0);
+        stats.insert("attr-external-tool-hint".to_string(), 0);
+        stats.insert("attr-locking-hint".to_string(), 0);
+        Ok(stats)
+    }
+
+    /// Get Git attribute statistics using gix (gitoxide)
+    pub fn get_attribute_stats_gix(&self) -> Result<std::collections::HashMap<String, u32>> {
+        // This would use gix::Repository to get attribute statistics
+        // For now, return a placeholder
+        let mut stats = std::collections::HashMap::new();
+        stats.insert("attr-line-ending-normalization".to_string(), 0);
+        stats.insert("attr-diff-strategy".to_string(), 0);
+        stats.insert("attr-merge-strategy".to_string(), 0);
+        stats.insert("attr-export-control".to_string(), 0);
+        stats.insert("attr-filter-driver".to_string(), 0);
+        stats.insert("attr-external-tool-hint".to_string(), 0);
+        stats.insert("attr-locking-hint".to_string(), 0);
+        Ok(stats)
+    }
+
     /// Get Git metadata statistics using gix (gitoxide)
     pub fn get_metadata_stats_gix(&self) -> Result<std::collections::HashMap<String, u32>> {
         // This would use gix::Repository to get metadata statistics
@@ -618,6 +648,13 @@ impl GitConcernValidator for GitBindings {
             "branch" => self.validate_git_metadata(&GitMetadataType::Branch, identifier),
             "head" => self.validate_git_metadata(&GitMetadataType::Head, identifier),
             "reflog" => self.validate_git_metadata(&GitMetadataType::Reflog, identifier),
+            "attr-line-ending-normalization" => self.validate_git_attribute(&GitAttributeType::AttrLineEndingNormalization, identifier),
+            "attr-diff-strategy" => self.validate_git_attribute(&GitAttributeType::AttrDiffStrategy, identifier),
+            "attr-merge-strategy" => self.validate_git_attribute(&GitAttributeType::AttrMergeStrategy, identifier),
+            "attr-export-control" => self.validate_git_attribute(&GitAttributeType::AttrExportControl, identifier),
+            "attr-filter-driver" => self.validate_git_attribute(&GitAttributeType::AttrFilterDriver, identifier),
+            "attr-external-tool-hint" => self.validate_git_attribute(&GitAttributeType::AttrExternalToolHint, identifier),
+            "attr-locking-hint" => self.validate_git_attribute(&GitAttributeType::AttrLockingHint, identifier),
             _ => bail!("Unknown concern: {}", concern),
         }
     }
@@ -643,6 +680,13 @@ impl GitConcernValidator for GitBindings {
             "branch" => self.validate_git_metadata_gix(&GitMetadataType::Branch, identifier),
             "head" => self.validate_git_metadata_gix(&GitMetadataType::Head, identifier),
             "reflog" => self.validate_git_metadata_gix(&GitMetadataType::Reflog, identifier),
+            "attr-line-ending-normalization" => self.validate_git_attribute_gix(&GitAttributeType::AttrLineEndingNormalization, identifier),
+            "attr-diff-strategy" => self.validate_git_attribute_gix(&GitAttributeType::AttrDiffStrategy, identifier),
+            "attr-merge-strategy" => self.validate_git_attribute_gix(&GitAttributeType::AttrMergeStrategy, identifier),
+            "attr-export-control" => self.validate_git_attribute_gix(&GitAttributeType::AttrExportControl, identifier),
+            "attr-filter-driver" => self.validate_git_attribute_gix(&GitAttributeType::AttrFilterDriver, identifier),
+            "attr-external-tool-hint" => self.validate_git_attribute_gix(&GitAttributeType::AttrExternalToolHint, identifier),
+            "attr-locking-hint" => self.validate_git_attribute_gix(&GitAttributeType::AttrLockingHint, identifier),
             _ => bail!("Unknown concern: {}", concern),
         }
     }
@@ -659,6 +703,10 @@ impl GitConcernValidator for GitBindings {
             }
             "ref" | "note" | "attr" | "index" | "stash" | "worktree" | "remote" | "branch" | "head" | "reflog" => {
                 let stats = self.get_metadata_stats_git2()?;
+                Ok(*stats.get(concern).unwrap_or(&0))
+            }
+            "attr-line-ending-normalization" | "attr-diff-strategy" | "attr-merge-strategy" | "attr-export-control" | "attr-filter-driver" | "attr-external-tool-hint" | "attr-locking-hint" => {
+                let stats = self.get_attribute_stats_git2()?;
                 Ok(*stats.get(concern).unwrap_or(&0))
             }
             _ => bail!("Unknown concern: {}", concern),
@@ -693,6 +741,15 @@ mod tests {
         assert!(bindings.validate_concern_git2("tree-directory", "src/").is_ok());
         assert!(bindings.validate_concern_git2("tree-submodule", "external-lib").is_ok());
         
+        // Test attribute concerns
+        assert!(bindings.validate_concern_git2("attr-line-ending-normalization", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_git2("attr-diff-strategy", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_git2("attr-merge-strategy", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_git2("attr-export-control", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_git2("attr-filter-driver", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_git2("attr-external-tool-hint", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_git2("attr-locking-hint", "src/main.rs").is_ok());
+        
         // Test metadata concerns
         assert!(bindings.validate_concern_git2("ref", "refs/heads/main").is_ok());
         assert!(bindings.validate_concern_git2("note", "test-note").is_ok());
@@ -725,6 +782,15 @@ mod tests {
         assert!(bindings.validate_concern_gix("tree-symlink", "link-to-file").is_ok());
         assert!(bindings.validate_concern_gix("tree-directory", "src/").is_ok());
         assert!(bindings.validate_concern_gix("tree-submodule", "external-lib").is_ok());
+        
+        // Test attribute concerns
+        assert!(bindings.validate_concern_gix("attr-line-ending-normalization", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_gix("attr-diff-strategy", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_gix("attr-merge-strategy", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_gix("attr-export-control", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_gix("attr-filter-driver", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_gix("attr-external-tool-hint", "src/main.rs").is_ok());
+        assert!(bindings.validate_concern_gix("attr-locking-hint", "src/main.rs").is_ok());
         
         // Test metadata concerns
         assert!(bindings.validate_concern_gix("ref", "refs/heads/main").is_ok());
