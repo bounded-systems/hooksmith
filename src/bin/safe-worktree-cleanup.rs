@@ -1,6 +1,4 @@
 use hooksmith::{get_worktrees, log_error, log_info, log_success, log_warning, run_git_command};
-use rayon::prelude::*;
-use rayon::iter::IntoParallelRefIterator;
 use std::env;
 use std::path::Path;
 use std::process::Command;
@@ -29,8 +27,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Use Arc<Mutex> for thread-safe counters
     let results = Arc::new(Mutex::new(Vec::new()));
 
-    // Process worktrees in parallel
-    worktrees.par_iter().for_each(|worktree_path| {
+    // Process worktrees sequentially (can be optimized later with rayon)
+    worktrees.iter().for_each(|worktree_path| {
         let worktree_path = std::path::PathBuf::from(worktree_path);
 
         // Skip the main worktree
