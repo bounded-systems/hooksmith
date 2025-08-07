@@ -1,0 +1,10 @@
+{
+  "name": "pre-commit",
+  "scope": "git",
+  "concerns": [
+    "blob",
+    "tree",
+    "contract-violation"
+  ],
+  "bin": "target/release/pre-commit"
+}
