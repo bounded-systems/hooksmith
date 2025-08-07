@@ -183,6 +183,7 @@ sonic-rs = "0.5.3"
 json_fast = "0.1.0"
 jzon = "0.12.5"
 ajson = "0.3.1"
+serde-sarif = "0.8.0"
 
 [dev-dependencies]
 tempfile = "3.0"

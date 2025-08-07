@@ -53,6 +53,8 @@ pub mod specifier;
 pub mod verifier;
 /// High-performance diffing strategies
 pub mod high_performance_diff;
+/// SARIF-first validation roles and architecture
+pub mod sarif_roles;
 
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, HookEvent};
 use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ExpectedSnapshot};
@@ -345,6 +347,52 @@ pub fn run_hook_with_diff_strategy(
 pub fn benchmark_hook_strategies(hook: HookEvent, repo_path: &str) -> String {
     let pipeline = FunctionalContractPipeline::new(repo_path);
     pipeline.benchmark_hook_strategies(hook)
+}
+
+/// Convenience function to run SARIF-first pipeline
+pub fn run_sarif_first_pipeline(
+    hook_event: HookEvent,
+    commit_hash: String,
+    tree_hash: String,
+) -> (serde_sarif::sarif::SarifLog, crate::modules::functional_contract_pipeline::sarif_roles::AuditResult) {
+    let mut pipeline = crate::modules::functional_contract_pipeline::sarif_roles::SarifFirstPipeline::new();
+    let git_metadata = crate::modules::functional_contract_pipeline::sarif_roles::GitMetadata::new(
+        commit_hash,
+        tree_hash,
+        hook_event,
+    );
+    pipeline.run_pipeline(hook_event, git_metadata)
+}
+
+/// Convenience function to create audit policy
+pub fn create_audit_policy(
+    name: String,
+    description: String,
+    concern: Option<String>,
+    severity: Option<crate::modules::functional_contract_pipeline::symbols::RuleSeverity>,
+    hook_event: Option<String>,
+    action: crate::modules::functional_contract_pipeline::sarif_roles::AuditAction,
+) -> crate::modules::functional_contract_pipeline::sarif_roles::AuditPolicy {
+    let mut criteria = crate::modules::functional_contract_pipeline::sarif_roles::QueryCriteria::new();
+    
+    if let Some(concern) = concern {
+        criteria = criteria.with_concern(concern);
+    }
+    
+    if let Some(severity) = severity {
+        criteria = criteria.with_severity(severity);
+    }
+    
+    if let Some(hook_event) = hook_event {
+        criteria = criteria.with_hook_event(hook_event);
+    }
+    
+    crate::modules::functional_contract_pipeline::sarif_roles::AuditPolicy::new(
+        name,
+        description,
+        criteria,
+        action,
+    )
 }
 
 #[cfg(test)]
