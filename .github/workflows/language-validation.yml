@@ -29,9 +29,10 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Rust
-        uses: actions/setup-rust@v1
+        uses: actions-rs/toolchain@v1
         with:
-          rust-version: stable
+          toolchain: stable
+          override: true
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
@@ -70,9 +71,10 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Rust
-        uses: actions/setup-rust@v1
+        uses: actions-rs/toolchain@v1
         with:
-          rust-version: stable
+          toolchain: stable
+          override: true
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
