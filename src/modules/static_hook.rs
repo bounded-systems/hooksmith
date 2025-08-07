@@ -35,7 +35,7 @@ pub enum HookScope {
     Patch,
 }
 
-/// Hook concerns enum - Git-native object types only
+/// Hook concerns enum - Git-native object types + local constructs
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Ord, PartialOrd)]
 #[serde(rename_all = "kebab-case")]
 pub enum HookConcern {
@@ -53,6 +53,8 @@ pub enum HookConcern {
     Note,
     /// Git attributes (file-based config)
     Attr,
+    /// Git index (staging area)
+    Index,
 }
 
 impl StaticHook {

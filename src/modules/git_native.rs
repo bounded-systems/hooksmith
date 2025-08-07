@@ -23,6 +23,8 @@ pub enum GitMetadataType {
     Note,
     /// Attributes (file-based config) - tracked in working tree or .git/info
     Attr,
+    /// Index (staging area) - tracked in .git/index
+    Index,
 }
 
 /// Git-native validation context
