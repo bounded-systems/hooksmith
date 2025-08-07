@@ -20,11 +20,17 @@ pub struct StaticHook {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum HookScope {
+    /// Traditional Git lifecycle hooks
     Git,
+    /// GitHub-specific hooks
     Github,
+    /// File system monitoring hooks
     FsMonitor,
+    /// Reference transaction hooks
     Reference,
+    /// Email-related hooks
     Email,
+    /// Patch-related hooks
     Patch,
 }
 
@@ -32,12 +38,19 @@ pub enum HookScope {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Ord, PartialOrd)]
 #[serde(rename_all = "kebab-case")]
 pub enum HookConcern {
+    /// Validates Git blob objects
     Blob,
+    /// Validates Git tree objects
     Tree,
+    /// Validates Git references
     Ref,
+    /// Validates Git notes
     Note,
+    /// Validates Git attributes
     Attr,
+    /// Validates contract violations
     ContractViolation,
+    /// Performs symbol analysis
     SymbolAnalysis,
 }
 

@@ -1,17 +1,10 @@
 {
-  // Human-readable name of the hook
   "name": "pre-commit",
-
-  // Hook trigger scope (only one allowed)
   "scope": "git",
-
-  // Required list of concerns (must match schema)
   "concerns": [
     "blob",
     "tree",
     "contract-violation"
   ],
-
-  // Only one binary per hook, must exist at build time
   "bin": "target/release/hooksmith-validate-tree"
 }
