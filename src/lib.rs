@@ -23,6 +23,349 @@ pub const CYAN: &str = "\x1b[0;36m";
 /// ANSI color codes for terminal output
 pub const NC: &str = "\x1b[0m"; // No Color
 
+/// Unified Git Hook Surface - maps all Git extension points
+///
+/// This enum represents all possible entry points into the Git system,
+/// from traditional hooks to LFS patterns, filters, and custom extensions.
+#[derive(Debug, Clone, PartialEq)]
+pub enum GitHookSurface {
+    /// Traditional Git lifecycle hooks (client-side)
+    LifecycleHook(LifecycleHookType),
+    /// Git LFS-style hooks for large file management
+    LfsHook(LfsHookType),
+    /// .gitattributes filter hooks (clean/smudge)
+    AttributeFilter(AttributeFilterType),
+    /// Git config-based hooks (includeIf, aliases)
+    ConfigHook(ConfigHookType),
+    /// Git notes for metadata storage
+    NotesHook(NotesHookType),
+    /// Custom refs and reflogs
+    CustomRef(CustomRefType),
+    /// Worktree lifecycle hooks
+    WorktreeHook(WorktreeHookType),
+    /// External tool integration hooks
+    ExternalTool(ExternalToolType),
+    /// Runtime proxy hooks (remotes, pager, editor)
+    RuntimeProxy(RuntimeProxyType),
+}
+
+/// Traditional Git lifecycle hooks
+#[derive(Debug, Clone, PartialEq)]
+pub enum LifecycleHookType {
+    PreCommit,
+    PrepareCommitMsg,
+    CommitMsg,
+    PostCommit,
+    PrePush,
+    PostPush,
+    PreMergeCommit,
+    PostMerge,
+    PreRebase,
+    PostRebase,
+    PreApplyPatch,
+    ApplyPatchMsg,
+    PostApplyPatch,
+    PostCheckout,
+    PostRewrite,
+    PostIndexChange,
+    ReferenceTransaction,
+    SendEmailValidate,
+    FsmonitorWatchman,
+}
+
+/// Git LFS-style hooks for large file management
+#[derive(Debug, Clone, PartialEq)]
+pub enum LfsHookType {
+    PrePush,
+    PostCheckout,
+    PostCommit,
+    PostMerge,
+    Clean,
+    Smudge,
+}
+
+/// .gitattributes filter hooks
+#[derive(Debug, Clone, PartialEq)]
+pub enum AttributeFilterType {
+    Clean,
+    Smudge,
+    Diff,
+    Merge,
+    Text,
+    Binary,
+    ExportIgnore,
+    ExportSubst,
+    Ident,
+    Eol,
+    WorkingDirectory,
+    MergeDriver,
+}
+
+/// Git config-based hooks
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConfigHookType {
+    IncludeIf,
+    Alias,
+    Credential,
+    CorePager,
+    CoreEditor,
+    DiffExternal,
+    MergeTool,
+    Rerere,
+}
+
+/// Git notes for metadata storage
+#[derive(Debug, Clone, PartialEq)]
+pub enum NotesHookType {
+    PreNotesEdit,
+    PostNotesEdit,
+    NotesRewrite,
+    NotesRef,
+}
+
+/// Custom refs and reflogs
+#[derive(Debug, Clone, PartialEq)]
+pub enum CustomRefType {
+    CustomRef,
+    Reflog,
+    SymbolicRef,
+    Head,
+}
+
+/// Worktree lifecycle hooks
+#[derive(Debug, Clone, PartialEq)]
+pub enum WorktreeHookType {
+    PreWorktreeCreate,
+    PostWorktreeCreate,
+    PreWorktreeRemove,
+    PostWorktreeRemove,
+    WorktreeSwitch,
+    WorktreeSync,
+}
+
+/// External tool integration hooks
+#[derive(Debug, Clone, PartialEq)]
+pub enum ExternalToolType {
+    Husky,
+    Lefthook,
+    PreCommit,
+    GitHooks,
+    CustomBinary,
+}
+
+/// Runtime proxy hooks
+#[derive(Debug, Clone, PartialEq)]
+pub enum RuntimeProxyType {
+    HttpProxy,
+    UrlRewrite,
+    RemoteProxy,
+    PagerProxy,
+    EditorProxy,
+}
+
+impl GitHookSurface {
+    /// Get the hook name for this surface
+    pub fn hook_name(&self) -> String {
+        match self {
+            GitHookSurface::LifecycleHook(hook) => match hook {
+                LifecycleHookType::PreCommit => "pre-commit".to_string(),
+                LifecycleHookType::PrepareCommitMsg => "prepare-commit-msg".to_string(),
+                LifecycleHookType::CommitMsg => "commit-msg".to_string(),
+                LifecycleHookType::PostCommit => "post-commit".to_string(),
+                LifecycleHookType::PrePush => "pre-push".to_string(),
+                LifecycleHookType::PostPush => "post-push".to_string(),
+                LifecycleHookType::PreMergeCommit => "pre-merge-commit".to_string(),
+                LifecycleHookType::PostMerge => "post-merge".to_string(),
+                LifecycleHookType::PreRebase => "pre-rebase".to_string(),
+                LifecycleHookType::PostRebase => "post-rebase".to_string(),
+                LifecycleHookType::PreApplyPatch => "pre-applypatch".to_string(),
+                LifecycleHookType::ApplyPatchMsg => "applypatch-msg".to_string(),
+                LifecycleHookType::PostApplyPatch => "post-applypatch".to_string(),
+                LifecycleHookType::PostCheckout => "post-checkout".to_string(),
+                LifecycleHookType::PostRewrite => "post-rewrite".to_string(),
+                LifecycleHookType::PostIndexChange => "post-index-change".to_string(),
+                LifecycleHookType::ReferenceTransaction => "reference-transaction".to_string(),
+                LifecycleHookType::SendEmailValidate => "sendemail-validate".to_string(),
+                LifecycleHookType::FsmonitorWatchman => "fsmonitor-watchman".to_string(),
+            },
+            GitHookSurface::LfsHook(hook) => match hook {
+                LfsHookType::PrePush => "lfs-pre-push".to_string(),
+                LfsHookType::PostCheckout => "lfs-post-checkout".to_string(),
+                LfsHookType::PostCommit => "lfs-post-commit".to_string(),
+                LfsHookType::PostMerge => "lfs-post-merge".to_string(),
+                LfsHookType::Clean => "lfs-clean".to_string(),
+                LfsHookType::Smudge => "lfs-smudge".to_string(),
+            },
+            GitHookSurface::AttributeFilter(filter) => match filter {
+                AttributeFilterType::Clean => "filter-clean".to_string(),
+                AttributeFilterType::Smudge => "filter-smudge".to_string(),
+                AttributeFilterType::Diff => "filter-diff".to_string(),
+                AttributeFilterType::Merge => "filter-merge".to_string(),
+                AttributeFilterType::Text => "filter-text".to_string(),
+                AttributeFilterType::Binary => "filter-binary".to_string(),
+                AttributeFilterType::ExportIgnore => "filter-export-ignore".to_string(),
+                AttributeFilterType::ExportSubst => "filter-export-subst".to_string(),
+                AttributeFilterType::Ident => "filter-ident".to_string(),
+                AttributeFilterType::Eol => "filter-eol".to_string(),
+                AttributeFilterType::WorkingDirectory => "filter-working-directory".to_string(),
+                AttributeFilterType::MergeDriver => "filter-merge-driver".to_string(),
+            },
+            GitHookSurface::ConfigHook(hook) => match hook {
+                ConfigHookType::IncludeIf => "config-include-if".to_string(),
+                ConfigHookType::Alias => "config-alias".to_string(),
+                ConfigHookType::Credential => "config-credential".to_string(),
+                ConfigHookType::CorePager => "config-core-pager".to_string(),
+                ConfigHookType::CoreEditor => "config-core-editor".to_string(),
+                ConfigHookType::DiffExternal => "config-diff-external".to_string(),
+                ConfigHookType::MergeTool => "config-merge-tool".to_string(),
+                ConfigHookType::Rerere => "config-rerere".to_string(),
+            },
+            GitHookSurface::NotesHook(hook) => match hook {
+                NotesHookType::PreNotesEdit => "notes-pre-edit".to_string(),
+                NotesHookType::PostNotesEdit => "notes-post-edit".to_string(),
+                NotesHookType::NotesRewrite => "notes-rewrite".to_string(),
+                NotesHookType::NotesRef => "notes-ref".to_string(),
+            },
+            GitHookSurface::CustomRef(hook) => match hook {
+                CustomRefType::CustomRef => "custom-ref".to_string(),
+                CustomRefType::Reflog => "custom-reflog".to_string(),
+                CustomRefType::SymbolicRef => "custom-symbolic-ref".to_string(),
+                CustomRefType::Head => "custom-head".to_string(),
+            },
+            GitHookSurface::WorktreeHook(hook) => match hook {
+                WorktreeHookType::PreWorktreeCreate => "worktree-pre-create".to_string(),
+                WorktreeHookType::PostWorktreeCreate => "worktree-post-create".to_string(),
+                WorktreeHookType::PreWorktreeRemove => "worktree-pre-remove".to_string(),
+                WorktreeHookType::PostWorktreeRemove => "worktree-post-remove".to_string(),
+                WorktreeHookType::WorktreeSwitch => "worktree-switch".to_string(),
+                WorktreeHookType::WorktreeSync => "worktree-sync".to_string(),
+            },
+            GitHookSurface::ExternalTool(hook) => match hook {
+                ExternalToolType::Husky => "husky".to_string(),
+                ExternalToolType::Lefthook => "lefthook".to_string(),
+                ExternalToolType::PreCommit => "pre-commit-tool".to_string(),
+                ExternalToolType::GitHooks => "git-hooks".to_string(),
+                ExternalToolType::CustomBinary => "custom-binary".to_string(),
+            },
+            GitHookSurface::RuntimeProxy(hook) => match hook {
+                RuntimeProxyType::HttpProxy => "http-proxy".to_string(),
+                RuntimeProxyType::UrlRewrite => "url-rewrite".to_string(),
+                RuntimeProxyType::RemoteProxy => "remote-proxy".to_string(),
+                RuntimeProxyType::PagerProxy => "pager-proxy".to_string(),
+                RuntimeProxyType::EditorProxy => "editor-proxy".to_string(),
+            },
+        }
+    }
+
+    /// Get the description for this hook surface
+    pub fn description(&self) -> &'static str {
+        match self {
+            GitHookSurface::LifecycleHook(hook) => match hook {
+                LifecycleHookType::PreCommit => "Run before commit is created",
+                LifecycleHookType::PrepareCommitMsg => "Prepare commit message",
+                LifecycleHookType::CommitMsg => "Validate commit message",
+                LifecycleHookType::PostCommit => "Run after commit is created",
+                LifecycleHookType::PrePush => "Run before push",
+                LifecycleHookType::PostPush => "Run after push",
+                LifecycleHookType::PreMergeCommit => "Run before merge commit",
+                LifecycleHookType::PostMerge => "Run after merge",
+                LifecycleHookType::PreRebase => "Run before rebase",
+                LifecycleHookType::PostRebase => "Run after rebase",
+                LifecycleHookType::PreApplyPatch => "Run before patch is applied",
+                LifecycleHookType::ApplyPatchMsg => "Validate patch message",
+                LifecycleHookType::PostApplyPatch => "Run after patch is applied",
+                LifecycleHookType::PostCheckout => "Run after checkout",
+                LifecycleHookType::PostRewrite => "Run after history rewrite",
+                LifecycleHookType::PostIndexChange => "Run after index changes",
+                LifecycleHookType::ReferenceTransaction => "Validate reference transactions",
+                LifecycleHookType::SendEmailValidate => "Validate email before sending",
+                LifecycleHookType::FsmonitorWatchman => "File system monitoring",
+            },
+            GitHookSurface::LfsHook(hook) => match hook {
+                LfsHookType::PrePush => "LFS pre-push validation",
+                LfsHookType::PostCheckout => "LFS post-checkout processing",
+                LfsHookType::PostCommit => "LFS post-commit processing",
+                LfsHookType::PostMerge => "LFS post-merge processing",
+                LfsHookType::Clean => "LFS clean filter",
+                LfsHookType::Smudge => "LFS smudge filter",
+            },
+            GitHookSurface::AttributeFilter(filter) => match filter {
+                AttributeFilterType::Clean => "Clean filter for file transformation",
+                AttributeFilterType::Smudge => "Smudge filter for file transformation",
+                AttributeFilterType::Diff => "Custom diff filter",
+                AttributeFilterType::Merge => "Custom merge filter",
+                AttributeFilterType::Text => "Text processing filter",
+                AttributeFilterType::Binary => "Binary processing filter",
+                AttributeFilterType::ExportIgnore => "Export ignore filter",
+                AttributeFilterType::ExportSubst => "Export substitution filter",
+                AttributeFilterType::Ident => "Identity filter",
+                AttributeFilterType::Eol => "End-of-line filter",
+                AttributeFilterType::WorkingDirectory => "Working directory filter",
+                AttributeFilterType::MergeDriver => "Custom merge driver",
+            },
+            GitHookSurface::ConfigHook(hook) => match hook {
+                ConfigHookType::IncludeIf => "Conditional config inclusion",
+                ConfigHookType::Alias => "Git command alias",
+                ConfigHookType::Credential => "Credential helper",
+                ConfigHookType::CorePager => "Custom pager",
+                ConfigHookType::CoreEditor => "Custom editor",
+                ConfigHookType::DiffExternal => "External diff tool",
+                ConfigHookType::MergeTool => "External merge tool",
+                ConfigHookType::Rerere => "Reuse recorded resolution",
+            },
+            GitHookSurface::NotesHook(hook) => match hook {
+                NotesHookType::PreNotesEdit => "Before notes edit",
+                NotesHookType::PostNotesEdit => "After notes edit",
+                NotesHookType::NotesRewrite => "Notes rewrite hook",
+                NotesHookType::NotesRef => "Notes reference hook",
+            },
+            GitHookSurface::CustomRef(hook) => match hook {
+                CustomRefType::CustomRef => "Custom reference hook",
+                CustomRefType::Reflog => "Custom reflog hook",
+                CustomRefType::SymbolicRef => "Symbolic reference hook",
+                CustomRefType::Head => "HEAD reference hook",
+            },
+            GitHookSurface::WorktreeHook(hook) => match hook {
+                WorktreeHookType::PreWorktreeCreate => "Before worktree creation",
+                WorktreeHookType::PostWorktreeCreate => "After worktree creation",
+                WorktreeHookType::PreWorktreeRemove => "Before worktree removal",
+                WorktreeHookType::PostWorktreeRemove => "After worktree removal",
+                WorktreeHookType::WorktreeSwitch => "Worktree switching",
+                WorktreeHookType::WorktreeSync => "Worktree synchronization",
+            },
+            GitHookSurface::ExternalTool(hook) => match hook {
+                ExternalToolType::Husky => "Husky Git hooks",
+                ExternalToolType::Lefthook => "Lefthook Git hooks",
+                ExternalToolType::PreCommit => "Pre-commit framework",
+                ExternalToolType::GitHooks => "Git hooks framework",
+                ExternalToolType::CustomBinary => "Custom binary hook",
+            },
+            GitHookSurface::RuntimeProxy(hook) => match hook {
+                RuntimeProxyType::HttpProxy => "HTTP proxy for Git",
+                RuntimeProxyType::UrlRewrite => "URL rewriting for Git",
+                RuntimeProxyType::RemoteProxy => "Remote proxy for Git",
+                RuntimeProxyType::PagerProxy => "Pager proxy for Git",
+                RuntimeProxyType::EditorProxy => "Editor proxy for Git",
+            },
+        }
+    }
+
+    /// Get the contract type this hook surface relates to
+    pub fn contract_type(&self) -> &'static str {
+        match self {
+            GitHookSurface::LifecycleHook(_) => "git-lifecycle",
+            GitHookSurface::LfsHook(_) => "git-lfs",
+            GitHookSurface::AttributeFilter(_) => "git-attributes",
+            GitHookSurface::ConfigHook(_) => "git-config",
+            GitHookSurface::NotesHook(_) => "git-notes",
+            GitHookSurface::CustomRef(_) => "git-refs",
+            GitHookSurface::WorktreeHook(_) => "git-worktree",
+            GitHookSurface::ExternalTool(_) => "git-external",
+            GitHookSurface::RuntimeProxy(_) => "git-runtime",
+        }
+    }
+}
+
 /// Represents the status of a git worktree
 #[derive(Debug, Clone)]
 pub struct WorktreeStatus {
@@ -62,9 +405,9 @@ pub enum WorktreeState {
 /// Represents the cleanup decision for a worktree
 #[derive(Debug, Clone)]
 pub enum CleanupDecision {
-    /// Remove the worktree entirely
+    /// Remove the worktree
     Remove,
-    /// Clean up the worktree (delete branch and remove worktree)
+    /// Clean up the worktree but keep it
     Cleanup,
     /// Keep the worktree as is
     Keep,
