@@ -2,24 +2,22 @@ name: Update .gitattributes
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths-ignore:
-      - '.gitattributes'
-      - 'docs/**'
+      - .gitattributes
+      - docs/**
       - '*.md'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths-ignore:
-      - '.gitattributes'
-      - 'docs/**'
+      - .gitattributes
+      - docs/**
       - '*.md'
   workflow_dispatch:
-    inputs:
-      force:
-        description: 'Force update even if no changes detected'
-        required: false
-        default: false
-        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   update-gitattributes:
@@ -33,10 +31,7 @@ jobs:
           fetch-depth: 0  # Full history for better git operations
       
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+        uses: dtolnay/rust-toolchain@stable
       
       - name: Install hyperpolyglot
         run: cargo install hyperpolyglot
@@ -57,13 +52,13 @@ jobs:
           fi
       
       - name: Update .gitattributes
-        if: steps.check.outputs.needs_update == 'true' || github.event.inputs.force == 'true'
+        if: steps.check.outputs.needs_update == 'true'
         run: |
           export CI=true
           ./scripts/ci-gitattributes.sh -f
       
       - name: Show changes
-        if: steps.check.outputs.needs_update == 'true' || github.event.inputs.force == 'true'
+        if: steps.check.outputs.needs_update == 'true'
         run: |
           echo "📊 Changes made to .gitattributes:"
           if [[ -f ".gitattributes.backup" ]]; then
@@ -75,7 +70,7 @@ jobs:
           fi
       
       - name: Commit changes
-        if: steps.check.outputs.needs_update == 'true' || github.event.inputs.force == 'true'
+        if: steps.check.outputs.needs_update == 'true'
         run: |
           # Configure git
           git config --local user.email "action@github.com"
@@ -100,12 +95,12 @@ jobs:
           fi
       
       - name: Create PR (if needed)
-        if: github.event_name == 'workflow_dispatch' && (steps.check.outputs.needs_update == 'true' || github.event.inputs.force == 'true')
-        uses: peter-evans/create-pull-request@v5
+        if: github.event_name == 'workflow_dispatch' && steps.check.outputs.needs_update == 'true'
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Update .gitattributes with latest file types"
-          title: "🤖 Auto-update .gitattributes"
+          commit-message: Update .gitattributes with latest file types
+          title: 🤖 Auto-update .gitattributes
           body: |
             ## Auto-generated .gitattributes update
             
