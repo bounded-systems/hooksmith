@@ -32,7 +32,7 @@ struct LanguageComparison {
     suggested_gitattributes: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct FileAnalysis {
     path: PathBuf,
     linguist_language: Option<String>,
@@ -131,7 +131,7 @@ fn analyze_file(file_path: &Path, languages: &HashMap<String, LanguageInfo>) -> 
     
     // Calculate confidence based on matches
     let confidence = if linguist_language.is_some() && hyperpolyglot_detection.is_some() {
-        if linguist_language.as_ref().unwrap() == &hyperpolyglot_detection.as_ref().unwrap() {
+        if linguist_language.as_ref().unwrap() == hyperpolyglot_detection.as_ref().unwrap() {
             1.0
         } else {
             0.5
@@ -316,10 +316,10 @@ fn main() -> ExitCode {
         println!("language-reconciliation - Compare Linguist and hyperpolyglot language detection");
         println!();
         println!("Usage:");
-        println!("  {} languages              - Show language comparison");
-        println!("  {} analyze               - Analyze repository files");
-        println!("  {} suggestions           - Generate .gitattributes suggestions");
-        println!("  {} full                  - Run complete analysis");
+        println!("  {} languages              - Show language comparison", args[0]);
+        println!("  {} analyze               - Analyze repository files", args[0]);
+        println!("  {} suggestions           - Generate .gitattributes suggestions", args[0]);
+        println!("  {} full                  - Run complete analysis", args[0]);
         println!();
         println!("This tool loads GitHub Linguist's languages.yml and compares");
         println!("it with hyperpolyglot's detection to ensure perfect alignment.");

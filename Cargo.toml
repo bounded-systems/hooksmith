@@ -128,6 +128,8 @@ num_cpus.workspace = true
 # Additional dependencies
 uuid.workspace = true
 hyperpolyglot.workspace = true
+serde_yaml.workspace = true
+reqwest.workspace = true
 
 # WASM and WIT support
 wasmtime.workspace = true
