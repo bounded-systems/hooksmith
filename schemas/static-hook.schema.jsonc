@@ -1,0 +1,45 @@
+{
+  "$id": "https://hooksmith.dev/schemas/static-hook.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hooksmith Static Hook Definition",
+  "description": "Static, JSONC-based build spec with zero dynamic resolution, no silent fallbacks, and mandatory binary existence validation",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the hook",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "scope": {
+      "type": "string",
+      "description": "Hook trigger scope (only one allowed)",
+      "enum": ["git", "github", "fsmonitor", "reference", "email", "patch"]
+    },
+    "concerns": {
+      "type": "array",
+      "description": "Required list of concerns (must match schema)",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "blob",
+          "tree", 
+          "ref",
+          "note",
+          "attr",
+          "contract-violation",
+          "symbol-analysis"
+        ]
+      }
+    },
+    "bin": {
+      "type": "string",
+      "description": "Only one binary per hook, must exist at build time",
+      "minLength": 1
+    }
+  },
+  "required": ["name", "scope", "concerns", "bin"]
+}

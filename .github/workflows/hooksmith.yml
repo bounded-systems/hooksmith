@@ -69,6 +69,7 @@ jobs:
     outputs:
       validation_passed: ${{ steps.validation.outputs.passed }}
       event_type: ${{ steps.event_info.outputs.type }}
+      workflow_run_url: ${{ steps.event_info.outputs.workflow_run_url }}
     
     steps:
       - name: Checkout code
@@ -85,20 +86,50 @@ jobs:
       - name: Get event information
         id: event_info
         run: |
+          # Use proper GitHub context variables
           echo "type=${{ github.event_name }}" >> $GITHUB_OUTPUT
           echo "repository=${{ github.repository }}" >> $GITHUB_OUTPUT
+          echo "repository_owner=${{ github.repository_owner }}" >> $GITHUB_OUTPUT
+          echo "repository_id=${{ github.repository_id }}" >> $GITHUB_OUTPUT
           echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
+          echo "ref_name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          echo "ref_type=${{ github.ref_type }}" >> $GITHUB_OUTPUT
           echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "actor=${{ github.actor }}" >> $GITHUB_OUTPUT
+          echo "actor_id=${{ github.actor_id }}" >> $GITHUB_OUTPUT
+          echo "triggering_actor=${{ github.triggering_actor }}" >> $GITHUB_OUTPUT
+          echo "run_id=${{ github.run_id }}" >> $GITHUB_OUTPUT
+          echo "run_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "run_attempt=${{ github.run_attempt }}" >> $GITHUB_OUTPUT
+          echo "workflow=${{ github.workflow }}" >> $GITHUB_OUTPUT
+          echo "workflow_ref=${{ github.workflow_ref }}" >> $GITHUB_OUTPUT
+          echo "workflow_sha=${{ github.workflow_sha }}" >> $GITHUB_OUTPUT
+          
+          # Construct workflow run URL using proper variables
+          echo "workflow_run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
+          
+          # Set runner information
+          echo "runner_os=${{ runner.os }}" >> $GITHUB_OUTPUT
+          echo "runner_arch=${{ runner.arch }}" >> $GITHUB_OUTPUT
+          echo "runner_name=${{ runner.name }}" >> $GITHUB_OUTPUT
+          echo "runner_environment=${{ runner.environment }}" >> $GITHUB_OUTPUT
       
       - name: Check if validation is enabled
         id: check_validation
         run: |
+          # Use proper environment variable handling
           if [ "${{ env.ENABLE_HOOKSMITH_VALIDATION }}" = "true" ]; then
             echo "enabled=true" >> $GITHUB_OUTPUT
             echo "::notice::✅ Hooksmith validation is enabled"
+            echo "::info::Repository: ${{ github.repository }}"
+            echo "::info::Event: ${{ github.event_name }}"
+            echo "::info::Actor: ${{ github.actor }}"
           else
             echo "enabled=false" >> $GITHUB_OUTPUT
             echo "::notice::🔇 Hooksmith validation is disabled"
+            echo "::info::Repository: ${{ github.repository }}"
+            echo "::info::Event: ${{ github.event_name }}"
+            echo "::info::Actor: ${{ github.actor }}"
           fi
       
       - name: Run event-specific validation
@@ -107,13 +138,35 @@ jobs:
         run: |
           echo "::group::🔍 Running Hooksmith validation for ${{ github.event_name }}"
           
+          # Use proper environment variables for event context
+          export GITHUB_EVENT_PATH="${{ github.event_path }}"
+          export GITHUB_EVENT_NAME="${{ github.event_name }}"
+          export GITHUB_REPOSITORY="${{ github.repository }}"
+          export GITHUB_REPOSITORY_OWNER="${{ github.repository_owner }}"
+          export GITHUB_REPOSITORY_ID="${{ github.repository_id }}"
+          export GITHUB_REF="${{ github.ref }}"
+          export GITHUB_REF_NAME="${{ github.ref_name }}"
+          export GITHUB_REF_TYPE="${{ github.ref_type }}"
+          export GITHUB_SHA="${{ github.sha }}"
+          export GITHUB_ACTOR="${{ github.actor }}"
+          export GITHUB_ACTOR_ID="${{ github.actor_id }}"
+          export GITHUB_TRIGGERING_ACTOR="${{ github.triggering_actor }}"
+          export GITHUB_RUN_ID="${{ github.run_id }}"
+          export GITHUB_RUN_NUMBER="${{ github.run_number }}"
+          export GITHUB_WORKFLOW="${{ github.workflow }}"
+          export GITHUB_WORKSPACE="${{ github.workspace }}"
+          
           case ${{ github.event_name }} in
             push)
               echo "::info::🚀 Processing push event"
+              echo "::info::Branch: ${{ github.ref_name }}"
+              echo "::info::SHA: ${{ github.sha }}"
               ./target/release/github-push || echo "::warning::Push validation failed"
               ;;
             pull_request)
               echo "::info::🔀 Processing pull request event"
+              echo "::info::Base ref: ${{ github.base_ref }}"
+              echo "::info::Head ref: ${{ github.head_ref }}"
               ./target/release/github-pull-request || echo "::warning::Pull request validation failed"
               ;;
             issues)
@@ -126,10 +179,14 @@ jobs:
               ;;
             create)
               echo "::info::🌿 Processing create event"
+              echo "::info::Ref type: ${{ github.ref_type }}"
+              echo "::info::Ref name: ${{ github.ref_name }}"
               ./target/release/github-create || echo "::warning::Create validation failed"
               ;;
             delete)
               echo "::info::🗑️ Processing delete event"
+              echo "::info::Ref type: ${{ github.ref_type }}"
+              echo "::info::Ref name: ${{ github.ref_name }}"
               ./target/release/github-delete || echo "::warning::Delete validation failed"
               ;;
             branch_protection_rule)
@@ -149,17 +206,20 @@ jobs:
           
           # Set validation result
           echo "passed=true" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_EVENT_PATH: ${{ github.event_path }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_REF: ${{ github.ref }}
-          GITHUB_SHA: ${{ github.sha }}
       
       - name: Run Git hook validations
         if: steps.check_validation.outputs.enabled == 'true'
         run: |
           echo "::group::🔧 Running Git hook validations"
+          
+          # Export all relevant GitHub context variables
+          export GITHUB_EVENT_PATH="${{ github.event_path }}"
+          export GITHUB_EVENT_NAME="${{ github.event_name }}"
+          export GITHUB_REPOSITORY="${{ github.repository }}"
+          export GITHUB_REF="${{ github.ref }}"
+          export GITHUB_SHA="${{ github.sha }}"
+          export GITHUB_ACTOR="${{ github.actor }}"
+          export GITHUB_WORKSPACE="${{ github.workspace }}"
           
           # Run pre-commit validation
           echo "::info::Running pre-commit validation"
@@ -180,13 +240,30 @@ jobs:
       - name: Generate validation summary
         if: steps.check_validation.outputs.enabled == 'true'
         run: |
+          # Use proper GitHub context variables in summary
           echo "## Hooksmith Validation Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Event Type:** ${{ steps.event_info.outputs.type }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository Owner:** ${{ github.repository_owner }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository ID:** ${{ github.repository_id }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Ref Type:** ${{ github.ref_type }}" >> $GITHUB_STEP_SUMMARY
           echo "- **SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actor:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actor ID:** ${{ github.actor_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggering Actor:** ${{ github.triggering_actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run Attempt:** ${{ github.run_attempt }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow:** ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Ref:** ${{ github.workflow_ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow SHA:** ${{ github.workflow_sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner OS:** ${{ runner.os }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner Architecture:** ${{ runner.arch }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner Environment:** ${{ runner.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Validation Status:** ${{ steps.validation.outputs.passed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run URL:** ${{ steps.event_info.outputs.workflow_run_url }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Event-to-Hook Mapping" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -197,6 +274,18 @@ jobs:
           echo "- **issues** → commit-msg" >> $GITHUB_STEP_SUMMARY
           echo "- **release** → pre-receive, post-receive" >> $GITHUB_STEP_SUMMARY
           echo "- **create/delete** → pre-receive, post-receive" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Context Variables Used" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This workflow properly utilizes GitHub Actions context variables:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- `github.event_name` - Event that triggered the workflow" >> $GITHUB_STEP_SUMMARY
+          echo "- `github.repository` - Repository owner and name" >> $GITHUB_STEP_SUMMARY
+          echo "- `github.ref` - Full ref that triggered the workflow" >> $GITHUB_STEP_SUMMARY
+          echo "- `github.sha` - Commit SHA that triggered the workflow" >> $GITHUB_STEP_SUMMARY
+          echo "- `github.actor` - User who initiated the workflow" >> $GITHUB_STEP_SUMMARY
+          echo "- `runner.os` - Operating system of the runner" >> $GITHUB_STEP_SUMMARY
+          echo "- `env.ENABLE_HOOKSMITH_VALIDATION` - Custom environment variable" >> $GITHUB_STEP_SUMMARY
       
       - name: Validation completed
         if: steps.check_validation.outputs.enabled == 'true'
@@ -205,6 +294,10 @@ jobs:
           echo "Event: ${{ github.event_name }}"
           echo "Repository: ${{ github.repository }}"
           echo "Branch: ${{ github.ref_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Runner: ${{ runner.os }} (${{ runner.arch }})"
       
       - name: No-op mode notification
         if: steps.check_validation.outputs.enabled == 'false'
@@ -213,6 +306,9 @@ jobs:
           echo "Event: ${{ github.event_name }}"
           echo "Repository: ${{ github.repository }}"
           echo "Branch: ${{ github.ref_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "Workflow: ${{ github.workflow }}"
           echo ""
           echo "To enable validation, set ENABLE_HOOKSMITH_VALIDATION=true in the workflow environment variables"
           echo "or modify the env section at the top of this workflow file."
