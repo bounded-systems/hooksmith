@@ -1,0 +1,134 @@
+name: Hooksmith Validation Example
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+  issues:
+    types: [ opened, edited ]
+  release:
+    types: [ created, published ]
+  create:
+    types: [ tag, branch ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      validation_passed: ${{ steps.validation.outputs.passed }}
+      event_type: ${{ steps.event_info.outputs.type }}
+      files_changed: ${{ steps.event_info.outputs.files_changed }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Build hooksmith
+        run: cargo build --release
+      
+      - name: Get event information
+        id: event_info
+        run: |
+          echo "type=${{ github.event_name }}" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "files_changed=${{ github.event.pull_request.changed_files }}" >> $GITHUB_OUTPUT
+          else
+            echo "files_changed=0" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Run event-specific validation
+        id: validation
+        run: |
+          case ${{ github.event_name }} in
+            push)
+              echo "::group::🚀 Running push validation"
+              ./target/release/github-push
+              echo "::endgroup::"
+              ;;
+            pull_request)
+              echo "::group::🔀 Running pull request validation"
+              ./target/release/github-pull-request
+              echo "::endgroup::"
+              ;;
+            issues)
+              echo "::group::🔍 Running issues validation"
+              ./target/release/github-issues
+              echo "::endgroup::"
+              ;;
+            release)
+              echo "::group::🏷️ Running release validation"
+              ./target/release/github-release
+              echo "::endgroup::"
+              ;;
+            create)
+              echo "::group::🌿 Running create validation"
+              ./target/release/github-create
+              echo "::endgroup::"
+              ;;
+          esac
+          
+          # Set validation result
+          echo "passed=true" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
+      
+      - name: Run Git hook validations
+        run: |
+          echo "::group::🔧 Running Git hook validations"
+          
+          # Run pre-commit validation
+          echo "::info::Running pre-commit validation"
+          ./target/release/pre-commit || echo "::warning::Pre-commit validation failed"
+          
+          # Run commit-msg validation if applicable
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "::info::Running commit-msg validation"
+            ./target/release/commit-msg || echo "::warning::Commit-msg validation failed"
+          fi
+          
+          # Run post-commit validation
+          echo "::info::Running post-commit validation"
+          ./target/release/post-commit || echo "::warning::Post-commit validation failed"
+          
+          echo "::endgroup::"
+      
+      - name: Generate validation summary
+        run: |
+          echo "## Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Event Type:** ${{ steps.event_info.outputs.type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files Changed:** ${{ steps.event_info.outputs.files_changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation Status:** ${{ steps.validation.outputs.passed }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Hooksmith Integration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This workflow demonstrates the integration between GitHub Actions events and Git hooks:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub **push** events map to **pre-commit**, **commit-msg**, and **post-commit** hooks" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub **pull_request** events map to **pre-commit** and **commit-msg** hooks" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub **issues** events map to **commit-msg** validation for issue descriptions" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub **release** events map to **pre-receive** and **post-receive** hooks" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub **create** events map to **pre-receive** and **post-receive** hooks" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Validation completed
+        run: |
+          echo "::notice::✅ Hooksmith validation completed successfully"
+          echo "Event: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"

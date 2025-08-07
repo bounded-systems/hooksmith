@@ -1,0 +1,9 @@
+# This repository has no submodules
+# 
+# This file is tracked to explicitly indicate that no submodules are used.
+# If submodules are added in the future, they should be declared here.
+# 
+# Example submodule declaration:
+# [submodule "vendor/libfoo"]
+#   path = vendor/libfoo
+#   url = https://github.com/foo/libfoo.git

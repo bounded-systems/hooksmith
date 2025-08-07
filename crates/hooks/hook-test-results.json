@@ -1,0 +1,546 @@
+[
+  {
+    "hook_name": "pre-commit",
+    "success": true,
+    "duration_ms": 2,
+    "exit_code": 0,
+    "stdout": "✅ Pre-commit hook (no-op mode) - would validate directory structure\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "pre-commit",
+      "phase": "PreValidation",
+      "scope": "Client",
+      "git_objects": [
+        "Index",
+        "Blob"
+      ],
+      "validation_capabilities": [
+        "FileContent",
+        "FileStructure",
+        "WorkingTree"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "prepare-commit-msg",
+    "success": true,
+    "duration_ms": 2,
+    "exit_code": 0,
+    "stdout": "✅ Prepare-commit-msg hook (no-op mode) - would prepare commit message\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "prepare-commit-msg",
+      "phase": "Preparation",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Message",
+        "Head"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "commit-msg",
+    "success": true,
+    "duration_ms": 2,
+    "exit_code": 0,
+    "stdout": "✅ Commit-msg hook (no-op mode) - would validate commit message\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "commit-msg",
+      "phase": "Validation",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Message"
+      ],
+      "validation_capabilities": [
+        "MessageFormat",
+        "MessageContent"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "post-commit",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Post-commit hook (no-op mode) - would perform post-commit actions\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "post-commit",
+      "phase": "PostAction",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Head"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "pre-push",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Pre-push hook (no-op mode) - would validate both directory and file structure\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "pre-push",
+      "phase": "PreValidation",
+      "scope": "Client",
+      "git_objects": [
+        "Ref",
+        "Commit",
+        "Remote"
+      ],
+      "validation_capabilities": [
+        "RefValidation",
+        "CommitHistory",
+        "RemoteValidation"
+      ],
+      "expects_stdin": true,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "post-checkout",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Post-checkout hook (no-op mode) - would perform post-checkout actions\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "post-checkout",
+      "phase": "PostAction",
+      "scope": "Client",
+      "git_objects": [
+        "Head",
+        "Tree",
+        "Index"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "post-merge",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Post-merge hook (no-op mode) - would perform post-merge actions\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "post-merge",
+      "phase": "PostAction",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Tree",
+        "Index",
+        "Head"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "pre-rebase",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Pre-rebase hook (no-op mode) - would validate before rebase\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "pre-rebase",
+      "phase": "PreValidation",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Ref",
+        "Head"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "post-rebase",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Post-rebase hook (no-op mode) - would perform post-rebase actions\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "post-rebase",
+      "phase": "PostAction",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Ref",
+        "Reflog"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "post-rewrite",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Post-rewrite hook (no-op mode) - would perform post-rewrite actions\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "post-rewrite",
+      "phase": "PostAction",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Ref",
+        "Reflog"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "applypatch-msg",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Applypatch-msg hook (no-op mode) - would validate patch commit message\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "applypatch-msg",
+      "phase": "Validation",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Blob"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "pre-applypatch",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Pre-applypatch hook (no-op mode) - would validate before applying patch\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "pre-applypatch",
+      "phase": "PreValidation",
+      "scope": "Client",
+      "git_objects": [
+        "Blob",
+        "Index"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "post-applypatch",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Post-applypatch hook (no-op mode) - would perform post-patch actions\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "post-applypatch",
+      "phase": "PostAction",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Tree"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "pre-merge-commit",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Pre-merge-commit hook (no-op mode) - would validate before merge commit\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "pre-merge-commit",
+      "phase": "PreValidation",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Index"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "reference-transaction",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "reference-transaction",
+      "phase": "Transaction",
+      "scope": "Client",
+      "git_objects": [
+        "Ref",
+        "Reflog",
+        "Commit"
+      ],
+      "validation_capabilities": [
+        "RefValidation",
+        "TransactionValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "sendemail-validate",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Sendemail-validate hook (no-op mode) - would validate email content\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "sendemail-validate",
+      "phase": "Validation",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Message"
+      ],
+      "validation_capabilities": [
+        "MessageFormat",
+        "EmailValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "fsmonitor-watchman",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Fsmonitor-watchman hook (no-op mode) - would monitor file system changes\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "fsmonitor-watchman",
+      "phase": "PostAction",
+      "scope": "Client",
+      "git_objects": [
+        "Tree",
+        "Index"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": true,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "post-index-change",
+    "success": true,
+    "duration_ms": 1,
+    "exit_code": 0,
+    "stdout": "✅ Post-index-change hook (no-op mode) - would handle index changes\n",
+    "stderr": "",
+    "error": null,
+    "metadata": {
+      "name": "post-index-change",
+      "phase": "PostAction",
+      "scope": "Client",
+      "git_objects": [
+        "Index",
+        "Tree"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "commit-operation",
+    "success": false,
+    "duration_ms": 46,
+    "exit_code": 1,
+    "stdout": "On branch fix-ci-workflow\nYour branch is ahead of 'origin/fix-ci-workflow' by 1 commit.\n  (use \"git push\" to publish your local commits)\n\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)\n\thook-test-results.json\n\tsrc/bin/github-pull-request.rs\n\tsrc/bin/github-push.rs\n\tsrc/bin/hook-test-runner.rs\n\nnothing added to commit but untracked files present (use \"git add\" to track)\n",
+    "stderr": "✅ Post-index-change hook (no-op mode) - would handle index changes\n✅ Pre-commit hook (no-op mode) - would validate directory structure\n",
+    "error": "Commit operation failed",
+    "metadata": {
+      "name": "commit-operation",
+      "phase": "PreValidation",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Index"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "push-operation",
+    "success": true,
+    "duration_ms": 560,
+    "exit_code": 0,
+    "stdout": "✅ Pre-push hook (no-op mode) - would validate both directory and file structure\n",
+    "stderr": "To github.com:bdelanghe/hooksmith.git\n   038eb459..de4c3b98  fix-ci-workflow -> fix-ci-workflow\n",
+    "error": null,
+    "metadata": {
+      "name": "push-operation",
+      "phase": "PreValidation",
+      "scope": "Client",
+      "git_objects": [
+        "Ref",
+        "Remote"
+      ],
+      "validation_capabilities": [
+        "RefValidation"
+      ],
+      "expects_stdin": true,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "checkout-operation",
+    "success": true,
+    "duration_ms": 95,
+    "exit_code": 0,
+    "stdout": "Your branch is ahead of 'origin/fix-ci-workflow' by 1 commit.\n  (use \"git push\" to publish your local commits)\n",
+    "stderr": "✅ Post-index-change hook (no-op mode) - would handle index changes\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\nAlready on 'fix-ci-workflow'\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n✅ Post-checkout hook (no-op mode) - would perform post-checkout actions\n",
+    "error": null,
+    "metadata": {
+      "name": "checkout-operation",
+      "phase": "PostAction",
+      "scope": "Client",
+      "git_objects": [
+        "Head",
+        "Tree"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  },
+  {
+    "hook_name": "merge-operation",
+    "success": true,
+    "duration_ms": 48,
+    "exit_code": 0,
+    "stdout": "Already up to date.\n",
+    "stderr": "✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n✅ Reference-transaction hook (no-op mode) - would validate reference transactions\n",
+    "error": null,
+    "metadata": {
+      "name": "merge-operation",
+      "phase": "PostAction",
+      "scope": "Client",
+      "git_objects": [
+        "Commit",
+        "Tree"
+      ],
+      "validation_capabilities": [
+        "BasicValidation"
+      ],
+      "expects_stdin": false,
+      "produces_stdout": false,
+      "working_directory": "RepositoryRoot"
+    }
+  }
+]

@@ -1,0 +1,10 @@
+[package]
+name = "dircheck-tree"
+version = "0.1.0"
+edition = "2021"
+authors = ["Pushd Team"]
+description = "Validate directory structure using git ls-tree"
+license = "MIT"
+
+[dependencies]
+dircheck-core = { path = "../core" }

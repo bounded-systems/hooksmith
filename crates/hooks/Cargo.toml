@@ -1,0 +1,87 @@
+[package]
+name = "git-hooks"
+version = "0.1.0"
+edition = "2021"
+authors = ["Pushd Team"]
+description = "Rust-based Git hooks for Hooksmith"
+license = "MIT"
+
+[dependencies]
+dircheck-core = { path = "../core" }
+anyhow = "1.0"
+clap = { version = "4.0", features = ["derive"] }
+
+# Client-side hooks
+[[bin]]
+name = "pre-commit"
+path = "src/bin/pre-commit.rs"
+
+[[bin]]
+name = "prepare-commit-msg"
+path = "src/bin/prepare-commit-msg.rs"
+
+[[bin]]
+name = "commit-msg"
+path = "src/bin/commit-msg.rs"
+
+[[bin]]
+name = "post-commit"
+path = "src/bin/post-commit.rs"
+
+[[bin]]
+name = "pre-push"
+path = "src/bin/pre-push.rs"
+
+[[bin]]
+name = "pre-rebase"
+path = "src/bin/pre-rebase.rs"
+
+[[bin]]
+name = "post-rebase"
+path = "src/bin/post-rebase.rs"
+
+[[bin]]
+name = "post-checkout"
+path = "src/bin/post-checkout.rs"
+
+[[bin]]
+name = "post-merge"
+path = "src/bin/post-merge.rs"
+
+[[bin]]
+name = "post-rewrite"
+path = "src/bin/post-rewrite.rs"
+
+# Patch-related hooks
+[[bin]]
+name = "applypatch-msg"
+path = "src/bin/applypatch-msg.rs"
+
+[[bin]]
+name = "pre-applypatch"
+path = "src/bin/pre-applypatch.rs"
+
+[[bin]]
+name = "post-applypatch"
+path = "src/bin/post-applypatch.rs"
+
+# Additional client-side hooks
+[[bin]]
+name = "pre-merge-commit"
+path = "src/bin/pre-merge-commit.rs"
+
+[[bin]]
+name = "reference-transaction"
+path = "src/bin/reference-transaction.rs"
+
+[[bin]]
+name = "sendemail-validate"
+path = "src/bin/sendemail-validate.rs"
+
+[[bin]]
+name = "fsmonitor-watchman"
+path = "src/bin/fsmonitor-watchman.rs"
+
+[[bin]]
+name = "post-index-change"
+path = "src/bin/post-index-change.rs"

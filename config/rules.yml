@@ -1,0 +1,64 @@
+# Directory structure rules
+tree_rules:
+  allowed_root_dirs:
+    - src
+    - docs
+    - crates
+    - examples
+    - tests
+    - scripts
+    - config
+    - schemas
+    - hooks
+    - target
+    - .github
+    - .git
+
+  forbidden_dirs:
+    - node_modules
+    - vendor
+    - tmp
+    - temp
+
+  required_dirs:
+    - src
+
+# File structure rules
+file_rules:
+  forbidden_root_extensions:
+    - .md
+    - .toml
+    - .rs
+
+  allowed_extensions_by_dir:
+    src:
+      - .rs
+    docs:
+      - .md
+      - .txt
+    examples:
+      - .rs
+      - .md
+    tests:
+      - .rs
+    scripts:
+      - .rs
+      - .sh
+    config:
+      - .toml
+      - .yml
+      - .yaml
+      - .json
+      - .jsonc
+    schemas:
+      - .json
+      - .jsonc
+
+  forbidden_files:
+    - Cargo.lock
+    - .DS_Store
+    - Thumbs.db
+
+  required_files:
+    - Cargo.toml
+    - README.md
