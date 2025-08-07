@@ -61,9 +61,12 @@ pub mod contract_templates;
 pub mod hashed_store;
 /// SARIF merge utilities for parallel processing
 pub mod sarif_merge;
+/// Repair planning system with Triage Officer, Investigator, Dispatcher, and Fixers
+pub mod repair_planning;
 
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, HookEvent};
 use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ExpectedSnapshot};
+use crate::modules::functional_contract_pipeline::repair_planning::{TriageOfficer, Violation, RepairPlan};
 use anyhow::Result;
 use std::collections::HashMap;
 use std::path::Path;
@@ -74,6 +77,8 @@ pub struct FunctionalContractPipeline {
     repo_path: String,
     /// Hook event to concern mapping
     hook_concerns: HashMap<HookEvent, Vec<ConcernSymbol>>,
+    /// Triage Officer for repair planning
+    triage_officer: TriageOfficer,
 }
 
 impl FunctionalContractPipeline {
@@ -82,6 +87,7 @@ impl FunctionalContractPipeline {
         Self {
             repo_path: repo_path.as_ref().to_string_lossy().to_string(),
             hook_concerns: HashMap::new(),
+            triage_officer: TriageOfficer::new(),
         }
     }
 
@@ -111,7 +117,7 @@ impl FunctionalContractPipeline {
     }
 
     /// Run the pipeline with detailed diff information
-    pub fn run_hook_with_diffs(&self, hook: HookEvent) -> crate::modules::functional_contract_pipeline::types::DiffSet {
+    pub fn run_hook_with_diff(&self, hook: HookEvent) -> Result<types::DiffSet> {
         // 1. Identify concerns for the hook
         let concerns = hooks::get_concerns(&hook);
         
@@ -130,338 +136,96 @@ impl FunctionalContractPipeline {
             .map(|contract| specifier::build_expectation(contract))
             .collect();
         
-        // 5. Verify with detailed diffs
-        verifier::verify_with_diffs(&snapshots, &expectations)
+        // 5. Verify snapshots against expectations and return diff
+        Ok(verifier::verify_with_diffs(&snapshots, &expectations))
     }
 
-    /// Run the pipeline with custom severity mapping
-    pub fn run_hook_with_severity(
-        &self,
-        hook: HookEvent,
-        severity_map: &HashMap<ConcernSymbol, crate::modules::functional_contract_pipeline::symbols::RuleSeverity>,
-    ) -> crate::modules::functional_contract_pipeline::types::DiffSet {
-        // 1. Identify concerns for the hook
-        let concerns = hooks::get_concerns(&hook);
+    /// Run the complete pipeline with repair planning
+    pub fn run_hook_with_repair(&mut self, hook: HookEvent) -> Result<Vec<RepairPlan>> {
+        // 1. Run the standard validation pipeline
+        let diff_set = self.run_hook_with_diff(hook)?;
         
-        // 2. Archive snapshots of concerns
-        let snapshots: Vec<ConcernSnapshot> = concerns
-            .iter()
-            .map(|concern| concerns::snapshot_concern(concern))
-            .collect();
+        // 2. Convert violations to repair plans
+        let mut repair_plans = Vec::new();
         
-        // 3. Get contracts for concerns
-        let contracts = contracts::get_all_contracts(&concerns);
+        for diff in &diff_set.diffs {
+            // Convert diff to violation
+            let violation = Violation {
+                concern: diff.concern.clone(),
+                contract: "unknown".to_string(), // Would be determined from contract mapping
+                message: diff.description.clone(),
+                location: None, // Would be extracted from diff
+                severity: diff.severity.clone(),
+                details: diff.metadata.clone(),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            };
+            
+            // Find corresponding snapshot
+            let snapshot = self.find_snapshot_for_concern(&diff.concern)?;
+            
+            // Create repair plan
+            let plan = self.triage_officer.create_plan(&violation, &snapshot)?;
+            repair_plans.push(plan);
+        }
         
-        // 4. Build expectations from contracts
-        let expectations: Vec<ExpectedSnapshot> = contracts
-            .iter()
-            .map(|contract| specifier::build_expectation(contract))
-            .collect();
-        
-        // 5. Verify with custom severity
-        verifier::verify_with_severity(&snapshots, &expectations, severity_map)
+        Ok(repair_plans)
     }
 
-    /// Run the pipeline with JSON Patch diff generation
-    pub fn run_hook_with_json_patch(
-        &self,
-        hook: HookEvent,
-    ) -> crate::modules::functional_contract_pipeline::types::DiffSet {
-        // 1. Identify concerns for the hook
-        let concerns = hooks::get_concerns(&hook);
-        
-        // 2. Archive snapshots of concerns
-        let snapshots: Vec<ConcernSnapshot> = concerns
-            .iter()
-            .map(|concern| concerns::snapshot_concern(concern))
-            .collect();
-        
-        // 3. Get contracts for concerns
-        let contracts = contracts::get_all_contracts(&concerns);
-        
-        // 4. Build expectations from contracts
-        let expectations: Vec<ExpectedSnapshot> = contracts
-            .iter()
-            .map(|contract| specifier::build_expectation(contract))
-            .collect();
-        
-        // 5. Verify with JSON Patch
-        verifier::verify_with_json_patch(&snapshots, &expectations)
-    }
-
-    /// Generate JSON Patch for the entire pipeline
-pub fn generate_pipeline_patch(
-    &self,
-    hook: HookEvent,
-) -> json_patch::Patch {
-    // 1. Identify concerns for the hook
-    let concerns = hooks::get_concerns(&hook);
-    
-    // 2. Archive snapshots of concerns
-    let snapshots: Vec<ConcernSnapshot> = concerns
-        .iter()
-        .map(|concern| concerns::snapshot_concern(concern))
-        .collect();
-    
-    // 3. Get contracts for concerns
-    let contracts = contracts::get_all_contracts(&concerns);
-    
-    // 4. Build expectations from contracts
-    let expectations: Vec<ExpectedSnapshot> = contracts
-        .iter()
-        .map(|contract| specifier::build_expectation(contract))
-        .collect();
-    
-    // 5. Generate JSON Patch
-    verifier::generate_json_patch(&snapshots, &expectations)
-}
-
-/// Run the pipeline with high-performance diffing and automatic strategy selection
-pub fn run_hook_with_high_performance_diff(
-    &self,
-    hook: HookEvent,
-) -> (crate::modules::functional_contract_pipeline::types::DiffSet, crate::modules::functional_contract_pipeline::high_performance_diff::DiffMetrics) {
-    // 1. Identify concerns for the hook
-    let concerns = hooks::get_concerns(&hook);
-    
-    // 2. Archive snapshots of concerns
-    let snapshots: Vec<ConcernSnapshot> = concerns
-        .iter()
-        .map(|concern| concerns::snapshot_concern(concern))
-        .collect();
-    
-    // 3. Get contracts for concerns
-    let contracts = contracts::get_all_contracts(&concerns);
-    
-    // 4. Build expectations from contracts
-    let expectations: Vec<ExpectedSnapshot> = contracts
-        .iter()
-        .map(|contract| specifier::build_expectation(contract))
-        .collect();
-    
-    // 5. Use high-performance diffing with automatic strategy selection
-    high_performance_diff::convenience::auto_diff(&snapshots, &expectations)
-}
-
-/// Run the pipeline with specified high-performance diffing strategy
-pub fn run_hook_with_diff_strategy(
-    &self,
-    hook: HookEvent,
-    strategy: crate::modules::functional_contract_pipeline::high_performance_diff::DiffStrategy,
-) -> (crate::modules::functional_contract_pipeline::types::DiffSet, crate::modules::functional_contract_pipeline::high_performance_diff::DiffMetrics) {
-    // 1. Identify concerns for the hook
-    let concerns = hooks::get_concerns(&hook);
-    
-    // 2. Archive snapshots of concerns
-    let snapshots: Vec<ConcernSnapshot> = concerns
-        .iter()
-        .map(|concern| concerns::snapshot_concern(concern))
-        .collect();
-    
-    // 3. Get contracts for concerns
-    let contracts = contracts::get_all_contracts(&concerns);
-    
-    // 4. Build expectations from contracts
-    let expectations: Vec<ExpectedSnapshot> = contracts
-        .iter()
-        .map(|contract| specifier::build_expectation(contract))
-        .collect();
-    
-    // 5. Use specified high-performance diffing strategy
-    high_performance_diff::convenience::diff_with_strategy(strategy, &snapshots, &expectations)
-}
-
-/// Benchmark all diffing strategies for a hook
-pub fn benchmark_hook_strategies(
-    &self,
-    hook: HookEvent,
-) -> String {
-    // 1. Identify concerns for the hook
-    let concerns = hooks::get_concerns(&hook);
-    
-    // 2. Archive snapshots of concerns
-    let snapshots: Vec<ConcernSnapshot> = concerns
-        .iter()
-        .map(|concern| concerns::snapshot_concern(concern))
-        .collect();
-    
-    // 3. Get contracts for concerns
-    let contracts = contracts::get_all_contracts(&concerns);
-    
-    // 4. Build expectations from contracts
-    let expectations: Vec<ExpectedSnapshot> = contracts
-        .iter()
-        .map(|contract| specifier::build_expectation(contract))
-        .collect();
-    
-    // 5. Generate benchmark report
-    high_performance_diff::convenience::benchmark_report(&snapshots, &expectations)
-}
-
-    /// Get repository path
-    pub fn repo_path(&self) -> &str {
-        &self.repo_path
-    }
-
-    /// Set repository path
-    pub fn set_repo_path<P: AsRef<Path>>(&mut self, repo_path: P) {
-        self.repo_path = repo_path.as_ref().to_string_lossy().to_string();
+    /// Find snapshot for a specific concern
+    fn find_snapshot_for_concern(&self, concern: &ConcernSymbol) -> Result<ConcernSnapshot> {
+        // This would typically look up the snapshot from the concern
+        // For now, create a placeholder snapshot
+        Ok(ConcernSnapshot::new(
+            concern.clone(),
+            serde_json::json!({}),
+            HashMap::new(),
+        ))
     }
 }
 
-/// Convenience function to run a hook validation
-pub fn run_hook(hook: HookEvent, repo_path: &str) -> Result<()> {
-    let pipeline = FunctionalContractPipeline::new(repo_path);
-    pipeline.run_hook(hook)
+/// Extended pipeline with repair planning capabilities
+pub struct RepairPlanningPipeline {
+    /// Base functional contract pipeline
+    base_pipeline: FunctionalContractPipeline,
+    /// Triage Officer for repair planning
+    triage_officer: TriageOfficer,
 }
 
-/// Convenience function to run a hook validation with diffs
-pub fn run_hook_with_diffs(hook: HookEvent, repo_path: &str) -> crate::modules::functional_contract_pipeline::types::DiffSet {
-    let pipeline = FunctionalContractPipeline::new(repo_path);
-    pipeline.run_hook_with_diffs(hook)
-}
-
-/// Convenience function to run a hook validation with JSON Patch
-pub fn run_hook_with_json_patch(hook: HookEvent, repo_path: &str) -> crate::modules::functional_contract_pipeline::types::DiffSet {
-    let pipeline = FunctionalContractPipeline::new(repo_path);
-    pipeline.run_hook_with_json_patch(hook)
-}
-
-/// Convenience function to generate JSON Patch for a hook
-pub fn generate_hook_patch(hook: HookEvent, repo_path: &str) -> json_patch::Patch {
-    let pipeline = FunctionalContractPipeline::new(repo_path);
-    pipeline.generate_pipeline_patch(hook)
-}
-
-/// Convenience function to run hook with high-performance diffing
-pub fn run_hook_with_high_performance_diff(hook: HookEvent, repo_path: &str) -> (crate::modules::functional_contract_pipeline::types::DiffSet, crate::modules::functional_contract_pipeline::high_performance_diff::DiffMetrics) {
-    let pipeline = FunctionalContractPipeline::new(repo_path);
-    pipeline.run_hook_with_high_performance_diff(hook)
-}
-
-/// Convenience function to run hook with specified diff strategy
-pub fn run_hook_with_diff_strategy(
-    hook: HookEvent, 
-    repo_path: &str,
-    strategy: crate::modules::functional_contract_pipeline::high_performance_diff::DiffStrategy,
-) -> (crate::modules::functional_contract_pipeline::types::DiffSet, crate::modules::functional_contract_pipeline::high_performance_diff::DiffMetrics) {
-    let pipeline = FunctionalContractPipeline::new(repo_path);
-    pipeline.run_hook_with_diff_strategy(hook, strategy)
-}
-
-/// Convenience function to benchmark hook strategies
-pub fn benchmark_hook_strategies(hook: HookEvent, repo_path: &str) -> String {
-    let pipeline = FunctionalContractPipeline::new(repo_path);
-    pipeline.benchmark_hook_strategies(hook)
-}
-
-/// Convenience function to run SARIF-first pipeline
-pub fn run_sarif_first_pipeline(
-    hook_event: HookEvent,
-    commit_hash: String,
-    tree_hash: String,
-) -> (crate::modules::functional_contract_pipeline::sarif_roles::SarifLog, crate::modules::functional_contract_pipeline::sarif_roles::AuditResult) {
-    let mut pipeline = crate::modules::functional_contract_pipeline::sarif_roles::SarifFirstPipeline::new();
-    let git_metadata = crate::modules::functional_contract_pipeline::sarif_roles::GitMetadata::new(
-        commit_hash,
-        tree_hash,
-        hook_event,
-    );
-    pipeline.run_pipeline(hook_event, git_metadata)
-}
-
-/// Convenience function to create audit policy
-pub fn create_audit_policy(
-    name: String,
-    description: String,
-    concern: Option<String>,
-    severity: Option<crate::modules::functional_contract_pipeline::symbols::RuleSeverity>,
-    hook_event: Option<String>,
-    action: crate::modules::functional_contract_pipeline::sarif_roles::AuditAction,
-) -> crate::modules::functional_contract_pipeline::sarif_roles::AuditPolicy {
-    let mut criteria = crate::modules::functional_contract_pipeline::sarif_roles::QueryCriteria::new();
-    
-    if let Some(concern) = concern {
-        criteria = criteria.with_concern(concern);
+impl RepairPlanningPipeline {
+    /// Create a new repair planning pipeline
+    pub fn new<P: AsRef<Path>>(repo_path: P) -> Self {
+        Self {
+            base_pipeline: FunctionalContractPipeline::new(repo_path),
+            triage_officer: TriageOfficer::new(),
+        }
     }
-    
-    if let Some(severity) = severity {
-        criteria = criteria.with_severity(severity);
+
+    /// Run the complete pipeline with repair planning
+    pub fn run_with_repair(&mut self, hook: HookEvent) -> Result<Vec<RepairPlan>> {
+        self.base_pipeline.run_hook_with_repair(hook)
     }
-    
-    if let Some(hook_event) = hook_event {
-        criteria = criteria.with_hook_event(hook_event);
+
+    /// Get the triage officer for direct access
+    pub fn triage_officer(&mut self) -> &mut TriageOfficer {
+        &mut self.triage_officer
     }
-    
-    crate::modules::functional_contract_pipeline::sarif_roles::AuditPolicy::new(
-        name,
-        description,
-        criteria,
-        action,
-    )
-}
-
-/// Convenience function to create contract template registry with predefined templates
-pub fn create_template_registry() -> crate::modules::functional_contract_pipeline::contract_templates::ContractTemplateRegistry {
-    let mut registry = crate::modules::functional_contract_pipeline::contract_templates::ContractTemplateRegistry::new();
-    
-    // Register predefined templates
-    registry.register_template(crate::modules::functional_contract_pipeline::contract_templates::predefined::file_mode_template());
-    registry.register_template(crate::modules::functional_contract_pipeline::contract_templates::predefined::line_ending_template());
-    registry.register_template(crate::modules::functional_contract_pipeline::contract_templates::predefined::file_size_template());
-    registry.register_template(crate::modules::functional_contract_pipeline::contract_templates::predefined::file_extension_template());
-    
-    registry
-}
-
-/// Convenience function to create hashed store
-pub fn create_hashed_store() -> crate::modules::functional_contract_pipeline::hashed_store::HashedStore {
-    crate::modules::functional_contract_pipeline::hashed_store::HashedStore::new()
-}
-
-/// Convenience function to merge SARIF logs
-pub fn merge_sarif_logs(
-    logs: Vec<crate::modules::functional_contract_pipeline::sarif_roles::SarifLog>,
-    strategy: crate::modules::functional_contract_pipeline::sarif_merge::MergeStrategy,
-) -> crate::modules::functional_contract_pipeline::sarif_roles::SarifLog {
-    let options = crate::modules::functional_contract_pipeline::sarif_merge::MergeOptions {
-        strategy,
-        deduplicate: true,
-        sort: true,
-        custom_merge: None,
-    };
-    
-    crate::modules::functional_contract_pipeline::sarif_merge::SarifMerger::merge_logs(logs, &options)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::modules::functional_contract_pipeline::symbols::HookEvent;
 
     #[test]
     fn test_pipeline_creation() {
         let pipeline = FunctionalContractPipeline::new(".");
-        assert_eq!(pipeline.repo_path(), ".");
+        assert_eq!(pipeline.repo_path, ".");
     }
 
     #[test]
-    fn test_pipeline_repo_path_setter() {
-        let mut pipeline = FunctionalContractPipeline::new(".");
-        pipeline.set_repo_path("/tmp/repo");
-        assert_eq!(pipeline.repo_path(), "/tmp/repo");
-    }
-
-    #[test]
-    fn test_run_hook_convenience() {
-        // This test would require a real Git repository
-        // For now, we just test that the function compiles
-        let _result = run_hook(HookEvent::PreCommit, ".");
-    }
-
-    #[test]
-    fn test_run_hook_with_diffs_convenience() {
-        // This test would require a real Git repository
-        // For now, we just test that the function compiles
-        let _result = run_hook_with_diffs(HookEvent::PreCommit, ".");
+    fn test_repair_planning_pipeline_creation() {
+        let mut pipeline = RepairPlanningPipeline::new(".");
+        // Test that the triage officer can be accessed
+        let _triage_officer = pipeline.triage_officer();
     }
 }

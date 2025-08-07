@@ -18,10 +18,9 @@ pub enum MergeStrategy {
     Custom(String),
 }
 
-/// SARIF merge options
-#[derive(Debug)]
+/// Options for merging SARIF logs
 pub struct MergeOptions {
-    /// Merge strategy to use
+    /// The merge strategy to use
     pub strategy: MergeStrategy,
     /// Whether to deduplicate results
     pub deduplicate: bool,
@@ -118,7 +117,8 @@ impl SarifMerger {
             merged.extend(group_results.into_iter().cloned());
         }
         
-        merged.into_iter().cloned().collect()
+        // Return merged results
+        merged.into_iter().collect()
     }
     
     /// Merge results by contract
@@ -139,7 +139,8 @@ impl SarifMerger {
             merged.extend(group_results.into_iter().cloned());
         }
         
-        merged.into_iter().cloned().collect()
+        // Return merged results
+        merged.into_iter().collect()
     }
     
     /// Merge results by severity
@@ -155,10 +156,11 @@ impl SarifMerger {
         let severity_order = vec!["error", "warning", "note"];
         for severity in severity_order {
             if let Some(group_results) = grouped.get(severity) {
-                merged.extend(group_results.into_iter().cloned());
+                merged.extend(group_results.iter().cloned());
             }
         }
         
+        // Convert references to owned values
         merged.into_iter().cloned().collect()
     }
     
@@ -177,10 +179,11 @@ impl SarifMerger {
         
         let mut merged = Vec::new();
         for (_hook_event, group_results) in grouped {
-            merged.extend(group_results.into_iter().cloned());
+            merged.extend(group_results.iter().cloned());
         }
         
-        merged.into_iter().cloned().collect()
+        // Return merged results
+        merged
     }
     
     /// Merge results by tool

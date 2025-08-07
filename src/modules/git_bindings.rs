@@ -1,6 +1,51 @@
 use anyhow::{bail, Result};
-use std::path::Path;
-use crate::modules::git_native::{GitObjectType, GitMetadataType, GitTreeEntryType, GitAttributeType};
+use std::collections::HashMap;
+
+/// Git object types
+#[derive(Debug, Clone, PartialEq)]
+pub enum GitObjectType {
+    Blob,
+    Tree,
+    Commit,
+    Tag,
+}
+
+/// Git tree entry types
+#[derive(Debug, Clone, PartialEq)]
+pub enum GitTreeEntryType {
+    File,
+    Executable,
+    Symlink,
+    Directory,
+    Submodule,
+}
+
+/// Git metadata types
+#[derive(Debug, Clone, PartialEq)]
+pub enum GitMetadataType {
+    Ref,
+    Note,
+    Attr,
+    Index,
+    Stash,
+    Worktree,
+    Remote,
+    Branch,
+    Head,
+    Reflog,
+}
+
+/// Git attribute types
+#[derive(Debug, Clone, PartialEq)]
+pub enum GitAttributeType {
+    LineEndingNormalization,
+    DiffStrategy,
+    MergeStrategy,
+    ExportControl,
+    FilterDriver,
+    ExternalToolHint,
+    LockingHint,
+}
 
 /// Git-native API bindings for hook concerns
 /// 
@@ -32,11 +77,11 @@ impl GitBindings {
     /// Validate a Git tree entry using git2
     pub fn validate_git_tree_entry(&self, tree_entry_type: &GitTreeEntryType, entry_path: &str) -> Result<()> {
         match tree_entry_type {
-            GitTreeEntryType::TreeFile => self.validate_tree_file_git2(entry_path),
-            GitTreeEntryType::TreeExecutable => self.validate_tree_executable_git2(entry_path),
-            GitTreeEntryType::TreeSymlink => self.validate_tree_symlink_git2(entry_path),
-            GitTreeEntryType::TreeDirectory => self.validate_tree_directory_git2(entry_path),
-            GitTreeEntryType::TreeSubmodule => self.validate_tree_submodule_git2(entry_path),
+            GitTreeEntryType::File => self.validate_tree_file_git2(entry_path),
+            GitTreeEntryType::Executable => self.validate_tree_executable_git2(entry_path),
+            GitTreeEntryType::Symlink => self.validate_tree_symlink_git2(entry_path),
+            GitTreeEntryType::Directory => self.validate_tree_directory_git2(entry_path),
+            GitTreeEntryType::Submodule => self.validate_tree_submodule_git2(entry_path),
         }
     }
 
@@ -59,13 +104,13 @@ impl GitBindings {
     /// Validate Git attributes using git2
     pub fn validate_git_attribute(&self, attribute_type: &GitAttributeType, file_path: &str) -> Result<()> {
         match attribute_type {
-            GitAttributeType::AttrLineEndingNormalization => self.validate_attr_line_ending_git2(file_path),
-            GitAttributeType::AttrDiffStrategy => self.validate_attr_diff_strategy_git2(file_path),
-            GitAttributeType::AttrMergeStrategy => self.validate_attr_merge_strategy_git2(file_path),
-            GitAttributeType::AttrExportControl => self.validate_attr_export_control_git2(file_path),
-            GitAttributeType::AttrFilterDriver => self.validate_attr_filter_driver_git2(file_path),
-            GitAttributeType::AttrExternalToolHint => self.validate_attr_external_tool_git2(file_path),
-            GitAttributeType::AttrLockingHint => self.validate_attr_locking_hint_git2(file_path),
+            GitAttributeType::LineEndingNormalization => self.validate_attr_line_ending_git2(file_path),
+            GitAttributeType::DiffStrategy => self.validate_attr_diff_strategy_git2(file_path),
+            GitAttributeType::MergeStrategy => self.validate_attr_merge_strategy_git2(file_path),
+            GitAttributeType::ExportControl => self.validate_attr_export_control_git2(file_path),
+            GitAttributeType::FilterDriver => self.validate_attr_filter_driver_git2(file_path),
+            GitAttributeType::ExternalToolHint => self.validate_attr_external_tool_git2(file_path),
+            GitAttributeType::LockingHint => self.validate_attr_locking_hint_git2(file_path),
         }
     }
 
@@ -158,7 +203,7 @@ impl GitBindings {
 
     fn validate_attr_git2(&self, attr_path: &str) -> Result<()> {
         // Check if .gitattributes file exists and is valid
-        let attr_file = Path::new(&self.repo_path).join(attr_path);
+        let attr_file = std::path::Path::new(&self.repo_path).join(attr_path);
         if !attr_file.exists() {
             bail!("Git attributes file not found: {}", attr_file.display());
         }
@@ -387,11 +432,11 @@ impl GitBindings {
     /// Validate a Git tree entry using gix (gitoxide)
     pub fn validate_git_tree_entry_gix(&self, tree_entry_type: &GitTreeEntryType, entry_path: &str) -> Result<()> {
         match tree_entry_type {
-            GitTreeEntryType::TreeFile => self.validate_tree_file_gix(entry_path),
-            GitTreeEntryType::TreeExecutable => self.validate_tree_executable_gix(entry_path),
-            GitTreeEntryType::TreeSymlink => self.validate_tree_symlink_gix(entry_path),
-            GitTreeEntryType::TreeDirectory => self.validate_tree_directory_gix(entry_path),
-            GitTreeEntryType::TreeSubmodule => self.validate_tree_submodule_gix(entry_path),
+            GitTreeEntryType::File => self.validate_tree_file_gix(entry_path),
+            GitTreeEntryType::Executable => self.validate_tree_executable_gix(entry_path),
+            GitTreeEntryType::Symlink => self.validate_tree_symlink_gix(entry_path),
+            GitTreeEntryType::Directory => self.validate_tree_directory_gix(entry_path),
+            GitTreeEntryType::Submodule => self.validate_tree_submodule_gix(entry_path),
         }
     }
 
@@ -414,13 +459,13 @@ impl GitBindings {
     /// Validate Git attributes using gix (gitoxide)
     pub fn validate_git_attribute_gix(&self, attribute_type: &GitAttributeType, file_path: &str) -> Result<()> {
         match attribute_type {
-            GitAttributeType::AttrLineEndingNormalization => self.validate_attr_line_ending_gix(file_path),
-            GitAttributeType::AttrDiffStrategy => self.validate_attr_diff_strategy_gix(file_path),
-            GitAttributeType::AttrMergeStrategy => self.validate_attr_merge_strategy_gix(file_path),
-            GitAttributeType::AttrExportControl => self.validate_attr_export_control_gix(file_path),
-            GitAttributeType::AttrFilterDriver => self.validate_attr_filter_driver_gix(file_path),
-            GitAttributeType::AttrExternalToolHint => self.validate_attr_external_tool_gix(file_path),
-            GitAttributeType::AttrLockingHint => self.validate_attr_locking_hint_gix(file_path),
+            GitAttributeType::LineEndingNormalization => self.validate_attr_line_ending_gix(file_path),
+            GitAttributeType::DiffStrategy => self.validate_attr_diff_strategy_gix(file_path),
+            GitAttributeType::MergeStrategy => self.validate_attr_merge_strategy_gix(file_path),
+            GitAttributeType::ExportControl => self.validate_attr_export_control_gix(file_path),
+            GitAttributeType::FilterDriver => self.validate_attr_filter_driver_gix(file_path),
+            GitAttributeType::ExternalToolHint => self.validate_attr_external_tool_gix(file_path),
+            GitAttributeType::LockingHint => self.validate_attr_locking_hint_gix(file_path),
         }
     }
 
@@ -470,7 +515,7 @@ impl GitBindings {
 
     fn validate_attr_gix(&self, attr_path: &str) -> Result<()> {
         // Check if .gitattributes file exists and is valid
-        let attr_file = Path::new(&self.repo_path).join(attr_path);
+        let attr_file = std::path::Path::new(&self.repo_path).join(attr_path);
         if !attr_file.exists() {
             bail!("Git attributes file not found: {}", attr_file.display());
         }
@@ -633,11 +678,11 @@ impl GitConcernValidator for GitBindings {
             "tree" => self.validate_git_object(&GitObjectType::Tree, identifier),
             "commit" => self.validate_git_object(&GitObjectType::Commit, identifier),
             "tag" => self.validate_git_object(&GitObjectType::Tag, identifier),
-            "tree-file" => self.validate_git_tree_entry(&GitTreeEntryType::TreeFile, identifier),
-            "tree-executable" => self.validate_git_tree_entry(&GitTreeEntryType::TreeExecutable, identifier),
-            "tree-symlink" => self.validate_git_tree_entry(&GitTreeEntryType::TreeSymlink, identifier),
-            "tree-directory" => self.validate_git_tree_entry(&GitTreeEntryType::TreeDirectory, identifier),
-            "tree-submodule" => self.validate_git_tree_entry(&GitTreeEntryType::TreeSubmodule, identifier),
+            "tree-file" => self.validate_git_tree_entry(&GitTreeEntryType::File, identifier),
+            "tree-executable" => self.validate_git_tree_entry(&GitTreeEntryType::Executable, identifier),
+            "tree-symlink" => self.validate_git_tree_entry(&GitTreeEntryType::Symlink, identifier),
+            "tree-directory" => self.validate_git_tree_entry(&GitTreeEntryType::Directory, identifier),
+            "tree-submodule" => self.validate_git_tree_entry(&GitTreeEntryType::Submodule, identifier),
             "ref" => self.validate_git_metadata(&GitMetadataType::Ref, identifier),
             "note" => self.validate_git_metadata(&GitMetadataType::Note, identifier),
             "attr" => self.validate_git_metadata(&GitMetadataType::Attr, identifier),
@@ -648,13 +693,13 @@ impl GitConcernValidator for GitBindings {
             "branch" => self.validate_git_metadata(&GitMetadataType::Branch, identifier),
             "head" => self.validate_git_metadata(&GitMetadataType::Head, identifier),
             "reflog" => self.validate_git_metadata(&GitMetadataType::Reflog, identifier),
-            "attr-line-ending-normalization" => self.validate_git_attribute(&GitAttributeType::AttrLineEndingNormalization, identifier),
-            "attr-diff-strategy" => self.validate_git_attribute(&GitAttributeType::AttrDiffStrategy, identifier),
-            "attr-merge-strategy" => self.validate_git_attribute(&GitAttributeType::AttrMergeStrategy, identifier),
-            "attr-export-control" => self.validate_git_attribute(&GitAttributeType::AttrExportControl, identifier),
-            "attr-filter-driver" => self.validate_git_attribute(&GitAttributeType::AttrFilterDriver, identifier),
-            "attr-external-tool-hint" => self.validate_git_attribute(&GitAttributeType::AttrExternalToolHint, identifier),
-            "attr-locking-hint" => self.validate_git_attribute(&GitAttributeType::AttrLockingHint, identifier),
+            "attr-line-ending-normalization" => self.validate_git_attribute(&GitAttributeType::LineEndingNormalization, identifier),
+            "attr-diff-strategy" => self.validate_git_attribute(&GitAttributeType::DiffStrategy, identifier),
+            "attr-merge-strategy" => self.validate_git_attribute(&GitAttributeType::MergeStrategy, identifier),
+            "attr-export-control" => self.validate_git_attribute(&GitAttributeType::ExportControl, identifier),
+            "attr-filter-driver" => self.validate_git_attribute(&GitAttributeType::FilterDriver, identifier),
+            "attr-external-tool-hint" => self.validate_git_attribute(&GitAttributeType::ExternalToolHint, identifier),
+            "attr-locking-hint" => self.validate_git_attribute(&GitAttributeType::LockingHint, identifier),
             _ => bail!("Unknown concern: {}", concern),
         }
     }
@@ -665,11 +710,11 @@ impl GitConcernValidator for GitBindings {
             "tree" => self.validate_git_object_gix(&GitObjectType::Tree, identifier),
             "commit" => self.validate_git_object_gix(&GitObjectType::Commit, identifier),
             "tag" => self.validate_git_object_gix(&GitObjectType::Tag, identifier),
-            "tree-file" => self.validate_git_tree_entry_gix(&GitTreeEntryType::TreeFile, identifier),
-            "tree-executable" => self.validate_git_tree_entry_gix(&GitTreeEntryType::TreeExecutable, identifier),
-            "tree-symlink" => self.validate_git_tree_entry_gix(&GitTreeEntryType::TreeSymlink, identifier),
-            "tree-directory" => self.validate_git_tree_entry_gix(&GitTreeEntryType::TreeDirectory, identifier),
-            "tree-submodule" => self.validate_git_tree_entry_gix(&GitTreeEntryType::TreeSubmodule, identifier),
+            "tree-file" => self.validate_git_tree_entry_gix(&GitTreeEntryType::File, identifier),
+            "tree-executable" => self.validate_git_tree_entry_gix(&GitTreeEntryType::Executable, identifier),
+            "tree-symlink" => self.validate_git_tree_entry_gix(&GitTreeEntryType::Symlink, identifier),
+            "tree-directory" => self.validate_git_tree_entry_gix(&GitTreeEntryType::Directory, identifier),
+            "tree-submodule" => self.validate_git_tree_entry_gix(&GitTreeEntryType::Submodule, identifier),
             "ref" => self.validate_git_metadata_gix(&GitMetadataType::Ref, identifier),
             "note" => self.validate_git_metadata_gix(&GitMetadataType::Note, identifier),
             "attr" => self.validate_git_metadata_gix(&GitMetadataType::Attr, identifier),
@@ -680,13 +725,13 @@ impl GitConcernValidator for GitBindings {
             "branch" => self.validate_git_metadata_gix(&GitMetadataType::Branch, identifier),
             "head" => self.validate_git_metadata_gix(&GitMetadataType::Head, identifier),
             "reflog" => self.validate_git_metadata_gix(&GitMetadataType::Reflog, identifier),
-            "attr-line-ending-normalization" => self.validate_git_attribute_gix(&GitAttributeType::AttrLineEndingNormalization, identifier),
-            "attr-diff-strategy" => self.validate_git_attribute_gix(&GitAttributeType::AttrDiffStrategy, identifier),
-            "attr-merge-strategy" => self.validate_git_attribute_gix(&GitAttributeType::AttrMergeStrategy, identifier),
-            "attr-export-control" => self.validate_git_attribute_gix(&GitAttributeType::AttrExportControl, identifier),
-            "attr-filter-driver" => self.validate_git_attribute_gix(&GitAttributeType::AttrFilterDriver, identifier),
-            "attr-external-tool-hint" => self.validate_git_attribute_gix(&GitAttributeType::AttrExternalToolHint, identifier),
-            "attr-locking-hint" => self.validate_git_attribute_gix(&GitAttributeType::AttrLockingHint, identifier),
+            "attr-line-ending-normalization" => self.validate_git_attribute_gix(&GitAttributeType::LineEndingNormalization, identifier),
+            "attr-diff-strategy" => self.validate_git_attribute_gix(&GitAttributeType::DiffStrategy, identifier),
+            "attr-merge-strategy" => self.validate_git_attribute_gix(&GitAttributeType::MergeStrategy, identifier),
+            "attr-export-control" => self.validate_git_attribute_gix(&GitAttributeType::ExportControl, identifier),
+            "attr-filter-driver" => self.validate_git_attribute_gix(&GitAttributeType::FilterDriver, identifier),
+            "attr-external-tool-hint" => self.validate_git_attribute_gix(&GitAttributeType::ExternalToolHint, identifier),
+            "attr-locking-hint" => self.validate_git_attribute_gix(&GitAttributeType::LockingHint, identifier),
             _ => bail!("Unknown concern: {}", concern),
         }
     }
