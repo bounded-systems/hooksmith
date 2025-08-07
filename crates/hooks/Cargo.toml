@@ -10,3 +10,11 @@ license = "MIT"
 dircheck-core = { path = "../core" }
 anyhow = "1.0"
 clap = { version = "4.0", features = ["derive"] }
+
+[[bin]]
+name = "pre-commit"
+path = "src/bin/pre-commit.rs"
+
+[[bin]]
+name = "pre-push"
+path = "src/bin/pre-push.rs"
