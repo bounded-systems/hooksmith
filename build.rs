@@ -7,6 +7,11 @@ fn main() {
     println!("cargo:rerun-if-changed=.hooksmith/hooks/");
     println!("cargo:rerun-if-changed=target/release/");
     
+    // Skip validation during build process to avoid circular dependency
+    if std::env::var("SKIP_HOOK_VALIDATION").is_ok() {
+        return;
+    }
+    
     // Validate all static hooks at build time
     if let Err(e) = validate_static_hooks() {
         eprintln!("❌ Static hook validation failed: {}", e);

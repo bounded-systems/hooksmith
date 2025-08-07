@@ -1,7 +1,6 @@
 use anyhow::{bail, Result};
 use std::process::Command;
-use std::collections::HashMap;
-use itertools::Itertools;
+
 
 fn main() -> Result<()> {
     println!("🔍 Validating Git push concerns...");
@@ -58,11 +57,11 @@ fn main() -> Result<()> {
     let mut warnings = Vec::new();
     
     if ref_count == 0 {
-        warnings.push("No Git references found - repository may be empty");
+        warnings.push("No Git references found - repository may be empty".to_string());
     }
     
     if remote_count == 0 {
-        warnings.push("No Git remotes configured - push may fail");
+        warnings.push("No Git remotes configured - push may fail".to_string());
     }
     
     if worktree_count > 1 {

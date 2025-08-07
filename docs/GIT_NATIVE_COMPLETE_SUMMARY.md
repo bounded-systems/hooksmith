@@ -4,7 +4,7 @@
 
 We have successfully implemented a **zero-dynamic-resolution**, **schema-validated** static hook definition system with mandatory binary existence validation, using **only Git-native object types** that map directly to `git2` and `gix` (gitoxide) enums.
 
-## 🔒 **Git-Native Object Types (8 Total)**
+## 🔒 **Git-Native Object Types (11 Total)**
 
 ### Core Git Objects (from `.git/objects/`)
 
@@ -23,6 +23,9 @@ We have successfully implemented a **zero-dynamic-resolution**, **schema-validat
 | `note` | Commit-attached metadata | `.git/refs/notes/`, objects/ | ✅ (as refs + blob) |
 | `attr` | Git attributes | Working tree file or `.git/info` | ❌* (handled as files) |
 | `index` | Git index (staging area) | `.git/index` | ✅ (gix has support) |
+| `stash` | Stash pseudo-refs | `.git/refs/stash` | ✅ (as refs) |
+| `worktree` | Linked working directories | `.git/worktrees/` | ✅ (gix has support) |
+| `remote` | Remote repository configs | `.git/config` | ✅ (managed via configs) |
 
 *Note: `attr` is not a true Git object but a file Git interprets, like `.gitignore`. It's still tracked as a "concern" for policy enforcement.
 
@@ -45,6 +48,9 @@ pub enum HookConcern {
     Note,      // Notes (commit-attached metadata)
     Attr,      // Attributes (file-based config)
     Index,     // Index (staging area)
+    Stash,     // Stash (pseudo-refs for uncommitted work)
+    Worktree,  // Worktree (linked working directories)
+    Remote,    // Remote (remote repository configurations)
 }
 ```
 
@@ -167,7 +173,7 @@ pub trait GitConcernValidator {
       "uniqueItems": true,
       "items": {
         "type": "string",
-        "enum": ["blob", "tree", "commit", "tag", "ref", "note", "attr", "index"]
+        "enum": ["blob", "tree", "commit", "tag", "ref", "note", "attr", "index", "stash", "worktree", "remote"]
       }
     },
     "bin": {
@@ -188,7 +194,7 @@ pub trait GitConcernValidator {
 fn validate_single_hook(hook_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     // Validate concerns (Git-native only)
     let concerns = json["concerns"].as_array().ok_or("Missing 'concerns' field")?;
-    let valid_concerns = ["blob", "tree", "commit", "tag", "ref", "note", "attr", "index"];
+    let valid_concerns = ["blob", "tree", "commit", "tag", "ref", "note", "attr", "index", "stash", "worktree", "remote"];
     for concern in concerns {
         let concern_str = concern.as_str().ok_or("Invalid concern format")?;
         if !valid_concerns.contains(&concern_str) {
@@ -289,7 +295,7 @@ These can be added later in a separate `ValidationConcern` or `ProjectConcern` e
 
 ## 🔄 **Migration**
 
-Existing hook definitions using non-Git-native concerns will fail validation and must be updated to use only the 8 canonical Git-native types: `blob`, `tree`, `commit`, `tag`, `ref`, `note`, `attr`, `index`.
+Existing hook definitions using non-Git-native concerns will fail validation and must be updated to use only the 11 canonical Git-native types: `blob`, `tree`, `commit`, `tag`, `ref`, `note`, `attr`, `index`, `stash`, `worktree`, `remote`.
 
 ## ✅ **Validation Results**
 

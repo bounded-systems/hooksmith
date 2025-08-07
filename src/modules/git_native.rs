@@ -31,6 +31,81 @@ pub enum GitMetadataType {
     Worktree,
     /// Remote (remote repository configurations) - tracked in .git/config
     Remote,
+    /// Branch (branch-specific configurations) - tracked in .git/config
+    Branch,
+    /// Head (current branch reference) - tracked in .git/HEAD
+    Head,
+    /// Reflog (reference history) - tracked in .git/logs/
+    Reflog,
+}
+
+/// Git config section types (first-class concerns)
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum GitConfigType {
+    /// User configuration settings
+    ConfigUser,
+    /// Core configuration settings
+    ConfigCore,
+    /// Branch configuration settings
+    ConfigBranch,
+    /// Remote configuration settings
+    ConfigRemote,
+    /// Init configuration settings
+    ConfigInit,
+    /// Color configuration settings
+    ConfigColor,
+    /// Alias configuration settings
+    ConfigAlias,
+    /// Diff configuration settings
+    ConfigDiff,
+    /// Merge configuration settings
+    ConfigMerge,
+    /// GPG configuration settings
+    ConfigGpg,
+    /// Commit configuration settings
+    ConfigCommit,
+    /// Pull configuration settings
+    ConfigPull,
+    /// Push configuration settings
+    ConfigPush,
+    /// Rebase configuration settings
+    ConfigRebase,
+    /// Fetch configuration settings
+    ConfigFetch,
+    /// Status configuration settings
+    ConfigStatus,
+    /// Tar configuration settings
+    ConfigTar,
+    /// Rerere configuration settings
+    ConfigRerere,
+    /// Advice configuration settings
+    ConfigAdvice,
+    /// Interactive configuration settings
+    ConfigInteractive,
+    /// Submodule configuration settings
+    ConfigSubmodule,
+    /// Filter configuration settings
+    ConfigFilter,
+    /// Include configuration settings
+    ConfigInclude,
+    /// Credential configuration settings
+    ConfigCredential,
+    /// HTTP configuration settings
+    ConfigHttp,
+    /// URL configuration settings
+    ConfigUrl,
+    /// Safe configuration settings
+    ConfigSafe,
+    /// Notes configuration settings
+    ConfigNotes,
+    /// Garbage collection configuration settings
+    ConfigGc,
+    /// Maintenance configuration settings
+    ConfigMaintenance,
+    /// Pager configuration settings
+    ConfigPager,
+    /// Worktree configuration settings
+    ConfigWorktree,
 }
 
 /// Git-native validation context
@@ -91,6 +166,48 @@ impl GitNativeValidator {
             "stash" => Some(GitMetadataType::Stash),
             "worktree" => Some(GitMetadataType::Worktree),
             "remote" => Some(GitMetadataType::Remote),
+            "branch" => Some(GitMetadataType::Branch),
+            "head" => Some(GitMetadataType::Head),
+            "reflog" => Some(GitMetadataType::Reflog),
+            _ => None,
+        }
+    }
+
+    /// Map string config types to Git-native enums
+    pub fn map_config_type(config_type: &str) -> Option<GitConfigType> {
+        match config_type {
+            "config-user" => Some(GitConfigType::ConfigUser),
+            "config-core" => Some(GitConfigType::ConfigCore),
+            "config-branch" => Some(GitConfigType::ConfigBranch),
+            "config-remote" => Some(GitConfigType::ConfigRemote),
+            "config-init" => Some(GitConfigType::ConfigInit),
+            "config-color" => Some(GitConfigType::ConfigColor),
+            "config-alias" => Some(GitConfigType::ConfigAlias),
+            "config-diff" => Some(GitConfigType::ConfigDiff),
+            "config-merge" => Some(GitConfigType::ConfigMerge),
+            "config-gpg" => Some(GitConfigType::ConfigGpg),
+            "config-commit" => Some(GitConfigType::ConfigCommit),
+            "config-pull" => Some(GitConfigType::ConfigPull),
+            "config-push" => Some(GitConfigType::ConfigPush),
+            "config-rebase" => Some(GitConfigType::ConfigRebase),
+            "config-fetch" => Some(GitConfigType::ConfigFetch),
+            "config-status" => Some(GitConfigType::ConfigStatus),
+            "config-tar" => Some(GitConfigType::ConfigTar),
+            "config-rerere" => Some(GitConfigType::ConfigRerere),
+            "config-advice" => Some(GitConfigType::ConfigAdvice),
+            "config-interactive" => Some(GitConfigType::ConfigInteractive),
+            "config-submodule" => Some(GitConfigType::ConfigSubmodule),
+            "config-filter" => Some(GitConfigType::ConfigFilter),
+            "config-include" => Some(GitConfigType::ConfigInclude),
+            "config-credential" => Some(GitConfigType::ConfigCredential),
+            "config-http" => Some(GitConfigType::ConfigHttp),
+            "config-url" => Some(GitConfigType::ConfigUrl),
+            "config-safe" => Some(GitConfigType::ConfigSafe),
+            "config-notes" => Some(GitConfigType::ConfigNotes),
+            "config-gc" => Some(GitConfigType::ConfigGc),
+            "config-maintenance" => Some(GitConfigType::ConfigMaintenance),
+            "config-pager" => Some(GitConfigType::ConfigPager),
+            "config-worktree" => Some(GitConfigType::ConfigWorktree),
             _ => None,
         }
     }
@@ -102,7 +219,20 @@ impl GitNativeValidator {
 
     /// Get canonical Git metadata type names
     pub fn canonical_metadata_types() -> Vec<&'static str> {
-        vec!["ref", "note", "attr", "index", "stash", "worktree", "remote"]
+        vec!["ref", "note", "attr", "index", "stash", "worktree", "remote", "branch", "head", "reflog"]
+    }
+
+    /// Get canonical Git config type names
+    pub fn canonical_config_types() -> Vec<&'static str> {
+        vec![
+            "config-user", "config-core", "config-branch", "config-remote", "config-init",
+            "config-color", "config-alias", "config-diff", "config-merge", "config-gpg",
+            "config-commit", "config-pull", "config-push", "config-rebase", "config-fetch",
+            "config-status", "config-tar", "config-rerere", "config-advice", "config-interactive",
+            "config-submodule", "config-filter", "config-include", "config-credential",
+            "config-http", "config-url", "config-safe", "config-notes", "config-gc",
+            "config-maintenance", "config-pager", "config-worktree"
+        ]
     }
 
     /// Validate that all concerns are Git-native

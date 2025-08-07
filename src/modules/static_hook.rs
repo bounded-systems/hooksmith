@@ -35,10 +35,11 @@ pub enum HookScope {
     Patch,
 }
 
-/// Hook concerns enum - Git-native object types + local constructs
+/// Hook concerns enum - Git-native object types + local constructs + config sections
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Ord, PartialOrd)]
 #[serde(rename_all = "kebab-case")]
 pub enum HookConcern {
+    // Git Object Concerns
     /// Git blob objects (file contents)
     Blob,
     /// Git tree objects (directory structure)
@@ -53,14 +54,88 @@ pub enum HookConcern {
     Note,
     /// Git attributes (file-based config)
     Attr,
-    /// Git index (staging area)
-    Index,
+
+    // Git Local State Concerns
     /// Git stash (pseudo-refs for uncommitted work)
     Stash,
     /// Git worktree (linked working directories)
     Worktree,
+    /// Git index (staging area)
+    Index,
     /// Git remote (remote repository configurations)
     Remote,
+    /// Git branch (branch-specific configurations)
+    Branch,
+    /// Git HEAD (current branch reference)
+    Head,
+    /// Git reflog (reference history)
+    Reflog,
+
+    // Git Config Concerns (first-class)
+    /// Git config user settings
+    ConfigUser,
+    /// Git config core settings
+    ConfigCore,
+    /// Git config branch settings
+    ConfigBranch,
+    /// Git config remote settings
+    ConfigRemote,
+    /// Git config init settings
+    ConfigInit,
+    /// Git config color settings
+    ConfigColor,
+    /// Git config alias settings
+    ConfigAlias,
+    /// Git config diff settings
+    ConfigDiff,
+    /// Git config merge settings
+    ConfigMerge,
+    /// Git config GPG settings
+    ConfigGpg,
+    /// Git config commit settings
+    ConfigCommit,
+    /// Git config pull settings
+    ConfigPull,
+    /// Git config push settings
+    ConfigPush,
+    /// Git config rebase settings
+    ConfigRebase,
+    /// Git config fetch settings
+    ConfigFetch,
+    /// Git config status settings
+    ConfigStatus,
+    /// Git config tar settings
+    ConfigTar,
+    /// Git config rerere settings
+    ConfigRerere,
+    /// Git config advice settings
+    ConfigAdvice,
+    /// Git config interactive settings
+    ConfigInteractive,
+    /// Git config submodule settings
+    ConfigSubmodule,
+    /// Git config filter settings
+    ConfigFilter,
+    /// Git config include settings
+    ConfigInclude,
+    /// Git config credential settings
+    ConfigCredential,
+    /// Git config HTTP settings
+    ConfigHttp,
+    /// Git config URL settings
+    ConfigUrl,
+    /// Git config safe settings
+    ConfigSafe,
+    /// Git config notes settings
+    ConfigNotes,
+    /// Git config garbage collection settings
+    ConfigGc,
+    /// Git config maintenance settings
+    ConfigMaintenance,
+    /// Git config pager settings
+    ConfigPager,
+    /// Git config worktree settings
+    ConfigWorktree,
 }
 
 impl StaticHook {
