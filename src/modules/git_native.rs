@@ -142,6 +142,130 @@ pub enum GitAttributeType {
     AttrLockingHint,
 }
 
+/// Git storage file types (.git/ structure)
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum GitStorageType {
+    /// Git HEAD pointer (current ref)
+    HeadPointer,
+    /// Git index/staging area
+    IndexEntry,
+    /// Git index file
+    IndexFile,
+    /// Git index stage
+    IndexStage,
+    /// Git branch references
+    RefBranch,
+    /// Git remote-tracking branch references
+    RefRemoteBranch,
+    /// Git tag references
+    RefTag,
+    /// Git packed references
+    RefPacked,
+    /// Git notes references
+    NoteRef,
+    /// Git repository-only attributes
+    AttrRepoOnly,
+    /// Git repository-only ignore patterns
+    IgnoreRepoOnly,
+    /// Git local configuration
+    ConfigLocal,
+    /// Git hook scripts
+    HookScript,
+    /// Git hook lifecycle
+    HookLifecycle,
+    /// Git reference logs
+    RefLog,
+    /// Git reference log entries
+    RefLogEntry,
+    /// Git worktree metadata
+    WorktreeMeta,
+    /// Git worktree lock
+    WorktreeLock,
+    /// Git rebase plan
+    RebasePlan,
+    /// Git rebase cache entry
+    RRCacheEntry,
+    /// Git merge state
+    MergeState,
+    /// Git merge head
+    MergeHead,
+    /// Git original head pointer
+    OrigHeadPointer,
+    /// Git commit message draft
+    CommitMessageDraft,
+    /// Git fetch head pointer
+    FetchHeadPointer,
+    /// Git repository description
+    RepoDescription,
+    /// Git filesystem monitor state
+    FsMonitorState,
+    /// Git shallow clone depth
+    ShallowCloneDepth,
+}
+
+/// Git pattern types (ignore/attributes)
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum GitPatternType {
+    /// Git tree ignore patterns
+    TreeIgnorePattern,
+    /// Git global ignore patterns
+    IgnoreGlobalPattern,
+    /// Git attribute patterns
+    AttrPattern,
+    /// Git global attributes
+    AttrGlobal,
+}
+
+/// Git remote and network types
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum GitRemoteType {
+    /// Git remote origin configuration
+    RemoteOrigin,
+    /// Git remote configuration
+    RemoteConfig,
+    /// Git push strategy configuration
+    PushStrategyConfig,
+    /// Git credential helper configuration
+    CredentialHelperConfig,
+    /// Git remote URL aliases
+    RemoteURLAlias,
+}
+
+/// Git state management types
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum GitStateType {
+    /// Git stash entries
+    StashEntry,
+    /// Git stash references
+    StashRef,
+    /// Git stash metadata
+    StashMeta,
+    /// Git rebase steps
+    RebaseStep,
+    /// Git merge conflict markers
+    MergeConflictMarker,
+    /// Git bisect state
+    BisectState,
+    /// Git bisect log
+    BisectLog,
+    /// Git tag objects
+    TagObject,
+    /// Git worktree index
+    WorktreeIndex,
+    /// Git worktree branch link
+    WorktreeBranchLink,
+    /// Git hook triggers
+    HookTrigger,
+    /// Git index conflicts
+    IndexConflict,
+    /// Git index modes
+    IndexMode,
+    /// Git global configuration
+    ConfigGlobal,
+    /// Git system configuration
+    ConfigSystem,
+}
+
 /// Git-native validation context
 pub struct GitNativeValidator {
     object_counts: HashMap<GitObjectType, u32>,

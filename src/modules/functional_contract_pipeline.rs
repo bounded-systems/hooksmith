@@ -27,7 +27,6 @@ pub enum HookEvent {
     PreCommitMsg,
     CommitMsg,
     PostCommitMsg,
-    PreRebase,
     PostRebase,
     PreRebaseAuto,
     PostRebaseAuto,

@@ -83,6 +83,118 @@ pub enum HookConcern {
     /// Attribute: Locking hints (lockable for Git LFS)
     AttrLockingHint,
 
+    // Git Storage File Concerns (.git/ structure)
+    /// Git HEAD pointer (current ref)
+    HeadPointer,
+    /// Git index/staging area
+    IndexEntry,
+    /// Git index file
+    IndexFile,
+    /// Git index stage
+    IndexStage,
+    /// Git branch references
+    RefBranch,
+    /// Git remote-tracking branch references
+    RefRemoteBranch,
+    /// Git tag references
+    RefTag,
+    /// Git packed references
+    RefPacked,
+    /// Git notes references
+    NoteRef,
+    /// Git repository-only attributes
+    AttrRepoOnly,
+    /// Git repository-only ignore patterns
+    IgnoreRepoOnly,
+    /// Git local configuration
+    ConfigLocal,
+    /// Git hook scripts
+    HookScript,
+    /// Git hook lifecycle
+    HookLifecycle,
+    /// Git reference logs
+    RefLog,
+    /// Git reference log entries
+    RefLogEntry,
+    /// Git worktree metadata
+    WorktreeMeta,
+    /// Git worktree lock
+    WorktreeLock,
+    /// Git rebase plan
+    RebasePlan,
+    /// Git rebase cache entry
+    RRCacheEntry,
+    /// Git merge state
+    MergeState,
+    /// Git merge head
+    MergeHead,
+    /// Git original head pointer
+    OrigHeadPointer,
+    /// Git commit message draft
+    CommitMessageDraft,
+    /// Git fetch head pointer
+    FetchHeadPointer,
+    /// Git repository description
+    RepoDescription,
+    /// Git filesystem monitor state
+    FsMonitorState,
+    /// Git shallow clone depth
+    ShallowCloneDepth,
+
+    // Git Pattern Concerns (ignore/attributes)
+    /// Git tree ignore patterns
+    TreeIgnorePattern,
+    /// Git global ignore patterns
+    IgnoreGlobalPattern,
+    /// Git attribute patterns
+    AttrPattern,
+    /// Git global attributes
+    AttrGlobal,
+
+    // Git Remote and Network Concerns
+    /// Git remote origin configuration
+    RemoteOrigin,
+    /// Git remote configuration
+    RemoteConfig,
+    /// Git push strategy configuration
+    PushStrategyConfig,
+    /// Git credential helper configuration
+    CredentialHelperConfig,
+    /// Git remote URL aliases
+    RemoteURLAlias,
+
+    // Git State Management Concerns
+    /// Git stash entries
+    StashEntry,
+    /// Git stash references
+    StashRef,
+    /// Git stash metadata
+    StashMeta,
+    /// Git rebase steps
+    RebaseStep,
+    /// Git merge conflict markers
+    MergeConflictMarker,
+    /// Git bisect state
+    BisectState,
+    /// Git bisect log
+    BisectLog,
+    /// Git tag objects
+    TagObject,
+    /// Git worktree index
+    WorktreeIndex,
+    /// Git worktree branch link
+    WorktreeBranchLink,
+    /// Git hook triggers
+    HookTrigger,
+    /// Git index conflicts
+    IndexConflict,
+    /// Git index modes
+    IndexMode,
+    /// Git global configuration
+    ConfigGlobal,
+    /// Git system configuration
+    ConfigSystem,
+
     // Git Reference Concerns (Detailed Ref Types)
     /// Git branch references (refs/heads/*)
     RefBranch,
