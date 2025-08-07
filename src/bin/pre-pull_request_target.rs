@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 pre pull_request_target validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 Pre pull_request_target validation completed successfully");
     Ok(())
 }
 

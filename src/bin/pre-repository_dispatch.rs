@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 pre repository_dispatch validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 Pre repository_dispatch validation completed successfully");
     Ok(())
 }
 

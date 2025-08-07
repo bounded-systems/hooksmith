@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 pre issue_comment validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 Pre issue_comment validation completed successfully");
     Ok(())
 }
 

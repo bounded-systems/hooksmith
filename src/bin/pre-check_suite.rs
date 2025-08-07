@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 pre check_suite validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 Pre check_suite validation completed successfully");
     Ok(())
 }
 

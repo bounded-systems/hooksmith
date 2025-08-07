@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 pre workflow_dispatch validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 Pre workflow_dispatch validation completed successfully");
     Ok(())
 }
 

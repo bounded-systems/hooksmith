@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 post gollum validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 Post gollum validation completed successfully");
     Ok(())
 }
 

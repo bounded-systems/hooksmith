@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 post delete validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 Post delete validation completed successfully");
     Ok(())
 }
 

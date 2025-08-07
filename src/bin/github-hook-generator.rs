@@ -204,7 +204,7 @@ fn main() -> Result<()> {{
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 {} {} validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 {hook_type_capitalized} {event_name} validation completed successfully");
     Ok(())
 }}
 

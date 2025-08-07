@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 post branch_protection_rule validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 Post branch_protection_rule validation completed successfully");
     Ok(())
 }
 

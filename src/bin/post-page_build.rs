@@ -35,7 +35,7 @@ fn main() -> Result<()> {
     // - Perform custom validation
     // - Log activity for audit
 
-    println!("🚀 post page_build validation completed successfully", hook_type_capitalized, event_name);
+    println!("🚀 Post page_build validation completed successfully");
     Ok(())
 }
 
