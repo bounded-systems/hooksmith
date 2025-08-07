@@ -1,0 +1,5 @@
+.cargo/aliases.toml
+.cargo/config.toml
+.cargo/config.wasm.toml
+.gitattributes
+.github/workflows/ci.yml
