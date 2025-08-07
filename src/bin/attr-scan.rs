@@ -136,7 +136,7 @@ fn classify_file(file_path: &Path, entries: &[GitAttributesEntry]) -> FileClassi
     // If no linguist-language is set in .gitattributes, try hyperpolyglot detection
     if classification.linguist_language.is_none() {
         if let Ok(Some(detection)) = hyperpolyglot::detect(file_path) {
-            classification.linguist_language = Some(detection.to_string());
+            classification.linguist_language = Some(format!("{:?}", detection));
         }
     }
     
