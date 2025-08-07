@@ -100,7 +100,7 @@ fn validate_single_hook(hook_path: &Path) -> Result<(), Box<dyn std::error::Erro
     
     // Validate concerns (Git-native only)
     let concerns = json["concerns"].as_array().ok_or("Missing 'concerns' field")?;
-    let valid_concerns = ["blob", "tree", "commit", "tag", "ref", "note", "attr"];
+    let valid_concerns = ["blob", "tree", "commit", "tag", "ref", "note", "attr", "index"];
     for concern in concerns {
         let concern_str = concern.as_str().ok_or("Invalid concern format")?;
         if !valid_concerns.contains(&concern_str) {

@@ -22,6 +22,7 @@ The Hooksmith static hook definition system has been updated to use **only Git-n
 | `ref` | References (heads, tags, etc.) | `.git/refs/`, `.git/packed-refs` | ✅ (as reference types) |
 | `note` | Commit-attached metadata | `.git/refs/notes/`, objects/ | ✅ (as refs + blob) |
 | `attr` | Git attributes | Working tree file or `.git/info` | ❌* (handled as files) |
+| `index` | Git index (staging area) | `.git/index` | ✅ (gix has support) |
 
 *Note: `attr` is not a true Git object but a file Git interprets, like `.gitignore`. It's still tracked as a "concern" for policy enforcement.
 
@@ -43,6 +44,7 @@ pub enum HookConcern {
     Ref,       // References (heads, tags, etc.)
     Note,      // Notes (commit-attached metadata)
     Attr,      // Attributes (file-based config)
+    Index,     // Index (staging area)
 }
 ```
 
@@ -120,7 +122,7 @@ impl GitNativeValidator {
       "uniqueItems": true,
       "items": {
         "type": "string",
-        "enum": ["blob", "tree", "commit", "tag", "ref", "note", "attr"]
+        "enum": ["blob", "tree", "commit", "tag", "ref", "note", "attr", "index"]
       }
     },
     "bin": {
@@ -141,7 +143,7 @@ impl GitNativeValidator {
 fn validate_single_hook(hook_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     // Validate concerns (Git-native only)
     let concerns = json["concerns"].as_array().ok_or("Missing 'concerns' field")?;
-    let valid_concerns = ["blob", "tree", "commit", "tag", "ref", "note", "attr"];
+    let valid_concerns = ["blob", "tree", "commit", "tag", "ref", "note", "attr", "index"];
     for concern in concerns {
         let concern_str = concern.as_str().ok_or("Invalid concern format")?;
         if !valid_concerns.contains(&concern_str) {

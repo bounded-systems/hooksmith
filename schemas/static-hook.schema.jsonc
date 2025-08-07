@@ -31,7 +31,8 @@
           "tag",
           "ref",
           "note",
-          "attr"
+          "attr",
+          "index"
         ]
       }
     },

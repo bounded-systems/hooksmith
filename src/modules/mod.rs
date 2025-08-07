@@ -39,3 +39,5 @@ pub mod wasm;
 pub mod static_hook;
 /// Git-native object validation
 pub mod git_native;
+/// Git-native API bindings (git2/gix)
+pub mod git_bindings;

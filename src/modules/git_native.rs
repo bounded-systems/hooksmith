@@ -81,6 +81,7 @@ impl GitNativeValidator {
             "ref" => Some(GitMetadataType::Ref),
             "note" => Some(GitMetadataType::Note),
             "attr" => Some(GitMetadataType::Attr),
+            "index" => Some(GitMetadataType::Index),
             _ => None,
         }
     }
@@ -92,7 +93,7 @@ impl GitNativeValidator {
 
     /// Get canonical Git metadata type names
     pub fn canonical_metadata_types() -> Vec<&'static str> {
-        vec!["ref", "note", "attr"]
+        vec!["ref", "note", "attr", "index"]
     }
 
     /// Validate that all concerns are Git-native
@@ -141,6 +142,7 @@ mod tests {
         assert_eq!(GitNativeValidator::map_metadata_type("ref"), Some(GitMetadataType::Ref));
         assert_eq!(GitNativeValidator::map_metadata_type("note"), Some(GitMetadataType::Note));
         assert_eq!(GitNativeValidator::map_metadata_type("attr"), Some(GitMetadataType::Attr));
+        assert_eq!(GitNativeValidator::map_metadata_type("index"), Some(GitMetadataType::Index));
         assert_eq!(GitNativeValidator::map_metadata_type("invalid"), None);
     }
 
