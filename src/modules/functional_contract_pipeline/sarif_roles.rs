@@ -107,12 +107,20 @@ pub mod roles {
             let mut results = Vec::new();
 
             for diff in &diff_set.diffs {
+                // Create properties map
+                let mut properties = HashMap::new();
+                properties.insert("concern".to_string(), serde_json::Value::String(diff.concern.name().to_string()));
+                properties.insert("diff_type".to_string(), serde_json::Value::String(diff.diff_type.name().to_string()));
+                properties.insert("origin".to_string(), serde_json::Value::String(format!("hook/{:?}", hook_event)));
+                properties.insert("severity".to_string(), serde_json::Value::String(diff.severity.to_string()));
+
                 let result = SarifResult::builder()
                     .rule_id(format!("{}-{}", diff.concern.name(), diff.diff_type.name()))
                     .level(match diff.severity {
                         RuleSeverity::Error => "error",
                         RuleSeverity::Warning => "warning",
                         RuleSeverity::Info => "note",
+                        RuleSeverity::Critical => "error",
                     })
                     .message(Message::builder()
                         .text(diff.description.clone())
@@ -124,12 +132,7 @@ pub mod roles {
                                 .build())
                             .build())
                         .build()])
-                    .properties(HashMap::from([
-                        ("concern".to_string(), serde_json::Value::String(diff.concern.name().to_string())),
-                        ("diff_type".to_string(), serde_json::Value::String(diff.diff_type.name().to_string())),
-                        ("origin".to_string(), serde_json::Value::String(format!("hook/{:?}", hook_event))),
-                        ("severity".to_string(), serde_json::Value::String(format!("{:?}", diff.severity))),
-                    ]))
+                    .properties(serde_sarif::PropertyBag::new(properties))
                     .build();
 
                 results.push(result);
@@ -233,7 +236,7 @@ pub mod roles {
         fn matches_criteria(&self, result: &SarifResult, criteria: &QueryCriteria) -> bool {
             if let Some(props) = &result.properties {
                 if let Some(concern) = &criteria.concern {
-                    if let Some(result_concern) = props.get("concern") {
+                    if let Some(result_concern) = props.additional_properties.get("concern") {
                         if result_concern.as_str() != Some(concern) {
                             return false;
                         }
@@ -241,7 +244,7 @@ pub mod roles {
                 }
                 
                 if let Some(severity) = &criteria.severity {
-                    if let Some(result_severity) = props.get("severity") {
+                    if let Some(result_severity) = props.additional_properties.get("severity") {
                         if result_severity.as_str() != Some(&severity.to_string()) {
                             return false;
                         }
@@ -249,7 +252,7 @@ pub mod roles {
                 }
                 
                 if let Some(hook_event) = &criteria.hook_event {
-                    if let Some(result_hook) = props.get("hook_event") {
+                    if let Some(result_hook) = props.additional_properties.get("hook_event") {
                         if result_hook.as_str() != Some(hook_event) {
                             return false;
                         }
@@ -323,7 +326,7 @@ pub mod roles {
         fn matches_criteria(&self, result: &SarifResult, criteria: &QueryCriteria) -> bool {
             if let Some(props) = &result.properties {
                 if let Some(concern) = &criteria.concern {
-                    if let Some(result_concern) = props.get("concern") {
+                    if let Some(result_concern) = props.additional_properties.get("concern") {
                         if result_concern.as_str() != Some(concern) {
                             return false;
                         }
@@ -331,7 +334,7 @@ pub mod roles {
                 }
                 
                 if let Some(severity) = &criteria.severity {
-                    if let Some(result_severity) = props.get("severity") {
+                    if let Some(result_severity) = props.additional_properties.get("severity") {
                         if result_severity.as_str() != Some(&severity.to_string()) {
                             return false;
                         }
@@ -339,7 +342,7 @@ pub mod roles {
                 }
                 
                 if let Some(hook_event) = &criteria.hook_event {
-                    if let Some(result_hook) = props.get("hook_event") {
+                    if let Some(result_hook) = props.additional_properties.get("hook_event") {
                         if result_hook.as_str() != Some(hook_event) {
                             return false;
                         }
@@ -444,7 +447,7 @@ impl AuditPolicy {
     pub fn matches(&self, result: &SarifResult) -> bool {
         if let Some(props) = &result.properties {
             if let Some(concern) = &self.criteria.concern {
-                if let Some(result_concern) = props.get("concern") {
+                if let Some(result_concern) = props.additional_properties.get("concern") {
                     if result_concern.as_str() != Some(concern) {
                         return false;
                     }
@@ -452,7 +455,7 @@ impl AuditPolicy {
             }
             
             if let Some(severity) = &self.criteria.severity {
-                if let Some(result_severity) = props.get("severity") {
+                if let Some(result_severity) = props.additional_properties.get("severity") {
                     if result_severity.as_str() != Some(&severity.to_string()) {
                         return false;
                     }
@@ -460,7 +463,7 @@ impl AuditPolicy {
             }
             
             if let Some(hook_event) = &self.criteria.hook_event {
-                if let Some(result_hook) = props.get("hook_event") {
+                if let Some(result_hook) = props.additional_properties.get("hook_event") {
                     if result_hook.as_str() != Some(hook_event) {
                         return false;
                     }
