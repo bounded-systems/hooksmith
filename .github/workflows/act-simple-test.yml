@@ -1,0 +1,26 @@
+name: Simple Act Test
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Test act functionality
+        run: |
+          echo "✅ Act is working!"
+          echo "Event: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run ID: ${{ github.run_id }}"
+      
+      - name: Success notification
+        run: |
+          echo "🎉 Act test completed successfully!"
+          echo "All GitHub Actions functionality is working correctly."

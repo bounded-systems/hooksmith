@@ -69,6 +69,9 @@ impl GitBindings {
         stats.insert("stash".to_string(), 0);
         stats.insert("worktree".to_string(), 0);
         stats.insert("remote".to_string(), 0);
+        stats.insert("branch".to_string(), 0);
+        stats.insert("head".to_string(), 0);
+        stats.insert("reflog".to_string(), 0);
         Ok(stats)
     }
 
@@ -199,6 +202,9 @@ impl GitBindings {
         stats.insert("stash".to_string(), 0);
         stats.insert("worktree".to_string(), 0);
         stats.insert("remote".to_string(), 0);
+        stats.insert("branch".to_string(), 0);
+        stats.insert("head".to_string(), 0);
+        stats.insert("reflog".to_string(), 0);
         Ok(stats)
     }
 
@@ -378,6 +384,9 @@ impl GitConcernValidator for GitBindings {
             "stash" => self.validate_git_metadata_gix(&GitMetadataType::Stash, identifier),
             "worktree" => self.validate_git_metadata_gix(&GitMetadataType::Worktree, identifier),
             "remote" => self.validate_git_metadata_gix(&GitMetadataType::Remote, identifier),
+            "branch" => self.validate_git_metadata_gix(&GitMetadataType::Branch, identifier),
+            "head" => self.validate_git_metadata_gix(&GitMetadataType::Head, identifier),
+            "reflog" => self.validate_git_metadata_gix(&GitMetadataType::Reflog, identifier),
             _ => bail!("Unknown concern: {}", concern),
         }
     }
@@ -388,7 +397,7 @@ impl GitConcernValidator for GitBindings {
                 let stats = self.get_object_stats_git2()?;
                 Ok(*stats.get(concern).unwrap_or(&0))
             }
-            "ref" | "note" | "attr" | "index" | "stash" | "worktree" | "remote" => {
+            "ref" | "note" | "attr" | "index" | "stash" | "worktree" | "remote" | "branch" | "head" | "reflog" => {
                 let stats = self.get_metadata_stats_git2()?;
                 Ok(*stats.get(concern).unwrap_or(&0))
             }
@@ -425,6 +434,9 @@ mod tests {
         assert!(bindings.validate_concern_git2("stash", "refs/stash").is_ok());
         assert!(bindings.validate_concern_git2("worktree", "feature-branch").is_ok());
         assert!(bindings.validate_concern_git2("remote", "origin").is_ok());
+        assert!(bindings.validate_concern_git2("branch", "main").is_ok());
+        assert!(bindings.validate_concern_git2("head", "HEAD").is_ok());
+        assert!(bindings.validate_concern_git2("reflog", "refs/heads/main").is_ok());
         
         // Test invalid concern
         assert!(bindings.validate_concern_git2("invalid", "test").is_err());
@@ -448,6 +460,9 @@ mod tests {
         assert!(bindings.validate_concern_gix("stash", "refs/stash").is_ok());
         assert!(bindings.validate_concern_gix("worktree", "feature-branch").is_ok());
         assert!(bindings.validate_concern_gix("remote", "origin").is_ok());
+        assert!(bindings.validate_concern_gix("branch", "main").is_ok());
+        assert!(bindings.validate_concern_gix("head", "HEAD").is_ok());
+        assert!(bindings.validate_concern_gix("reflog", "refs/heads/main").is_ok());
         
         // Test invalid concern
         assert!(bindings.validate_concern_gix("invalid", "test").is_err());
