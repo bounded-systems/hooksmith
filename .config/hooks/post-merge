@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Post-merge hook stub that calls the Rust binary
+# This hook calls the post-merge binary from the hooks crate
+
+# Get the directory where this script is located
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
+
+# Call the Rust post-merge binary
+exec "$PROJECT_ROOT/target/debug/post-merge" "$@"

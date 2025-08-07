@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Prepare-commit-msg hook stub that calls the Rust binary
+# This hook calls the prepare-commit-msg binary from the hooks crate
+
+# Get the directory where this script is located
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
+
+# Call the Rust prepare-commit-msg binary
+exec "$PROJECT_ROOT/target/debug/prepare-commit-msg" "$@"

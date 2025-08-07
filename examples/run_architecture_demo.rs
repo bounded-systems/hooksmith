@@ -2,10 +2,10 @@
 
 use std::env;
 use std::fs;
-use std::path::Path;
-use std::process::{Command, Stdio};
 use std::io::{self, Write};
 use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
+use std::process::{Command, Stdio};
 
 // Colors for output
 const RED: &str = "\x1b[31m";
@@ -81,14 +81,17 @@ export default {
     // Create demo directories and files
     fs::create_dir_all("hooks")?;
     fs::create_dir_all("docs")?;
-    
+
     // Create pre-commit hook
-    fs::write("hooks/pre-commit", "#!/bin/bash\necho 'Pre-commit hook executed'")?;
+    fs::write(
+        "hooks/pre-commit",
+        "#!/bin/bash\necho 'Pre-commit hook executed'",
+    )?;
     fs::set_permissions("hooks/pre-commit", fs::Permissions::from_mode(0o755))?;
-    
+
     // Create README.md
     fs::write("README.md", "# Hooksmith Architecture Demo")?;
-    
+
     // Create ARCHITECTURE.md
     fs::write("docs/ARCHITECTURE.md", "# Architecture Documentation")?;
 
@@ -118,8 +121,7 @@ fn run_demo() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🚀 Starting Hooksmith Pipeline");
     println!("================================");
 
-    let status = Command::new("./target/debug/examples/hooksmith_architecture_demo")
-        .status()?;
+    let status = Command::new("./target/debug/examples/hooksmith_architecture_demo").status()?;
 
     if status.success() {
         print_success("Demo completed successfully!");
@@ -151,7 +153,7 @@ fn generate_sarif_output() -> Result<(), Box<dyn std::error::Error>> {
 
     let sarif_content = r#"{"ruleId":"must_be_executable","level":"warning","message":"hooks/pre-commit is not marked executable as required","target":"hooks/pre-commit","locations":[{"uri":"hooks/pre-commit","line":null,"column":null}],"timestamp":"2025-01-02T15:20:00Z"}
 {"ruleId":"must_have_handler","level":"error","message":"Slack workflow 'Submit Container' is missing a handler","target":"Submit Container","locations":[{"uri":"Submit Container","line":null,"column":null}],"timestamp":"2025-01-02T15:20:00Z"}"#;
-    
+
     fs::write("demo_sarif.jsonl", sarif_content)?;
     print_success("Generated sample SARIF output");
     Ok(())
@@ -195,7 +197,7 @@ fn create_routing_config() -> Result<(), Box<dyn std::error::Error>> {
     }
   ]
 }"#;
-    
+
     fs::write("demo_routing.jsonc", routing_content)?;
     print_success("Created routing configuration");
     Ok(())
@@ -206,11 +208,11 @@ fn cleanup_demo_files() -> Result<(), Box<dyn std::error::Error>> {
 
     let files_to_remove = [
         ".devcontract.ts",
-        "demo_sarif.jsonl", 
+        "demo_sarif.jsonl",
         "demo_routing.jsonc",
         "hooks/pre-commit",
         "README.md",
-        "docs/ARCHITECTURE.md"
+        "docs/ARCHITECTURE.md",
     ];
 
     for file in &files_to_remove {
@@ -282,7 +284,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("This demo proves that the Hooksmith dual-agent architecture is possible:");
     println!();
     println!("🔹 Contract parsing and desired state generation");
-    println!("🔹 Validation and observed state generation"); 
+    println!("🔹 Validation and observed state generation");
     println!("🔹 Diff generation and SARIF conversion");
     println!("🔹 Event routing with declarative rules");
     println!("🔹 Multi-modal operation (CLI, HTTP, file watching)");
@@ -301,4 +303,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("4. Add more sophisticated validation rules and handlers");
 
     Ok(())
-} 
+}

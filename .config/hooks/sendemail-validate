@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Sendemail-validate hook stub that calls the Rust binary
+# This hook calls the sendemail-validate binary from the hooks crate
+
+# Get the directory where this script is located
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
+
+# Call the Rust sendemail-validate binary
+exec "$PROJECT_ROOT/target/debug/sendemail-validate" "$@"

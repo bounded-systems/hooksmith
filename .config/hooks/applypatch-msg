@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Applypatch-msg hook stub that calls the Rust binary
+# This hook calls the applypatch-msg binary from the hooks crate
+
+# Get the directory where this script is located
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
+
+# Call the Rust applypatch-msg binary
+exec "$PROJECT_ROOT/target/debug/applypatch-msg" "$@"

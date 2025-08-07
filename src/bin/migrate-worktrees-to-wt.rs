@@ -1,6 +1,4 @@
-use hooksmith::{
-    get_worktrees, log_error, log_info, log_success, log_warning, run_git_command,
-};
+use hooksmith::{get_worktrees, log_error, log_info, log_success, log_warning, run_git_command};
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};

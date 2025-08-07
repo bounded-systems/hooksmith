@@ -55,18 +55,16 @@ on:
   # Custom and manual events
   repository_dispatch:
   schedule:
-    - cron: '0 0 * * *'  # Daily at midnight UTC
+    - cron: 0 0 * * *  # Daily at midnight UTC
   status:
   watch:
   
   # Workflow events
   workflow_dispatch:
-  workflow_run:
 
 jobs:
-  # Main validation job that can be easily enabled/disabled
+  # Main validation job - always runs but conditionally executes validation
   validate:
-    if: env.ENABLE_HOOKSMITH_VALIDATION == 'true'
     runs-on: ubuntu-latest
     outputs:
       validation_passed: ${{ steps.validation.outputs.passed }}
@@ -92,8 +90,20 @@ jobs:
           echo "ref=${{ github.ref }}" >> $GITHUB_OUTPUT
           echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
       
+      - name: Check if validation is enabled
+        id: check_validation
+        run: |
+          if [ "${{ env.ENABLE_HOOKSMITH_VALIDATION }}" = "true" ]; then
+            echo "enabled=true" >> $GITHUB_OUTPUT
+            echo "::notice::✅ Hooksmith validation is enabled"
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
+            echo "::notice::🔇 Hooksmith validation is disabled"
+          fi
+      
       - name: Run event-specific validation
         id: validation
+        if: steps.check_validation.outputs.enabled == 'true'
         run: |
           echo "::group::🔍 Running Hooksmith validation for ${{ github.event_name }}"
           
@@ -147,6 +157,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
       
       - name: Run Git hook validations
+        if: steps.check_validation.outputs.enabled == 'true'
         run: |
           echo "::group::🔧 Running Git hook validations"
           
@@ -167,6 +178,7 @@ jobs:
           echo "::endgroup::"
       
       - name: Generate validation summary
+        if: steps.check_validation.outputs.enabled == 'true'
         run: |
           echo "## Hooksmith Validation Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -187,18 +199,15 @@ jobs:
           echo "- **create/delete** → pre-receive, post-receive" >> $GITHUB_STEP_SUMMARY
       
       - name: Validation completed
+        if: steps.check_validation.outputs.enabled == 'true'
         run: |
           echo "::notice::✅ Hooksmith validation completed successfully"
           echo "Event: ${{ github.event_name }}"
           echo "Repository: ${{ github.repository }}"
           echo "Branch: ${{ github.ref_name }}"
-
-  # No-op job that always runs (for audit trail)
-  noop_audit:
-    if: env.ENABLE_HOOKSMITH_VALIDATION == 'false'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Hooksmith No-Op Mode
+      
+      - name: No-op mode notification
+        if: steps.check_validation.outputs.enabled == 'false'
         run: |
           echo "::notice::🔇 Hooksmith validation is disabled"
           echo "Event: ${{ github.event_name }}"

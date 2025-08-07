@@ -98,6 +98,9 @@ tempfile = "3.0"
 # Async runtime
 regex = "1.0"
 futures-io = "0.3"
+
+# Parallel processing
+rayon = "1.8"
 num_cpus = "1.0"
 
 # Additional dependencies

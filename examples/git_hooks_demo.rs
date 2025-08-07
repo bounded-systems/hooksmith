@@ -1,5 +1,5 @@
 //! Git Hooks Demo
-//! 
+//!
 //! This example demonstrates how to set up Git hooks using Rust binaries
 //! and Git aliases, eliminating the need for shell scripts.
 
@@ -11,7 +11,7 @@ use std::process::Command;
 /// Example Git hooks configuration
 fn create_hooks_config() -> git_hooks::GitHooksConfig {
     let mut config = git_hooks::GitHooksConfig::new();
-    
+
     // Add some common hooks
     config.add_hook(git_hooks::GitHook {
         name: "pre-commit".to_string(),
@@ -23,7 +23,7 @@ fn create_hooks_config() -> git_hooks::GitHooksConfig {
         dependencies: Vec::new(),
         config: HashMap::new(),
     });
-    
+
     config.add_hook(git_hooks::GitHook {
         name: "commit-msg".to_string(),
         binary_name: "hook-commit-msg".to_string(),
@@ -34,7 +34,7 @@ fn create_hooks_config() -> git_hooks::GitHooksConfig {
         dependencies: Vec::new(),
         config: HashMap::new(),
     });
-    
+
     config.add_hook(git_hooks::GitHook {
         name: "pre-push".to_string(),
         binary_name: "hook-pre-push".to_string(),
@@ -45,7 +45,7 @@ fn create_hooks_config() -> git_hooks::GitHooksConfig {
         dependencies: Vec::new(),
         config: HashMap::new(),
     });
-    
+
     config
 }
 
@@ -116,7 +116,8 @@ fn main() {
     println!("✅ Pre-commit checks passed");
     process::exit(0);
 }
-"#.to_string()
+"#
+    .to_string()
 }
 
 /// Example hook implementation for commit-msg
@@ -200,7 +201,8 @@ fn validate_commit_message(message: &str) -> bool {
     
     true
 }
-"#.to_string()
+"#
+    .to_string()
 }
 
 /// Example hook implementation for pre-push
@@ -273,7 +275,8 @@ fn check_file_sizes() -> bool {
     // This is a simplified check - in practice you'd scan actual files
     true // Always pass for demo
 }
-"#.to_string()
+"#
+    .to_string()
 }
 
 /// Generate Cargo.toml binary entries
@@ -292,55 +295,64 @@ path = "hooks/commit_msg.rs"
 [[bin]]
 name = "hook-pre-push"
 path = "hooks/pre_push.rs"
-"#.to_string()
+"#
+    .to_string()
 }
 
 /// Demo function to show the complete workflow
 fn run_demo() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚀 Git Hooks Demo");
     println!("==================");
-    
+
     // Create hooks configuration
     let config = create_hooks_config();
-    
+
     // Generate hook source files
     println!("\n📝 Generating hook source files...");
     fs::create_dir_all("hooks")?;
     fs::write("hooks/pre_commit.rs", generate_pre_commit_hook())?;
     fs::write("hooks/commit_msg.rs", generate_commit_msg_hook())?;
     fs::write("hooks/pre_push.rs", generate_pre_push_hook())?;
-    
+
     // Generate Cargo.toml binary entries
     println!("📦 Generating Cargo.toml binary entries...");
     let cargo_binaries = generate_cargo_binaries();
     fs::write("cargo-binaries.toml", cargo_binaries)?;
-    
+
     // Generate hooks configuration
     println!("⚙️ Generating hooks configuration...");
     let jsonc = config.to_jsonc()?;
     fs::write("git-hooks.jsonc", jsonc)?;
-    
+
     // Show what would be installed
     println!("\n📋 Hook Configuration Summary:");
     println!("==============================");
-    
+
     for hook in &config.hooks {
-        println!("• {}: {}", hook.name, hook.description.as_ref().unwrap_or(&"No description".to_string()));
+        println!(
+            "• {}: {}",
+            hook.name,
+            hook.description
+                .as_ref()
+                .unwrap_or(&"No description".to_string())
+        );
         println!("  Binary: {}", hook.binary_name);
         println!("  Source: {}", hook.source_path);
         println!("  Alias: {}", hook.alias_name);
         println!();
     }
-    
+
     // Show Git alias commands
     println!("🔗 Git Aliases that would be created:");
     println!("=====================================");
     for hook in &config.hooks {
-        println!("git config --local alias.{} '!./.git/hooks/bin/{}'", 
-            hook.alias_name, hook.binary_name);
+        println!(
+            "git config --local alias.{} '!./.git/hooks/bin/{}'",
+            hook.alias_name, hook.binary_name
+        );
     }
     println!();
-    
+
     // Show hook stub examples
     println!("📄 Hook Stub Examples:");
     println!("======================");
@@ -349,11 +361,11 @@ fn run_demo() -> Result<(), Box<dyn std::error::Error>> {
         println!("exec git {}\"$@\"", hook.alias_name);
         println!();
     }
-    
+
     println!("✅ Demo completed successfully!");
     println!("\nTo install these hooks, run:");
     println!("cargo xtask git-hooks install --config git-hooks.jsonc");
-    
+
     Ok(())
 }
 

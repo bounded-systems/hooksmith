@@ -789,6 +789,7 @@ mod event_stream;
 mod events;
 mod file_audit;
 mod generated_file_validator;
+mod git_attributes;
 mod git_config;
 mod git_lefthook_integration;
 mod git_notes_manager;
@@ -809,9 +810,8 @@ mod unified_generator;
 mod wasm_event_bus;
 mod workflow;
 mod worktree;
-mod worktree_sync;
 mod worktree_contract;
-mod git_attributes;
+mod worktree_sync;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -1640,31 +1640,31 @@ enum Commands {
         retries: u32,
     },
     /// Worktree management and tool integration
-Worktree {
-    #[command(subcommand)]
-    command: WorktreeCommands,
-},
-/// Git configuration management and conversion
-GitConfig {
-    #[command(subcommand)]
-    command: GitConfigCommands,
-},
-/// Git attributes management and conversion
-GitAttributes {
-    #[command(subcommand)]
-    command: GitAttributesCommands,
-},
-/// Git hooks management with Rust binaries
-GitHooks {
-    #[command(subcommand)]
-    command: GitHooksCommands,
-},
-/// SBOM generation and management
-Sbom {
-    /// SBOM command to execute
-    #[arg(trailing_var_arg = true)]
-    args: Vec<String>,
-},
+    Worktree {
+        #[command(subcommand)]
+        command: WorktreeCommands,
+    },
+    /// Git configuration management and conversion
+    GitConfig {
+        #[command(subcommand)]
+        command: GitConfigCommands,
+    },
+    /// Git attributes management and conversion
+    GitAttributes {
+        #[command(subcommand)]
+        command: GitAttributesCommands,
+    },
+    /// Git hooks management with Rust binaries
+    GitHooks {
+        #[command(subcommand)]
+        command: GitHooksCommands,
+    },
+    /// SBOM generation and management
+    Sbom {
+        /// SBOM command to execute
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
+    },
 }
 
 /// WIT schema for function definition
@@ -2613,9 +2613,7 @@ async fn main() -> Result<()> {
             } => {
                 let config = git_config::parse_git_config(&input)?;
                 let exported = match format.as_str() {
-                    "jsonc" => {
-                        git_config::convert_to_jsonc(&config)?
-                    }
+                    "jsonc" => git_config::convert_to_jsonc(&config)?,
                     "json" => {
                         let json = serde_json::to_string_pretty(&config)?;
                         json
@@ -2635,10 +2633,7 @@ async fn main() -> Result<()> {
                 fs::write(&output, exported)?;
                 println!("✅ Exported .git/config to {format}: {output}");
             }
-            GitConfigCommands::Validate {
-                input,
-                strict,
-            } => {
+            GitConfigCommands::Validate { input, strict } => {
                 let config = git_config::parse_git_config(&input)?;
                 let schema = git_config::load_schema()?;
                 let validation_result = git_config::validate_config(&config, &schema)?;
@@ -2723,9 +2718,7 @@ async fn main() -> Result<()> {
             } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 let exported = match format.as_str() {
-                    "jsonc" => {
-                        git_attributes::convert_to_jsonc(&attributes)?
-                    }
+                    "jsonc" => git_attributes::convert_to_jsonc(&attributes)?,
                     "json" => {
                         let json = serde_json::to_string_pretty(&attributes)?;
                         json
@@ -2749,10 +2742,7 @@ async fn main() -> Result<()> {
                 fs::write(&output, exported)?;
                 println!("✅ Exported .gitattributes to {format}: {output}");
             }
-            GitAttributesCommands::Validate {
-                input,
-                strict,
-            } => {
+            GitAttributesCommands::Validate { input, strict } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 let schema = git_attributes::load_schema()?;
                 let validation_result = git_attributes::validate_attributes(&attributes, &schema)?;
@@ -2768,10 +2758,7 @@ async fn main() -> Result<()> {
                     }
                 }
             }
-            GitAttributesCommands::TestMatching {
-                input,
-                files,
-            } => {
+            GitAttributesCommands::TestMatching { input, files } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 for file in files {
                     let matched_attributes = git_attributes::match_attributes(&attributes, &file);

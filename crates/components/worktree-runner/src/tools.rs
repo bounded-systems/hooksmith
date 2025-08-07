@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use std::process::Command;
 use tracing::{info, warn};
 
-use crate::crd::{WorktreeChangeRequest, WorktreeAction};
+use crate::crd::{WorktreeAction, WorktreeChangeRequest};
 
 /// Available worktree tools
 #[derive(Debug, Clone)]
@@ -75,7 +75,7 @@ impl ToolManager {
 
         // Find the best available tool for this operation
         let available_tools = WorktreeTool::get_available_tools();
-        
+
         for tool in available_tools {
             if self.is_tool_suitable(&tool, operation) {
                 return Ok(tool);
@@ -103,23 +103,37 @@ impl ToolManager {
     }
 
     /// Execute a worktree operation using the best available tool
-    pub async fn execute_operation(&self, operation: ToolOperation, args: &[&str]) -> Result<ToolResult> {
+    pub async fn execute_operation(
+        &self,
+        operation: ToolOperation,
+        args: &[&str],
+    ) -> Result<ToolResult> {
         let tool = self.get_best_tool(&operation)?;
-        info!("Using {} for operation {:?}", tool.command_name(), operation);
-        
+        info!(
+            "Using {} for operation {:?}",
+            tool.command_name(),
+            operation
+        );
+
         match tool {
             WorktreeTool::Workbloom => self.execute_with_workbloom(operation, args).await,
             WorktreeTool::Gwtr => self.execute_with_gwtr(operation, args).await,
-            WorktreeTool::GitWorktreeCli => self.execute_with_git_worktree_cli(operation, args).await,
+            WorktreeTool::GitWorktreeCli => {
+                self.execute_with_git_worktree_cli(operation, args).await
+            }
             WorktreeTool::Devspace => self.execute_with_devspace(operation, args).await,
             WorktreeTool::Git => self.execute_with_git(operation, args).await,
         }
     }
 
     /// Execute operation using workbloom
-    async fn execute_with_workbloom(&self, operation: ToolOperation, args: &[&str]) -> Result<ToolResult> {
+    async fn execute_with_workbloom(
+        &self,
+        operation: ToolOperation,
+        args: &[&str],
+    ) -> Result<ToolResult> {
         let mut cmd = Command::new("wb");
-        
+
         match operation {
             ToolOperation::CreateWorktree => {
                 cmd.args(&["add", args[0]]);
@@ -137,13 +151,18 @@ impl ToolManager {
                 cmd.args(&["status"]);
             }
             _ => {
-                warn!("Workbloom doesn't support operation {:?}, falling back to git", operation);
+                warn!(
+                    "Workbloom doesn't support operation {:?}, falling back to git",
+                    operation
+                );
                 return self.execute_with_git(operation, args).await;
             }
         }
 
-        let output = cmd.output().context("Failed to execute workbloom command")?;
-        
+        let output = cmd
+            .output()
+            .context("Failed to execute workbloom command")?;
+
         Ok(ToolResult {
             success: output.status.success(),
             output: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -157,9 +176,13 @@ impl ToolManager {
     }
 
     /// Execute operation using gwtr
-    async fn execute_with_gwtr(&self, operation: ToolOperation, args: &[&str]) -> Result<ToolResult> {
+    async fn execute_with_gwtr(
+        &self,
+        operation: ToolOperation,
+        args: &[&str],
+    ) -> Result<ToolResult> {
         let mut cmd = Command::new("gwtr");
-        
+
         match operation {
             ToolOperation::CreateWorktree => {
                 cmd.args(&["add", args[0]]);
@@ -177,13 +200,16 @@ impl ToolManager {
                 cmd.args(&["status"]);
             }
             _ => {
-                warn!("Gwtr doesn't support operation {:?}, falling back to git", operation);
+                warn!(
+                    "Gwtr doesn't support operation {:?}, falling back to git",
+                    operation
+                );
                 return self.execute_with_git(operation, args).await;
             }
         }
 
         let output = cmd.output().context("Failed to execute gwtr command")?;
-        
+
         Ok(ToolResult {
             success: output.status.success(),
             output: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -197,9 +223,13 @@ impl ToolManager {
     }
 
     /// Execute operation using git-worktree-cli
-    async fn execute_with_git_worktree_cli(&self, operation: ToolOperation, args: &[&str]) -> Result<ToolResult> {
+    async fn execute_with_git_worktree_cli(
+        &self,
+        operation: ToolOperation,
+        args: &[&str],
+    ) -> Result<ToolResult> {
         let mut cmd = Command::new("git-worktree-cli");
-        
+
         match operation {
             ToolOperation::Status => {
                 cmd.args(&["status"]);
@@ -208,13 +238,18 @@ impl ToolManager {
                 cmd.args(&["add", args[0]]);
             }
             _ => {
-                warn!("Git-worktree-cli doesn't support operation {:?}, falling back to git", operation);
+                warn!(
+                    "Git-worktree-cli doesn't support operation {:?}, falling back to git",
+                    operation
+                );
                 return self.execute_with_git(operation, args).await;
             }
         }
 
-        let output = cmd.output().context("Failed to execute git-worktree-cli command")?;
-        
+        let output = cmd
+            .output()
+            .context("Failed to execute git-worktree-cli command")?;
+
         Ok(ToolResult {
             success: output.status.success(),
             output: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -228,9 +263,13 @@ impl ToolManager {
     }
 
     /// Execute operation using devspace
-    async fn execute_with_devspace(&self, operation: ToolOperation, args: &[&str]) -> Result<ToolResult> {
+    async fn execute_with_devspace(
+        &self,
+        operation: ToolOperation,
+        args: &[&str],
+    ) -> Result<ToolResult> {
         let mut cmd = Command::new("devspace");
-        
+
         match operation {
             ToolOperation::CreateWorktree => {
                 cmd.args(&["add", args[0]]);
@@ -245,13 +284,16 @@ impl ToolManager {
                 cmd.args(&["status"]);
             }
             _ => {
-                warn!("Devspace doesn't support operation {:?}, falling back to git", operation);
+                warn!(
+                    "Devspace doesn't support operation {:?}, falling back to git",
+                    operation
+                );
                 return self.execute_with_git(operation, args).await;
             }
         }
 
         let output = cmd.output().context("Failed to execute devspace command")?;
-        
+
         Ok(ToolResult {
             success: output.status.success(),
             output: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -265,9 +307,13 @@ impl ToolManager {
     }
 
     /// Execute operation using git (fallback)
-    async fn execute_with_git(&self, operation: ToolOperation, args: &[&str]) -> Result<ToolResult> {
+    async fn execute_with_git(
+        &self,
+        operation: ToolOperation,
+        args: &[&str],
+    ) -> Result<ToolResult> {
         let mut cmd = Command::new("git");
-        
+
         match operation {
             ToolOperation::CreateWorktree => {
                 cmd.args(&["worktree", "add", args[0], args[1]]);
@@ -288,12 +334,15 @@ impl ToolManager {
                 cmd.args(&["worktree", "list"]);
             }
             _ => {
-                return Err(anyhow::anyhow!("Git doesn't support operation {:?}", operation));
+                return Err(anyhow::anyhow!(
+                    "Git doesn't support operation {:?}",
+                    operation
+                ));
             }
         }
 
         let output = cmd.output().context("Failed to execute git command")?;
-        
+
         Ok(ToolResult {
             success: output.status.success(),
             output: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -309,11 +358,14 @@ impl ToolManager {
     /// Get status of all available tools
     pub fn get_tool_status(&self) -> Vec<ToolStatus> {
         let mut status = Vec::new();
-        
+
         for tool in WorktreeTool::get_available_tools() {
             let available = tool.is_available();
-            let preferred = self.preferred_tool.as_ref().map_or(false, |pt| pt.command_name() == tool.command_name());
-            
+            let preferred = self
+                .preferred_tool
+                .as_ref()
+                .map_or(false, |pt| pt.command_name() == tool.command_name());
+
             status.push(ToolStatus {
                 name: tool.command_name().to_string(),
                 available,
@@ -321,7 +373,7 @@ impl ToolManager {
                 version: self.get_tool_version(&tool),
             });
         }
-        
+
         status
     }
 
@@ -331,7 +383,7 @@ impl ToolManager {
             .arg("--version")
             .output()
             .ok()?;
-        
+
         if output.status.success() {
             Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
         } else {
@@ -388,25 +440,32 @@ impl EnhancedWorktreeOps {
     }
 
     /// Create a worktree with automatic setup
-    pub async fn create_worktree_with_setup(&self, branch_name: &str, _setup_commands: &[&str]) -> Result<ToolResult> {
+    pub async fn create_worktree_with_setup(
+        &self,
+        branch_name: &str,
+        _setup_commands: &[&str],
+    ) -> Result<ToolResult> {
         // Create worktree
-        let create_result = self.tool_manager.execute_operation(
-            ToolOperation::CreateWorktree,
-            &[branch_name],
-        ).await?;
+        let create_result = self
+            .tool_manager
+            .execute_operation(ToolOperation::CreateWorktree, &[branch_name])
+            .await?;
 
         if !create_result.success {
             return Ok(create_result);
         }
 
         // Setup environment if workbloom is available
-        if let Ok(workbloom) = self.tool_manager.get_best_tool(&ToolOperation::SetupEnvironment) {
+        if let Ok(workbloom) = self
+            .tool_manager
+            .get_best_tool(&ToolOperation::SetupEnvironment)
+        {
             if matches!(workbloom, WorktreeTool::Workbloom) {
-                let setup_result = self.tool_manager.execute_operation(
-                    ToolOperation::SetupEnvironment,
-                    &[branch_name],
-                ).await?;
-                
+                let setup_result = self
+                    .tool_manager
+                    .execute_operation(ToolOperation::SetupEnvironment, &[branch_name])
+                    .await?;
+
                 return Ok(setup_result);
             }
         }
@@ -416,75 +475,76 @@ impl EnhancedWorktreeOps {
 
     /// Bulk pull all worktrees
     pub async fn bulk_pull_all(&self) -> Result<ToolResult> {
-        self.tool_manager.execute_operation(
-            ToolOperation::BulkPull,
-            &[],
-        ).await
+        self.tool_manager
+            .execute_operation(ToolOperation::BulkPull, &[])
+            .await
     }
 
     /// Prune stale worktrees
     pub async fn prune_worktrees(&self, force: bool) -> Result<ToolResult> {
         let args = if force { vec!["--force"] } else { vec![] };
-        self.tool_manager.execute_operation(
-            ToolOperation::PruneWorktrees,
-            &args.iter().map(|s| *s).collect::<Vec<_>>(),
-        ).await
+        self.tool_manager
+            .execute_operation(
+                ToolOperation::PruneWorktrees,
+                &args.iter().map(|s| *s).collect::<Vec<_>>(),
+            )
+            .await
     }
 
     /// Get comprehensive status
     pub async fn get_status(&self) -> Result<ToolResult> {
-        self.tool_manager.execute_operation(
-            ToolOperation::Status,
-            &[],
-        ).await
+        self.tool_manager
+            .execute_operation(ToolOperation::Status, &[])
+            .await
     }
 
     /// Switch context using devspace
     pub async fn switch_context(&self, context_name: &str) -> Result<ToolResult> {
-        self.tool_manager.execute_operation(
-            ToolOperation::SwitchContext,
-            &[context_name],
-        ).await
+        self.tool_manager
+            .execute_operation(ToolOperation::SwitchContext, &[context_name])
+            .await
     }
 
     /// List worktrees using devspace
     pub async fn list_worktrees(&self) -> Result<ToolResult> {
-        self.tool_manager.execute_operation(
-            ToolOperation::ListWorktrees,
-            &[],
-        ).await
+        self.tool_manager
+            .execute_operation(ToolOperation::ListWorktrees, &[])
+            .await
     }
 
     /// Execute CRD action using enhanced tools
-    pub async fn execute_crd_action(&self, crd: &WorktreeChangeRequest, action: &WorktreeAction) -> Result<ToolResult> {
+    pub async fn execute_crd_action(
+        &self,
+        crd: &WorktreeChangeRequest,
+        action: &WorktreeAction,
+    ) -> Result<ToolResult> {
         match action {
             WorktreeAction::CreateWorktree => {
                 self.create_worktree_with_setup(&crd.spec.branch, &[]).await
             }
             WorktreeAction::CreateBranch => {
-                self.tool_manager.execute_operation(
-                    ToolOperation::CreateBranch,
-                    &[&crd.spec.branch],
-                ).await
+                self.tool_manager
+                    .execute_operation(ToolOperation::CreateBranch, &[&crd.spec.branch])
+                    .await
             }
             WorktreeAction::PushBranch => {
-                self.tool_manager.execute_operation(
-                    ToolOperation::PushBranch,
-                    &[&crd.spec.branch],
-                ).await
+                self.tool_manager
+                    .execute_operation(ToolOperation::PushBranch, &[&crd.spec.branch])
+                    .await
             }
             WorktreeAction::CleanupWorktree => {
-                self.tool_manager.execute_operation(
-                    ToolOperation::CleanupWorktree,
-                    &[&crd.spec.branch],
-                ).await
+                self.tool_manager
+                    .execute_operation(ToolOperation::CleanupWorktree, &[&crd.spec.branch])
+                    .await
             }
             _ => {
                 // Fallback to git for other operations
-                self.tool_manager.execute_operation(
-                    ToolOperation::CreateWorktree, // Placeholder
-                    &[&crd.spec.branch],
-                ).await
+                self.tool_manager
+                    .execute_operation(
+                        ToolOperation::CreateWorktree, // Placeholder
+                        &[&crd.spec.branch],
+                    )
+                    .await
             }
         }
     }
@@ -503,6 +563,8 @@ mod tests {
     #[test]
     fn test_tool_manager_creation() {
         let manager = ToolManager::new(Some(WorktreeTool::Git));
-        assert!(manager.get_best_tool(&ToolOperation::CreateWorktree).is_ok());
+        assert!(manager
+            .get_best_tool(&ToolOperation::CreateWorktree)
+            .is_ok());
     }
-} 
+}

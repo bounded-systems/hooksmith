@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Commit-msg hook stub that calls the Rust binary
+# This hook calls the commit-msg binary from the hooks crate
+
+# Get the directory where this script is located
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
+
+# Call the Rust commit-msg binary
+exec "$PROJECT_ROOT/target/debug/commit-msg" "$@"

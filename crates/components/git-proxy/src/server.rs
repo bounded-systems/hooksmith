@@ -14,9 +14,9 @@ use tracing::{debug, error, info, warn};
 use warp::{Filter, Rejection, Reply};
 
 use crate::{
+    hooks::{HookContext, ServerHookHandler, ServerHookType},
     ClientInfo, GitFetchRequest, GitFetchResult, GitProtocol, GitProxyConfig, GitProxyEvent,
     GitPullRequest, GitPullResult, GitPushRequest, GitPushResult, ServerStatus,
-    hooks::{ServerHookHandler, HookContext, ServerHookType},
 };
 
 /// HTTP server for Git proxy
@@ -127,7 +127,12 @@ impl HttpServer {
     }
 
     /// Execute server-side hooks
-    async fn execute_server_hooks(&self, hook_type: ServerHookType, args: Vec<String>, stdin_data: Option<String>) -> Result<()> {
+    async fn execute_server_hooks(
+        &self,
+        hook_type: ServerHookType,
+        args: Vec<String>,
+        stdin_data: Option<String>,
+    ) -> Result<()> {
         let context = HookContext {
             hook_type,
             repo_path: self.config.proxy_repo_path.clone(),
@@ -431,7 +436,12 @@ impl SshServer {
     }
 
     /// Execute server-side hooks
-    async fn execute_server_hooks(&self, hook_type: ServerHookType, args: Vec<String>, stdin_data: Option<String>) -> Result<()> {
+    async fn execute_server_hooks(
+        &self,
+        hook_type: ServerHookType,
+        args: Vec<String>,
+        stdin_data: Option<String>,
+    ) -> Result<()> {
         let context = HookContext {
             hook_type,
             repo_path: self.config.proxy_repo_path.clone(),

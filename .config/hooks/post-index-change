@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Post-index-change hook stub that calls the Rust binary
+# This hook calls the post-index-change binary from the hooks crate
+
+# Get the directory where this script is located
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
+
+# Call the Rust post-index-change binary
+exec "$PROJECT_ROOT/target/debug/post-index-change" "$@"

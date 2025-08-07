@@ -49,117 +49,186 @@ pub enum GitHookSurface {
     RuntimeProxy(RuntimeProxyType),
 }
 
-/// Traditional Git lifecycle hooks
+/// Traditional Git lifecycle hooks (client-side)
 #[derive(Debug, Clone, PartialEq)]
 pub enum LifecycleHookType {
+    /// Pre-commit hook - runs before commit is created
     PreCommit,
+    /// Prepare commit message hook - runs before commit message editor
     PrepareCommitMsg,
+    /// Commit message hook - validates commit message format
     CommitMsg,
+    /// Post-commit hook - runs after commit is created
     PostCommit,
+    /// Pre-push hook - runs before push to remote
     PrePush,
+    /// Post-push hook - runs after push to remote
     PostPush,
+    /// Pre-merge commit hook - runs before merge commit
     PreMergeCommit,
+    /// Post-merge hook - runs after merge
     PostMerge,
+    /// Pre-rebase hook - runs before rebase
     PreRebase,
+    /// Post-rebase hook - runs after rebase
     PostRebase,
+    /// Pre-applypatch hook - runs before applying patch
     PreApplyPatch,
+    /// Apply patch message hook - validates patch message
     ApplyPatchMsg,
+    /// Post-applypatch hook - runs after applying patch
     PostApplyPatch,
+    /// Post-checkout hook - runs after checkout
     PostCheckout,
+    /// Post-rewrite hook - runs after history rewrite
     PostRewrite,
+    /// Post-index-change hook - runs after index changes
     PostIndexChange,
+    /// Reference transaction hook - runs during ref updates
     ReferenceTransaction,
+    /// Send email validate hook - validates email
     SendEmailValidate,
+    /// Fsmonitor watchman hook - file system monitoring
     FsmonitorWatchman,
 }
 
-/// Git LFS-style hooks for large file management
+/// Git LFS (Large File Storage) hooks
 #[derive(Debug, Clone, PartialEq)]
 pub enum LfsHookType {
+    /// Pre-push LFS hook - ensures LFS objects are pushed
     PrePush,
+    /// Post-checkout LFS hook - ensures LFS objects are checked out
     PostCheckout,
+    /// Post-commit LFS hook - ensures LFS objects are committed
     PostCommit,
+    /// Post-merge LFS hook - ensures LFS objects are merged
     PostMerge,
+    /// Clean filter - transforms files during staging
     Clean,
+    /// Smudge filter - transforms files during checkout
     Smudge,
 }
 
-/// .gitattributes filter hooks
+/// Git attributes filters and transformations
 #[derive(Debug, Clone, PartialEq)]
 pub enum AttributeFilterType {
+    /// Clean filter - transforms files during staging
     Clean,
+    /// Smudge filter - transforms files during checkout
     Smudge,
+    /// Diff filter - custom diff behavior
     Diff,
+    /// Merge filter - custom merge behavior
     Merge,
+    /// Text attribute - text file handling
     Text,
+    /// Binary attribute - binary file handling
     Binary,
+    /// Export ignore - exclude from exports
     ExportIgnore,
+    /// Export subst - substitute in exports
     ExportSubst,
+    /// Ident attribute - keyword substitution
     Ident,
+    /// EOL attribute - line ending handling
     Eol,
+    /// Working directory - working tree handling
     WorkingDirectory,
+    /// Merge driver - custom merge strategy
     MergeDriver,
 }
 
-/// Git config-based hooks
+/// Git configuration hooks and extensions
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConfigHookType {
+    /// IncludeIf - conditional config inclusion
     IncludeIf,
+    /// Alias - command aliases
     Alias,
+    /// Credential - credential helper
     Credential,
+    /// Core pager - custom pager
     CorePager,
+    /// Core editor - custom editor
     CoreEditor,
+    /// Diff external - external diff tool
     DiffExternal,
+    /// Merge tool - custom merge tool
     MergeTool,
+    /// Rerere - reuse recorded resolution
     Rerere,
 }
 
-/// Git notes for metadata storage
+/// Git notes hooks and metadata
 #[derive(Debug, Clone, PartialEq)]
 pub enum NotesHookType {
+    /// Pre-notes edit - runs before notes edit
     PreNotesEdit,
+    /// Post-notes edit - runs after notes edit
     PostNotesEdit,
+    /// Notes rewrite - runs during notes rewrite
     NotesRewrite,
+    /// Notes ref - custom notes reference
     NotesRef,
 }
 
 /// Custom refs and reflogs
 #[derive(Debug, Clone, PartialEq)]
 pub enum CustomRefType {
+    /// Custom ref - custom reference
     CustomRef,
+    /// Reflog - reference log
     Reflog,
+    /// Symbolic ref - symbolic reference
     SymbolicRef,
+    /// Head - current branch reference
     Head,
 }
 
-/// Worktree lifecycle hooks
+/// Git worktree system hooks
 #[derive(Debug, Clone, PartialEq)]
 pub enum WorktreeHookType {
+    /// Pre-worktree create - runs before worktree creation
     PreWorktreeCreate,
+    /// Post-worktree create - runs after worktree creation
     PostWorktreeCreate,
+    /// Pre-worktree remove - runs before worktree removal
     PreWorktreeRemove,
+    /// Post-worktree remove - runs after worktree removal
     PostWorktreeRemove,
+    /// Worktree switch - runs during worktree switching
     WorktreeSwitch,
+    /// Worktree sync - runs during worktree synchronization
     WorktreeSync,
 }
 
 /// External tool integration hooks
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExternalToolType {
+    /// Husky - Node.js hook manager
     Husky,
+    /// Lefthook - Git hook manager
     Lefthook,
+    /// Pre-commit - Python hook framework
     PreCommit,
+    /// Git hooks - Git hook manager
     GitHooks,
+    /// Custom binary - custom executable
     CustomBinary,
 }
 
-/// Runtime proxy hooks
+/// Runtime proxy and interception hooks
 #[derive(Debug, Clone, PartialEq)]
 pub enum RuntimeProxyType {
+    /// HTTP proxy - HTTP request interception
     HttpProxy,
+    /// URL rewrite - URL transformation
     UrlRewrite,
+    /// Remote proxy - remote operation interception
     RemoteProxy,
+    /// Pager proxy - pager interception
     PagerProxy,
+    /// Editor proxy - editor interception
     EditorProxy,
 }
 
@@ -681,7 +750,9 @@ pub fn is_rebasing(worktree_path: &str) -> Result<bool, String> {
             let status = String::from_utf8_lossy(&output.stdout);
 
             // Check for conflict markers
-            if status.lines().any(|line| line.starts_with("UU") || line.starts_with("AA") || line.starts_with("DD")) {
+            if status.lines().any(|line| {
+                line.starts_with("UU") || line.starts_with("AA") || line.starts_with("DD")
+            }) {
                 return Ok(true);
             }
 
@@ -696,10 +767,10 @@ pub fn is_rebasing(worktree_path: &str) -> Result<bool, String> {
                     let git_status = String::from_utf8_lossy(&git_output.stdout);
                     Ok(git_status.contains("rebase in progress"))
                 }
-                Err(_) => Ok(false)
+                Err(_) => Ok(false),
             }
         }
-        Err(_) => Ok(false)
+        Err(_) => Ok(false),
     }
 }
 
@@ -739,8 +810,14 @@ pub fn cleanup_merged_worktree(worktree_path: &str, branch_name: &str) -> Result
     match merge_check {
         Ok(output) => {
             let merged_branches = String::from_utf8_lossy(&output.stdout);
-            if merged_branches.lines().any(|line| line.trim() == branch_name) {
-                log_info(&format!("Branch {} is merged, cleaning up worktree", branch_name));
+            if merged_branches
+                .lines()
+                .any(|line| line.trim() == branch_name)
+            {
+                log_info(&format!(
+                    "Branch {} is merged, cleaning up worktree",
+                    branch_name
+                ));
 
                 // Remove the worktree
                 let remove_output = Command::new("git")
@@ -764,7 +841,10 @@ pub fn cleanup_merged_worktree(worktree_path: &str, branch_name: &str) -> Result
                     }
                 }
             } else {
-                log_info(&format!("Branch {} is not merged, keeping worktree", branch_name));
+                log_info(&format!(
+                    "Branch {} is not merged, keeping worktree",
+                    branch_name
+                ));
                 Ok(false)
             }
         }

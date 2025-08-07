@@ -43,7 +43,7 @@ impl FileTypePolicy {
         blocked.insert("com".to_string());
         blocked.insert("exe".to_string());
         blocked.insert("vbs".to_string());
-        
+
         // Other programming languages (not allowed in this policy)
         blocked.insert("js".to_string());
         blocked.insert("ts".to_string());
@@ -160,7 +160,7 @@ fn detect_file_type_with_hyperpolyglot(path: &Path) -> Option<String> {
             }
             None
         }
-        _ => None
+        _ => None,
     }
 }
 
@@ -191,14 +191,18 @@ fn validate_files(files: &[PathBuf], policy: &FileTypePolicy) -> ValidationResul
                     match detected_type.as_str() {
                         "rust" => result.allowed_files.push(file.clone()),
                         "shell" | "bash" | "zsh" => result.blocked_files.push(file.clone()),
-                        "yaml" | "markdown" | "json" => result.linguist_generated_files.push(file.clone()),
+                        "yaml" | "markdown" | "json" => {
+                            result.linguist_generated_files.push(file.clone())
+                        }
                         _ => result.other_files.push(file.clone()),
                     }
                 } else {
                     // If hyperpolyglot can't detect, check for known file patterns
                     let file_name = file.file_name().unwrap_or_default().to_str().unwrap_or("");
                     match file_name {
-                        ".gitattributes" | ".gitignore" => result.linguist_generated_files.push(file.clone()),
+                        ".gitattributes" | ".gitignore" => {
+                            result.linguist_generated_files.push(file.clone())
+                        }
                         "CODEOWNERS" => result.linguist_generated_files.push(file.clone()),
                         ".editorconfig" => result.linguist_generated_files.push(file.clone()),
                         ".workbloom" => result.linguist_generated_files.push(file.clone()),
@@ -252,7 +256,11 @@ fn get_staged_files() -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
 fn get_pr_changed_files() -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
     let base_ref = env::var("GITHUB_BASE_REF").unwrap_or_else(|_| "main".to_string());
     let output = Command::new("git")
-        .args(&["diff", "--name-only", &format!("origin/{}...HEAD", base_ref)])
+        .args(&[
+            "diff",
+            "--name-only",
+            &format!("origin/{}...HEAD", base_ref),
+        ])
         .output()?;
 
     if !output.status.success() {
@@ -293,7 +301,10 @@ fn print_results(result: &ValidationResult, context: &str) {
 
     if !result.no_extension_files.is_empty() {
         has_warnings = true;
-        println!("⚠️  Files with no extension ({}):", result.no_extension_files.len());
+        println!(
+            "⚠️  Files with no extension ({}):",
+            result.no_extension_files.len()
+        );
         for file in &result.no_extension_files {
             println!("   {}", file.display());
         }
@@ -306,7 +317,10 @@ fn print_results(result: &ValidationResult, context: &str) {
     }
 
     if !result.linguist_generated_files.is_empty() {
-        println!("🔧 Linguist-generated files: {} files", result.linguist_generated_files.len());
+        println!(
+            "🔧 Linguist-generated files: {} files",
+            result.linguist_generated_files.len()
+        );
     }
 
     if !result.other_files.is_empty() {
@@ -314,7 +328,8 @@ fn print_results(result: &ValidationResult, context: &str) {
         println!("⚠️  Other files: {} files", result.other_files.len());
 
         // Group by extension for better overview
-        let mut extension_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+        let mut extension_counts: std::collections::HashMap<String, usize> =
+            std::collections::HashMap::new();
         for file in &result.other_files {
             if let Some(ext) = get_file_extension(file) {
                 *extension_counts.entry(ext).or_insert(0) += 1;
@@ -391,7 +406,11 @@ fn main() -> ExitCode {
     println!();
 
     // Check if we're in a git repository
-    if Command::new("git").args(&["rev-parse", "--git-dir"]).output().is_err() {
+    if Command::new("git")
+        .args(&["rev-parse", "--git-dir"])
+        .output()
+        .is_err()
+    {
         eprintln!("❌ Error: Not in a git repository");
         return ExitCode::FAILURE;
     }
