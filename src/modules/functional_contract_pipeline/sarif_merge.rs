@@ -182,8 +182,8 @@ impl SarifMerger {
             merged.extend(group_results.iter().cloned());
         }
         
-        // Return merged results
-        merged
+        // Convert references to owned values
+        merged.into_iter().cloned().collect()
     }
     
     /// Merge results by tool
