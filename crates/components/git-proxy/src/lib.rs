@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub mod config;
+pub mod hooks;
 pub mod protocol;
 pub mod server;
 pub mod validation;

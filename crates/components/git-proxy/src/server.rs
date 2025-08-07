@@ -16,6 +16,7 @@ use warp::{Filter, Rejection, Reply};
 use crate::{
     ClientInfo, GitFetchRequest, GitFetchResult, GitProtocol, GitProxyConfig, GitProxyEvent,
     GitPullRequest, GitPullResult, GitPushRequest, GitPushResult, ServerStatus,
+    hooks::{ServerHookHandler, HookContext, ServerHookType},
 };
 
 /// HTTP server for Git proxy
@@ -23,13 +24,14 @@ pub struct HttpServer {
     config: GitProxyConfig,
     event_sender: mpsc::Sender<GitProxyEvent>,
     status: ServerStatus,
+    hook_handler: ServerHookHandler,
 }
 
 impl HttpServer {
     /// Create a new HTTP server
     pub fn new(config: GitProxyConfig, event_sender: mpsc::Sender<GitProxyEvent>) -> Self {
         Self {
-            config,
+            config: config.clone(),
             event_sender,
             status: ServerStatus {
                 running: false,
@@ -39,6 +41,7 @@ impl HttpServer {
                 uptime_seconds: 0,
                 last_operation: None,
             },
+            hook_handler: ServerHookHandler::new(config),
         }
     }
 
@@ -120,6 +123,30 @@ impl HttpServer {
     pub async fn stop(&mut self) -> Result<()> {
         self.status.running = false;
         info!("HTTP server stopped");
+        Ok(())
+    }
+
+    /// Execute server-side hooks
+    async fn execute_server_hooks(&self, hook_type: ServerHookType, args: Vec<String>, stdin_data: Option<String>) -> Result<()> {
+        let context = HookContext {
+            hook_type,
+            repo_path: self.config.proxy_repo_path.clone(),
+            work_dir: None,
+            env_vars: std::env::vars().collect(),
+            args,
+            stdin_data,
+            client_info: None,
+            timestamp: Utc::now(),
+        };
+
+        let result = self.hook_handler.execute_hook(context).await?;
+
+        if !result.success {
+            warn!("Server hook failed: {:?}", result.error);
+        } else {
+            debug!("Server hook completed successfully");
+        }
+
         Ok(())
     }
 }
@@ -339,13 +366,14 @@ pub struct SshServer {
     config: GitProxyConfig,
     event_sender: mpsc::Sender<GitProxyEvent>,
     status: ServerStatus,
+    hook_handler: ServerHookHandler,
 }
 
 impl SshServer {
     /// Create a new SSH server
     pub fn new(config: GitProxyConfig, event_sender: mpsc::Sender<GitProxyEvent>) -> Self {
         Self {
-            config,
+            config: config.clone(),
             event_sender,
             status: ServerStatus {
                 running: false,
@@ -355,6 +383,7 @@ impl SshServer {
                 uptime_seconds: 0,
                 last_operation: None,
             },
+            hook_handler: ServerHookHandler::new(config),
         }
     }
 
@@ -398,6 +427,30 @@ impl SshServer {
         // 4. Forward requests to upstream
 
         info!("Handling SSH connection (placeholder)");
+        Ok(())
+    }
+
+    /// Execute server-side hooks
+    async fn execute_server_hooks(&self, hook_type: ServerHookType, args: Vec<String>, stdin_data: Option<String>) -> Result<()> {
+        let context = HookContext {
+            hook_type,
+            repo_path: self.config.proxy_repo_path.clone(),
+            work_dir: None,
+            env_vars: std::env::vars().collect(),
+            args,
+            stdin_data,
+            client_info: None,
+            timestamp: Utc::now(),
+        };
+
+        let result = self.hook_handler.execute_hook(context).await?;
+
+        if !result.success {
+            warn!("Server hook failed: {:?}", result.error);
+        } else {
+            debug!("Server hook completed successfully");
+        }
+
         Ok(())
     }
 
