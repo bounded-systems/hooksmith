@@ -16,14 +16,19 @@ use thiserror::Error;
 /// Error types for repair planning operations
 #[derive(Error, Debug)]
 pub enum RepairError {
+    /// Invalid repair action detected
     #[error("Invalid repair action: {0}")]
     InvalidAction(String),
+    /// Circular dependency detected in repair plan
     #[error("Circular dependency detected in repair plan")]
     CircularDependency,
+    /// Invalid fixer ID provided
     #[error("Invalid fixer ID: {0}")]
     InvalidFixer(String),
+    /// Plan validation failed
     #[error("Plan validation failed: {0}")]
     ValidationFailed(String),
+    /// Serialization error
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
 }
@@ -56,21 +61,48 @@ pub struct RepairAction {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ActionType {
     /// Edit a file at specific line/column
-    Edit { line: u32, column: u32, content: String },
+    Edit { 
+        /// Line number to edit
+        line: u32, 
+        /// Column number to edit
+        column: u32, 
+        /// Content to insert
+        content: String 
+    },
     /// Replace entire file content
-    Replace { content: String },
+    Replace { 
+        /// New file content
+        content: String 
+    },
     /// Delete a file
     Delete,
     /// Reorder lines in a file
-    ReorderLines { strategy: String },
+    ReorderLines { 
+        /// Strategy for reordering (e.g., "alphabetical")
+        strategy: String 
+    },
     /// Run a command
-    RunCommand { command: String, args: Vec<String> },
+    RunCommand { 
+        /// Command to run
+        command: String, 
+        /// Command arguments
+        args: Vec<String> 
+    },
     /// Apply a patch
-    ApplyPatch { patch: String },
+    ApplyPatch { 
+        /// Patch content to apply
+        patch: String 
+    },
     /// Create a new file
-    Create { content: String },
+    Create { 
+        /// File content to create
+        content: String 
+    },
     /// Move/rename a file
-    Move { new_path: String },
+    Move { 
+        /// New path for the file
+        new_path: String 
+    },
 }
 
 /// Result of executing a repair action
@@ -131,8 +163,11 @@ pub struct Violation {
 /// Severity levels for violations
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ViolationSeverity {
+    /// Error severity level
     Error,
+    /// Warning severity level
     Warning,
+    /// Info severity level
     Info,
 }
 
@@ -152,11 +187,17 @@ pub struct RootCause {
 /// Categories of fixes that can be applied
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum FixCategory {
+    /// Formatting fixes (indentation, spacing, etc.)
     Formatting,
+    /// Linting fixes (code quality, style violations)
     Linting,
+    /// Structural fixes (file organization, naming)
     Structural,
+    /// Configuration fixes (settings, options)
     Configuration,
+    /// Content fixes (actual file content changes)
     Content,
+    /// Tool-specific fixes (external tool integration)
     ToolSpecific,
 }
 
