@@ -11,7 +11,7 @@ A powerful Rust-based tool for building and managing Git hooks with WASM compone
 
 - **WASM Integration**: Build hooks as WebAssembly components
 - **Contract Validation**: Enforce file policies and validation rules
-- **Lefthook Integration**: Seamless integration with Lefthook
+- **Custom Git Hooks**: Complete coverage of all 18 client-side Git hooks
 - **Structured Logging**: Comprehensive event-driven logging
 - **Code Generation**: Automated file generation and validation
 - **Component Status**: Real-time monitoring of WIT components and native crates
@@ -29,12 +29,36 @@ cargo run -p xtask -- component-status
 # Generate all files
 cargo xtask gen-all
 
-# Run pre-commit hooks
-lefthook run pre-commit
+# Test Git hooks (all hooks are currently in no-op mode)
+git commit -m "test commit"
 
 # Create worktree with Cursor integration
 cargo xtask worktree create --branch feature-name --open-cursor
 ```
+
+## Git Hooks System
+
+Hooksmith implements a comprehensive Git hooks system with **100% coverage** of all client-side Git hooks:
+
+### Complete Hook Coverage (18 hooks)
+- **Commit Lifecycle**: `pre-commit`, `prepare-commit-msg`, `commit-msg`, `post-commit`
+- **Merge Lifecycle**: `pre-merge-commit`, `post-merge`
+- **Push Lifecycle**: `pre-push`
+- **Rebase Lifecycle**: `pre-rebase`, `post-rebase`
+- **Branch Management**: `post-checkout`
+- **History Management**: `post-rewrite`
+- **Patch Management**: `applypatch-msg`, `pre-applypatch`, `post-applypatch`
+- **Reference Management**: `reference-transaction`
+- **Email Management**: `sendemail-validate`
+- **File System**: `fsmonitor-watchman`
+- **Index Management**: `post-index-change`
+
+### Architecture
+```
+Git Hook Stubs → Rust Binaries → Validation Workflow
+```
+
+All hooks are currently in **no-op mode** and ready for validation workflow integration.
 
 ## Development
 
@@ -51,6 +75,17 @@ Check component status with:
 ```bash
 cargo run -p xtask -- component-status --format table
 ```
+
+### Migration from Lefthook
+
+We are migrating from Lefthook to custom Rust-based Git hooks. See [LEFTHOOK_MIGRATION_PLAN.md](LEFTHOOK_MIGRATION_PLAN.md) for details.
+
+**Benefits of Migration:**
+- ✅ Type-safe Rust binaries
+- ✅ Direct integration with validation workflow
+- ✅ No external dependencies
+- ✅ Better performance and reliability
+- ✅ Unified architecture with our codebase
 
 ## License
 
