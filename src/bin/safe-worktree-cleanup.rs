@@ -14,6 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut skipped_count = 0;
 
     for worktree_path in worktrees {
+        let worktree_path = std::path::PathBuf::from(worktree_path);
         // Skip the main worktree
         if worktree_path == current_dir {
             log_info(&format!(
