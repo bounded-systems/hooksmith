@@ -64,3 +64,24 @@ path = "src/bin/pre-applypatch.rs"
 [[bin]]
 name = "post-applypatch"
 path = "src/bin/post-applypatch.rs"
+
+# Additional client-side hooks
+[[bin]]
+name = "pre-merge-commit"
+path = "src/bin/pre-merge-commit.rs"
+
+[[bin]]
+name = "reference-transaction"
+path = "src/bin/reference-transaction.rs"
+
+[[bin]]
+name = "sendemail-validate"
+path = "src/bin/sendemail-validate.rs"
+
+[[bin]]
+name = "fsmonitor-watchman"
+path = "src/bin/fsmonitor-watchman.rs"
+
+[[bin]]
+name = "post-index-change"
+path = "src/bin/post-index-change.rs"

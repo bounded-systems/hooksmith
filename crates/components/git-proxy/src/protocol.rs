@@ -18,15 +18,24 @@ use crate::{
 };
 
 /// Git protocol handler trait
-pub trait GitProtocolHandler {
+pub trait GitProtocolHandler: Send + Sync {
     /// Handle a push operation
-    async fn handle_push(&self, request: GitPushRequest) -> Result<GitPushResult>;
+    fn handle_push<'a>(
+        &'a self,
+        request: GitPushRequest,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<GitPushResult>> + Send + 'a>>;
 
     /// Handle a pull operation
-    async fn handle_pull(&self, request: GitPullRequest) -> Result<GitPullResult>;
+    fn handle_pull<'a>(
+        &'a self,
+        request: GitPullRequest,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<GitPullResult>> + Send + 'a>>;
 
     /// Handle a fetch operation
-    async fn handle_fetch(&self, request: GitFetchRequest) -> Result<GitFetchResult>;
+    fn handle_fetch<'a>(
+        &'a self,
+        request: GitFetchRequest,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<GitFetchResult>> + Send + 'a>>;
 
     /// Get protocol information
     fn protocol_info(&self) -> ProtocolInfo;
@@ -92,8 +101,10 @@ impl HttpSmartProtocol {
 
         // Set up authentication
         if let Some(token) = &self.config.auth.github_token {
-            fetch_options.credentials(|_url, username_from_url, _allowed_types| {
-                Cred::userpass_plaintext(username_from_url.unwrap_or("git"), token)
+            fetch_options.remote_callbacks(|callbacks| {
+                callbacks.credentials(|_url, username_from_url, _allowed_types| {
+                    Cred::userpass_plaintext(username_from_url.unwrap_or("git"), token)
+                });
             });
         }
 
@@ -153,8 +164,10 @@ impl HttpSmartProtocol {
 
         // Set up authentication
         if let Some(token) = &self.config.auth.github_token {
-            fetch_options.credentials(|_url, username_from_url, _allowed_types| {
-                Cred::userpass_plaintext(username_from_url.unwrap_or("git"), token)
+            fetch_options.remote_callbacks(|callbacks| {
+                callbacks.credentials(|_url, username_from_url, _allowed_types| {
+                    Cred::userpass_plaintext(username_from_url.unwrap_or("git"), token)
+                });
             });
         }
 
@@ -186,8 +199,10 @@ impl HttpSmartProtocol {
 
         // Set up authentication
         if let Some(token) = &self.config.auth.github_token {
-            fetch_options.credentials(|_url, username_from_url, _allowed_types| {
-                Cred::userpass_plaintext(username_from_url.unwrap_or("git"), token)
+            fetch_options.remote_callbacks(|callbacks| {
+                callbacks.credentials(|_url, username_from_url, _allowed_types| {
+                    Cred::userpass_plaintext(username_from_url.unwrap_or("git"), token)
+                });
             });
         }
 
@@ -209,57 +224,75 @@ impl HttpSmartProtocol {
 }
 
 impl GitProtocolHandler for HttpSmartProtocol {
-    async fn handle_push(&self, request: GitPushRequest) -> Result<GitPushResult> {
-        let start_time = std::time::Instant::now();
+    fn handle_push<'a>(
+        &'a self,
+        request: GitPushRequest,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<GitPushResult>> + Send + 'a>>
+    {
+        Box::pin(async move {
+            let start_time = std::time::Instant::now();
 
-        // Forward to upstream
-        let success = self.forward_push_to_upstream(&request).await?;
+            // Forward to upstream
+            let success = self.forward_push_to_upstream(&request).await?;
 
-        let duration_ms = start_time.elapsed().as_millis() as u64;
+            let duration_ms = start_time.elapsed().as_millis() as u64;
 
-        Ok(GitPushResult {
-            request_id: request.request_id,
-            success,
-            refs_pushed: if success { request.refs } else { vec![] },
-            error: None,
-            duration_ms,
-            timestamp: Utc::now(),
+            Ok(GitPushResult {
+                request_id: request.request_id,
+                success,
+                refs_pushed: if success { request.refs } else { vec![] },
+                error: None,
+                duration_ms,
+                timestamp: Utc::now(),
+            })
         })
     }
 
-    async fn handle_pull(&self, request: GitPullRequest) -> Result<GitPullResult> {
-        let start_time = std::time::Instant::now();
+    fn handle_pull<'a>(
+        &'a self,
+        request: GitPullRequest,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<GitPullResult>> + Send + 'a>>
+    {
+        Box::pin(async move {
+            let start_time = std::time::Instant::now();
 
-        // Forward to upstream
-        let success = self.forward_pull_from_upstream(&request).await?;
+            // Forward to upstream
+            let success = self.forward_pull_from_upstream(&request).await?;
 
-        let duration_ms = start_time.elapsed().as_millis() as u64;
+            let duration_ms = start_time.elapsed().as_millis() as u64;
 
-        Ok(GitPullResult {
-            request_id: request.request_id,
-            success,
-            refs_pulled: if success { request.refs } else { vec![] },
-            error: None,
-            duration_ms,
-            timestamp: Utc::now(),
+            Ok(GitPullResult {
+                request_id: request.request_id,
+                success,
+                refs_pulled: if success { request.refs } else { vec![] },
+                error: None,
+                duration_ms,
+                timestamp: Utc::now(),
+            })
         })
     }
 
-    async fn handle_fetch(&self, request: GitFetchRequest) -> Result<GitFetchResult> {
-        let start_time = std::time::Instant::now();
+    fn handle_fetch<'a>(
+        &'a self,
+        request: GitFetchRequest,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<GitFetchResult>> + Send + 'a>>
+    {
+        Box::pin(async move {
+            let start_time = std::time::Instant::now();
 
-        // Forward to upstream
-        let success = self.forward_fetch_from_upstream(&request).await?;
+            // Forward to upstream
+            let success = self.forward_fetch_from_upstream(&request).await?;
 
-        let duration_ms = start_time.elapsed().as_millis() as u64;
+            let duration_ms = start_time.elapsed().as_millis() as u64;
 
-        Ok(GitFetchResult {
-            request_id: request.request_id,
-            success,
-            refs_fetched: if success { request.refs } else { vec![] },
-            error: None,
-            duration_ms,
-            timestamp: Utc::now(),
+            Ok(GitFetchResult {
+                request_id: request.request_id,
+                success,
+                refs_fetched: if success { request.refs } else { vec![] },
+                error: None,
+                duration_ms,
+                timestamp: Utc::now(),
+            })
         })
     }
 
@@ -325,8 +358,10 @@ impl SshProtocol {
 
         // Set up SSH authentication
         if let Some(ssh_key_path) = &self.config.auth.ssh_key_path {
-            fetch_options.credentials(|_url, username_from_url, _allowed_types| {
-                Cred::ssh_key(username_from_url.unwrap_or("git"), None, ssh_key_path, None)
+            fetch_options.remote_callbacks(|callbacks| {
+                callbacks.credentials(|_url, username_from_url, _allowed_types| {
+                    Cred::ssh_key(username_from_url.unwrap_or("git"), None, ssh_key_path, None)
+                });
             });
         }
 
@@ -386,8 +421,10 @@ impl SshProtocol {
 
         // Set up SSH authentication
         if let Some(ssh_key_path) = &self.config.auth.ssh_key_path {
-            fetch_options.credentials(|_url, username_from_url, _allowed_types| {
-                Cred::ssh_key(username_from_url.unwrap_or("git"), None, ssh_key_path, None)
+            fetch_options.remote_callbacks(|callbacks| {
+                callbacks.credentials(|_url, username_from_url, _allowed_types| {
+                    Cred::ssh_key(username_from_url.unwrap_or("git"), None, ssh_key_path, None)
+                });
             });
         }
 
@@ -419,8 +456,10 @@ impl SshProtocol {
 
         // Set up SSH authentication
         if let Some(ssh_key_path) = &self.config.auth.ssh_key_path {
-            fetch_options.credentials(|_url, username_from_url, _allowed_types| {
-                Cred::ssh_key(username_from_url.unwrap_or("git"), None, ssh_key_path, None)
+            fetch_options.remote_callbacks(|callbacks| {
+                callbacks.credentials(|_url, username_from_url, _allowed_types| {
+                    Cred::ssh_key(username_from_url.unwrap_or("git"), None, ssh_key_path, None)
+                });
             });
         }
 
