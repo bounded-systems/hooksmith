@@ -1,0 +1,9 @@
+[package]
+name = "configure-git-proxy"
+version = "0.1.0"
+edition = "2021"
+authors = ["Pushd Team"]
+description = "Configure Git to use the Git proxy"
+license = "MIT"
+
+[dependencies]
