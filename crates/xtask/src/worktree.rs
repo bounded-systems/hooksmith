@@ -1787,8 +1787,8 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
                     println!(
                         "{}",
                         style(&format!(
-                                                    "  - You can manually open it with: cursor {}",
-                        worktree_path
+                            "  - You can manually open it with: cursor {}",
+                            worktree_path
                         ))
                         .dim()
                     );
@@ -2084,7 +2084,11 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
 
             contract.merge_pr_and_cleanup(&branch_name, &worktree_path)?;
         }
-        WorktreeCommands::SwitchNext { branch, base_dir, no_open } => {
+        WorktreeCommands::SwitchNext {
+            branch,
+            base_dir,
+            no_open,
+        } => {
             use crate::worktree_contract::{switch_next_worktree, WorktreeContract};
 
             let mut contract = WorktreeContract::default();
