@@ -34,8 +34,9 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+      # Cache step temporarily disabled due to Node.js compatibility issues with act
+      # - name: Cache Rust dependencies
+      #   uses: Swatinem/rust-cache@v2
 
       - name: Build validation tools
         run: |
@@ -76,8 +77,9 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+      # Cache step temporarily disabled due to Node.js compatibility issues with act
+      # - name: Cache Rust dependencies
+      #   uses: Swatinem/rust-cache@v2
 
       - name: Build validation tools
         run: |
