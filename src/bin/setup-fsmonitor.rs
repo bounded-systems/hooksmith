@@ -1,13 +1,14 @@
 use anyhow::Result;
-use std::env;
 use std::process::Command;
 
 /// Hooksmith FSMonitor Setup
 ///
 /// This binary configures file system monitoring for optimal Git performance:
-/// 1. Enables Git's built-in FSMonitor daemon if available
-/// 2. Configures the Rust-based fsmonitor-watchman hook
-/// 3. Sets up performance monitoring and validation
+/// 1. Auto-detects available FSMonitor strategies
+/// 2. Enables Git's built-in FSMonitor daemon if available
+/// 3. Configures rs-git-fsmonitor if available
+/// 4. Sets up the Rust-based fsmonitor-watchman hook
+/// 5. Provides performance monitoring and validation
 fn main() -> Result<()> {
     println!("🔧 Setting up Hooksmith FSMonitor...");
 
@@ -15,12 +16,18 @@ fn main() -> Result<()> {
     let git_version = get_git_version()?;
     println!("📦 Git version: {}", git_version);
 
-    if supports_builtin_fsmonitor(&git_version)? {
-        println!("✅ Git supports built-in FSMonitor daemon");
-        enable_builtin_fsmonitor()?;
-    } else {
-        println!("⚠️  Git version doesn't support built-in FSMonitor, using Rust implementation");
+    // Detect available FSMonitor strategies
+    let strategies = detect_fsmonitor_strategies()?;
+    println!("\n🔍 Available FSMonitor strategies:");
+
+    for (strategy, available) in &strategies {
+        let status = if *available { "✅ Available" } else { "❌ Not available" };
+        println!("   {}: {}", strategy, status);
     }
+
+    // Select and configure the best strategy
+    let best_strategy = select_best_strategy(&strategies)?;
+    configure_fsmonitor_strategy(best_strategy)?;
 
     // Configure the fsmonitor-watchman hook
     configure_fsmonitor_hook()?;
@@ -28,10 +35,17 @@ fn main() -> Result<()> {
     // Set up performance monitoring
     setup_performance_monitoring()?;
 
-    println!("🎉 FSMonitor setup complete!");
-    println!("💡 Performance tip: Run 'git status' to see the speed improvement");
+    println!("\n🎉 FSMonitor setup complete!");
+    println!("💡 Performance tip: Run 'cargo run --bin performance-test' to benchmark");
 
     Ok(())
+}
+
+#[derive(Debug)]
+enum FSMonitorStrategy {
+    BuiltIn,
+    RsGitFsmonitor,
+    RustImplementation,
 }
 
 fn get_git_version() -> Result<String> {
@@ -49,6 +63,23 @@ fn get_git_version() -> Result<String> {
     }
 }
 
+fn detect_fsmonitor_strategies() -> Result<Vec<(String, bool)>> {
+    let mut strategies = Vec::new();
+
+    // Check built-in FSMonitor
+    let builtin_available = supports_builtin_fsmonitor(&get_git_version()?)?;
+    strategies.push(("Built-in FSMonitor daemon".to_string(), builtin_available));
+
+    // Check rs-git-fsmonitor
+    let rs_git_available = is_rs_git_fsmonitor_available()?;
+    strategies.push(("rs-git-fsmonitor (Rust Watchman)".to_string(), rs_git_available));
+
+    // Our Rust implementation is always available
+    strategies.push(("Hooksmith Rust implementation".to_string(), true));
+
+    Ok(strategies)
+}
+
 fn supports_builtin_fsmonitor(version: &str) -> Result<bool> {
     // Git 2.37.0+ supports built-in FSMonitor
     // Parse version like "git version 2.37.0"
@@ -60,18 +91,64 @@ fn supports_builtin_fsmonitor(version: &str) -> Result<bool> {
     Ok(false)
 }
 
-fn enable_builtin_fsmonitor() -> Result<()> {
-    println!("🚀 Enabling Git's built-in FSMonitor daemon...");
+fn is_rs_git_fsmonitor_available() -> Result<bool> {
+    // Check if rs-git-fsmonitor is installed and available
+    let output = Command::new("which")
+        .args(&["rs-git-fsmonitor"])
+        .output()?;
 
-    // Enable core.fsmonitor
-    let status = Command::new("git")
-        .args(&["config", "core.fsmonitor", "true"])
-        .status()?;
+    Ok(output.status.success())
+}
 
-    if status.success() {
-        println!("✅ Built-in FSMonitor enabled");
-    } else {
-        println!("❌ Failed to enable built-in FSMonitor");
+fn select_best_strategy(strategies: &[(String, bool)]) -> Result<FSMonitorStrategy> {
+    // Priority order: Built-in > rs-git-fsmonitor > Rust implementation
+
+    if strategies.iter().any(|(name, available)| name.contains("Built-in") && *available) {
+        println!("\n🚀 Using built-in FSMonitor daemon (recommended)");
+        return Ok(FSMonitorStrategy::BuiltIn);
+    }
+
+    if strategies.iter().any(|(name, available)| name.contains("rs-git-fsmonitor") && *available) {
+        println!("\n⚡ Using rs-git-fsmonitor (Rust-based Watchman hook)");
+        return Ok(FSMonitorStrategy::RsGitFsmonitor);
+    }
+
+    println!("\n🔧 Using Hooksmith's Rust-based implementation");
+    Ok(FSMonitorStrategy::RustImplementation)
+}
+
+fn configure_fsmonitor_strategy(strategy: FSMonitorStrategy) -> Result<()> {
+    match strategy {
+        FSMonitorStrategy::BuiltIn => {
+            println!("🔧 Enabling Git's built-in FSMonitor daemon...");
+            let status = Command::new("git")
+                .args(&["config", "core.fsmonitor", "true"])
+                .status()?;
+
+            if status.success() {
+                println!("✅ Built-in FSMonitor enabled");
+            } else {
+                println!("❌ Failed to enable built-in FSMonitor");
+            }
+        }
+        FSMonitorStrategy::RsGitFsmonitor => {
+            println!("🔧 Configuring rs-git-fsmonitor...");
+            let status = Command::new("git")
+                .args(&["config", "core.fsmonitor", "rs-git-fsmonitor"])
+                .status()?;
+
+            if status.success() {
+                println!("✅ rs-git-fsmonitor configured");
+            } else {
+                println!("❌ Failed to configure rs-git-fsmonitor");
+            }
+        }
+        FSMonitorStrategy::RustImplementation => {
+            println!("🔧 Configuring Hooksmith's Rust implementation...");
+            // Our implementation is used when core.fsmonitor points to our hook
+            // This is already configured via core.hooksPath
+            println!("✅ Rust implementation ready (via core.hooksPath)");
+        }
     }
 
     Ok(())
@@ -82,11 +159,11 @@ fn configure_fsmonitor_hook() -> Result<()> {
 
     // Ensure the hook is executable
     let hook_path = ".hooksmith/hooks/git/fsmonitor-watchman";
-    
+
     // Make sure the hook exists and is executable
     if std::path::Path::new(hook_path).exists() {
         println!("✅ fsmonitor-watchman hook found");
-        
+
         // Set executable permissions
         #[cfg(unix)]
         {
@@ -95,7 +172,7 @@ fn configure_fsmonitor_hook() -> Result<()> {
             perms.set_mode(0o755);
             std::fs::set_permissions(hook_path, perms)?;
         }
-        
+
         println!("✅ Hook permissions set");
     } else {
         println!("❌ fsmonitor-watchman hook not found at {}", hook_path);
@@ -126,7 +203,7 @@ echo "Performance test complete!"
 "#;
 
     std::fs::write(".hooksmith/performance-test.sh", test_script)?;
-    
+
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
@@ -148,8 +225,20 @@ mod tests {
     fn test_git_version_parsing() {
         let version = "git version 2.37.0";
         assert!(supports_builtin_fsmonitor(version).unwrap());
-        
+
         let old_version = "git version 2.36.0";
         assert!(!supports_builtin_fsmonitor(old_version).unwrap());
+    }
+
+    #[test]
+    fn test_strategy_selection() {
+        let strategies = vec![
+            ("Built-in FSMonitor daemon".to_string(), true),
+            ("rs-git-fsmonitor (Rust Watchman)".to_string(), false),
+            ("Hooksmith Rust implementation".to_string(), true),
+        ];
+
+        let best = select_best_strategy(&strategies).unwrap();
+        assert!(matches!(best, FSMonitorStrategy::BuiltIn));
     }
 }
