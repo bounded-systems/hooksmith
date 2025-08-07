@@ -51,10 +51,6 @@ hook_concerns:
   post-apply-patch:
     - index
     - commit
-  pre-rebase:
-    - ref
-    - branch
-    - config_rebase
   post-rebase:
     - ref
     - branch
