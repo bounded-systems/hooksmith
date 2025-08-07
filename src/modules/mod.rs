@@ -35,3 +35,5 @@ pub mod hook_builder;
 pub mod lefthook;
 /// Wasm functionality
 pub mod wasm;
+/// Static Hook functionality
+pub mod static_hook;
