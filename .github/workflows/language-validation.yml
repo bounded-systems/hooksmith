@@ -29,12 +29,14 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Rust
-        uses: actions/setup-rust@v1
+        uses: actions-rs/toolchain@v1
         with:
-          rust-version: stable
+          toolchain: stable
+          override: true
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+      # Cache step temporarily disabled due to Node.js compatibility issues with act
+      # - name: Cache Rust dependencies
+      #   uses: Swatinem/rust-cache@v2
 
       - name: Build validation tools
         run: |
@@ -70,12 +72,14 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Rust
-        uses: actions/setup-rust@v1
+        uses: actions-rs/toolchain@v1
         with:
-          rust-version: stable
+          toolchain: stable
+          override: true
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+      # Cache step temporarily disabled due to Node.js compatibility issues with act
+      # - name: Cache Rust dependencies
+      #   uses: Swatinem/rust-cache@v2
 
       - name: Build validation tools
         run: |
