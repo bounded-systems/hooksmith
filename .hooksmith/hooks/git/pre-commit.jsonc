@@ -4,7 +4,7 @@
   "concerns": [
     "blob",
     "tree",
-    "contract-violation"
+    "commit"
   ],
   "bin": "hooksmith-validate-tree"
 }

@@ -98,9 +98,9 @@ fn validate_single_hook(hook_path: &Path) -> Result<(), Box<dyn std::error::Erro
         return Err(format!("Invalid scope '{}': must be one of {:?}", scope, valid_scopes).into());
     }
     
-    // Validate concerns
+    // Validate concerns (Git-native only)
     let concerns = json["concerns"].as_array().ok_or("Missing 'concerns' field")?;
-    let valid_concerns = ["blob", "tree", "ref", "note", "attr", "contract-violation", "symbol-analysis"];
+    let valid_concerns = ["blob", "tree", "commit", "tag", "ref", "note", "attr"];
     for concern in concerns {
         let concern_str = concern.as_str().ok_or("Invalid concern format")?;
         if !valid_concerns.contains(&concern_str) {

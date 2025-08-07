@@ -171,6 +171,7 @@ num_cpus.workspace = true
 # Additional dependencies
 uuid.workspace = true
 hyperpolyglot.workspace = true
+itertools.workspace = true
 serde_yaml.workspace = true
 reqwest.workspace = true
 

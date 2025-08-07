@@ -1,6 +1,7 @@
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use crate::modules::git_native::GitNativeValidator;
 
 /// Static hook definition with zero dynamic resolution
 #[derive(Debug, Serialize, Deserialize)]
@@ -34,24 +35,24 @@ pub enum HookScope {
     Patch,
 }
 
-/// Hook concerns enum - what the hook validates
+/// Hook concerns enum - Git-native object types only
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Ord, PartialOrd)]
 #[serde(rename_all = "kebab-case")]
 pub enum HookConcern {
-    /// Validates Git blob objects
+    /// Git blob objects (file contents)
     Blob,
-    /// Validates Git tree objects
+    /// Git tree objects (directory structure)
     Tree,
-    /// Validates Git references
+    /// Git commit objects (commit history)
+    Commit,
+    /// Git tag objects (annotated tags)
+    Tag,
+    /// Git references (heads, tags, etc.)
     Ref,
-    /// Validates Git notes
+    /// Git notes (commit-attached metadata)
     Note,
-    /// Validates Git attributes
+    /// Git attributes (file-based config)
     Attr,
-    /// Validates contract violations
-    ContractViolation,
-    /// Performs symbol analysis
-    SymbolAnalysis,
 }
 
 impl StaticHook {
@@ -61,6 +62,12 @@ impl StaticHook {
         if !self.name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
             bail!("Invalid hook name '{}': must contain only alphanumeric characters, underscores, and hyphens", self.name);
         }
+
+        // Validate concerns are Git-native
+        let concern_strings: Vec<String> = self.concerns.iter()
+            .map(|c| serde_json::to_string(c).unwrap().trim_matches('"').to_string())
+            .collect();
+        GitNativeValidator::validate_concerns(&concern_strings)?;
 
         // Validate concerns are unique
         let mut concerns = self.concerns.clone();

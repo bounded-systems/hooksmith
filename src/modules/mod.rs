@@ -37,3 +37,5 @@ pub mod lefthook;
 pub mod wasm;
 /// Static Hook functionality
 pub mod static_hook;
+/// Git-native object validation
+pub mod git_native;

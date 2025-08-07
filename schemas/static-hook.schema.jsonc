@@ -19,19 +19,19 @@
     },
     "concerns": {
       "type": "array",
-      "description": "Required list of concerns (must match schema)",
+      "description": "Required list of Git-native concerns (must match schema)",
       "minItems": 1,
       "uniqueItems": true,
       "items": {
         "type": "string",
         "enum": [
           "blob",
-          "tree", 
+          "tree",
+          "commit",
+          "tag",
           "ref",
           "note",
-          "attr",
-          "contract-violation",
-          "symbol-analysis"
+          "attr"
         ]
       }
     },

@@ -39,13 +39,13 @@ fn main() -> Result<()> {
         println!("     {}: {}", object_type, count);
     }
     
-    // Validate object types
+    // Validate object types (Git-native only)
     let valid_types = ["blob", "tree", "commit", "tag"];
     let mut validation_errors = Vec::new();
     
     for (object_type, count) in &object_types {
         if !valid_types.contains(&object_type.as_str()) {
-            validation_errors.push(format!("Unknown object type '{}' found {} times", object_type, count));
+            validation_errors.push(format!("Unknown Git object type '{}' found {} times", object_type, count));
         }
     }
     
