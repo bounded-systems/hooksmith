@@ -174,8 +174,6 @@ pub enum HookConcern {
     Init,
     /// Git snapshot operations (add, commit)
     Snapshot,
-    /// Git branching operations
-    Branch,
     /// Git merge operations
     Merge,
     /// Git rebase operations
