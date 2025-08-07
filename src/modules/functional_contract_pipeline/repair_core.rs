@@ -457,10 +457,10 @@ mod tests {
     fn test_plan_validation() {
         let plan = RepairPlan {
             id: "test-plan".to_string(),
-            concern: ConcernSymbol::TreeFile("test.txt".to_string()),
+            concern: ConcernSymbol::TreeFile,
             contract: "test-contract".to_string(),
             violation: Violation {
-                concern: ConcernSymbol::TreeFile("test.txt".to_string()),
+                concern: ConcernSymbol::TreeFile,
                 contract: "test-contract".to_string(),
                 message: "Test violation".to_string(),
                 location: "test.txt:1".to_string(),
@@ -501,10 +501,10 @@ mod tests {
     fn test_circular_dependency_detection() {
         let plan = RepairPlan {
             id: "test-plan".to_string(),
-            concern: ConcernSymbol::TreeFile("test.txt".to_string()),
+            concern: ConcernSymbol::TreeFile,
             contract: "test-contract".to_string(),
             violation: Violation {
-                concern: ConcernSymbol::TreeFile("test.txt".to_string()),
+                concern: ConcernSymbol::TreeFile,
                 contract: "test-contract".to_string(),
                 message: "Test violation".to_string(),
                 location: "test.txt:1".to_string(),
@@ -559,10 +559,10 @@ mod tests {
     fn test_mermaid_export() {
         let plan = RepairPlan {
             id: "test-plan".to_string(),
-            concern: ConcernSymbol::TreeFile("test.txt".to_string()),
+            concern: ConcernSymbol::TreeFile,
             contract: "test-contract".to_string(),
             violation: Violation {
-                concern: ConcernSymbol::TreeFile("test.txt".to_string()),
+                concern: ConcernSymbol::TreeFile,
                 contract: "test-contract".to_string(),
                 message: "Test violation".to_string(),
                 location: "test.txt:1".to_string(),

@@ -44,7 +44,7 @@ fn demo_core_repair_plan(pipeline: &FunctionalContractPipeline) -> RepairResult<
     println!("📋 Demo 1: Core Repair Plan Creation");
     println!("------------------------------------");
     
-    let concern = ConcernSymbol::TreeFile(".gitignore".to_string());
+    let concern = ConcernSymbol::TreeFile;
     let contract = "no-wildcard-root";
     let violation_msg = "Root .gitignore includes unrestricted * pattern";
     
@@ -98,7 +98,7 @@ fn demo_fixer_implementations() -> RepairResult<()> {
     println!("--------------------------------");
     
     let violation = Violation {
-        concern: ConcernSymbol::TreeFile(".gitignore".to_string()),
+        concern: ConcernSymbol::TreeFile,
         contract: "no-wildcard-root".to_string(),
         message: "Root .gitignore includes wildcard pattern".to_string(),
         location: ".gitignore:1".to_string(),
@@ -122,7 +122,7 @@ fn demo_fixer_implementations() -> RepairResult<()> {
     
     // Test LintIgnoreOrderFixer
     let order_violation = Violation {
-        concern: ConcernSymbol::TreeFile(".gitignore".to_string()),
+        concern: ConcernSymbol::TreeFile,
         contract: "ordered-ignore".to_string(),
         message: ".gitignore lines are not in alphabetical order".to_string(),
         location: ".gitignore".to_string(),
@@ -140,7 +140,7 @@ fn demo_fixer_implementations() -> RepairResult<()> {
 }
 
 fn create_valid_plan() -> RepairResult<RepairPlan> {
-    let concern = ConcernSymbol::TreeFile(".gitignore".to_string());
+    let concern = ConcernSymbol::TreeFile;
     
     let violation = Violation {
         concern: concern.clone(),
@@ -201,7 +201,7 @@ fn create_valid_plan() -> RepairResult<RepairPlan> {
 }
 
 fn create_circular_dependency_plan() -> RepairResult<RepairPlan> {
-    let concern = ConcernSymbol::TreeFile(".gitignore".to_string());
+    let concern = ConcernSymbol::TreeFile;
     
     let violation = Violation {
         concern: concern.clone(),
