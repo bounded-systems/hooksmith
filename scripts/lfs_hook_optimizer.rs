@@ -150,7 +150,7 @@ fn analyze_shared_binary_hooks() -> Result<Vec<SharedBinaryHook>, Box<dyn std::e
             let hash = parts[1].to_string();
             
             if path.contains(".hooksmith/hooks/") || path.contains("hooks/") {
-                hash_groups.entry(hash).or_insert_with(Vec::new).push((path, hash));
+                hash_groups.entry(hash.clone()).or_insert_with(Vec::new).push((path, hash));
             }
         }
     }

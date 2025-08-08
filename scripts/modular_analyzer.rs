@@ -12,6 +12,7 @@ enum AnalysisModule {
     RustSpecific,       // Rust project analysis
     FrequentWrites,     // Frequent write detection
     Performance,        // Performance impact analysis
+    LfsOptimization,    // Git LFS optimization
 }
 
 impl AnalysisModule {
@@ -25,6 +26,7 @@ impl AnalysisModule {
             "rust" | "rust-specific" => Some(AnalysisModule::RustSpecific),
             "writes" | "frequent-writes" => Some(AnalysisModule::FrequentWrites),
             "perf" | "performance" => Some(AnalysisModule::Performance),
+            "lfs" | "lfs-optimization" => Some(AnalysisModule::LfsOptimization),
             _ => None,
         }
     }
@@ -39,6 +41,7 @@ impl AnalysisModule {
             AnalysisModule::RustSpecific => "Rust-specific project analysis",
             AnalysisModule::FrequentWrites => "Frequent write file detection",
             AnalysisModule::Performance => "Performance impact analysis",
+            AnalysisModule::LfsOptimization => "Git LFS optimization for binary hooks",
         }
     }
 
@@ -52,6 +55,7 @@ impl AnalysisModule {
             AnalysisModule::RustSpecific => "🦀",
             AnalysisModule::FrequentWrites => "📝",
             AnalysisModule::Performance => "⚡",
+            AnalysisModule::LfsOptimization => "📦",
         }
     }
 }
@@ -319,6 +323,7 @@ fn show_available_modules() {
         AnalysisModule::RustSpecific,
         AnalysisModule::FrequentWrites,
         AnalysisModule::Performance,
+        AnalysisModule::LfsOptimization,
     ] {
         println!("{} {}: {}", 
             module.emoji(),
@@ -355,6 +360,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 AnalysisModule::Deduplication,
                 AnalysisModule::FileTypes,
                 AnalysisModule::FrequentWrites,
+                AnalysisModule::LfsOptimization,
             ];
             break;
         } else if let Some(module) = AnalysisModule::from_str(arg) {
@@ -383,6 +389,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             AnalysisModule::Deduplication => run_deduplication_analysis(),
             AnalysisModule::FileTypes => run_file_type_analysis(),
             AnalysisModule::FrequentWrites => run_frequent_writes_analysis(),
+            AnalysisModule::LfsOptimization => run_lfs_optimization_analysis(),
             _ => {
                 println!("⚠️  Module {:?} not yet implemented", module);
                 continue;
@@ -404,5 +411,64 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("• Each module provides targeted recommendations");
     println!("• Combine modules for different use cases");
     
-    Ok(())
+fn run_lfs_optimization_analysis() -> Result<AnalysisResult, Box<dyn std::error::Error>> {
+    println!("📦 Running LFS optimization analysis...");
+    
+    let output = Command::new("git")
+        .args(&["ls-files", "--stage"])
+        .output()?;
+    
+    let output_str = String::from_utf8(output.stdout)?;
+    let mut lfs_candidates = 0;
+    let mut shared_binaries = 0;
+    let mut total_potential_savings = 0;
+    
+    for line in output_str.lines() {
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() >= 4 {
+            let path = parts[3..].join(" ");
+            let hash = parts[1];
+            
+            // Get file size
+            let size_output = Command::new("git")
+                .args(&["cat-file", "-s", hash])
+                .output()?;
+            
+            if let Ok(size_str) = String::from_utf8(size_output.stdout) {
+                if let Ok(size) = u64::from_str(size_str.trim()) {
+                    // Check if this is an LFS candidate
+                    if size > 1024 * 1024 { // 1 MB
+                        lfs_candidates += 1;
+                        total_potential_savings += size - 130; // LFS pointer is ~130 bytes
+                    }
+                }
+            }
+        }
+    }
+    
+    let mut metrics = HashMap::new();
+    metrics.insert("lfs_candidates".to_string(), lfs_candidates as f64);
+    metrics.insert("shared_binaries".to_string(), shared_binaries as f64);
+    metrics.insert("total_potential_savings".to_string(), total_potential_savings as f64);
+    
+    let summary = format!("Found {} LFS candidates with {:.2} MB potential savings", 
+        lfs_candidates, total_potential_savings as f64 / (1024.0 * 1024.0));
+    
+    let mut recommendations = Vec::new();
+    if lfs_candidates > 0 {
+        recommendations.push("Consider Git LFS for large binary files".to_string());
+        recommendations.push("Add .gitattributes rules for binary file types".to_string());
+    }
+    if shared_binaries > 0 {
+        recommendations.push("Use symbolic links for identical binary hooks".to_string());
+    }
+    
+    Ok(AnalysisResult {
+        module: AnalysisModule::LfsOptimization,
+        summary,
+        recommendations,
+        metrics,
+    })
 }
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
