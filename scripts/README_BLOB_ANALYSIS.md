@@ -141,6 +141,20 @@ cargo run --bin rust_git_analyzer
 cargo run --bin file_type_analyzer
 ```
 
+### 9. `frequent_write_analyzer.rs` - Frequent Write Detection
+**Purpose**: Identifies files with frequent writes that should be excluded from Git to prevent recomputation
+
+**Features**:
+- Detects files that change frequently (logs, cache, temp files)
+- Analyzes write frequency and Git impact
+- Provides .gitignore recommendations
+- Identifies files that bloat Git history
+
+**Usage**:
+```bash
+cargo run --bin frequent_write_analyzer
+```
+
 ## 📊 Understanding the Results
 
 ### Blob Size Categories
