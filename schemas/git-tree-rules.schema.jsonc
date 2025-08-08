@@ -22,8 +22,15 @@
       "minLength": 1,
       "maxLength": 1000
     },
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema",
+      "format": "uri",
+      "pattern": "^https://hooksmith\\.dev/schemas/git-tree-rules\\.schema\\.json$"
+    },
     "schema": {
       "type": "object",
+      "description": "JSON Schema definition for the data structure",
       "properties": {
         "type": {
           "const": "object"
@@ -162,6 +169,7 @@
     },
     "data": {
       "type": "object",
+      "description": "Actual data values for the contract",
       "properties": {
         "git": {
           "type": "object",
@@ -178,28 +186,36 @@
                         "required": {
                           "type": "array",
                           "items": {
-                            "type": "string"
+                            "type": "string",
+                            "pattern": "^[^/]+$",
+                            "description": "Flat object name (no slashes)"
                           },
                           "description": "Files/directories that must exist in the tree (flat names only)"
                         },
                         "allowed": {
                           "type": "array",
                           "items": {
-                            "type": "string"
+                            "type": "string",
+                            "pattern": "^[^/]+$",
+                            "description": "Flat object name (no slashes)"
                           },
                           "description": "Files/directories that are permitted but not required (flat names only)"
                         },
                         "rejected": {
                           "type": "array",
                           "items": {
-                            "type": "string"
+                            "type": "string",
+                            "pattern": "^[^/]+$",
+                            "description": "Flat object name (no slashes)"
                           },
                           "description": "Files/directories that must not exist in the tree (flat names only)"
                         },
                         "ignored": {
                           "type": "array",
                           "items": {
-                            "type": "string"
+                            "type": "string",
+                            "pattern": "^[^/]+$",
+                            "description": "Flat object name (no slashes)"
                           },
                           "description": "Files/directories that are Git-ignored and should not be in tree (flat names only)"
                         }
@@ -220,6 +236,7 @@
     },
     "rules": {
       "type": "array",
+      "description": "Validation rules for the contract",
       "items": {
         "type": "object",
         "properties": {
@@ -227,7 +244,8 @@
             "type": "string",
             "description": "Name of the validation rule",
             "minLength": 1,
-            "maxLength": 255
+            "maxLength": 255,
+            "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
           },
           "description": {
             "type": "string",
@@ -243,7 +261,77 @@
           "parameters": {
             "type": "object",
             "description": "Rule-specific parameters",
-            "additionalProperties": true
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "data_path": {
+                    "type": "string",
+                    "description": "Path to data in the contract",
+                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_.]*$"
+                  }
+                },
+                "required": ["data_path"]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "allowed_patterns": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["literal_names", "suffix_wildcards", "prefix_wildcards", "negated_globs"]
+                    }
+                  },
+                  "disallowed_patterns": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["path_traversal", "double_star_globs", "slash_based_matching", "nested_paths"]
+                    }
+                  },
+                  "validation_rules": {
+                    "type": "object",
+                    "properties": {
+                      "no_slashes": {
+                        "type": "boolean"
+                      },
+                      "no_double_star": {
+                        "type": "boolean"
+                      },
+                      "flat_names_only": {
+                        "type": "boolean"
+                      },
+                      "root_scope_only": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "scope": {
+                    "type": "string",
+                    "enum": ["root_only"]
+                  },
+                  "depth": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "allow_directories": {
+                    "type": "boolean"
+                  },
+                  "allow_files": {
+                    "type": "boolean"
+                  },
+                  "forbid_nested_paths": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            ]
           },
           "required": {
             "type": "boolean",
@@ -262,6 +350,7 @@
     },
     "metadata": {
       "type": "object",
+      "description": "Additional metadata about the contract",
       "properties": {
         "contract_type": {
           "type": "string",
@@ -288,12 +377,15 @@
         "tags": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
           },
           "description": "Tags for categorizing the contract"
         },
         "pattern_constraints": {
           "type": "object",
+          "description": "Constraints on glob patterns",
           "properties": {
             "description": {
               "type": "string",
@@ -321,7 +413,8 @@
                 "valid": {
                   "type": "array",
                   "items": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^[^/]+$"
                   },
                   "description": "Examples of valid patterns"
                 },
@@ -332,15 +425,16 @@
                   },
                   "description": "Examples of invalid patterns"
                 }
-              }
+              },
+              "required": ["valid", "invalid"]
             }
           },
-          "description": "Constraints on glob patterns"
+          "required": ["description", "allowed_glob_types", "disallowed_glob_types", "examples"]
         }
       },
-      "additionalProperties": true
+      "required": ["contract_type", "scope", "enforcement_level", "auto_fix", "tags", "pattern_constraints"]
     }
   },
-  "required": ["name", "version", "description", "schema", "data"],
+  "required": ["name", "version", "description", "$schema", "schema", "data", "rules", "metadata"],
   "additionalProperties": false
 }
