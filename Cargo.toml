@@ -154,6 +154,10 @@ path = "scripts/lfs_hook_optimizer.rs"
 name = "modularization_analyzer"
 path = "scripts/modularization_analyzer.rs"
 
+[[bin]]
+name = "rust_blob_analyzer"
+path = "scripts/rust_blob_analyzer.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
