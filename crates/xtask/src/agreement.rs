@@ -536,6 +536,7 @@ impl AgreementCLI {
         base_branch: &str,
         create_worktree: bool,
         worktree_name: Option<&str>,
+        open_in_cursor: bool,
     ) -> Result<()> {
         // Get the agreement details
         let metadata = self.manager.get_agreement(scope)?;
@@ -563,6 +564,11 @@ impl AgreementCLI {
             let worktree_dir = worktree_name.unwrap_or(scope);
             create_worktree_for_branch(branch_name, worktree_dir)?;
             println!("✅ Created worktree: .wt/{}", worktree_dir);
+
+            if open_in_cursor {
+                open_worktree_in_cursor(&worktree_dir)?;
+                println!("✅ Opened worktree in Cursor: .wt/{}", worktree_dir);
+            }
         }
 
         println!("🎉 Agreement honored successfully!");
@@ -749,12 +755,14 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
             base_branch,
             create_worktree,
             worktree_name,
+            open_in_cursor,
         } => {
             cli.honor(
                 &scope,
                 &base_branch,
                 create_worktree,
                 worktree_name.as_deref(),
+                open_in_cursor,
             )?;
         }
     }
@@ -933,6 +941,79 @@ fn create_worktree_for_branch(branch_name: &str, worktree_dir: &str) -> Result<(
     }
 
     Ok(())
+}
+
+/// Open a worktree in Cursor
+fn open_worktree_in_cursor(worktree_dir: &str) -> Result<()> {
+    // Get the absolute path to the worktree
+    let worktree_path = std::path::Path::new(".wt").join(worktree_dir);
+    let absolute_path = worktree_path.canonicalize().context(format!(
+        "Failed to get absolute path for worktree: {}",
+        worktree_dir
+    ))?;
+
+    // Open in Cursor
+    let cursor_output = std::process::Command::new("cursor")
+        .args([absolute_path.to_str().unwrap()])
+        .output()
+        .context("Failed to open worktree in Cursor")?;
+
+    if !cursor_output.status.success() {
+        let error = String::from_utf8_lossy(&cursor_output.stderr);
+        anyhow::bail!("Failed to open worktree in Cursor: {}", error);
+    }
+
+    Ok(())
+}
+
+/// Get the Git repository root, handling worktree scenarios
+fn get_git_repo_root() -> Result<std::path::PathBuf> {
+    // Check if we're in a worktree
+    let worktree_output = std::process::Command::new("git")
+        .args(["rev-parse", "--git-dir"])
+        .output()
+        .context("Failed to get Git directory")?;
+
+    if !worktree_output.status.success() {
+        anyhow::bail!("Not in a Git repository");
+    }
+
+    let git_dir = String::from_utf8(worktree_output.stdout)?
+        .trim()
+        .to_string();
+
+    // If we're in a worktree, the git dir will be something like .git/worktrees/<name>
+    if git_dir.contains("worktrees") {
+        // Get the main repository root
+        let main_repo_output = std::process::Command::new("git")
+            .args(["rev-parse", "--show-toplevel"])
+            .output()
+            .context("Failed to get repository root")?;
+
+        if !main_repo_output.status.success() {
+            anyhow::bail!("Failed to get repository root");
+        }
+
+        let repo_root = String::from_utf8(main_repo_output.stdout)?
+            .trim()
+            .to_string();
+        Ok(std::path::PathBuf::from(repo_root))
+    } else {
+        // Regular repository
+        let repo_root_output = std::process::Command::new("git")
+            .args(["rev-parse", "--show-toplevel"])
+            .output()
+            .context("Failed to get repository root")?;
+
+        if !repo_root_output.status.success() {
+            anyhow::bail!("Failed to get repository root");
+        }
+
+        let repo_root = String::from_utf8(repo_root_output.stdout)?
+            .trim()
+            .to_string();
+        Ok(std::path::PathBuf::from(repo_root))
+    }
 }
 
 #[cfg(test)]
