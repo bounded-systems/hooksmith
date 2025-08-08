@@ -94,6 +94,9 @@ num_cpus = "1.0"
 # JSONC parsing support
 json_comments = "0.2"
 
+# GitHub Actions workflow parsing and validation
+# gh-workflow-parser = "0.1"  # Temporarily disabled due to dependency conflicts
+
 # Cargo metadata
 cargo_metadata = "0.18"
 
