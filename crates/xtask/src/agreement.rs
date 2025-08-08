@@ -827,7 +827,7 @@ impl AgreementCLI {
 
         for metadata in agreements {
             let short_scope = &metadata.agreement.scope[..7];
-            
+
             // Determine status indicator
             let indicator = if metadata.agreement.scope == current_tree_sha {
                 "* " // Active/current agreement
