@@ -1,0 +1,12 @@
+{
+  "name": "pre-push",
+  "scope": "git",
+  "concerns": [
+    "ref",
+    "remote",
+    "worktree",
+    "config-push",
+    "config-remote"
+  ],
+  "bin": "hooksmith-validate-push"
+}

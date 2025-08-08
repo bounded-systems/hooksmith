@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
+pub mod git_inspector;
 pub mod git_query;
 pub mod git_snapshot;
-pub mod git_inspector;
 
 #[derive(Debug, Clone)]
 pub struct TreeRuleSet {
@@ -59,9 +59,7 @@ impl TreeRuleSet {
                 "tmp".to_string(),
                 "temp".to_string(),
             ],
-            required_dirs: vec![
-                "src".to_string(),
-            ],
+            required_dirs: vec!["src".to_string()],
         }
     }
 }
@@ -70,12 +68,33 @@ impl FileRuleSet {
     pub fn default() -> Self {
         let mut allowed_extensions_by_dir = HashMap::new();
         allowed_extensions_by_dir.insert("src".to_string(), vec![".rs".to_string()]);
-        allowed_extensions_by_dir.insert("docs".to_string(), vec![".md".to_string(), ".txt".to_string()]);
-        allowed_extensions_by_dir.insert("examples".to_string(), vec![".rs".to_string(), ".md".to_string()]);
+        allowed_extensions_by_dir.insert(
+            "docs".to_string(),
+            vec![".md".to_string(), ".txt".to_string()],
+        );
+        allowed_extensions_by_dir.insert(
+            "examples".to_string(),
+            vec![".rs".to_string(), ".md".to_string()],
+        );
         allowed_extensions_by_dir.insert("tests".to_string(), vec![".rs".to_string()]);
-        allowed_extensions_by_dir.insert("scripts".to_string(), vec![".rs".to_string(), ".sh".to_string()]);
-        allowed_extensions_by_dir.insert("config".to_string(), vec![".toml".to_string(), ".yml".to_string(), ".yaml".to_string(), ".json".to_string(), ".jsonc".to_string()]);
-        allowed_extensions_by_dir.insert("schemas".to_string(), vec![".json".to_string(), ".jsonc".to_string()]);
+        allowed_extensions_by_dir.insert(
+            "scripts".to_string(),
+            vec![".rs".to_string(), ".sh".to_string()],
+        );
+        allowed_extensions_by_dir.insert(
+            "config".to_string(),
+            vec![
+                ".toml".to_string(),
+                ".yml".to_string(),
+                ".yaml".to_string(),
+                ".json".to_string(),
+                ".jsonc".to_string(),
+            ],
+        );
+        allowed_extensions_by_dir.insert(
+            "schemas".to_string(),
+            vec![".json".to_string(), ".jsonc".to_string()],
+        );
 
         Self {
             forbidden_root_extensions: vec![
@@ -89,16 +108,13 @@ impl FileRuleSet {
                 ".DS_Store".to_string(),
                 "Thumbs.db".to_string(),
             ],
-            required_files: vec![
-                "Cargo.toml".to_string(),
-                "README.md".to_string(),
-            ],
+            required_files: vec!["Cargo.toml".to_string(), "README.md".to_string()],
         }
     }
 }
 
 /// Validate directory structure from HEAD commit tree
-/// 
+///
 /// This function validates the directory structure as it exists in the HEAD commit,
 /// not including any uncommitted changes in the working directory.
 pub fn validate_tree_commit(paths: &[String], rules: &TreeRuleSet) -> Vec<Violation> {
@@ -119,7 +135,10 @@ pub fn validate_tree_commit(paths: &[String], rules: &TreeRuleSet) -> Vec<Violat
                 rule: "allowed_root_dirs".to_string(),
                 path: root_dir.clone(),
                 message: format!("Root directory '{}' is not in allowed list", root_dir),
-                suggestion: Some(format!("Add '{}' to allowed_root_dirs or remove it", root_dir)),
+                suggestion: Some(format!(
+                    "Add '{}' to allowed_root_dirs or remove it",
+                    root_dir
+                )),
             });
         }
     }
@@ -152,7 +171,7 @@ pub fn validate_tree_commit(paths: &[String], rules: &TreeRuleSet) -> Vec<Violat
 }
 
 /// Validate file structure from Git index (tracked files)
-/// 
+///
 /// This function validates the file structure as it exists in the Git index,
 /// including staged files but not unstaged changes or untracked files.
 pub fn validate_files_index(paths: &[String], rules: &FileRuleSet) -> Vec<Violation> {
@@ -182,8 +201,14 @@ pub fn validate_files_index(paths: &[String], rules: &FileRuleSet) -> Vec<Violat
                         violations.push(Violation {
                             rule: "allowed_extensions_by_dir".to_string(),
                             path: path.clone(),
-                            message: format!("File with extension '{}' not allowed in directory '{}'", ext, dir),
-                            suggestion: Some(format!("Move '{}' to directory that allows '{}' extension", path, ext)),
+                            message: format!(
+                                "File with extension '{}' not allowed in directory '{}'",
+                                ext, dir
+                            ),
+                            suggestion: Some(format!(
+                                "Move '{}' to directory that allows '{}' extension",
+                                path, ext
+                            )),
                         });
                     }
                 }
@@ -227,7 +252,13 @@ fn get_directory(path: &str) -> Option<String> {
     std::path::Path::new(path)
         .parent()
         .and_then(|p| p.to_str())
-        .map(|s| if s.is_empty() { ".".to_string() } else { s.to_string() })
+        .map(|s| {
+            if s.is_empty() {
+                ".".to_string()
+            } else {
+                s.to_string()
+            }
+        })
 }
 
 /// Compatibility function - validates tree structure (alias for validate_tree_commit)

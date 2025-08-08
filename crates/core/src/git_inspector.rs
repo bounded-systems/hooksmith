@@ -71,7 +71,8 @@ pub struct GitInspector;
 
 impl GitInspector {
     /// Perform comprehensive repository inspection
-    pub fn inspect_repository() -> Result<GitInspectionReport, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn inspect_repository(
+    ) -> Result<GitInspectionReport, Box<dyn std::error::Error + Send + Sync>> {
         let refs = Self::analyze_refs()?;
         let unreachable = Self::analyze_unreachable()?;
         let sync_status = Self::analyze_sync_status(&refs)?;
@@ -150,7 +151,8 @@ impl GitInspector {
     }
 
     /// Analyze unreachable objects
-    pub fn analyze_unreachable() -> Result<UnreachableAnalysis, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn analyze_unreachable(
+    ) -> Result<UnreachableAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         let output = Command::new("git")
             .args(["fsck", "--unreachable"])
             .output()?;
@@ -207,7 +209,9 @@ impl GitInspector {
     }
 
     /// Analyze local/remote synchronization
-    fn analyze_sync_status(refs: &RefAnalysis) -> Result<SyncStatus, Box<dyn std::error::Error + Send + Sync>> {
+    fn analyze_sync_status(
+        refs: &RefAnalysis,
+    ) -> Result<SyncStatus, Box<dyn std::error::Error + Send + Sync>> {
         let mut local_only = Vec::new();
         let mut remote_only = Vec::new();
         let out_of_sync = Vec::new();
@@ -280,14 +284,18 @@ impl GitInspector {
     }
 
     /// Get object path (for blobs)
-    fn get_object_path(_sha: &str) -> Result<Option<String>, Box<dyn std::error::Error + Send + Sync>> {
+    fn get_object_path(
+        _sha: &str,
+    ) -> Result<Option<String>, Box<dyn std::error::Error + Send + Sync>> {
         // This would need to traverse the object graph to find paths
         // For now, return None
         Ok(None)
     }
 
     /// Get object size
-    fn get_object_size(sha: &str) -> Result<Option<usize>, Box<dyn std::error::Error + Send + Sync>> {
+    fn get_object_size(
+        sha: &str,
+    ) -> Result<Option<usize>, Box<dyn std::error::Error + Send + Sync>> {
         let output = Command::new("git").args(["cat-file", "-s", sha]).output()?;
 
         if output.status.success() {

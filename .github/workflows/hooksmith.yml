@@ -15,14 +15,12 @@ permissions:
   issues: read
 
 on:
+  # Core events
   push:
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - closed
   workflow_dispatch:
+  
+  # Repository events
   create:
   delete:
   fork:
@@ -30,91 +28,42 @@ on:
   page_build:
   public:
   watch:
+  
+  # Issue and PR events
   issues:
-    types:
-      - opened
-      - edited
-      - closed
-      - reopened
   issue_comment:
-    types:
-      - created
-      - edited
-      - deleted
   pull_request_review:
-    types:
-      - submitted
-      - edited
-      - dismissed
   pull_request_review_comment:
-    types:
-      - created
-      - edited
-      - deleted
+  
+  # Release and deployment events
   release:
-    types:
-      - created
-      - edited
-      - deleted
-      - published
-      - unpublished
   deployment:
   deployment_status:
+  
+  # Check and status events
   check_suite:
-    types:
-      - completed
   check_run:
-    types:
-      - created
-      - rerequested
-      - completed
-      - requested_action
   status:
+  
+  # Discussion events
   discussion:
-    types:
-      - created
-      - edited
-      - deleted
-      - transferred
-      - pinned
-      - unpinned
-      - locked
-      - unlocked
-      - category_changed
-      - answered
-      - unanswered
   discussion_comment:
-    types:
-      - created
-      - edited
-      - deleted
+  
+  # Label and milestone events
   label:
-    types:
-      - created
-      - edited
-      - deleted
   milestone:
-    types:
-      - created
-      - closed
-      - opened
-      - edited
-      - deleted
+  
+  # Schedule and dispatch events
   schedule:
-    - cron: 0 0 * * *
+    - cron: '0 0 * * *'  # Daily at midnight UTC
   repository_dispatch:
+  
+  # Package and protection events
   registry_package:
-    types:
-      - published
-      - updated
   branch_protection_rule:
-    types:
-      - created
-      - edited
-      - deleted
 
 jobs:
-  ubuntu-latest:
+  run:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -123,13 +72,20 @@ jobs:
           fetch-depth: 0
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+      
       - name: Cache Rust dependencies
         uses: actions/cache@v4
         with:
+          path: |
+            target
+            ~/.cargo/registry
+            ~/.cargo/git
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          path: target,~/.cargo/registry,~/.cargo/git
-          restore-keys: ${{ runner.os }}-cargo-
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
       - name: Build Hooksmith
         run: cargo build --release
+      
       - name: Run Hooksmith Dispatch
         run: ./target/release/hooksmith-dispatch

@@ -1,7 +1,7 @@
-use std::process::Command;
-use std::collections::HashMap;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use anyhow::{Result, Context};
+use std::collections::HashMap;
+use std::process::Command;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct TreeRuleSet {
@@ -25,7 +25,10 @@ fn run_git_ls_tree() -> Result<Vec<String>> {
         .context("Failed to run git ls-tree")?;
 
     if !output.status.success() {
-        anyhow::bail!("git ls-tree failed: {}", String::from_utf8_lossy(&output.stderr));
+        anyhow::bail!(
+            "git ls-tree failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -57,7 +60,10 @@ fn check_ls_tree(rules: &TreeRuleSet) -> Result<Vec<Violation>> {
                 rule: "allowed_root_dirs".to_string(),
                 path: root_dir.clone(),
                 message: format!("Root directory '{}' is not in allowed list", root_dir),
-                suggestion: Some(format!("Add '{}' to allowed_root_dirs or remove it", root_dir)),
+                suggestion: Some(format!(
+                    "Add '{}' to allowed_root_dirs or remove it",
+                    root_dir
+                )),
             });
         }
     }
@@ -112,9 +118,7 @@ fn main() -> Result<()> {
             "tmp".to_string(),
             "temp".to_string(),
         ],
-        required_dirs: vec![
-            "src".to_string(),
-        ],
+        required_dirs: vec!["src".to_string()],
     };
 
     match check_ls_tree(&rules) {
@@ -123,7 +127,10 @@ fn main() -> Result<()> {
                 println!("✅ All directory structure rules passed");
                 std::process::exit(0);
             } else {
-                eprintln!("❌ Found {} directory structure violations:", violations.len());
+                eprintln!(
+                    "❌ Found {} directory structure violations:",
+                    violations.len()
+                );
                 for violation in violations {
                     eprintln!("  Rule: {}", violation.rule);
                     eprintln!("  Path: {}", violation.path);

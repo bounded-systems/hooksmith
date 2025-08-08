@@ -1,19 +1,25 @@
-use dircheck_core::{FileRuleSet, validate_files_index, git_query::GitQueryCommands};
+use dircheck_core::{git_query::GitQueryCommands, validate_files_index, FileRuleSet};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rules = FileRuleSet::default();
-    
+
     // Use the Git query module to get the command
     let git_cmd = GitQueryCommands::ls_files_index();
-    println!("🔍 Validating file structure using: {}", git_cmd.description);
+    println!(
+        "🔍 Validating file structure using: {}",
+        git_cmd.description
+    );
     println!("📋 Git view: {:?}", git_cmd.view);
-    
+
     let output = std::process::Command::new(&git_cmd.command)
         .args(&git_cmd.args)
         .output()?;
 
     if !output.status.success() {
-        eprintln!("❌ git ls-files failed: {}", String::from_utf8_lossy(&output.stderr));
+        eprintln!(
+            "❌ git ls-files failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
         std::process::exit(1);
     }
 

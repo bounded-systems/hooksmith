@@ -153,7 +153,7 @@ impl GitAttributes {
         let pattern = parts[0].to_string();
         let attributes = parts[1..].iter().map(|s| s.to_string()).collect();
 
-        Some((pattern, attributes))
+        Some((pattern, attributes.into_iter().map(|s| s.to_string()).collect()))
     }
 
     /// Parse a single attribute into key-value pair

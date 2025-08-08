@@ -7,10 +7,10 @@ use schema::{GitHook, HookContext, HookError};
 /// Main hook execution function
 pub fn execute_hook(hook_name: &str, args: Vec<String>) -> Result<()> {
     let context = HookContext::from_args(args)?;
-    
+
     // Validate the hook context
     context.validate()?;
-    
+
     // Execute the appropriate hook logic
     match context.hook {
         GitHook::PreCommit => execute_pre_commit(&context)?,
@@ -32,7 +32,7 @@ pub fn execute_hook(hook_name: &str, args: Vec<String>) -> Result<()> {
         GitHook::FSMonitorWatchman => execute_fsmonitor_watchman(&context)?,
         GitHook::PostIndexChange => execute_post_index_change(&context)?,
     }
-    
+
     Ok(())
 }
 
@@ -130,21 +130,21 @@ fn execute_post_index_change(_context: &HookContext) -> Result<()> {
 /// Run comprehensive hook tests
 pub async fn run_hook_tests() -> Result<()> {
     use test_framework::HookTestFramework;
-    
+
     let mut framework = HookTestFramework::new()?;
-    
+
     // Test all individual hooks
     framework.test_all_hooks().await?;
-    
+
     // Test Git operations
     framework.test_git_operations().await?;
-    
+
     // Export results
     let results = framework.export_results()?;
     std::fs::write("hook-test-results.json", results)?;
-    
+
     println!("📄 Test results exported to hook-test-results.json");
-    
+
     Ok(())
 }
 

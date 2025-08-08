@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HookConcern Schema",
+  "description": "Comprehensive schema for Git-native concerns based on Git Internals analysis",
+  "type": "object",
+  "properties": {
+    "concerns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          // Git Object Concerns (Core Objects)
+          "blob",
+          "tree", 
+          "commit",
+          "tag",
+          "ref",
+          "note",
+          "attr",
+          
+          // Git Reference Concerns (Detailed Ref Types)
+          "ref-branch",
+          "ref-remote", 
+          "ref-tag",
+          "ref-note",
+          "ref-stash",
+          "ref-worktree",
+          "ref-sym",
+          "head-pointer",
+          "packed-refs",
+          "fetch-head-pointer",
+          "merge-head-pointer", 
+          "cherry-pick-pointer",
+          "revert-head-pointer",
+          "orig-head",
+          "ref-log-entry",
+          
+          // Git Storage Concerns (Object Database)
+          "packfile-index",
+          "packfile-data",
+          "packfile-bitmap", 
+          "packfile-keep",
+          "packfile-promisor",
+          "loose-object",
+          "object-database",
+          
+          // Git Local State Concerns
+          "stash",
+          "worktree",
+          "index",
+          "remote",
+          "branch",
+          "head",
+          "reflog",
+          
+          // Git Transport & Protocol Concerns
+          "protocol-local",
+          "protocol-git",
+          "protocol-http",
+          "protocol-https", 
+          "protocol-ssh",
+          "refspec",
+          "protocol-packet",
+          
+          // Git Runtime & Environment Concerns
+          "git-dir-override",
+          "work-tree-override",
+          "index-file-override",
+          "object-directory-override",
+          "alternate-object-database",
+          "git-config-override",
+          "trace-override",
+          "author-override",
+          "ui-override",
+          
+          // Git Maintenance & Recovery Concerns
+          "fsck-check",
+          "prune-orphaned",
+          "repack-packfile",
+          "gc-lifecycle",
+          "reflog-repair",
+          "index-recovery",
+          
+          // Git Command & Operation Concerns
+          "init",
+          "snapshot",
+          "branch",
+          "merge",
+          "rebase",
+          "push",
+          "pull",
+          "fetch",
+          "log",
+          "diff",
+          "status",
+          "stash",
+          "patch",
+          "debug",
+          "blame",
+          "plumbing",
+          "object-db",
+          "transport",
+          "project-init",
+          
+          // Git Config Concerns
+          "config-user",
+          "config-core",
+          "config-branch",
+          "config-remote",
+          "config-init",
+          "config-color",
+          "config-alias",
+          "config-diff",
+          "config-merge",
+          "config-gpg",
+          "config-commit",
+          "config-pull",
+          "config-push",
+          "config-rebase",
+          "config-fetch",
+          "config-status",
+          "config-tar",
+          "config-rerere",
+          "config-advice",
+          "config-interactive",
+          "config-submodule",
+          "config-filter",
+          "config-include",
+          "config-credential",
+          "config-http",
+          "config-url",
+          "config-safe",
+          "config-notes",
+          "config-gc",
+          "config-maintenance",
+          "config-pager",
+          "config-worktree"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "required": ["concerns"],
+  "additionalProperties": false
+}

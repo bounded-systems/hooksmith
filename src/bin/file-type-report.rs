@@ -58,10 +58,10 @@ fn analyze_file_types(files: &[PathBuf]) -> HashMap<String, FileTypeStats> {
             continue; // Skip directories
         }
 
-        let extension = get_file_extension(file)
-            .unwrap_or_else(|| "no-extension".to_string());
+        let extension = get_file_extension(file).unwrap_or_else(|| "no-extension".to_string());
 
-        stats.entry(extension)
+        stats
+            .entry(extension)
             .or_insert_with(FileTypeStats::new)
             .add_file(file);
     }
@@ -92,10 +92,11 @@ fn print_file_type_report(stats: &HashMap<String, FileTypeStats>) {
         let percentage = (stat.count as f64 / total_files as f64) * 100.0;
         let bar_length = ((percentage / 5.0) as usize).min(20); // Max 20 chars
         let bar = "█".repeat(bar_length);
-        
-        println!("{:>6} {:>4} files ({:>5.1}%) {}", 
-            format!(".{}", extension), 
-            stat.count, 
+
+        println!(
+            "{:>6} {:>4} files ({:>5.1}%) {}",
+            format!(".{}", extension),
+            stat.count,
             format!("{:.1}", percentage),
             bar
         );
@@ -119,13 +120,64 @@ fn print_file_type_report(stats: &HashMap<String, FileTypeStats>) {
 
     let allowed_extensions = ["rs", "jsonc"];
     let blocked_extensions = [
-        "sh", "bash", "zsh", "fish", "csh", "ksh", "tcsh", "dash", "ash", 
-        "mksh", "yash", "posh", "rc", "es", "nu", "xonsh", "elvish", 
-        "nushell", "powershell", "ps1", "cmd", "bat", "com", "exe", "vbs",
-        "js", "ts", "py", "rb", "pl", "php", "java", "cs", "cpp", "c", 
-        "h", "hpp", "cc", "cxx", "m", "mm", "swift", "go", "dart", "kt", 
-        "scala", "clj", "hs", "ml", "fs", "v", "zig", "nim", "crystal", 
-        "odin", "jai", "carbon", "mojo"
+        "sh",
+        "bash",
+        "zsh",
+        "fish",
+        "csh",
+        "ksh",
+        "tcsh",
+        "dash",
+        "ash",
+        "mksh",
+        "yash",
+        "posh",
+        "rc",
+        "es",
+        "nu",
+        "xonsh",
+        "elvish",
+        "nushell",
+        "powershell",
+        "ps1",
+        "cmd",
+        "bat",
+        "com",
+        "exe",
+        "vbs",
+        "js",
+        "ts",
+        "py",
+        "rb",
+        "pl",
+        "php",
+        "java",
+        "cs",
+        "cpp",
+        "c",
+        "h",
+        "hpp",
+        "cc",
+        "cxx",
+        "m",
+        "mm",
+        "swift",
+        "go",
+        "dart",
+        "kt",
+        "scala",
+        "clj",
+        "hs",
+        "ml",
+        "fs",
+        "v",
+        "zig",
+        "nim",
+        "crystal",
+        "odin",
+        "jai",
+        "carbon",
+        "mojo",
     ];
 
     let mut allowed_count = 0;
@@ -146,7 +198,10 @@ fn print_file_type_report(stats: &HashMap<String, FileTypeStats>) {
     let blocked_percentage = (blocked_count as f64 / total_files as f64) * 100.0;
     let other_percentage = (other_count as f64 / total_files as f64) * 100.0;
 
-    println!("✅ Policy Compliant ({} files, {:.1}%):", allowed_count, allowed_percentage);
+    println!(
+        "✅ Policy Compliant ({} files, {:.1}%):",
+        allowed_count, allowed_percentage
+    );
     for ext in &allowed_extensions {
         if let Some(stat) = stats.get(*ext) {
             println!("   .{}: {} files", ext, stat.count);
@@ -155,7 +210,10 @@ fn print_file_type_report(stats: &HashMap<String, FileTypeStats>) {
     println!();
 
     if blocked_count > 0 {
-        println!("❌ Policy Violations ({} files, {:.1}%):", blocked_count, blocked_percentage);
+        println!(
+            "❌ Policy Violations ({} files, {:.1}%):",
+            blocked_count, blocked_percentage
+        );
         for (ext, stat) in &sorted_stats {
             if blocked_extensions.contains(&ext.as_str()) && stat.count > 0 {
                 println!("   .{}: {} files", ext, stat.count);
@@ -164,10 +222,16 @@ fn print_file_type_report(stats: &HashMap<String, FileTypeStats>) {
         println!();
     }
 
-    println!("⚠️  Other Files ({} files, {:.1}%):", other_count, other_percentage);
-    let mut other_extensions: Vec<_> = sorted_stats.iter()
-        .filter(|(ext, _)| !allowed_extensions.contains(&ext.as_str()) && 
-                           !blocked_extensions.contains(&ext.as_str()))
+    println!(
+        "⚠️  Other Files ({} files, {:.1}%):",
+        other_count, other_percentage
+    );
+    let mut other_extensions: Vec<_> = sorted_stats
+        .iter()
+        .filter(|(ext, _)| {
+            !allowed_extensions.contains(&ext.as_str())
+                && !blocked_extensions.contains(&ext.as_str())
+        })
         .collect();
     other_extensions.sort_by(|a, b| b.1.count.cmp(&a.1.count));
 
@@ -182,15 +246,18 @@ fn print_file_type_report(stats: &HashMap<String, FileTypeStats>) {
     // Recommendations
     println!("💡 Recommendations:");
     if blocked_count > 0 {
-        println!("   • Remove {} blocked files to achieve 100% policy compliance", blocked_count);
+        println!(
+            "   • Remove {} blocked files to achieve 100% policy compliance",
+            blocked_count
+        );
     } else {
         println!("   • ✅ Repository is 100% policy compliant!");
     }
-    
+
     if allowed_percentage < 50.0 {
         println!("   • Consider converting more files to .rs or .jsonc");
     }
-    
+
     if other_percentage > 50.0 {
         println!("   • Review other file types for potential conversion");
     }
@@ -213,24 +280,33 @@ fn print_detailed_analysis(stats: &HashMap<String, FileTypeStats>) {
 
     // Extension categories
     let mut categories = HashMap::new();
-    categories.insert("Configuration", vec!["toml", "yml", "yaml", "json", "jsonc", "ini", "cfg", "conf"]);
+    categories.insert(
+        "Configuration",
+        vec!["toml", "yml", "yaml", "json", "jsonc", "ini", "cfg", "conf"],
+    );
     categories.insert("Documentation", vec!["md", "txt", "rst", "adoc", "tex"]);
     categories.insert("Build/CI", vec!["yml", "yaml", "toml", "lock", "cargo"]);
-    categories.insert("Source Code", vec!["rs", "js", "ts", "py", "rb", "java", "cpp", "c", "go"]);
-    categories.insert("Shell/Scripts", vec!["sh", "bash", "zsh", "fish", "ps1", "cmd", "bat"]);
+    categories.insert(
+        "Source Code",
+        vec!["rs", "js", "ts", "py", "rb", "java", "cpp", "c", "go"],
+    );
+    categories.insert(
+        "Shell/Scripts",
+        vec!["sh", "bash", "zsh", "fish", "ps1", "cmd", "bat"],
+    );
 
     println!("📂 File Categories:");
     for (category, extensions) in &categories {
         let mut category_count = 0;
         let mut category_files = Vec::new();
-        
+
         for ext in extensions {
             if let Some(stat) = stats.get(*ext) {
                 category_count += stat.count;
                 category_files.extend(stat.examples.clone());
             }
         }
-        
+
         if category_count > 0 {
             println!("   {}: {} files", category, category_count);
             for file in category_files.iter().take(3) {
@@ -262,7 +338,11 @@ fn main() -> ExitCode {
     }
 
     // Check if we're in a git repository
-    if Command::new("git").args(&["rev-parse", "--git-dir"]).output().is_err() {
+    if Command::new("git")
+        .args(&["rev-parse", "--git-dir"])
+        .output()
+        .is_err()
+    {
         eprintln!("❌ Error: Not in a git repository");
         return ExitCode::FAILURE;
     }

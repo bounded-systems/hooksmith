@@ -1,8 +1,8 @@
-use std::process::Command;
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::process::Command;
 
 #[derive(Parser)]
 #[command(name = "dircheck")]
@@ -53,7 +53,10 @@ fn run_git_ls_tree() -> Result<Vec<String>> {
         .context("Failed to run git ls-tree")?;
 
     if !output.status.success() {
-        anyhow::bail!("git ls-tree failed: {}", String::from_utf8_lossy(&output.stderr));
+        anyhow::bail!(
+            "git ls-tree failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -73,7 +76,10 @@ fn run_git_ls_files() -> Result<Vec<String>> {
         .context("Failed to run git ls-files")?;
 
     if !output.status.success() {
-        anyhow::bail!("git ls-files failed: {}", String::from_utf8_lossy(&output.stderr));
+        anyhow::bail!(
+            "git ls-files failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -97,7 +103,13 @@ fn get_directory(path: &str) -> Option<String> {
     std::path::Path::new(path)
         .parent()
         .and_then(|p| p.to_str())
-        .map(|s| if s.is_empty() { ".".to_string() } else { s.to_string() })
+        .map(|s| {
+            if s.is_empty() {
+                ".".to_string()
+            } else {
+                s.to_string()
+            }
+        })
 }
 
 fn check_ls_tree(rules: &TreeRuleSet) -> Result<Vec<Violation>> {
@@ -119,7 +131,10 @@ fn check_ls_tree(rules: &TreeRuleSet) -> Result<Vec<Violation>> {
                 rule: "allowed_root_dirs".to_string(),
                 path: root_dir.clone(),
                 message: format!("Root directory '{}' is not in allowed list", root_dir),
-                suggestion: Some(format!("Add '{}' to allowed_root_dirs or remove it", root_dir)),
+                suggestion: Some(format!(
+                    "Add '{}' to allowed_root_dirs or remove it",
+                    root_dir
+                )),
             });
         }
     }
@@ -179,8 +194,14 @@ fn check_ls_files(rules: &FileRuleSet) -> Result<Vec<Violation>> {
                         violations.push(Violation {
                             rule: "allowed_extensions_by_dir".to_string(),
                             path: path.clone(),
-                            message: format!("File with extension '{}' not allowed in directory '{}'", ext, dir),
-                            suggestion: Some(format!("Move '{}' to directory that allows '{}' extension", path, ext)),
+                            message: format!(
+                                "File with extension '{}' not allowed in directory '{}'",
+                                ext, dir
+                            ),
+                            suggestion: Some(format!(
+                                "Move '{}' to directory that allows '{}' extension",
+                                path, ext
+                            )),
                         });
                     }
                 }
@@ -235,38 +256,50 @@ fn get_default_tree_rules() -> TreeRuleSet {
             "tmp".to_string(),
             "temp".to_string(),
         ],
-        required_dirs: vec![
-            "src".to_string(),
-        ],
+        required_dirs: vec!["src".to_string()],
     }
 }
 
 fn get_default_file_rules() -> FileRuleSet {
     let mut allowed_extensions_by_dir = HashMap::new();
     allowed_extensions_by_dir.insert("src".to_string(), vec![".rs".to_string()]);
-    allowed_extensions_by_dir.insert("docs".to_string(), vec![".md".to_string(), ".txt".to_string()]);
-    allowed_extensions_by_dir.insert("examples".to_string(), vec![".rs".to_string(), ".md".to_string()]);
+    allowed_extensions_by_dir.insert(
+        "docs".to_string(),
+        vec![".md".to_string(), ".txt".to_string()],
+    );
+    allowed_extensions_by_dir.insert(
+        "examples".to_string(),
+        vec![".rs".to_string(), ".md".to_string()],
+    );
     allowed_extensions_by_dir.insert("tests".to_string(), vec![".rs".to_string()]);
-    allowed_extensions_by_dir.insert("scripts".to_string(), vec![".rs".to_string(), ".sh".to_string()]);
-    allowed_extensions_by_dir.insert("config".to_string(), vec![".toml".to_string(), ".yml".to_string(), ".yaml".to_string(), ".json".to_string(), ".jsonc".to_string()]);
-    allowed_extensions_by_dir.insert("schemas".to_string(), vec![".json".to_string(), ".jsonc".to_string()]);
+    allowed_extensions_by_dir.insert(
+        "scripts".to_string(),
+        vec![".rs".to_string(), ".sh".to_string()],
+    );
+    allowed_extensions_by_dir.insert(
+        "config".to_string(),
+        vec![
+            ".toml".to_string(),
+            ".yml".to_string(),
+            ".yaml".to_string(),
+            ".json".to_string(),
+            ".jsonc".to_string(),
+        ],
+    );
+    allowed_extensions_by_dir.insert(
+        "schemas".to_string(),
+        vec![".json".to_string(), ".jsonc".to_string()],
+    );
 
     FileRuleSet {
-        forbidden_root_extensions: vec![
-            ".md".to_string(),
-            ".toml".to_string(),
-            ".rs".to_string(),
-        ],
+        forbidden_root_extensions: vec![".md".to_string(), ".toml".to_string(), ".rs".to_string()],
         allowed_extensions_by_dir,
         forbidden_files: vec![
             "Cargo.lock".to_string(),
             ".DS_Store".to_string(),
             "Thumbs.db".to_string(),
         ],
-        required_files: vec![
-            "Cargo.toml".to_string(),
-            "README.md".to_string(),
-        ],
+        required_files: vec!["Cargo.toml".to_string(), "README.md".to_string()],
     }
 }
 
@@ -328,7 +361,7 @@ fn main() -> Result<()> {
         Commands::All => {
             let tree_rules = get_default_tree_rules();
             let file_rules = get_default_file_rules();
-            
+
             let mut all_violations = Vec::new();
             let mut has_errors = false;
 

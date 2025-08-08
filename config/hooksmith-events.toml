@@ -1,0 +1,114 @@
+# Hooksmith Event Mapping Configuration
+# Maps GitHub events to Rust binary handlers
+
+[push]
+binary = "github-push"
+description = "Handles push events to branches and tags"
+
+[pull_request]
+binary = "github-pull-request"
+description = "Handles pull request creation, updates, and merges"
+
+[issues]
+binary = "github-issues"
+description = "Handles issue creation, updates, and closures"
+
+[release]
+binary = "github-release"
+description = "Handles release creation and updates"
+
+[create]
+binary = "github-create"
+description = "Handles branch and tag creation"
+
+[delete]
+binary = "github-delete"
+description = "Handles branch and tag deletion"
+
+[workflow_dispatch]
+binary = "github-workflow-dispatch"
+description = "Handles manual workflow triggers"
+
+[schedule]
+binary = "github-schedule"
+description = "Handles scheduled workflow runs"
+
+[watch]
+binary = "github-watch"
+description = "Handles repository starring"
+
+[fork]
+binary = "github-fork"
+description = "Handles repository forking"
+
+[gollum]
+binary = "github-gollum"
+description = "Handles wiki page updates"
+
+[page_build]
+binary = "github-page-build"
+description = "Handles GitHub Pages builds"
+
+[public]
+binary = "github-public"
+description = "Handles repository publicization"
+
+[label]
+binary = "github-label"
+description = "Handles label creation and updates"
+
+[milestone]
+binary = "github-milestone"
+description = "Handles milestone creation and updates"
+
+[discussion]
+binary = "github-discussion"
+description = "Handles discussion creation and updates"
+
+[discussion_comment]
+binary = "github-discussion-comment"
+description = "Handles discussion comment events"
+
+[issue_comment]
+binary = "github-issue-comment"
+description = "Handles issue comment events"
+
+[pull_request_review]
+binary = "github-pull-request-review"
+description = "Handles pull request review events"
+
+[pull_request_review_comment]
+binary = "github-pull-request-review-comment"
+description = "Handles pull request review comment events"
+
+[check_suite]
+binary = "github-check-suite"
+description = "Handles check suite events"
+
+[check_run]
+binary = "github-check-run"
+description = "Handles check run events"
+
+[status]
+binary = "github-status"
+description = "Handles commit status events"
+
+[deployment]
+binary = "github-deployment"
+description = "Handles deployment events"
+
+[deployment_status]
+binary = "github-deployment-status"
+description = "Handles deployment status events"
+
+[repository_dispatch]
+binary = "github-repository-dispatch"
+description = "Handles custom repository events"
+
+[registry_package]
+binary = "github-registry-package"
+description = "Handles package registry events"
+
+[branch_protection_rule]
+binary = "github-branch-protection-rule"
+description = "Handles branch protection rule events"

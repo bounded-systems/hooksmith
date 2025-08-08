@@ -1670,28 +1670,11 @@ enum Commands {
         #[command(subcommand)]
         command: GitAttributesCommands,
     },
-    /// Git hooks management with Rust binaries
-    GitHooks {
-        #[command(subcommand)]
-        command: GitHooksCommands,
-    },
     /// SBOM generation and management
     Sbom {
         /// SBOM command to execute
         #[arg(trailing_var_arg = true)]
         args: Vec<String>,
-    },
-    /// Generate GitHub Actions workflow from JSONC configuration
-    GenGitHubActions {
-        /// Input JSONC configuration file
-        #[arg(long, default_value = "config/github-actions.jsonc")]
-        config: String,
-        /// Output workflow file
-        #[arg(long, default_value = ".github/workflows/hooksmith.yml")]
-        output: String,
-        /// Whether to validate the generated workflow
-        #[arg(long)]
-        validate: bool,
     },
     /// Validate static hook definitions
     ValidateStaticHooks {
@@ -1704,51 +1687,6 @@ enum Commands {
         /// Check binary existence in target/release/
         #[arg(long, default_value = "true")]
         check_binaries: bool,
-    },
-    /// Validate GitHub Actions workflow contracts
-    WorkflowContracts {
-        /// Workflow file or directory to validate
-        #[arg(long, default_value = ".github/workflows")]
-        path: String,
-        /// Whether to exit with error on validation failures
-        #[arg(long)]
-        strict: bool,
-        /// Show detailed validation output
-        #[arg(long)]
-        verbose: bool,
-        /// Generate a disabled workflow stub
-        #[arg(long)]
-        generate_stub: Option<String>,
-        /// Output format (text, json, summary)
-        #[arg(long, default_value = "text")]
-        format: String,
-    },
-    /// Test GitHub Actions workflow contracts with act
-    TestWorkflowContracts {
-        /// Workflow files to test
-        #[arg(long)]
-        paths: Vec<String>,
-        /// Use act for testing workflows
-        #[arg(long)]
-        use_act: bool,
-        /// Run act in dry-run mode
-        #[arg(long)]
-        act_dry_run: bool,
-        /// Generate mock input files
-        #[arg(long)]
-        generate_inputs: bool,
-        /// Test all triggers, not just workflow_dispatch
-        #[arg(long)]
-        test_all_triggers: bool,
-        /// Output directory for generated files
-        #[arg(long)]
-        output_dir: Option<String>,
-        /// Custom act inputs file
-        #[arg(long)]
-        act_inputs_file: Option<String>,
-        /// Output format (json, yaml, markdown)
-        #[arg(long, default_value = "markdown")]
-        format: String,
     },
 }
 
@@ -2544,13 +2482,6 @@ async fn main() -> Result<()> {
         Commands::Sbom { args } => {
             sbom::handle_sbom_command(&args).await?;
         }
-        Commands::GenGitHubActions {
-            config,
-            output,
-            validate,
-        } => {
-            github_actions::generate_workflow(&config, &output, validate).await?;
-        }
         Commands::ValidateStaticHooks {
             strict,
             verbose,
@@ -2558,36 +2489,7 @@ async fn main() -> Result<()> {
         } => {
             validate_static_hooks_command(strict, verbose, check_binaries).await?;
         }
-        Commands::WorkflowContracts {
-            path,
-            strict,
-            verbose,
-            generate_stub,
-            format,
-        } => {
-            run_workflow_contracts_command(path, strict, verbose, generate_stub.as_deref(), format).await?;
-        }
-        Commands::TestWorkflowContracts {
-            paths,
-            use_act,
-            act_dry_run,
-            generate_inputs,
-            test_all_triggers,
-            output_dir,
-            act_inputs_file,
-            format,
-        } => {
-            run_test_workflow_contracts_command(
-                paths,
-                use_act,
-                act_dry_run,
-                generate_inputs,
-                test_all_triggers,
-                output_dir,
-                act_inputs_file,
-                format,
-            ).await?;
-        }
+    }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
                 config_dir,
@@ -2674,6 +2576,111 @@ async fn main() -> Result<()> {
                 println!("✅ Converted {input} to {format}: {output}");
             }
         },
+        Commands::GitConfig { command } => match command {
+            GitConfigCommands::Convert {
+                input,
+                output,
+                validate,
+            } => {
+                let config = git_config::parse_git_config(&input)?;
+                let jsonc = git_config::convert_to_jsonc(&config)?;
+                fs::write(&output, jsonc)?;
+                println!("✅ Converted .git/config to JSONC: {output}");
+
+                if validate {
+                    let schema = git_config::load_schema()?;
+                    let validation_result = git_config::validate_jsonc(&output, &schema)?;
+                    if validation_result.is_valid {
+                        println!("✅ JSONC configuration is valid");
+                    } else {
+                        println!("❌ JSONC configuration is invalid:");
+                        for error in validation_result.errors {
+                            println!("  - {error}");
+                        }
+                        anyhow::bail!("JSONC validation failed");
+                    }
+                }
+            }
+            GitConfigCommands::Template {
+                output,
+                comprehensive,
+            } => {
+                let template = if comprehensive {
+                    git_config::generate_comprehensive_template()
+                } else {
+                    git_config::generate_template()
+                };
+                fs::write(&output, template)?;
+                println!("✅ Generated Git config template: {output}");
+            }
+            GitConfigCommands::Analyze {
+                input,
+                format,
+                detailed,
+            } => {
+                let config = git_config::parse_git_config(&input)?;
+                let analysis = git_config::analyze_config(&config, detailed);
+                match format.as_str() {
+                    "text" => {
+                        println!("{}", analysis);
+                    }
+                    "json" => {
+                        let json = serde_json::to_string_pretty(&analysis)?;
+                        println!("{}", json);
+                    }
+                    "summary" => {
+                        let summary = git_config::summarize_analysis(&analysis);
+                        println!("{}", summary);
+                    }
+                    _ => {
+                        anyhow::bail!("Invalid output format: {format}");
+                    }
+                }
+            }
+            GitConfigCommands::Export {
+                input,
+                format,
+                output,
+            } => {
+                let config = git_config::parse_git_config(&input)?;
+                let exported = match format.as_str() {
+                    "jsonc" => git_config::convert_to_jsonc(&config)?,
+                    "json" => {
+                        let json = serde_json::to_string_pretty(&config)?;
+                        json
+                    }
+                    "yaml" => {
+                        let yaml = serde_yaml::to_string(&config)?;
+                        yaml
+                    }
+                    "toml" => {
+                        let toml = toml::to_string_pretty(&config)?;
+                        toml
+                    }
+                    _ => {
+                        anyhow::bail!("Invalid output format: {format}");
+                    }
+                };
+                fs::write(&output, exported)?;
+                println!("✅ Exported .git/config to {format}: {output}");
+            }
+            GitConfigCommands::Validate { input, strict } => {
+                let config = git_config::parse_git_config(&input)?;
+                let schema = git_config::load_schema()?;
+                let validation_result = git_config::validate_config(&config, &schema)?;
+                if validation_result.is_valid {
+                    println!("✅ Git configuration is valid");
+                } else {
+                    println!("❌ Git configuration is invalid:");
+                    for error in validation_result.errors {
+                        println!("  - {error}");
+                    }
+                    if strict {
+                        anyhow::bail!("Git configuration validation failed");
+                    }
+                }
+            }
+        },
         Commands::GitHooks { command } => match command {
             GitHooksCommands::Validate { strict, verbose } => {
                 println!("Git hooks validation not yet implemented");
@@ -2688,22 +2695,24 @@ async fn main() -> Result<()> {
                 output,
                 validate,
             } => {
-                let attributes = git_attributes::parse_git_attributes(&input)?;
-                let jsonc = git_attributes::convert_to_jsonc(&attributes)?;
+                let attributes = git_attributes::GitAttributes::from_file(&input)?;
+                let jsonc = attributes.to_jsonc()?;
                 fs::write(&output, jsonc)?;
                 println!("✅ Converted .gitattributes to JSONC: {output}");
 
                 if validate {
-                    let schema = git_attributes::load_schema()?;
-                    let validation_result = git_attributes::validate_jsonc(&output, &schema)?;
-                    if validation_result.is_valid {
-                        println!("✅ JSONC attributes are valid");
-                    } else {
-                        println!("❌ JSONC attributes are invalid:");
-                        for error in validation_result.errors {
-                            println!("  - {error}");
+                    let validation_result = attributes.validate();
+                    match validation_result {
+                        Ok(_) => {
+                            println!("✅ JSONC attributes are valid");
                         }
-                        anyhow::bail!("JSONC validation failed");
+                        Err(errors) => {
+                            println!("❌ JSONC attributes are invalid:");
+                            for error in errors {
+                                println!("  - {error}");
+                            }
+                            anyhow::bail!("JSONC validation failed");
+                        }
                     }
                 }
             }
@@ -2711,12 +2720,7 @@ async fn main() -> Result<()> {
                 output,
                 comprehensive,
             } => {
-                let template = if comprehensive {
-                    git_attributes::generate_comprehensive_template()
-                } else {
-                    git_attributes::generate_template()
-                };
-                fs::write(&output, template)?;
+                git_attributes::GitAttributesManager::generate_template(&output)?;
                 println!("✅ Generated Git attributes template: {output}");
             }
             GitAttributesCommands::Analyze {
@@ -2724,19 +2728,17 @@ async fn main() -> Result<()> {
                 format,
                 detailed,
             } => {
-                let attributes = git_attributes::parse_git_attributes(&input)?;
-                let analysis = git_attributes::analyze_attributes(&attributes, detailed);
+                let attributes = git_attributes::GitAttributes::from_file(&input)?;
                 match format.as_str() {
                     "text" => {
-                        println!("{}", analysis);
+                        println!("{}", attributes.generate_summary());
                     }
                     "json" => {
-                        let json = serde_json::to_string_pretty(&analysis)?;
+                        let json = serde_json::to_string_pretty(&attributes)?;
                         println!("{}", json);
                     }
                     "summary" => {
-                        let summary = git_attributes::summarize_analysis(&analysis);
-                        println!("{}", summary);
+                        println!("{}", attributes.generate_summary());
                     }
                     _ => {
                         anyhow::bail!("Invalid output format: {format}");
@@ -2750,9 +2752,7 @@ async fn main() -> Result<()> {
             } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 let exported = match format.as_str() {
-                    "jsonc" => {
-                        git_attributes::convert_to_jsonc(&attributes)?
-                    }
+                    "jsonc" => git_attributes::convert_to_jsonc(&attributes)?,
                     "json" => {
                         let json = serde_json::to_string_pretty(&attributes)?;
                         json
@@ -2776,29 +2776,22 @@ async fn main() -> Result<()> {
                 fs::write(&output, exported)?;
                 println!("✅ Exported .gitattributes to {format}: {output}");
             }
-            GitAttributesCommands::Validate {
-                input,
-                strict,
-            } => {
-                let attributes = git_attributes::parse_git_attributes(&input)?;
-                let schema = git_attributes::load_schema()?;
-                let validation_result = git_attributes::validate_attributes(&attributes, &schema)?;
-                if validation_result.is_valid {
-                    println!("✅ Git attributes are valid");
-                } else {
-                    println!("❌ Git attributes are invalid:");
-                    for error in validation_result.errors {
-                        println!("  - {error}");
-                    }
-                    if strict {
-                        anyhow::bail!("Git attributes validation failed");
+            GitAttributesCommands::Validate { input, strict } => {
+                let attributes = git_attributes::GitAttributes::from_file(&input)?;
+                match attributes.validate() {
+                    Ok(_) => println!("✅ Git attributes are valid"),
+                    Err(errors) => {
+                        println!("❌ Git attributes are invalid:");
+                        for error in errors {
+                            println!("  - {error}");
+                        }
+                        if strict {
+                            anyhow::bail!("Git attributes validation failed");
+                        }
                     }
                 }
             }
-            GitAttributesCommands::TestMatching {
-                input,
-                files,
-            } => {
+            GitAttributesCommands::TestMatching { input, files } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 for file in files {
                     let matched_attributes = git_attributes::match_attributes(&attributes, &file);
@@ -10147,4 +10140,6 @@ async fn run_test_workflow_contracts_command(
     }
 
     Ok(())
+}
+
 }

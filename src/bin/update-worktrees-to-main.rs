@@ -184,7 +184,8 @@ fn show_usage() {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
-    let command = args.get(1).unwrap_or(&"help".to_string());
+    let help = "help".to_string();
+    let command = args.get(1).unwrap_or(&help);
 
     match command.as_str() {
         "update" => {

@@ -1,0 +1,10 @@
+{
+  "name": "pre-commit",
+  "scope": "git",
+  "concerns": [
+    "tree-file",
+    "tree-executable",
+    "tree-directory"
+  ],
+  "bin": "hooksmith-validate-tree"
+}

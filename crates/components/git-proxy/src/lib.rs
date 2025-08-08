@@ -229,13 +229,13 @@ pub enum GitProtocol {
 pub trait GitProxyServer {
     /// Start the proxy server
     async fn start(&mut self) -> Result<()>;
-    
+
     /// Stop the proxy server
     async fn stop(&mut self) -> Result<()>;
-    
+
     /// Get server status
     fn status(&self) -> ServerStatus;
-    
+
     /// Handle incoming Git operation
     async fn handle_operation(&mut self, event: GitProxyEvent) -> Result<GitProxyEvent>;
 }
@@ -272,7 +272,7 @@ impl GitProxy {
             },
         }
     }
-    
+
     /// Initialize the proxy repository
     pub async fn initialize(&mut self) -> Result<()> {
         // Create proxy repository if it doesn't exist
@@ -281,15 +281,15 @@ impl GitProxy {
             // Initialize as bare repository
             // This would be implemented with git2 or git CLI
         }
-        
+
         Ok(())
     }
-    
+
     /// Get the current configuration
     pub fn config(&self) -> &GitProxyConfig {
         &self.config
     }
-    
+
     /// Update the configuration
     pub fn update_config(&mut self, config: GitProxyConfig) {
         self.config = config;
@@ -300,34 +300,34 @@ impl GitProxyServer for GitProxy {
     async fn start(&mut self) -> Result<()> {
         // Initialize the proxy
         self.initialize().await?;
-        
+
         // Start HTTP server if enabled
         if self.config.server.enable_http {
             // Start HTTP server
             self.status.http_enabled = true;
         }
-        
+
         // Start SSH server if enabled
         if self.config.server.enable_ssh {
             // Start SSH server
             self.status.ssh_enabled = true;
         }
-        
+
         self.status.running = true;
         Ok(())
     }
-    
+
     async fn stop(&mut self) -> Result<()> {
         self.status.running = false;
         self.status.http_enabled = false;
         self.status.ssh_enabled = false;
         Ok(())
     }
-    
+
     fn status(&self) -> ServerStatus {
         self.status.clone()
     }
-    
+
     async fn handle_operation(&mut self, event: GitProxyEvent) -> Result<GitProxyEvent> {
         match event {
             GitProxyEvent::PushRequest(req) => {
@@ -361,7 +361,7 @@ impl GitProxyServer for GitProxy {
 impl GitProxy {
     async fn handle_push_request(&self, req: GitPushRequest) -> Result<GitPushResult> {
         let start_time = std::time::Instant::now();
-        
+
         // Validate the push request
         let validation_req = ValidationRequest {
             request_id: req.request_id.clone(),
@@ -372,24 +372,27 @@ impl GitProxy {
             metadata: req.metadata.clone(),
             timestamp: req.timestamp,
         };
-        
+
         // Perform validation
         let validation_result = self.validate_operation(validation_req).await?;
-        
+
         if !validation_result.valid {
             return Ok(GitPushResult {
                 request_id: req.request_id,
                 success: false,
                 refs_pushed: vec![],
-                error: Some(format!("Validation failed: {}", validation_result.errors.join(", "))),
+                error: Some(format!(
+                    "Validation failed: {}",
+                    validation_result.errors.join(", ")
+                )),
                 duration_ms: start_time.elapsed().as_millis() as u64,
                 timestamp: Utc::now(),
             });
         }
-        
+
         // Forward to upstream
         let success = self.forward_to_upstream(&req).await?;
-        
+
         Ok(GitPushResult {
             request_id: req.request_id,
             success,
@@ -399,13 +402,13 @@ impl GitProxy {
             timestamp: Utc::now(),
         })
     }
-    
+
     async fn handle_pull_request(&self, req: GitPullRequest) -> Result<GitPullResult> {
         let start_time = std::time::Instant::now();
-        
+
         // Forward to upstream
         let success = self.forward_pull_to_upstream(&req).await?;
-        
+
         Ok(GitPullResult {
             request_id: req.request_id,
             success,
@@ -415,13 +418,13 @@ impl GitProxy {
             timestamp: Utc::now(),
         })
     }
-    
+
     async fn handle_fetch_request(&self, req: GitFetchRequest) -> Result<GitFetchResult> {
         let start_time = std::time::Instant::now();
-        
+
         // Forward to upstream
         let success = self.forward_fetch_to_upstream(&req).await?;
-        
+
         Ok(GitFetchResult {
             request_id: req.request_id,
             success,
@@ -431,12 +434,12 @@ impl GitProxy {
             timestamp: Utc::now(),
         })
     }
-    
+
     async fn handle_validation_request(&self, req: ValidationRequest) -> Result<ValidationResult> {
         let start_time = std::time::Instant::now();
-        
+
         let result = self.validate_operation(req).await?;
-        
+
         Ok(ValidationResult {
             request_id: result.request_id,
             valid: result.valid,
@@ -446,27 +449,27 @@ impl GitProxy {
             timestamp: Utc::now(),
         })
     }
-    
+
     async fn validate_operation(&self, req: ValidationRequest) -> Result<ValidationResult> {
         let mut errors = Vec::new();
         let mut warnings = Vec::new();
-        
+
         // Implement validation logic based on config
         if self.config.validation.enable_commit_validation {
             // Validate commit messages
             // This would check against required_patterns
         }
-        
+
         if self.config.validation.enable_file_size_validation {
             // Validate file sizes
             // This would check against max_file_size
         }
-        
+
         // Check blocked patterns
         for pattern in &self.config.validation.blocked_patterns {
             // Check if any files match blocked patterns
         }
-        
+
         Ok(ValidationResult {
             request_id: req.request_id,
             valid: errors.is_empty(),
@@ -476,18 +479,18 @@ impl GitProxy {
             timestamp: Utc::now(),
         })
     }
-    
+
     async fn forward_to_upstream(&self, req: &GitPushRequest) -> Result<bool> {
         // Implement forwarding logic to upstream repository
         // This would use git2 or git CLI to push to the upstream URL
         Ok(true)
     }
-    
+
     async fn forward_pull_to_upstream(&self, req: &GitPullRequest) -> Result<bool> {
         // Implement pull forwarding logic
         Ok(true)
     }
-    
+
     async fn forward_fetch_to_upstream(&self, req: &GitFetchRequest) -> Result<bool> {
         // Implement fetch forwarding logic
         Ok(true)
@@ -498,7 +501,7 @@ impl GitProxy {
 mod tests {
     use super::*;
     use tempfile::tempdir;
-    
+
     #[tokio::test]
     async fn test_git_proxy_creation() {
         let temp_dir = tempdir().unwrap();
@@ -532,10 +535,10 @@ mod tests {
                 structured: true,
             },
         };
-        
+
         let mut proxy = GitProxy::new(config);
         assert!(!proxy.status().running);
-        
+
         // Test initialization
         proxy.initialize().await.unwrap();
         assert!(proxy.config().proxy_repo_path.exists());
