@@ -34,6 +34,9 @@ cargo run --bin modularization_packing_estimator
 
 # Analyze contract stability based on Git object patterns
 cargo run --bin contract_stability_analyzer
+
+# Analyze Git tree object stability for contract optimization
+cargo run --bin tree_stability_analyzer
 ```
 
 ## 📊 Analysis Tools
@@ -253,6 +256,38 @@ cargo run --bin contract_stability_analyzer
 💡 Recommendations:
   • Use git attributes for contract-aware filtering
   • Implement contract.lock system for object identity tracking
+```
+
+### 🌳 Tree Stability Analyzer (`tree_stability_analyzer`)
+**Purpose**: Analyze Git tree object stability for contract optimization, focusing on tree SHA stability and cascade effects.
+
+**Features**:
+- **Tree SHA Analysis**: Tracks tree object stability and churn patterns
+- **Cascade Effect Detection**: Identifies how tree changes affect parent trees
+- **Memoization Strategies**: Provides tree-aware memoization recommendations
+- **Structure Optimization**: Suggests tree structure improvements for stability
+
+**Example Output**:
+```
+🌳 Git Tree Stability Analysis
+=============================
+
+📊 Tree Stability Overview:
+  🟢 test-enhanced-gen-files (6 files, 10.0% churn)
+  🟡 generated-sources (3 files, 40.0% churn)
+  🔴 crates (193 files, 100.0% churn)
+  🔴 src (198 files, 100.0% churn)
+
+📈 Stability Metrics:
+  • Overall stability score: 0.0%
+  • Total trees: 20
+  • Stable trees: 1
+  • Critical trees: 14
+
+💡 Memoization Recommendations:
+  • Use tree SHA as contract scope identifier
+  • Implement tree-level fix plan caching
+  • Critical tree: crates - implement aggressive isolation
 ```
 
 ## 🎯 Key Concepts
