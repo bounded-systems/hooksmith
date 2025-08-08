@@ -202,6 +202,10 @@ path = "scripts/repository_size_auditor.rs"
 name = "git_history_rewriter"
 path = "scripts/git_history_rewriter.rs"
 
+[[bin]]
+name = "git_history_cleanliness_analyzer"
+path = "scripts/git_history_cleanliness_analyzer.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
