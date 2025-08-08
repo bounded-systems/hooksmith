@@ -182,6 +182,10 @@ path = "scripts/modularization_packing_estimator.rs"
 name = "contract_stability_analyzer"
 path = "scripts/contract_stability_analyzer.rs"
 
+[[bin]]
+name = "tree_stability_analyzer"
+path = "scripts/tree_stability_analyzer.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
