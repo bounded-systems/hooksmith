@@ -4,31 +4,285 @@
   "title": "Git Tree Rules Schema",
   "description": "Core schema for Git tree member inclusion rules with flat object name patterns",
   "type": "object",
-  "properties": {
-    "name": {
+  "definitions": {
+    "flat-object-name": {
       "type": "string",
-      "description": "Name of the contract",
-      "minLength": 1,
-      "maxLength": 255
+      "pattern": "^[^/]+$",
+      "description": "Flat object name (no slashes allowed)"
     },
-    "version": {
+    "version-string": {
       "type": "string",
-      "description": "Version of the contract",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version string"
     },
-    "description": {
+    "schema-reference": {
       "type": "string",
-      "description": "Description of the contract",
-      "minLength": 1,
-      "maxLength": 1000
-    },
-    "$schema": {
-      "type": "string",
-      "description": "Reference to this schema",
       "format": "uri",
-      "pattern": "^https://hooksmith\\.dev/schemas/git-tree-rules\\.schema\\.json$"
+      "pattern": "^https://hooksmith\\.dev/schemas/git-tree-rules\\.schema\\.json$",
+      "description": "Reference to this schema"
     },
-    "schema": {
+    "git-tree-names": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/flat-object-name"
+          },
+          "description": "Files/directories that must exist in the tree (flat names only)"
+        },
+        "allowed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/flat-object-name"
+          },
+          "description": "Files/directories that are permitted but not required (flat names only)"
+        },
+        "rejected": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/flat-object-name"
+          },
+          "description": "Files/directories that must not exist in the tree (flat names only)"
+        },
+        "ignored": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/flat-object-name"
+          },
+          "description": "Files/directories that are Git-ignored and should not be in tree (flat names only)"
+        }
+      },
+      "required": ["required", "allowed", "rejected", "ignored"]
+    },
+    "git-tree-objects": {
+      "type": "object",
+      "properties": {
+        "names": {
+          "$ref": "#/definitions/git-tree-names"
+        }
+      },
+      "required": ["names"]
+    },
+    "git-tree": {
+      "type": "object",
+      "properties": {
+        "objects": {
+          "$ref": "#/definitions/git-tree-objects"
+        }
+      },
+      "required": ["objects"]
+    },
+    "git-data": {
+      "type": "object",
+      "properties": {
+        "tree": {
+          "$ref": "#/definitions/git-tree"
+        }
+      },
+      "required": ["tree"]
+    },
+    "validation-rule-parameters": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "data_path": {
+              "type": "string",
+              "pattern": "^[a-zA-Z_][a-zA-Z0-9_.]*$",
+              "description": "Path to data in the contract"
+            }
+          },
+          "required": ["data_path"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "allowed_patterns": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["literal_names", "suffix_wildcards", "prefix_wildcards", "negated_globs"]
+              }
+            },
+            "disallowed_patterns": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["path_traversal", "double_star_globs", "slash_based_matching", "nested_paths"]
+              }
+            },
+            "validation_rules": {
+              "type": "object",
+              "properties": {
+                "no_slashes": {
+                  "type": "boolean"
+                },
+                "no_double_star": {
+                  "type": "boolean"
+                },
+                "flat_names_only": {
+                  "type": "boolean"
+                },
+                "root_scope_only": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "scope": {
+              "type": "string",
+              "enum": ["root_only"]
+            },
+            "depth": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "allow_directories": {
+              "type": "boolean"
+            },
+            "allow_files": {
+              "type": "boolean"
+            },
+            "forbid_nested_paths": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
+    },
+    "validation-rule": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$",
+          "description": "Name of the validation rule"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Description of what the rule validates"
+        },
+        "rule_type": {
+          "type": "string",
+          "enum": ["TreeValidation", "PatternValidation"],
+          "description": "Type of validation rule"
+        },
+        "parameters": {
+          "$ref": "#/definitions/validation-rule-parameters"
+        },
+        "required": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether this rule is required for validation"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["Error", "Warning", "Info"],
+          "default": "Error",
+          "description": "Severity level of rule violations"
+        }
+      },
+      "required": ["name", "description", "rule_type", "parameters"]
+    },
+    "pattern-examples": {
+      "type": "object",
+      "properties": {
+        "valid": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/flat-object-name"
+          },
+          "description": "Examples of valid patterns"
+        },
+        "invalid": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Examples of invalid patterns"
+        }
+      },
+      "required": ["valid", "invalid"]
+    },
+    "pattern-constraints": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Description of pattern constraints"
+        },
+        "allowed_glob_types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["literal_names", "suffix_wildcards", "prefix_wildcards", "negated_globs"]
+          },
+          "description": "Allowed glob pattern types"
+        },
+        "disallowed_glob_types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["path_traversal", "double_star_globs", "slash_based_matching", "nested_paths"]
+          },
+          "description": "Disallowed glob pattern types"
+        },
+        "examples": {
+          "$ref": "#/definitions/pattern-examples"
+        }
+      },
+      "required": ["description", "allowed_glob_types", "disallowed_glob_types", "examples"]
+    },
+    "contract-metadata": {
+      "type": "object",
+      "properties": {
+        "contract_type": {
+          "type": "string",
+          "const": "git_tree_validation",
+          "description": "Type of contract"
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["repository", "directory", "file"],
+          "default": "repository",
+          "description": "Scope of the contract"
+        },
+        "enforcement_level": {
+          "type": "string",
+          "enum": ["strict", "lenient", "advisory"],
+          "default": "strict",
+          "description": "Enforcement level"
+        },
+        "auto_fix": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether violations can be auto-fixed"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "description": "Tags for categorizing the contract"
+        },
+        "pattern_constraints": {
+          "$ref": "#/definitions/pattern-constraints"
+        }
+      },
+      "required": ["contract_type", "scope", "enforcement_level", "auto_fix", "tags", "pattern_constraints"]
+    },
+    "json-schema-definition": {
       "type": "object",
       "description": "JSON Schema definition for the data structure",
       "properties": {
@@ -166,70 +420,36 @@
           "required": ["git"]
         }
       }
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "description": "Name of the contract"
+    },
+    "version": {
+      "$ref": "#/definitions/version-string"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "Description of the contract"
+    },
+    "$schema": {
+      "$ref": "#/definitions/schema-reference"
+    },
+    "schema": {
+      "$ref": "#/definitions/json-schema-definition"
     },
     "data": {
       "type": "object",
       "description": "Actual data values for the contract",
       "properties": {
         "git": {
-          "type": "object",
-          "properties": {
-            "tree": {
-              "type": "object",
-              "properties": {
-                "objects": {
-                  "type": "object",
-                  "properties": {
-                    "names": {
-                      "type": "object",
-                      "properties": {
-                        "required": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "pattern": "^[^/]+$",
-                            "description": "Flat object name (no slashes)"
-                          },
-                          "description": "Files/directories that must exist in the tree (flat names only)"
-                        },
-                        "allowed": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "pattern": "^[^/]+$",
-                            "description": "Flat object name (no slashes)"
-                          },
-                          "description": "Files/directories that are permitted but not required (flat names only)"
-                        },
-                        "rejected": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "pattern": "^[^/]+$",
-                            "description": "Flat object name (no slashes)"
-                          },
-                          "description": "Files/directories that must not exist in the tree (flat names only)"
-                        },
-                        "ignored": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "pattern": "^[^/]+$",
-                            "description": "Flat object name (no slashes)"
-                          },
-                          "description": "Files/directories that are Git-ignored and should not be in tree (flat names only)"
-                        }
-                      },
-                      "required": ["required", "allowed", "rejected", "ignored"]
-                    }
-                  },
-                  "required": ["names"]
-                }
-              },
-              "required": ["objects"]
-            }
-          },
-          "required": ["tree"]
+          "$ref": "#/definitions/git-data"
         }
       },
       "required": ["git"]
@@ -238,201 +458,11 @@
       "type": "array",
       "description": "Validation rules for the contract",
       "items": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Name of the validation rule",
-            "minLength": 1,
-            "maxLength": 255,
-            "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description of what the rule validates",
-            "minLength": 1,
-            "maxLength": 500
-          },
-          "rule_type": {
-            "type": "string",
-            "enum": ["TreeValidation", "PatternValidation"],
-            "description": "Type of validation rule"
-          },
-          "parameters": {
-            "type": "object",
-            "description": "Rule-specific parameters",
-            "oneOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "data_path": {
-                    "type": "string",
-                    "description": "Path to data in the contract",
-                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_.]*$"
-                  }
-                },
-                "required": ["data_path"]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "allowed_patterns": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": ["literal_names", "suffix_wildcards", "prefix_wildcards", "negated_globs"]
-                    }
-                  },
-                  "disallowed_patterns": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": ["path_traversal", "double_star_globs", "slash_based_matching", "nested_paths"]
-                    }
-                  },
-                  "validation_rules": {
-                    "type": "object",
-                    "properties": {
-                      "no_slashes": {
-                        "type": "boolean"
-                      },
-                      "no_double_star": {
-                        "type": "boolean"
-                      },
-                      "flat_names_only": {
-                        "type": "boolean"
-                      },
-                      "root_scope_only": {
-                        "type": "boolean"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "scope": {
-                    "type": "string",
-                    "enum": ["root_only"]
-                  },
-                  "depth": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "allow_directories": {
-                    "type": "boolean"
-                  },
-                  "allow_files": {
-                    "type": "boolean"
-                  },
-                  "forbid_nested_paths": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            ]
-          },
-          "required": {
-            "type": "boolean",
-            "description": "Whether this rule is required for validation",
-            "default": true
-          },
-          "severity": {
-            "type": "string",
-            "enum": ["Error", "Warning", "Info"],
-            "description": "Severity level of rule violations",
-            "default": "Error"
-          }
-        },
-        "required": ["name", "description", "rule_type", "parameters"]
+        "$ref": "#/definitions/validation-rule"
       }
     },
     "metadata": {
-      "type": "object",
-      "description": "Additional metadata about the contract",
-      "properties": {
-        "contract_type": {
-          "type": "string",
-          "const": "git_tree_validation",
-          "description": "Type of contract"
-        },
-        "scope": {
-          "type": "string",
-          "enum": ["repository", "directory", "file"],
-          "description": "Scope of the contract",
-          "default": "repository"
-        },
-        "enforcement_level": {
-          "type": "string",
-          "enum": ["strict", "lenient", "advisory"],
-          "description": "Enforcement level",
-          "default": "strict"
-        },
-        "auto_fix": {
-          "type": "boolean",
-          "description": "Whether violations can be auto-fixed",
-          "default": false
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50
-          },
-          "description": "Tags for categorizing the contract"
-        },
-        "pattern_constraints": {
-          "type": "object",
-          "description": "Constraints on glob patterns",
-          "properties": {
-            "description": {
-              "type": "string",
-              "description": "Description of pattern constraints"
-            },
-            "allowed_glob_types": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": ["literal_names", "suffix_wildcards", "prefix_wildcards", "negated_globs"]
-              },
-              "description": "Allowed glob pattern types"
-            },
-            "disallowed_glob_types": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": ["path_traversal", "double_star_globs", "slash_based_matching", "nested_paths"]
-              },
-              "description": "Disallowed glob pattern types"
-            },
-            "examples": {
-              "type": "object",
-              "properties": {
-                "valid": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "pattern": "^[^/]+$"
-                  },
-                  "description": "Examples of valid patterns"
-                },
-                "invalid": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "Examples of invalid patterns"
-                }
-              },
-              "required": ["valid", "invalid"]
-            }
-          },
-          "required": ["description", "allowed_glob_types", "disallowed_glob_types", "examples"]
-        }
-      },
-      "required": ["contract_type", "scope", "enforcement_level", "auto_fix", "tags", "pattern_constraints"]
+      "$ref": "#/definitions/contract-metadata"
     }
   },
   "required": ["name", "version", "description", "$schema", "schema", "data", "rules", "metadata"],
