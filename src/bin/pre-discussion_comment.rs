@@ -10,7 +10,9 @@ use std::env;
 /// Hook Type: pre
 /// Status: Stub (ready for implementation)
 fn main() -> Result<()> {
-    println!("✅ pre-discussion_comment hook (stub mode) - would handle pre discussion_comment events");
+    println!(
+        "✅ pre-discussion_comment hook (stub mode) - would handle pre discussion_comment events"
+    );
 
     // Read GitHub event data
     if let Ok(event_path) = env::var("GITHUB_EVENT_PATH") {

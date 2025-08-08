@@ -52,7 +52,7 @@ fn main() -> Result<()> {
 
 fn validate_single_hook(file: &PathBuf) -> Result<()> {
     println!("🔍 Validating static hook: {}", file.display());
-    
+
     match hooksmith::modules::static_hook::load_static_hook(file) {
         Ok(hook) => {
             println!("✅ Hook '{}' is valid", hook.name);
@@ -65,64 +65,68 @@ fn validate_single_hook(file: &PathBuf) -> Result<()> {
             std::process::exit(1);
         }
     }
-    
+
     Ok(())
 }
 
 fn validate_directory(dir: &PathBuf) -> Result<()> {
     println!("🔍 Validating static hooks in directory: {}", dir.display());
-    
+
     let hooks = hooksmith::modules::static_hook::validate_static_hooks(dir)?;
-    
+
     if hooks.is_empty() {
         println!("⚠️  No static hook files found in {}", dir.display());
     } else {
         println!("✅ Found {} valid static hooks:", hooks.len());
         for hook in hooks {
-            println!("   - {} (scope: {}, concerns: {:?})", 
-                hook.name, hook.scope_str(), hook.concerns);
+            println!(
+                "   - {} (scope: {}, concerns: {:?})",
+                hook.name,
+                hook.scope_str(),
+                hook.concerns
+            );
         }
     }
-    
+
     Ok(())
 }
 
 fn discover_hooks(root: &PathBuf) -> Result<()> {
     println!("🔍 Discovering static hooks in: {}", root.display());
-    
+
     let mut total_hooks = 0;
     let mut valid_hooks = 0;
-    
+
     // Look for .hooksmith/hooks/ directory structure
     let hooksmith_dir = root.join(".hooksmith").join("hooks");
     if hooksmith_dir.exists() {
         for scope_dir in std::fs::read_dir(&hooksmith_dir)? {
             let scope_dir = scope_dir?;
             let scope_path = scope_dir.path();
-            
+
             if scope_path.is_dir() {
                 let scope_name = scope_path.file_name().unwrap().to_string_lossy();
                 println!("📁 Scope: {}", scope_name);
-                
+
                 let hooks = hooksmith::modules::static_hook::validate_static_hooks(&scope_path)?;
                 total_hooks += hooks.len();
                 valid_hooks += hooks.len();
-                
+
                 for hook in hooks {
                     println!("   ✅ {} (concerns: {:?})", hook.name, hook.concerns);
                 }
             }
         }
     }
-    
+
     println!("\n📊 Summary:");
     println!("   Total hooks found: {}", total_hooks);
     println!("   Valid hooks: {}", valid_hooks);
     println!("   Invalid hooks: {}", total_hooks - valid_hooks);
-    
+
     if total_hooks > valid_hooks {
         std::process::exit(1);
     }
-    
+
     Ok(())
 }

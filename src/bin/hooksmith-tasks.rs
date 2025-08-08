@@ -4,7 +4,7 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 
 /// Hooksmith Task Runner - Pure Rust Implementation
-/// 
+///
 /// This binary replaces the Makefile with:
 /// - Docker operations
 /// - act testing
@@ -12,7 +12,7 @@ use std::process::{Command, Stdio};
 /// - Development workflows
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() < 2 {
         print_help();
         return Ok(());
@@ -66,7 +66,7 @@ fn build_binaries() -> Result<()> {
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()?;
-    
+
     if status.success() {
         println!("✅ Build successful!");
     } else {
@@ -77,7 +77,7 @@ fn build_binaries() -> Result<()> {
 
 fn docker_build() -> Result<()> {
     println!("🐳 Building Hooksmith Docker image with Bake...");
-    
+
     // Check if docker-bake.hcl exists
     if !Path::new("docker-bake.hcl").exists() {
         println!("⚠️  docker-bake.hcl not found, falling back to regular Docker build");
@@ -87,7 +87,7 @@ fn docker_build() -> Result<()> {
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
             .status()?;
-        
+
         if status.success() {
             println!("✅ Docker build successful!");
         } else {
@@ -95,7 +95,7 @@ fn docker_build() -> Result<()> {
         }
         return Ok(());
     }
-    
+
     // Use Bake for optimized builds
     let status = Command::new("docker")
         .args(&["buildx", "bake", "-f", "docker-bake.hcl", "hooksmith"])
@@ -103,7 +103,7 @@ fn docker_build() -> Result<()> {
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()?;
-    
+
     if status.success() {
         println!("✅ Docker Bake build successful!");
     } else {
@@ -114,13 +114,13 @@ fn docker_build() -> Result<()> {
 
 fn docker_test() -> Result<()> {
     println!("🧪 Testing Hooksmith Docker image...");
-    
+
     // Check if docker-bake.hcl exists
     if !Path::new("docker-bake.hcl").exists() {
         println!("⚠️  docker-bake.hcl not found, skipping Docker tests");
         return Ok(());
     }
-    
+
     // Build test target with Bake
     let status = Command::new("docker")
         .args(&["buildx", "bake", "-f", "docker-bake.hcl", "test"])
@@ -128,7 +128,7 @@ fn docker_test() -> Result<()> {
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()?;
-    
+
     if status.success() {
         println!("✅ Docker tests successful!");
     } else {
@@ -141,21 +141,27 @@ fn docker_run() -> Result<()> {
     println!("🚀 Running Hooksmith in Docker...");
     let current_dir = env::current_dir()?;
     let home_dir = env::var("HOME")?;
-    
+
     let status = Command::new("docker")
         .args(&[
-            "run", "--rm", "-it",
-            "-v", &format!("{}:/hooksmith", current_dir.display()),
-            "-v", &format!("{}/.gitconfig:/root/.gitconfig:ro", home_dir),
-            "-e", "GITHUB_WORKSPACE=/hooksmith",
-            "-e", "GITHUB_ACTIONS=true",
-            "hooksmith:latest"
+            "run",
+            "--rm",
+            "-it",
+            "-v",
+            &format!("{}:/hooksmith", current_dir.display()),
+            "-v",
+            &format!("{}/.gitconfig:/root/.gitconfig:ro", home_dir),
+            "-e",
+            "GITHUB_WORKSPACE=/hooksmith",
+            "-e",
+            "GITHUB_ACTIONS=true",
+            "hooksmith:latest",
         ])
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()?;
-    
+
     if !status.success() {
         std::process::exit(status.code().unwrap_or(1));
     }
@@ -164,24 +170,22 @@ fn docker_run() -> Result<()> {
 
 fn act_test() -> Result<()> {
     println!("🧪 Testing GitHub Actions with act...");
-    
+
     // Check if act is installed
-    let act_check = Command::new("which")
-        .arg("act")
-        .output()?;
-    
+    let act_check = Command::new("which").arg("act").output()?;
+
     if !act_check.status.success() {
         eprintln!("❌ act not found. Install with: brew install act");
         std::process::exit(1);
     }
-    
+
     let status = Command::new("act")
         .args(&["--reuse", "--container-architecture", "linux/amd64"])
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()?;
-    
+
     if status.success() {
         println!("✅ act test successful!");
     } else {
@@ -192,24 +196,22 @@ fn act_test() -> Result<()> {
 
 fn act_validate() -> Result<()> {
     println!("✅ Validating workflow syntax...");
-    
+
     // Check if act is installed
-    let act_check = Command::new("which")
-        .arg("act")
-        .output()?;
-    
+    let act_check = Command::new("which").arg("act").output()?;
+
     if !act_check.status.success() {
         eprintln!("❌ act not found. Install with: brew install act");
         std::process::exit(1);
     }
-    
+
     let status = Command::new("act")
         .arg("--list")
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()?;
-    
+
     if status.success() {
         println!("✅ Workflow validation successful!");
     } else {
@@ -220,7 +222,7 @@ fn act_validate() -> Result<()> {
 
 fn clean() -> Result<()> {
     println!("🧹 Cleaning build artifacts...");
-    
+
     // Clean cargo artifacts
     let cargo_status = Command::new("cargo")
         .arg("clean")
@@ -228,7 +230,7 @@ fn clean() -> Result<()> {
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()?;
-    
+
     // Clean Docker system
     let docker_status = Command::new("docker")
         .args(&["system", "prune", "-f"])
@@ -236,7 +238,7 @@ fn clean() -> Result<()> {
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()?;
-    
+
     if cargo_status.success() && docker_status.success() {
         println!("✅ Clean successful!");
     } else {

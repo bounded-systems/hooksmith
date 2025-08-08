@@ -23,7 +23,7 @@ fn main() -> Result<()> {
 
     // Calculate improvement
     let improvement = ((time_without - time_with) / time_without) * 100.0;
-    
+
     println!("\n📈 Performance Results:");
     println!("   Without FSMonitor: {:.3}s", time_without);
     println!("   With FSMonitor:    {:.3}s", time_with);
@@ -41,7 +41,7 @@ fn main() -> Result<()> {
 
 fn git_config_fsmonitor(enabled: bool) -> Result<()> {
     let value = if enabled { "true" } else { "false" };
-    
+
     let status = Command::new("git")
         .args(&["config", "core.fsmonitor", value])
         .status()?;
@@ -55,10 +55,8 @@ fn git_config_fsmonitor(enabled: bool) -> Result<()> {
 
 fn measure_git_status() -> Result<f64> {
     let start = Instant::now();
-    
-    let output = Command::new("git")
-        .args(&["status"])
-        .output()?;
+
+    let output = Command::new("git").args(&["status"]).output()?;
 
     let duration = start.elapsed();
     let seconds = duration.as_secs_f64();

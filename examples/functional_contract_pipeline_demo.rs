@@ -1,5 +1,5 @@
 use hooksmith::modules::functional_contract_pipeline::{
-    FunctionalContractPipeline, HookEvent, ConcernSymbol, ContractSymbol
+    ConcernSymbol, ContractSymbol, FunctionalContractPipeline, HookEvent,
 };
 use std::collections::HashMap;
 
@@ -25,7 +25,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Demonstrate the full pipeline
-fn demonstrate_pipeline(pipeline: &FunctionalContractPipeline) -> Result<(), Box<dyn std::error::Error>> {
+fn demonstrate_pipeline(
+    pipeline: &FunctionalContractPipeline,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("📋 Pipeline Demonstration");
     println!("-------------------------");
 
@@ -37,10 +39,10 @@ fn demonstrate_pipeline(pipeline: &FunctionalContractPipeline) -> Result<(), Box
 
     for hook in hooks {
         println!("\n🔍 Testing hook: {:?}", hook);
-        
+
         // Run with detailed diffs to see what's happening
         let diff_set = pipeline.run_hook_with_diffs(hook);
-        
+
         if diff_set.is_valid() {
             println!("  ✅ Validation passed");
             if diff_set.diff_count() > 0 {
@@ -71,22 +73,28 @@ fn demonstrate_components() -> Result<(), Box<dyn std::error::Error>> {
     // 2. Concerns to Snapshots
     println!("\n2️⃣ Concerns → Snapshots");
     for concern in &concerns {
-        let snapshot = hooksmith::modules::functional_contract_pipeline::concerns::snapshot_concern(concern);
+        let snapshot =
+            hooksmith::modules::functional_contract_pipeline::concerns::snapshot_concern(concern);
         println!("  {:?}: {}", concern, snapshot.hash);
     }
 
     // 3. Concerns to Contracts
     println!("\n3️⃣ Concerns → Contracts");
     for concern in &concerns {
-        let contracts = hooksmith::modules::functional_contract_pipeline::contracts::get_contracts(concern);
+        let contracts =
+            hooksmith::modules::functional_contract_pipeline::contracts::get_contracts(concern);
         println!("  {:?}: {:?}", concern, contracts);
     }
 
     // 4. Contracts to Expectations
     println!("\n4️⃣ Contracts → Expectations");
-    let all_contracts = hooksmith::modules::functional_contract_pipeline::contracts::get_all_contracts(&concerns);
+    let all_contracts =
+        hooksmith::modules::functional_contract_pipeline::contracts::get_all_contracts(&concerns);
     for contract in &all_contracts {
-        let expectation = hooksmith::modules::functional_contract_pipeline::specifier::build_expectation(contract);
+        let expectation =
+            hooksmith::modules::functional_contract_pipeline::specifier::build_expectation(
+                contract,
+            );
         println!("  {}: {:?}", contract.name(), expectation.symbol);
     }
 
@@ -94,24 +102,35 @@ fn demonstrate_components() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Demonstrate custom validation scenarios
-fn demonstrate_custom_validation(pipeline: &FunctionalContractPipeline) -> Result<(), Box<dyn std::error::Error>> {
+fn demonstrate_custom_validation(
+    pipeline: &FunctionalContractPipeline,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🎯 Custom Validation Scenarios");
     println!("-----------------------------");
 
     // Custom severity mapping
     println!("\n1️⃣ Custom Severity Mapping");
     let mut severity_map = HashMap::new();
-    severity_map.insert(ConcernSymbol::Index, hooksmith::modules::functional_contract_pipeline::symbols::RuleSeverity::Warning);
-    severity_map.insert(ConcernSymbol::TreeExecutable, hooksmith::modules::functional_contract_pipeline::symbols::RuleSeverity::Error);
-    
+    severity_map.insert(
+        ConcernSymbol::Index,
+        hooksmith::modules::functional_contract_pipeline::symbols::RuleSeverity::Warning,
+    );
+    severity_map.insert(
+        ConcernSymbol::TreeExecutable,
+        hooksmith::modules::functional_contract_pipeline::symbols::RuleSeverity::Error,
+    );
+
     let diff_set = pipeline.run_hook_with_severity(HookEvent::PrePush, &severity_map);
-    println!("  PrePush with custom severity: {} diffs", diff_set.diff_count());
+    println!(
+        "  PrePush with custom severity: {} diffs",
+        diff_set.diff_count()
+    );
 
     // Tolerance fields
     println!("\n2️⃣ Tolerance Fields");
     let mut tolerance_fields = HashMap::new();
     tolerance_fields.insert(ConcernSymbol::Index, vec!["timestamp".to_string()]);
-    
+
     // This would be used with verify_with_tolerance in a real scenario
     println!("  Tolerance configured for Index timestamp field");
 
@@ -135,7 +154,8 @@ fn demonstrate_contract_registration() {
     ];
 
     for concern in &concerns {
-        let contracts = hooksmith::modules::functional_contract_pipeline::contracts::get_contracts(concern);
+        let contracts =
+            hooksmith::modules::functional_contract_pipeline::contracts::get_contracts(concern);
         println!("  {:?}:", concern);
         for contract in &contracts {
             println!("    - {}", contract.name());
@@ -173,14 +193,18 @@ mod tests {
 
     #[test]
     fn test_hook_concerns() {
-        let concerns = hooksmith::modules::functional_contract_pipeline::hooks::get_concerns(&HookEvent::PreCommit);
+        let concerns = hooksmith::modules::functional_contract_pipeline::hooks::get_concerns(
+            &HookEvent::PreCommit,
+        );
         assert!(!concerns.is_empty());
         assert!(concerns.contains(&ConcernSymbol::Index));
     }
 
     #[test]
     fn test_contract_mapping() {
-        let contracts = hooksmith::modules::functional_contract_pipeline::contracts::get_contracts(&ConcernSymbol::Index);
+        let contracts = hooksmith::modules::functional_contract_pipeline::contracts::get_contracts(
+            &ConcernSymbol::Index,
+        );
         assert!(!contracts.is_empty());
         assert!(contracts.iter().any(|c| c.name() == "must-exist"));
     }
@@ -188,7 +212,10 @@ mod tests {
     #[test]
     fn test_expectation_building() {
         let contract = ContractSymbol::new("must-exist");
-        let expectation = hooksmith::modules::functional_contract_pipeline::specifier::build_expectation(&contract);
+        let expectation =
+            hooksmith::modules::functional_contract_pipeline::specifier::build_expectation(
+                &contract,
+            );
         assert_eq!(expectation.symbol, ConcernSymbol::Index);
         assert_eq!(expectation.contract, "must-exist");
     }

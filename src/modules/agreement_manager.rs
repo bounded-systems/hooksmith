@@ -86,7 +86,10 @@ impl AgreementManager {
         let note_content = serde_json::to_string_pretty(&metadata)?;
         self.store_note(&scope, &note_content)?;
 
-        Ok(format!("Agreement created: scope={}, contract={}", scope, contract))
+        Ok(format!(
+            "Agreement created: scope={}, contract={}",
+            scope, contract
+        ))
     }
 
     /// Get an agreement by scope
@@ -106,7 +109,7 @@ impl AgreementManager {
 
         // Get all notes from the agreements ref
         let notes = self.repo.notes(&self.notes_ref)?;
-        
+
         for (oid, _) in notes {
             if let Ok(note) = self.repo.find_note(oid, &self.notes_ref) {
                 if let Ok(content) = std::str::from_utf8(note.message()) {
@@ -121,11 +124,7 @@ impl AgreementManager {
     }
 
     /// Update agreement status
-    pub fn update_agreement_status(
-        &self,
-        scope: &str,
-        status: AgreementStatus,
-    ) -> Result<()> {
+    pub fn update_agreement_status(&self, scope: &str, status: AgreementStatus) -> Result<()> {
         if let Some(mut metadata) = self.get_agreement(scope)? {
             metadata.status = status;
             let note_content = serde_json::to_string_pretty(&metadata)?;
@@ -139,9 +138,13 @@ impl AgreementManager {
     pub fn validate_agreement(&self, scope: &str) -> Result<bool> {
         if let Some(metadata) = self.get_agreement(scope)? {
             // Check if the contract blob exists in the scope tree
-            let scope_tree = self.repo.find_tree(git2::Oid::from_str(&metadata.agreement.scope)?)?;
-            let contract_blob = self.repo.find_blob(git2::Oid::from_str(&metadata.agreement.contract)?)?;
-            
+            let scope_tree = self
+                .repo
+                .find_tree(git2::Oid::from_str(&metadata.agreement.scope)?)?;
+            let contract_blob = self
+                .repo
+                .find_blob(git2::Oid::from_str(&metadata.agreement.contract)?)?;
+
             // This is a simplified validation - in practice you'd want to check
             // if the contract is actually referenced in the scope tree
             Ok(true)
@@ -155,7 +158,7 @@ impl AgreementManager {
         // Get the contract blob content
         let contract_oid = git2::Oid::from_str(&agreement.contract)?;
         let contract_blob = self.repo.find_blob(contract_oid)?;
-        
+
         let content = std::str::from_utf8(contract_blob.content())?;
         Ok(Some(content.to_string()))
     }
@@ -163,44 +166,50 @@ impl AgreementManager {
     /// Store a Git note
     fn store_note(&self, key: &str, content: &str) -> Result<()> {
         let signature = self.get_signature()?;
-        
+
         // Create blob with note content
         let blob_oid = self.repo.blob(content.as_bytes())?;
-        
+
         // Create or update note
         let note_ref = format!("{}/{}", self.notes_ref, key.replace('/', "_"));
-        
+
         // This is a simplified implementation - in practice you'd want to
         // handle the note tree structure more carefully
         println!("Would store note at {}: {}", note_ref, content);
-        
+
         Ok(())
     }
 
     /// Get a Git note
     fn get_note(&self, key: &str) -> Result<String> {
         let note_ref = format!("{}/{}", self.notes_ref, key.replace('/', "_"));
-        
+
         // This is a simplified implementation - in practice you'd want to
         // actually read from Git notes
         println!("Would get note from {}", note_ref);
-        
+
         Ok("".to_string())
     }
 
     /// Get current user signature
     fn get_signature(&self) -> Result<Signature> {
         let config = self.repo.config()?;
-        let name = config.get_string("user.name").unwrap_or_else(|_| "Unknown".to_string());
-        let email = config.get_string("user.email").unwrap_or_else(|_| "unknown@example.com".to_string());
-        
+        let name = config
+            .get_string("user.name")
+            .unwrap_or_else(|_| "Unknown".to_string());
+        let email = config
+            .get_string("user.email")
+            .unwrap_or_else(|_| "unknown@example.com".to_string());
+
         Ok(Signature::now(&name, &email)?)
     }
 
     /// Get current user name
     fn get_current_user(&self) -> Result<String> {
         let config = self.repo.config()?;
-        let name = config.get_string("user.name").unwrap_or_else(|_| "Unknown".to_string());
+        let name = config
+            .get_string("user.name")
+            .unwrap_or_else(|_| "Unknown".to_string());
         Ok(name)
     }
 }
@@ -219,7 +228,9 @@ impl AgreementCLI {
 
     /// Create a new agreement
     pub fn create(&self, scope: &str, contract: &str, description: Option<&str>) -> Result<()> {
-        let result = self.manager.create_agreement(scope, contract, description)?;
+        let result = self
+            .manager
+            .create_agreement(scope, contract, description)?;
         println!("✅ {}", result);
         Ok(())
     }
@@ -227,7 +238,7 @@ impl AgreementCLI {
     /// List all agreements
     pub fn list(&self) -> Result<()> {
         let agreements = self.manager.list_agreements()?;
-        
+
         if agreements.is_empty() {
             println!("📝 No agreements found");
             return Ok(());
@@ -304,16 +315,16 @@ mod tests {
     fn test_agreement_creation() {
         let temp_dir = TempDir::new().unwrap();
         let repo = Repository::init(temp_dir.path()).unwrap();
-        
+
         let manager = AgreementManager::new(temp_dir.path()).unwrap();
-        
+
         // Test creating an agreement
         let result = manager.create_agreement(
             "test-scope-sha",
             "test-contract-sha",
             Some("Test agreement"),
         );
-        
+
         assert!(result.is_ok());
     }
 

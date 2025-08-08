@@ -1,6 +1,6 @@
-use clap::{Command, Arg};
+use clap::{Arg, Command};
 use hooksmith::modules::functional_contract_pipeline::{
-    FunctionalContractPipeline, symbols::HookEvent
+    symbols::HookEvent, FunctionalContractPipeline,
 };
 use std::process;
 
@@ -16,12 +16,24 @@ fn main() {
                 .help("Git hook to validate")
                 .required(true)
                 .value_parser([
-                    "pre-commit", "pre-push", "pre-receive", "post-receive",
-                    "update", "post-update", "pre-auto-gc", "post-merge",
-                    "pre-rebase", "post-checkout", "post-commit", "pre-apply-patch",
-                    "post-apply-patch", "post-rebase", "pre-commit-msg",
-                    "commit-msg", "post-commit-msg"
-                ])
+                    "pre-commit",
+                    "pre-push",
+                    "pre-receive",
+                    "post-receive",
+                    "update",
+                    "post-update",
+                    "pre-auto-gc",
+                    "post-merge",
+                    "pre-rebase",
+                    "post-checkout",
+                    "post-commit",
+                    "pre-apply-patch",
+                    "post-apply-patch",
+                    "post-rebase",
+                    "pre-commit-msg",
+                    "commit-msg",
+                    "post-commit-msg",
+                ]),
         )
         .arg(
             Arg::new("repo")
@@ -29,13 +41,13 @@ fn main() {
                 .long("repo")
                 .value_name("PATH")
                 .help("Repository path (default: current directory)")
-                .default_value(".")
+                .default_value("."),
         )
         .arg(
             Arg::new("verbose")
                 .short('v')
                 .long("verbose")
-                .help("Show detailed diff information")
+                .help("Show detailed diff information"),
         )
         .get_matches();
 
@@ -76,7 +88,7 @@ fn main() {
 
     // Create pipeline and run validation
     let mut pipeline = FunctionalContractPipeline::new(repo_path);
-    
+
     if verbose {
         // Run with detailed diffs
         match pipeline.run_hook_with_diff(hook) {

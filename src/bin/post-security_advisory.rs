@@ -10,7 +10,9 @@ use std::env;
 /// Hook Type: post
 /// Status: Stub (ready for implementation)
 fn main() -> Result<()> {
-    println!("✅ post-security_advisory hook (stub mode) - would handle post security_advisory events");
+    println!(
+        "✅ post-security_advisory hook (stub mode) - would handle post security_advisory events"
+    );
 
     // Read GitHub event data
     if let Ok(event_path) = env::var("GITHUB_EVENT_PATH") {

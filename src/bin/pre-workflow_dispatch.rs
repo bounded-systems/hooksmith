@@ -10,7 +10,9 @@ use std::env;
 /// Hook Type: pre
 /// Status: Stub (ready for implementation)
 fn main() -> Result<()> {
-    println!("✅ pre-workflow_dispatch hook (stub mode) - would handle pre workflow_dispatch events");
+    println!(
+        "✅ pre-workflow_dispatch hook (stub mode) - would handle pre workflow_dispatch events"
+    );
 
     // Read GitHub event data
     if let Ok(event_path) = env::var("GITHUB_EVENT_PATH") {

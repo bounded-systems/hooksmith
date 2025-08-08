@@ -528,6 +528,46 @@ impl AgreementCLI {
         self.manager.prune_invalid_agreements(dry_run, force)?;
         Ok(())
     }
+
+    /// Honor an agreement by creating a remote branch and worktree
+    pub fn honor(
+        &self,
+        scope: &str,
+        base_branch: &str,
+        create_worktree: bool,
+        worktree_name: Option<&str>,
+    ) -> Result<()> {
+        // Get the agreement details
+        let metadata = self.manager.get_agreement(scope)?;
+        let agreement = match metadata {
+            Some(meta) => meta.agreement,
+            None => {
+                anyhow::bail!("No agreement found for scope: {}", scope);
+            }
+        };
+
+        println!("🎯 Honoring agreement:");
+        println!("  Scope: {}", agreement.scope);
+        println!("  Contract: {}", agreement.contract);
+
+        // Get the base commit SHA
+        let base_sha = get_base_commit_sha(base_branch)?;
+        println!("  Base branch: {} ({})", base_branch, base_sha);
+
+        // Create remote branch using GitHub CLI
+        let branch_name = scope;
+        create_remote_branch(branch_name, &base_sha)?;
+        println!("✅ Created remote branch: {}", branch_name);
+
+        if create_worktree {
+            let worktree_dir = worktree_name.unwrap_or(scope);
+            create_worktree_for_branch(branch_name, worktree_dir)?;
+            println!("✅ Created worktree: .wt/{}", worktree_dir);
+        }
+
+        println!("🎉 Agreement honored successfully!");
+        Ok(())
+    }
 }
 
 /// Agreement management commands
@@ -701,6 +741,19 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
         AgreementCommands::Prune { dry_run, force } => {
             cli.prune(dry_run, force)?;
         }
+        AgreementCommands::Honor {
+            scope,
+            base_branch,
+            create_worktree,
+            worktree_name,
+        } => {
+            cli.honor(
+                &scope,
+                &base_branch,
+                create_worktree,
+                worktree_name.as_deref(),
+            )?;
+        }
     }
 
     Ok(())
@@ -761,6 +814,122 @@ fn get_file_blob_sha(file_path: &str) -> Result<String> {
 
     let blob_sha = String::from_utf8(output.stdout)?.trim().to_string();
     Ok(blob_sha)
+}
+
+/// Get the base commit SHA for a branch
+fn get_base_commit_sha(base_branch: &str) -> Result<String> {
+    let output = std::process::Command::new("git")
+        .args(["rev-parse", base_branch])
+        .output()
+        .context(format!("Failed to get base commit SHA for {}", base_branch))?;
+
+    if !output.status.success() {
+        anyhow::bail!(
+            "Failed to get base commit SHA for {}: {}",
+            base_branch,
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    let commit_sha = String::from_utf8(output.stdout)?.trim().to_string();
+    Ok(commit_sha)
+}
+
+/// Create a remote branch using GitHub CLI
+fn create_remote_branch(branch_name: &str, base_sha: &str) -> Result<()> {
+    // Get repository owner and name from remote URL
+    let output = std::process::Command::new("git")
+        .args(["remote", "get-url", "origin"])
+        .output()
+        .context("Failed to get remote URL")?;
+
+    if !output.status.success() {
+        anyhow::bail!(
+            "Failed to get remote URL: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    let url = String::from_utf8(output.stdout)?.trim().to_string();
+    let (owner, repo_name) = extract_owner_repo_from_url(&url)?;
+
+    // Create the branch using GitHub CLI
+    let gh_output = std::process::Command::new("gh")
+        .args([
+            "api",
+            &format!("repos/{}/{}/git/refs", owner, repo_name),
+            "-f",
+            &format!("ref=refs/heads/{}", branch_name),
+            "-f",
+            &format!("sha={}", base_sha),
+        ])
+        .output()
+        .context("Failed to create remote branch with GitHub CLI")?;
+
+    if !gh_output.status.success() {
+        let error = String::from_utf8_lossy(&gh_output.stderr);
+        anyhow::bail!("Failed to create remote branch: {}", error);
+    }
+
+    Ok(())
+}
+
+/// Extract owner and repository name from Git URL
+fn extract_owner_repo_from_url(url: &str) -> Result<(String, String)> {
+    // Handle SSH format: git@github.com:owner/repo.git
+    if url.starts_with("git@") {
+        let parts: Vec<&str> = url.split(':').collect();
+        if parts.len() != 2 {
+            anyhow::bail!("Invalid SSH URL format: {}", url);
+        }
+        let repo_part = parts[1].trim_end_matches(".git");
+        let repo_parts: Vec<&str> = repo_part.split('/').collect();
+        if repo_parts.len() != 2 {
+            anyhow::bail!("Invalid repository format in URL: {}", url);
+        }
+        return Ok((repo_parts[0].to_string(), repo_parts[1].to_string()));
+    }
+
+    // Handle HTTPS format: https://github.com/owner/repo.git
+    if url.starts_with("https://") {
+        let parts: Vec<&str> = url.split('/').collect();
+        if parts.len() < 5 {
+            anyhow::bail!("Invalid HTTPS URL format: {}", url);
+        }
+        let owner = parts[3];
+        let repo = parts[4].trim_end_matches(".git");
+        return Ok((owner.to_string(), repo.to_string()));
+    }
+
+    anyhow::bail!("Unsupported URL format: {}", url);
+}
+
+/// Create a worktree for a branch
+fn create_worktree_for_branch(branch_name: &str, worktree_dir: &str) -> Result<()> {
+    // First fetch the branch from remote
+    let fetch_output = std::process::Command::new("git")
+        .args(["fetch", "origin", branch_name])
+        .output()
+        .context("Failed to fetch branch")?;
+
+    if !fetch_output.status.success() {
+        let error = String::from_utf8_lossy(&fetch_output.stderr);
+        anyhow::bail!("Failed to fetch branch: {}", error);
+    }
+
+    // Create the worktree
+    let worktree_path = format!(".wt/{}", worktree_dir);
+    let worktree_output = std::process::Command::new("git")
+        .args(["worktree", "add", &worktree_path, branch_name])
+        .output()
+        .context("Failed to create worktree")?;
+
+    if !worktree_output.status.success() {
+        let error = String::from_utf8_lossy(&worktree_output.stderr);
+        anyhow::bail!("Failed to create worktree: {}", error);
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]

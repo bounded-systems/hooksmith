@@ -806,7 +806,6 @@ mod generated_file_validator;
 mod git_attributes;
 mod git_config;
 mod git_lefthook_integration;
-mod workflow_contracts;
 mod git_notes_manager;
 mod github_actions;
 mod hierarchical_validation;
@@ -825,6 +824,7 @@ mod structured_logging;
 mod unified_generator;
 mod wasm_event_bus;
 mod workflow;
+mod workflow_contracts;
 mod worktree;
 mod worktree_contract;
 mod worktree_sync;
@@ -2573,7 +2573,8 @@ async fn main() -> Result<()> {
             generate_stub,
             format,
         } => {
-            run_workflow_contracts_command(path, strict, verbose, generate_stub.as_deref(), format).await?;
+            run_workflow_contracts_command(path, strict, verbose, generate_stub.as_deref(), format)
+                .await?;
         }
         Commands::TestWorkflowContracts {
             paths,
@@ -2594,7 +2595,8 @@ async fn main() -> Result<()> {
                 output_dir,
                 act_inputs_file,
                 format,
-            ).await?;
+            )
+            .await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
@@ -9779,38 +9781,39 @@ async fn validate_static_hooks_command(
     check_binaries: bool,
 ) -> Result<()> {
     let hooks_dir = std::path::Path::new(".hooksmith/hooks");
-    
+
     if !hooks_dir.exists() {
         if verbose {
             println!("⚠️  No .hooksmith/hooks directory found - skipping validation");
         }
         return Ok(());
     }
-    
+
     let mut total_hooks = 0;
     let mut valid_hooks = 0;
     let mut errors = Vec::new();
-    
+
     // Walk through all scope directories
     for scope_entry in std::fs::read_dir(hooks_dir)? {
         let scope_entry = scope_entry?;
         let scope_path = scope_entry.path();
-        
+
         if scope_path.is_dir() {
             let scope_name = scope_path.file_name().unwrap().to_string_lossy();
-            
+
             if verbose {
                 println!("📁 Scanning scope: {}", scope_name);
             }
-            
+
             // Walk through all hook files in this scope
             for hook_entry in std::fs::read_dir(&scope_path)? {
                 let hook_entry = hook_entry?;
                 let hook_path = hook_entry.path();
-                
-                if hook_path.is_file() && hook_path.extension().map_or(false, |ext| ext == "jsonc") {
+
+                if hook_path.is_file() && hook_path.extension().map_or(false, |ext| ext == "jsonc")
+                {
                     total_hooks += 1;
-                    
+
                     match validate_single_static_hook(&hook_path, check_binaries) {
                         Ok(_) => {
                             valid_hooks += 1;
@@ -9829,26 +9832,26 @@ async fn validate_static_hooks_command(
             }
         }
     }
-    
+
     // Report results
     println!("📊 Static Hook Validation Summary:");
     println!("   Total hooks found: {}", total_hooks);
     println!("   Valid hooks: {}", valid_hooks);
     println!("   Invalid hooks: {}", total_hooks - valid_hooks);
-    
+
     if !errors.is_empty() {
         println!("\n❌ Validation errors:");
         for error in &errors {
             println!("   - {}", error);
         }
-        
+
         if strict {
             anyhow::bail!("{} hook(s) failed validation", errors.len());
         }
     } else if total_hooks > 0 {
         println!("✅ All static hooks validated successfully");
     }
-    
+
     Ok(())
 }
 
@@ -9859,22 +9862,22 @@ fn validate_single_static_hook(
     // Read and parse the hook definition
     let content = std::fs::read_to_string(hook_path)?;
     let hook: StaticHookDefinition = serde_json::from_str(&content)?;
-    
+
     // Validate the hook structure
     hook.validate()?;
-    
+
     // Check if binary exists in target/release/
     if check_binaries {
         let binary_path = std::path::Path::new("target/release").join(&hook.bin);
         if !binary_path.exists() {
             return Err(format!("Binary '{}' not found in target/release/", hook.bin).into());
         }
-        
+
         if !binary_path.is_file() {
             return Err(format!("Binary '{}' is not a file", hook.bin).into());
         }
     }
-    
+
     Ok(())
 }
 
@@ -9890,24 +9893,44 @@ struct StaticHookDefinition {
 impl StaticHookDefinition {
     fn validate(&self) -> Result<(), Box<dyn std::error::Error>> {
         // Validate name format
-        if !self.name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+        if !self
+            .name
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
+        {
             return Err(format!("Invalid hook name '{}': must contain only alphanumeric characters, underscores, and hyphens", self.name).into());
         }
-        
+
         // Validate scope
         let valid_scopes = ["git", "github", "fsmonitor", "reference", "email", "patch"];
         if !valid_scopes.contains(&self.scope.as_str()) {
-            return Err(format!("Invalid scope '{}': must be one of {:?}", self.scope, valid_scopes).into());
+            return Err(format!(
+                "Invalid scope '{}': must be one of {:?}",
+                self.scope, valid_scopes
+            )
+            .into());
         }
-        
+
         // Validate concerns
-        let valid_concerns = ["blob", "tree", "ref", "note", "attr", "contract-violation", "symbol-analysis"];
+        let valid_concerns = [
+            "blob",
+            "tree",
+            "ref",
+            "note",
+            "attr",
+            "contract-violation",
+            "symbol-analysis",
+        ];
         for concern in &self.concerns {
             if !valid_concerns.contains(&concern.as_str()) {
-                return Err(format!("Invalid concern '{}': must be one of {:?}", concern, valid_concerns).into());
+                return Err(format!(
+                    "Invalid concern '{}': must be one of {:?}",
+                    concern, valid_concerns
+                )
+                .into());
             }
         }
-        
+
         // Check for duplicate concerns
         let mut concerns = self.concerns.clone();
         concerns.sort();
@@ -9915,7 +9938,7 @@ impl StaticHookDefinition {
         if concerns.len() != self.concerns.len() {
             return Err(format!("Duplicate concerns found in hook '{}'", self.name).into());
         }
-        
+
         Ok(())
     }
 }
@@ -10091,7 +10114,7 @@ async fn run_workflow_contracts_command(
         trigger_mocking: true,
     };
     let validator = workflow_contracts::WorkflowContractValidator::new(config);
-    
+
     if verbose {
         println!("🔍 Validating workflow contracts at: {}", path);
     }
@@ -10116,9 +10139,30 @@ async fn run_workflow_contracts_command(
             println!("📊 Workflow Contracts Validation Summary");
             println!("=====================================");
             println!("✅ Valid: {}", result.is_valid);
-            println!("❌ Errors: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count());
-            println!("⚠️  Warnings: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).count());
-            println!("💰 Billing Impact: {:?}", result.trigger_analysis.billing_impact);
+            println!(
+                "❌ Errors: {}",
+                result
+                    .concerns
+                    .iter()
+                    .filter(|c| matches!(
+                        c.level,
+                        workflow_contracts::ConcernLevel::Error
+                            | workflow_contracts::ConcernLevel::Critical
+                    ))
+                    .count()
+            );
+            println!(
+                "⚠️  Warnings: {}",
+                result
+                    .concerns
+                    .iter()
+                    .filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning))
+                    .count()
+            );
+            println!(
+                "💰 Billing Impact: {:?}",
+                result.trigger_analysis.billing_impact
+            );
         }
         "text" | _ => {
             if result.is_valid {
@@ -10127,19 +10171,41 @@ async fn run_workflow_contracts_command(
                 println!("❌ Workflow contracts validation failed!");
             }
 
-            let errors: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).collect();
+            let errors: Vec<_> = result
+                .concerns
+                .iter()
+                .filter(|c| {
+                    matches!(
+                        c.level,
+                        workflow_contracts::ConcernLevel::Error
+                            | workflow_contracts::ConcernLevel::Critical
+                    )
+                })
+                .collect();
             if !errors.is_empty() {
                 println!("\n❌ Errors:");
                 for error in errors {
-                    println!("  • {}: {}", error.location.as_deref().unwrap_or("unknown"), error.message);
+                    println!(
+                        "  • {}: {}",
+                        error.location.as_deref().unwrap_or("unknown"),
+                        error.message
+                    );
                 }
             }
 
-            let warnings: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).collect();
+            let warnings: Vec<_> = result
+                .concerns
+                .iter()
+                .filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning))
+                .collect();
             if !warnings.is_empty() {
                 println!("\n⚠️  Warnings:");
                 for warning in warnings {
-                    println!("  • {}: {}", warning.location.as_deref().unwrap_or("unknown"), warning.message);
+                    println!(
+                        "  • {}: {}",
+                        warning.location.as_deref().unwrap_or("unknown"),
+                        warning.message
+                    );
                 }
             }
         }
@@ -10149,7 +10215,15 @@ async fn run_workflow_contracts_command(
     if strict && !result.is_valid {
         anyhow::bail!(
             "Workflow contracts validation failed with {} errors",
-            result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count()
+            result
+                .concerns
+                .iter()
+                .filter(|c| matches!(
+                    c.level,
+                    workflow_contracts::ConcernLevel::Error
+                        | workflow_contracts::ConcernLevel::Critical
+                ))
+                .count()
         );
     }
 
@@ -10177,7 +10251,7 @@ async fn run_test_workflow_contracts_command(
         trigger_mocking: true,
     };
     let validator = workflow_contracts::WorkflowContractValidator::new(config);
-    
+
     let test_config = workflow_contracts::WorkflowContractTestConfig {
         use_act,
         act_dry_run,
@@ -10187,11 +10261,12 @@ async fn run_test_workflow_contracts_command(
         act_inputs_file: act_inputs_file.map(|p| std::path::PathBuf::from(p)),
     };
     let test_runner = workflow_contracts::WorkflowContractTestRunner::new(test_config, validator);
-    
+
     println!("🧪 Testing workflow contracts with act...");
 
     // Convert paths to PathBuf
-    let workflow_paths: Vec<std::path::PathBuf> = paths.into_iter().map(std::path::PathBuf::from).collect();
+    let workflow_paths: Vec<std::path::PathBuf> =
+        paths.into_iter().map(std::path::PathBuf::from).collect();
 
     // Run tests
     let results = test_runner.run_tests(&workflow_paths)?;
@@ -10209,28 +10284,54 @@ async fn run_test_workflow_contracts_command(
         "markdown" | _ => {
             println!("📊 Workflow Contract Test Results");
             println!("================================");
-            
+
             let total_workflows = results.len();
-            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
-            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
-            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let valid_workflows = results
+                .iter()
+                .filter(|r| r.validation_result.is_valid)
+                .count();
+            let total_act_tests = results
+                .iter()
+                .map(|r| r.act_test_results.len())
+                .sum::<usize>();
+            let passed_act_tests = results
+                .iter()
+                .flat_map(|r| &r.act_test_results)
+                .filter(|r| r.success)
+                .count();
             let failed_act_tests = total_act_tests - passed_act_tests;
-            
-            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
-            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            println!(
+                "✅ Valid Workflows: {}/{}",
+                valid_workflows, total_workflows
+            );
+            println!(
+                "🧪 Act Tests Passed: {}/{}",
+                passed_act_tests, total_act_tests
+            );
 
             if !results.is_empty() {
                 println!("\n📋 Test Results:");
                 for test_result in &results {
-                    println!("  • {}: {}", test_result.workflow_path.display(), 
-                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                    println!(
+                        "  • {}: {}",
+                        test_result.workflow_path.display(),
+                        if test_result.validation_result.is_valid {
+                            "✅ VALID"
+                        } else {
+                            "❌ INVALID"
+                        }
+                    );
                 }
             }
         }
     }
 
     // Exit with error if tests failed
-    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    let failed_workflows = results
+        .iter()
+        .filter(|r| !r.validation_result.is_valid)
+        .count();
     if failed_workflows > 0 {
         anyhow::bail!(
             "Workflow contract tests failed: {} valid, {} invalid",
