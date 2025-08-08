@@ -10,9 +10,9 @@ env:
   ENABLE_HOOKSMITH_VALIDATION: true
 
 permissions:
-  issues: read
-  pull-requests: read
   contents: read
+  pull-requests: read
+  issues: read
 
 on:
   push:
@@ -101,7 +101,7 @@ on:
       - edited
       - deleted
   schedule:
-    - cron: '0 0 * * *'
+    - cron: 0 0 * * *
   repository_dispatch:
   registry_package:
     types:

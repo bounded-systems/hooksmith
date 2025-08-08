@@ -168,7 +168,7 @@ impl GitHubActionsGenerator {
                 // Handle schedule events specially
                 if let Some(cron) = &event.cron {
                     yaml.push_str(&format!("  {}:\n", event.name));
-                    yaml.push_str(&format!("    - cron: '{}'\n", cron));
+                    yaml.push_str(&format!("    - cron: {}\n", cron));
                 }
             } else {
                 yaml.push_str(&format!("  {}:\n", event.name));

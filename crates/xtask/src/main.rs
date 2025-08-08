@@ -10063,3 +10063,172 @@ async fn run_validate_structure(strict: bool, verbose: bool, format: String) -> 
 
     Ok(())
 }
+
+async fn run_workflow_contracts_command(
+    path: String,
+    strict: bool,
+    verbose: bool,
+    generate_stub: Option<&str>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: strict,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    if verbose {
+        println!("🔍 Validating workflow contracts at: {}", path);
+    }
+
+    // Run validation
+    let result = validator.validate_workflow(std::path::Path::new(&path))?;
+
+    // Generate stub if requested
+    if let Some(stub_type) = generate_stub {
+        let stub_content = workflow_contracts::generate_gated_workflow_stub(stub_type)?;
+        println!("📝 Generated {} workflow stub:", stub_type);
+        println!("{}", stub_content);
+    }
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&result)?;
+            println!("{}", json_output);
+        }
+        "summary" => {
+            println!("📊 Workflow Contracts Validation Summary");
+            println!("=====================================");
+            println!("✅ Valid: {}", result.is_valid);
+            println!("❌ Errors: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count());
+            println!("⚠️  Warnings: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).count());
+            println!("💰 Billing Impact: {:?}", result.trigger_analysis.billing_impact);
+        }
+        "text" | _ => {
+            if result.is_valid {
+                println!("✅ Workflow contracts validation passed!");
+            } else {
+                println!("❌ Workflow contracts validation failed!");
+            }
+
+            let errors: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).collect();
+            if !errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in errors {
+                    println!("  • {}: {}", error.location.as_deref().unwrap_or("unknown"), error.message);
+                }
+            }
+
+            let warnings: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).collect();
+            if !warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in warnings {
+                    println!("  • {}: {}", warning.location.as_deref().unwrap_or("unknown"), warning.message);
+                }
+            }
+        }
+    }
+
+    // Exit with error if strict mode and validation failed
+    if strict && !result.is_valid {
+        anyhow::bail!(
+            "Workflow contracts validation failed with {} errors",
+            result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count()
+        );
+    }
+
+    Ok(())
+}
+
+async fn run_test_workflow_contracts_command(
+    paths: Vec<String>,
+    use_act: bool,
+    act_dry_run: bool,
+    generate_inputs: bool,
+    test_all_triggers: bool,
+    output_dir: Option<String>,
+    act_inputs_file: Option<String>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: false,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    let test_config = workflow_contracts::WorkflowContractTestConfig {
+        use_act,
+        act_dry_run,
+        generate_inputs,
+        test_all_triggers,
+        output_dir: output_dir.map(|p| std::path::PathBuf::from(p)),
+        act_inputs_file: act_inputs_file.map(|p| std::path::PathBuf::from(p)),
+    };
+    let test_runner = workflow_contracts::WorkflowContractTestRunner::new(test_config, validator);
+    
+    println!("🧪 Testing workflow contracts with act...");
+
+    // Convert paths to PathBuf
+    let workflow_paths: Vec<std::path::PathBuf> = paths.into_iter().map(std::path::PathBuf::from).collect();
+
+    // Run tests
+    let results = test_runner.run_tests(&workflow_paths)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&results)?;
+            println!("{}", json_output);
+        }
+        "yaml" => {
+            let yaml_output = serde_yaml::to_string(&results)?;
+            println!("{}", yaml_output);
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
