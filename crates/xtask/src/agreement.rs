@@ -1043,6 +1043,21 @@ impl AgreementCLI {
     }
 
     /// Honor an agreement by creating a remote branch and worktree
+    ///
+    /// Naming Convention: ~<short-sha>-<contract-name> <path-scope>
+    ///
+    /// Examples:
+    ///   ~c785760-object-names foo/bar
+    ///   ~e1158e3-crate-boundaries src/
+    ///   ~4e8500b-lint-rules tools/internal
+    ///
+    /// Format breakdown:
+    ///   ~ = Agreement namespace prefix
+    ///   <short-sha> = First 7 chars of tree SHA
+    ///   - = Separator
+    ///   <contract-name> = Contract identifier
+    ///   <space> = Path scope separator
+    ///   <path-scope> = Human-readable path or scope
     pub fn honor(
         &self,
         scope: &str,
@@ -1051,40 +1066,82 @@ impl AgreementCLI {
         worktree_name: Option<&str>,
         open_in_cursor: bool,
     ) -> Result<()> {
-        // Get the agreement details
-        let metadata = self.manager.get_agreement(scope)?;
-        let agreement = match metadata {
-            Some(meta) => meta.agreement,
+        // Get agreement details
+        let agreement = self.manager.get_agreement(scope)?;
+        let agreement = match agreement {
+            Some(agreement) => agreement,
             None => {
-                anyhow::bail!("No agreement found for scope: {}", scope);
+                println!("❌ No agreement found for scope: {}", scope);
+                return Ok(());
             }
         };
 
-        println!("🎯 Honoring agreement:");
-        println!("  Scope: {}", agreement.scope);
-        println!("  Contract: {}", agreement.contract);
+        // Get contract name
+        let contract_name = get_contract_name(&agreement.agreement.contract)?;
 
-        // Get the base commit SHA
+        // Get path scope from tree resolution
+        let resolution = self.manager.resolve_tree_path(scope)?;
+        let path_scope = match resolution.resolution_type {
+            ResolutionType::Path(path) => {
+                if path.is_empty() {
+                    "root".to_string()
+                } else {
+                    path
+                }
+            }
+            ResolutionType::Commit(_) => "history".to_string(),
+            ResolutionType::Tree(_) => "detached".to_string(),
+            ResolutionType::NotFound => "unknown".to_string(),
+        };
+
+        // Generate branch name with new convention
+        let short_scope = &scope[..7];
+        let branch_name = if let Some(custom_name) = worktree_name {
+            format!("~{}", custom_name)
+        } else {
+            format!("~{}-{}", short_scope, contract_name)
+        };
+
+        // Generate worktree directory name with path scope
+        let worktree_dir = if let Some(custom_name) = worktree_name {
+            custom_name.to_string()
+        } else {
+            // Sanitize path scope for filesystem use
+            let sanitized_path = path_scope
+                .replace('/', "-")
+                .replace('.', "")
+                .replace(' ', "_");
+            
+            if sanitized_path == "root" {
+                format!("~{}-{}", short_scope, contract_name)
+            } else {
+                format!("~{}-{}-{}", short_scope, contract_name, sanitized_path)
+            }
+        };
+
+        println!("🎯 Honoring agreement: {}", scope);
+        println!("  Branch: {}", branch_name);
+        println!("  Worktree: {}", worktree_dir);
+        println!("  Path Scope: {}", path_scope);
+        println!("  Contract: {}", contract_name);
+
+        // Create remote branch
         let base_sha = get_base_commit_sha(base_branch)?;
-        println!("  Base branch: {} ({})", base_branch, base_sha);
-
-        // Create remote branch using GitHub CLI
-        let branch_name = scope;
-        create_remote_branch(branch_name, &base_sha)?;
-        println!("✅ Created remote branch: {}", branch_name);
+        create_remote_branch(&branch_name, &base_sha)?;
 
         if create_worktree {
-            let worktree_dir = worktree_name.unwrap_or(scope);
-            create_worktree_for_branch(branch_name, worktree_dir)?;
-            println!("✅ Created worktree: .wt/{}", worktree_dir);
+            create_worktree_for_branch(&branch_name, &worktree_dir)?;
 
             if open_in_cursor {
                 open_worktree_in_cursor(&worktree_dir)?;
-                println!("✅ Opened worktree in Cursor: .wt/{}", worktree_dir);
             }
         }
 
-        println!("🎉 Agreement honored successfully!");
+        println!("✅ Agreement honored successfully!");
+        println!("  📁 Worktree: {}", worktree_dir);
+        println!("  🌿 Branch: {}", branch_name);
+        println!("  📍 Path Scope: {}", path_scope);
+
         Ok(())
     }
 
@@ -1305,6 +1362,131 @@ impl AgreementCLI {
         Ok(worktree_list
             .lines()
             .any(|line| line.contains(short_scope) || line.contains(scope)))
+    }
+
+    /// List local agreements (agreements that have associated worktrees)
+    pub fn list_local(&self) -> Result<()> {
+        let agreements = self.manager.list_agreements()?;
+
+        if agreements.is_empty() {
+            println!("📝 No agreements found");
+            return Ok(());
+        }
+
+        // Get list of worktrees
+        let worktree_output = std::process::Command::new("git")
+            .args(&["worktree", "list", "--porcelain"])
+            .output()?;
+
+        let worktree_list = String::from_utf8(worktree_output.stdout)?;
+        let worktree_dirs: Vec<String> = worktree_list
+            .lines()
+            .filter_map(|line| {
+                if line.starts_with("worktree") {
+                    line.split_whitespace().nth(1).map(|s| s.to_string())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // Get current tree SHA to mark active agreements
+        let current_tree = std::process::Command::new("git")
+            .args(&["rev-parse", "HEAD^{tree}"])
+            .output()?;
+        let current_tree_sha = String::from_utf8_lossy(&current_tree.stdout)
+            .trim()
+            .to_string();
+
+        let mut local_agreements = Vec::new();
+
+        for metadata in agreements {
+            let short_scope = &metadata.agreement.scope[..7];
+
+            // Check if this agreement has a local worktree
+            let has_worktree = worktree_dirs.iter().any(|dir| {
+                dir.contains(short_scope) ||
+                dir.contains(&metadata.agreement.scope) ||
+                dir.contains(&format!("~{}", short_scope))
+            });
+
+            if has_worktree {
+                // Get path scope and tree slug
+                let resolution = self.manager.resolve_tree_path(&metadata.agreement.scope)?;
+                let path_scope = match resolution.resolution_type {
+                    ResolutionType::Path(path) => {
+                        if path.is_empty() {
+                            "root".to_string()
+                        } else {
+                            path
+                        }
+                    }
+                    ResolutionType::Commit(_) => "history".to_string(),
+                    ResolutionType::Tree(_) => "detached".to_string(),
+                    ResolutionType::NotFound => "unknown".to_string(),
+                };
+
+                let tree_slug = path_scope.replace('/', "-").replace('.', "");
+
+                // Find the actual worktree directory
+                let worktree_dir = worktree_dirs.iter()
+                    .find(|dir| {
+                        dir.contains(short_scope) || 
+                        dir.contains(&metadata.agreement.scope) ||
+                        dir.contains(&format!("~{}", short_scope))
+                    })
+                    .cloned()
+                    .unwrap_or_else(|| "unknown".to_string());
+
+                // Determine status indicator
+                let indicator = if metadata.agreement.scope == current_tree_sha {
+                    "* " // Current agreement
+                } else {
+                    "+ " // Has worktree
+                };
+
+                // Get contract name for display
+                let contract_name = get_contract_name(&metadata.agreement.contract)
+                    .unwrap_or_else(|_| "unknown".to_string());
+
+                local_agreements.push((metadata, path_scope, tree_slug, worktree_dir, indicator, contract_name));
+            }
+        }
+
+        if local_agreements.is_empty() {
+            println!("📝 No local agreements found (no worktrees exist)");
+            return Ok(());
+        }
+
+        // Sort: current first, then by scope
+        local_agreements.sort_by(|a, b| {
+            let a_is_current = a.0.agreement.scope == current_tree_sha;
+            let b_is_current = b.0.agreement.scope == current_tree_sha;
+
+            if a_is_current && !b_is_current {
+                std::cmp::Ordering::Less
+            } else if !a_is_current && b_is_current {
+                std::cmp::Ordering::Greater
+            } else {
+                a.0.agreement.scope.cmp(&b.0.agreement.scope)
+            }
+        });
+
+        println!("🏠 Local Agreements (with worktrees):");
+        println!();
+
+        for (metadata, path_scope, tree_slug, worktree_dir, indicator, contract_name) in local_agreements {
+            let short_scope = &metadata.agreement.scope[..7];
+            
+            println!("{}{} ({}): {} [{}]", indicator, short_scope, contract_name, path_scope, tree_slug);
+            println!("  📁 Worktree: {}", worktree_dir);
+            println!("  📅 Created: {}", metadata.created_at);
+            println!("  👤 By: {}", metadata.created_by);
+            println!("  📊 Status: {}", metadata.status);
+            println!();
+        }
+
+        Ok(())
     }
 }
 
