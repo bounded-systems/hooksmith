@@ -60,16 +60,52 @@
     },
     "required": ["git"]
   },
+  "data": {
+    "git": {
+      "tree": {
+        "objects": {
+          "names": {
+            "required": [
+              ".gitignore",
+              "projects"
+            ],
+            "allowed": [
+              ".gitignore",
+              ".gitattributes",
+              ".meta",
+              "docs",
+              "generated",
+              "projects",
+              "src",
+              "tests",
+              "tools",
+              "wit"
+            ],
+            "rejected": [
+              "README.md",
+              "Cargo.toml",
+              "rustfmt.toml",
+              "*.md",
+              "*.toml"
+            ],
+            "ignored": [
+              ".DS_Store",
+              "Thumbs.db",
+              ".idea",
+              ".vscode"
+            ]
+          }
+        }
+      }
+    }
+  },
   "rules": [
     {
       "name": "required_files_exist",
       "description": "Ensure all required files and directories exist in the tree",
       "rule_type": "TreeValidation",
       "parameters": {
-        "required": [
-          ".gitignore",
-          "projects"
-        ]
+        "data_path": "git.tree.objects.names.required"
       },
       "required": true,
       "severity": "Error"
@@ -79,18 +115,7 @@
       "description": "Ensure only allowed files and directories are present",
       "rule_type": "TreeValidation",
       "parameters": {
-        "allowed": [
-          ".gitignore",
-          ".gitattributes",
-          ".meta",
-          "docs",
-          "generated",
-          "projects",
-          "src",
-          "tests",
-          "tools",
-          "wit"
-        ]
+        "data_path": "git.tree.objects.names.allowed"
       },
       "required": true,
       "severity": "Error"
@@ -100,13 +125,7 @@
       "description": "Ensure rejected files and directories are not present",
       "rule_type": "TreeValidation",
       "parameters": {
-        "rejected": [
-          "README.md",
-          "Cargo.toml",
-          "rustfmt.toml",
-          "*.md",
-          "*.toml"
-        ]
+        "data_path": "git.tree.objects.names.rejected"
       },
       "required": true,
       "severity": "Error"
@@ -116,12 +135,7 @@
       "description": "Ensure Git-ignored files are not present in the tree",
       "rule_type": "TreeValidation",
       "parameters": {
-        "ignored": [
-          ".DS_Store",
-          "Thumbs.db",
-          ".idea",
-          ".vscode"
-        ]
+        "data_path": "git.tree.objects.names.ignored"
       },
       "required": true,
       "severity": "Warning"
@@ -212,4 +226,3 @@
     }
   }
 }
-# Updated contract
