@@ -178,6 +178,10 @@ path = "scripts/git_lfs_auto_tracker.rs"
 name = "modularization_packing_estimator"
 path = "scripts/modularization_packing_estimator.rs"
 
+[[bin]]
+name = "contract_stability_analyzer"
+path = "scripts/contract_stability_analyzer.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
