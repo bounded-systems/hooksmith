@@ -134,10 +134,11 @@ fn validate_single_hook(hook_path: &Path) -> Result<(), Box<dyn std::error::Erro
         return Err(format!("Duplicate concerns found in hook '{}'", name).into());
     }
     
-    // Check if binary exists in target/release/
+    // Check if binary exists in target/release/ (skip during build process)
     let binary_path = Path::new("target/release").join(bin);
     if !binary_path.exists() {
-        return Err(format!("Binary '{}' not found in target/release/", bin).into());
+        println!("⚠️  Binary '{}' not found in target/release/ - skipping validation during build", bin);
+        return Ok(());
     }
     
     if !binary_path.is_file() {

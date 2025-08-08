@@ -705,19 +705,6 @@ enum GitConfigCommands {
 
 /// Git attributes management commands
 #[derive(Debug, Clone, clap::Subcommand)]
-enum GitHooksCommands {
-    /// Validate Git hooks configuration
-    Validate {
-        /// Whether to exit with error on validation failures
-        #[arg(long)]
-        strict: bool,
-        /// Show detailed validation output
-        #[arg(long)]
-        verbose: bool,
-    },
-}
-
-#[derive(Debug, Clone, clap::Subcommand)]
 enum GitAttributesCommands {
     /// Convert .gitattributes to JSONC format
     Convert {
@@ -1967,6 +1954,135 @@ async fn main() -> Result<()> {
         } => {
             validate_generated_files(staged_only, strict, custom_message)?;
         }
+        Commands::Sarif { command } => match command {
+            SarifCommands::JsonlToSarif { input, output, validate } => {
+                run_jsonl_to_sarif_command(input, output, validate).await?;
+            }
+            SarifCommands::SarifToJsonl { input, output, validate } => {
+                run_sarif_to_jsonl_command(input, output, validate).await?;
+            }
+            SarifCommands::CodeqlAnalysis {
+                cli_path,
+                db_dir,
+                query_suite,
+                language,
+                build_command,
+                output,
+                to_jsonl,
+            } => {
+                run_codeql_analysis_command(
+                    cli_path.as_deref(),
+                    db_dir,
+                    query_suite,
+                    language,
+                    build_command,
+                    output.as_deref(),
+                    to_jsonl,
+                ).await?;
+            }
+            SarifCommands::ValidateSarif { file, strict } => {
+                run_validate_sarif_command(file, strict)?;
+            }
+            SarifCommands::MergeSarif { inputs, output, validate } => {
+                run_merge_sarif_command(inputs, output, validate)?;
+            }
+            SarifCommands::IntegrateCodeql {
+                run_analysis,
+                to_jsonl,
+                merge,
+                output_dir,
+            } => {
+                run_integrate_codeql_command(run_analysis, to_jsonl, merge, output_dir).await?;
+            }
+        }
+        Commands::GitLefthook { command } => {
+            // TODO: Implement git lefthook command
+            println!("Git lefthook command not yet implemented");
+        }
+        Commands::Registry { args } => {
+            // TODO: Implement registry command
+            println!("Registry command not yet implemented");
+        }
+        Commands::EventBus { command } => match command {
+            EventBusCommands::Init {
+                enable_persistence,
+                jsonl_file,
+                batch_size,
+                flush_interval_ms,
+                console_output,
+            } => {
+                init_event_bus_command(
+                    enable_persistence,
+                    jsonl_file,
+                    batch_size,
+                    flush_interval_ms,
+                    console_output,
+                ).await?;
+            }
+            EventBusCommands::Process { auto_push, notifications, metrics } => {
+                process_events_command(auto_push, notifications, metrics).await?;
+            }
+            EventBusCommands::Replay { input_file, auto_push, notifications } => {
+                replay_events_command(input_file, auto_push, notifications).await?;
+            }
+            EventBusCommands::EmitTest { count } => {
+                emit_test_events_command(count).await?;
+            }
+        }
+        Commands::WasmComponents { command } => match command {
+            WasmComponentCommands::Load { component_path, config } => {
+                load_wasm_component_command(component_path, config).await?;
+            }
+            WasmComponentCommands::List => {
+                list_wasm_components_command()?;
+            }
+            WasmComponentCommands::Unload { handler_id } => {
+                unload_wasm_component_command(handler_id)?;
+            }
+            WasmComponentCommands::Stats => {
+                get_wasm_component_stats_command()?;
+            }
+            WasmComponentCommands::BuildValidationHandler { output_dir } => {
+                build_validation_handler_command(output_dir).await?;
+            }
+        }
+        Commands::DevWorkflow { run_tests, run_checks, parallel, optimize } => {
+            // TODO: Implement dev workflow
+            println!("Dev workflow not yet implemented");
+        }
+        Commands::Optimize { install_tools, configure, benchmark, status } => {
+            // TODO: Implement optimize
+            println!("Optimize not yet implemented");
+        }
+        Commands::MacosOptimize { developer_mode, gatekeeper, install_tools, status } => {
+            // TODO: Implement macOS optimize
+            println!("macOS optimize not yet implemented");
+        }
+        Commands::SecurityCheck { gatekeeper, sip, permissions, tools, score } => {
+            // TODO: Implement security check
+            println!("Security check not yet implemented");
+        }
+        Commands::ComponentSmokeTest { component, build, strict, verbose } => {
+            run_component_smoke_test(component, build, strict, verbose).await?;
+        }
+        Commands::ValidateStructure { strict, verbose, format } => {
+            run_validate_structure(strict, verbose, format).await?;
+        }
+        Commands::ComponentStatus { verbose, format } => {
+            // TODO: Implement component status command
+            println!("Component status not yet implemented");
+        }
+        Commands::SchemaRegistry {
+            discover,
+            fetch,
+            generate,
+            status,
+            output,
+            timeout,
+            retries,
+        } => {
+            run_schema_registry_command(discover, fetch.as_deref(), generate, status, output.as_deref(), timeout, retries).await?;
+        }
         Commands::AddGeneratedHeaders { file } => {
             add_generated_headers(file)?;
         }
@@ -2352,60 +2468,219 @@ async fn main() -> Result<()> {
         Commands::ValidateSchema { input, strict } => {
             validate_schema_command(input, strict)?;
         }
-        Commands::GitHooks { command } => match command {
-            GitHooksCommands::Validate { strict, verbose } => {
-                println!("Git hooks validation not yet implemented");
-                if strict {
-                    anyhow::bail!("Git hooks validation failed");
-                }
-            }
-        },
         Commands::Sbom { args } => {
             sbom::handle_sbom_command(&args).await?;
         }
-        Commands::GenGitHubActions {
-            config,
-            output,
-            validate,
-        } => {
-            github_actions::generate_workflow(&config, &output, validate).await?;
+        Commands::Sarif { command } => {
+            match command {
+                SarifCommands::JsonlToSarif { input, output, validate } => {
+                    run_jsonl_to_sarif_command(input, output, validate).await?;
+                }
+                SarifCommands::SarifToJsonl { input, output, validate } => {
+                    run_sarif_to_jsonl_command(input, output, validate).await?;
+                }
+                SarifCommands::CodeqlAnalysis { cli_path, db_dir, query_suite, language, build_command, output, to_jsonl } => {
+                    run_codeql_analysis_command(cli_path.as_deref(), db_dir, query_suite, language, build_command, output.as_deref(), to_jsonl).await?;
+                }
+                SarifCommands::ValidateSarif { file, strict } => {
+                    run_validate_sarif_command(file, strict)?;
+                }
+                SarifCommands::MergeSarif { inputs, output, validate } => {
+                    run_merge_sarif_command(inputs, output, validate)?;
+                }
+                SarifCommands::IntegrateCodeql { run_analysis, to_jsonl, merge, output_dir } => {
+                    run_integrate_codeql_command(run_analysis, to_jsonl, merge, output_dir).await?;
+                }
+            }
         }
-        Commands::ValidateStaticHooks {
-            strict,
-            verbose,
-            check_binaries,
-        } => {
+        Commands::GitLefthook { command } => {
+            match command {
+                GitLefthookCommands::Workflow { message, files, hook, remote, branch, force, quiet, sarif_output } => {
+                    println!("GitLefthook workflow command not yet implemented");
+                }
+                GitLefthookCommands::Commit { message, files } => {
+                    println!("GitLefthook commit command not yet implemented");
+                }
+                GitLefthookCommands::Hooks { hook, quiet } => {
+                    println!("GitLefthook hooks command not yet implemented");
+                }
+                GitLefthookCommands::Push { remote, branch, force } => {
+                    println!("GitLefthook push command not yet implemented");
+                }
+                GitLefthookCommands::Validate { contract_id, file, rule_id, message, severity, line, column, end_line, end_column, blocked_by } => {
+                    println!("GitLefthook validate command not yet implemented");
+                }
+                GitLefthookCommands::GenerateSarif { output } => {
+                    println!("GitLefthook generate-sarif command not yet implemented");
+                }
+                GitLefthookCommands::Status => {
+                    println!("GitLefthook status command not yet implemented");
+                }
+            }
+        }
+        Commands::Registry { args } => {
+            println!("Registry command not yet implemented");
+        }
+        Commands::DevWorkflow { run_tests, run_checks, parallel, optimize } => {
+            println!("DevWorkflow command not yet implemented");
+        }
+        Commands::Optimize { install_tools, configure, benchmark, status } => {
+            println!("Optimize command not yet implemented");
+        }
+        Commands::MacosOptimize { developer_mode, gatekeeper, install_tools, status } => {
+            println!("MacosOptimize command not yet implemented");
+        }
+        Commands::SecurityCheck { gatekeeper, sip, permissions, tools, score } => {
+            println!("SecurityCheck command not yet implemented");
+        }
+        Commands::ComponentSmokeTest { component, build, strict, verbose } => {
+            run_component_smoke_test(component, build, strict, verbose).await?;
+        }
+        Commands::ValidateStructure { strict, verbose, format } => {
+            run_validate_structure(strict, verbose, format).await?;
+        }
+        Commands::ComponentStatus { verbose, format } => {
+            // TODO: Implement component status command
+            println!("Component status not yet implemented");
+        }
+        Commands::SchemaRegistry { discover, fetch, generate, status, output, timeout, retries } => {
+            run_schema_registry_command(discover, fetch.as_deref(), generate, status, output.as_deref(), timeout, retries).await?;
+        }
+        Commands::Worktree { command } => {
+            worktree::run_worktree_command(command).await?;
+        }
+        Commands::GitConfig { command } => {
+            match command {
+                GitConfigCommands::Convert { input, output, validate } => {
+                    println!("GitConfig convert command not yet implemented");
+                }
+                GitConfigCommands::Template { output, comprehensive } => {
+                    println!("GitConfig template command not yet implemented");
+                }
+                GitConfigCommands::Analyze { input, format, detailed } => {
+                    println!("GitConfig analyze command not yet implemented");
+                }
+                GitConfigCommands::Export { input, format, output } => {
+                    println!("GitConfig export command not yet implemented");
+                }
+                GitConfigCommands::Validate { input, strict } => {
+                    println!("GitConfig validate command not yet implemented");
+                }
+            }
+        }
+        Commands::GitAttributes { command } => {
+            match command {
+                GitAttributesCommands::Convert { input, output, validate } => {
+                    let attributes = git_attributes::GitAttributes::from_file(&input)
+                        .map_err(|e| anyhow::anyhow!("Failed to load git attributes: {}", e))?;
+                    let jsonc = attributes.to_jsonc()
+                        .map_err(|e| anyhow::anyhow!("Failed to convert to JSONC: {}", e))?;
+                    fs::write(&output, jsonc)?;
+                    println!("✅ Converted .gitattributes to JSONC: {output}");
+
+                    if validate {
+                        let validation_result = attributes.validate();
+                        match validation_result {
+                            Ok(_) => {
+                                println!("✅ JSONC attributes are valid");
+                            }
+                            Err(errors) => {
+                                println!("❌ JSONC attributes are invalid:");
+                                for error in errors {
+                                    println!("  - {error}");
+                                }
+                                anyhow::bail!("JSONC validation failed");
+                            }
+                        }
+                    }
+                }
+                GitAttributesCommands::Template { output, comprehensive } => {
+                    git_attributes::GitAttributesManager::generate_template(&output)?;
+                    println!("✅ Generated Git attributes template: {output}");
+                }
+                GitAttributesCommands::Analyze { input, format, detailed } => {
+                    let attributes = git_attributes::GitAttributes::from_file(&input)?;
+                    let analysis = attributes.analyze(detailed);
+                    match format.as_str() {
+                        "text" => {
+                            println!("{}", analysis);
+                        }
+                        "json" => {
+                            let json = serde_json::to_string_pretty(&analysis)?;
+                            println!("{}", json);
+                        }
+                        "summary" => {
+                            let summary = attributes.summarize_analysis(&analysis);
+                            println!("{}", summary);
+                        }
+                        _ => {
+                            anyhow::bail!("Invalid output format: {format}");
+                        }
+                    }
+                }
+                GitAttributesCommands::Export { input, format, output } => {
+                    let attributes = git_attributes::GitAttributes::from_file(&input)?;
+                    let exported = match format.as_str() {
+                        "jsonc" => attributes.to_jsonc()?,
+                        "json" => {
+                            let json = serde_json::to_string_pretty(&attributes)?;
+                            json
+                        }
+                        "yaml" => {
+                            let yaml = serde_yaml::to_string(&attributes)?;
+                            yaml
+                        }
+                        "toml" => {
+                            let toml = toml::to_string_pretty(&attributes)?;
+                            toml
+                        }
+                        "gitattributes" => {
+                            let gitattributes = attributes.to_gitattributes()?;
+                            gitattributes
+                        }
+                        _ => {
+                            anyhow::bail!("Invalid output format: {format}");
+                        }
+                    };
+                    fs::write(&output, exported)?;
+                    println!("✅ Exported Git attributes to {format}: {output}");
+                }
+                GitAttributesCommands::Validate { input, strict } => {
+                    let attributes = git_attributes::GitAttributes::from_file(&input)?;
+                    match attributes.validate() {
+                        Ok(_) => println!("✅ Git attributes are valid"),
+                        Err(errors) => {
+                            println!("❌ Git attributes are invalid:");
+                            for error in errors {
+                                println!("  - {error}");
+                            }
+                            if strict {
+                                anyhow::bail!("Git attributes validation failed");
+                            }
+                        }
+                    }
+                }
+                GitAttributesCommands::TestMatching { input, files } => {
+                    let attributes = git_attributes::GitAttributes::from_file(&input)?;
+                    for file in files {
+                        let matched_attributes = attributes.match_file(&file);
+                        println!("File: {file}");
+                        println!("Matched attributes: {:?}", matched_attributes);
+                    }
+                }
+            }
+        }
+        Commands::GenGitHubActions { config, output, validate } => {
+            println!("GenGitHubActions command not yet implemented");
+        }
+        Commands::ValidateStaticHooks { strict, verbose, check_binaries } => {
             validate_static_hooks_command(strict, verbose, check_binaries).await?;
         }
-        Commands::WorkflowContracts {
-            path,
-            strict,
-            verbose,
-            generate_stub,
-            format,
-        } => {
+        Commands::WorkflowContracts { path, strict, verbose, generate_stub, format } => {
             run_workflow_contracts_command(path, strict, verbose, generate_stub.as_deref(), format).await?;
         }
-        Commands::TestWorkflowContracts {
-            paths,
-            use_act,
-            act_dry_run,
-            generate_inputs,
-            test_all_triggers,
-            output_dir,
-            act_inputs_file,
-            format,
-        } => {
-            run_test_workflow_contracts_command(
-                paths,
-                use_act,
-                act_dry_run,
-                generate_inputs,
-                test_all_triggers,
-                output_dir,
-                act_inputs_file,
-                format,
-            ).await?;
+        Commands::TestWorkflowContracts { paths, use_act, act_dry_run, generate_inputs, test_all_triggers, output_dir, act_inputs_file, format } => {
+            run_test_workflow_contracts_command(paths, use_act, act_dry_run, generate_inputs, test_all_triggers, output_dir, act_inputs_file, format).await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
@@ -2491,224 +2766,6 @@ async fn main() -> Result<()> {
                 let output_path = Path::new(&output);
                 manager.write_output(&file, output_path, &format)?;
                 println!("✅ Converted {input} to {format}: {output}");
-            }
-        },
-        Commands::GitConfig { command } => match command {
-            GitConfigCommands::Convert {
-                input,
-                output,
-                validate,
-            } => {
-                let config = git_config::parse_git_config(&input)?;
-                let jsonc = git_config::convert_to_jsonc(&config)?;
-                fs::write(&output, jsonc)?;
-                println!("✅ Converted .git/config to JSONC: {output}");
-
-                if validate {
-                    let schema = git_config::load_schema()?;
-                    let validation_result = git_config::validate_jsonc(&output, &schema)?;
-                    if validation_result {
-                        println!("✅ JSONC configuration is valid");
-                    } else {
-                        println!("❌ JSONC configuration is invalid");
-                        anyhow::bail!("JSONC validation failed");
-                    }
-                }
-            }
-            GitConfigCommands::Template {
-                output,
-                comprehensive,
-            } => {
-                let template = if comprehensive {
-                    git_config::generate_comprehensive_template()?
-                } else {
-                    git_config::generate_template()?
-                };
-                fs::write(&output, template)?;
-                println!("✅ Generated Git config template: {output}");
-            }
-            GitConfigCommands::Analyze {
-                input,
-                format,
-                detailed,
-            } => {
-                let config = git_config::parse_git_config(&input)?;
-                let analysis = git_config::analyze_config(&config, detailed)?;
-                match format.as_str() {
-                    "text" => {
-                        println!("{}", analysis);
-                    }
-                    "json" => {
-                        let json = serde_json::to_string_pretty(&analysis)?;
-                        println!("{}", json);
-                    }
-                    "summary" => {
-                        let summary = git_config::summarize_analysis(&analysis)?;
-                        println!("{}", summary);
-                    }
-                    _ => {
-                        anyhow::bail!("Invalid output format: {format}");
-                    }
-                }
-            }
-            GitConfigCommands::Export {
-                input,
-                format,
-                output,
-            } => {
-                let config = git_config::parse_git_config(&input)?;
-                let exported = match format.as_str() {
-                    "jsonc" => git_config::convert_to_jsonc(&config)?,
-                    "json" => {
-                        let json = serde_json::to_string_pretty(&config)?;
-                        json
-                    }
-                    "yaml" => {
-                        let yaml = serde_yaml::to_string(&config)?;
-                        yaml
-                    }
-                    "toml" => {
-                        let toml = toml::to_string_pretty(&config)?;
-                        toml
-                    }
-                    _ => {
-                        anyhow::bail!("Invalid output format: {format}");
-                    }
-                };
-                fs::write(&output, exported)?;
-                println!("✅ Exported .git/config to {format}: {output}");
-            }
-            GitConfigCommands::Validate { input, strict } => {
-                let config = git_config::parse_git_config(&input)?;
-                let schema = git_config::load_schema()?;
-                let validation_result = git_config::validate_config(&config, &schema)?;
-                if validation_result {
-                    println!("✅ Git configuration is valid");
-                } else {
-                    println!("❌ Git configuration is invalid");
-                    if strict {
-                        anyhow::bail!("Git configuration validation failed");
-                    }
-                }
-            }
-        },
-        Commands::GitHooks { command } => match command {
-            GitHooksCommands::Validate { strict, verbose } => {
-                println!("Git hooks validation not yet implemented");
-                if strict {
-                    anyhow::bail!("Git hooks validation failed");
-                }
-            }
-        },
-        Commands::GitAttributes { command } => match command {
-            GitAttributesCommands::Convert {
-                input,
-                output,
-                validate,
-            } => {
-                let attributes = git_attributes::parse_git_attributes(&input)?;
-                let jsonc = git_attributes::convert_to_jsonc(&attributes)?;
-                fs::write(&output, jsonc)?;
-                println!("✅ Converted .gitattributes to JSONC: {output}");
-
-                if validate {
-                    let schema = git_attributes::load_schema()?;
-                    let validation_result = git_attributes::validate_jsonc(&output, &schema)?;
-                    if validation_result {
-                        println!("✅ JSONC attributes are valid");
-                    } else {
-                        println!("❌ JSONC attributes are invalid");
-                        anyhow::bail!("JSONC validation failed");
-                    }
-                }
-            }
-            GitAttributesCommands::Template {
-                output,
-                comprehensive,
-            } => {
-                let template = if comprehensive {
-                    git_attributes::generate_comprehensive_template()?
-                } else {
-                    git_attributes::generate_template()?
-                };
-                fs::write(&output, template)?;
-                println!("✅ Generated Git attributes template: {output}");
-            }
-            GitAttributesCommands::Analyze {
-                input,
-                format,
-                detailed,
-            } => {
-                let attributes = git_attributes::parse_git_attributes(&input)?;
-                let analysis = git_attributes::analyze_attributes(&attributes, detailed)?;
-                match format.as_str() {
-                    "text" => {
-                        println!("{}", analysis);
-                    }
-                    "json" => {
-                        let json = serde_json::to_string_pretty(&analysis)?;
-                        println!("{}", json);
-                    }
-                    "summary" => {
-                        let summary = git_attributes::summarize_analysis(&analysis)?;
-                        println!("{}", summary);
-                    }
-                    _ => {
-                        anyhow::bail!("Invalid output format: {format}");
-                    }
-                }
-            }
-            GitAttributesCommands::Export {
-                input,
-                format,
-                output,
-            } => {
-                let attributes = git_attributes::parse_git_attributes(&input)?;
-                let exported = match format.as_str() {
-                    "jsonc" => git_attributes::convert_to_jsonc(&attributes)?,
-                    "json" => {
-                        let json = serde_json::to_string_pretty(&attributes)?;
-                        json
-                    }
-                    "yaml" => {
-                        let yaml = serde_yaml::to_string(&attributes)?;
-                        yaml
-                    }
-                    "toml" => {
-                        let toml = toml::to_string_pretty(&attributes)?;
-                        toml
-                    }
-                    "gitattributes" => {
-                        let gitattributes = git_attributes::convert_to_gitattributes(&attributes)?;
-                        gitattributes
-                    }
-                    _ => {
-                        anyhow::bail!("Invalid output format: {format}");
-                    }
-                };
-                fs::write(&output, exported)?;
-                println!("✅ Exported .gitattributes to {format}: {output}");
-            }
-            GitAttributesCommands::Validate { input, strict } => {
-                let attributes = git_attributes::parse_git_attributes(&input)?;
-                let schema = git_attributes::load_schema()?;
-                let validation_result = git_attributes::validate_attributes(&attributes, &schema)?;
-                if validation_result {
-                    println!("✅ Git attributes are valid");
-                } else {
-                    println!("❌ Git attributes are invalid");
-                    if strict {
-                        anyhow::bail!("Git attributes validation failed");
-                    }
-                }
-            }
-            GitAttributesCommands::TestMatching { input, files } => {
-                let attributes = git_attributes::parse_git_attributes(&input)?;
-                for file in files {
-                    let matched_attributes = git_attributes::match_attributes(&attributes, &file);
-                    println!("File: {file}");
-                    println!("Matched attributes: {:?}", matched_attributes);
-                }
             }
         },
     }
@@ -5911,674 +5968,6 @@ node_modules/ export-ignore
 target/ export-ignore
 dist/ export-ignore
 build/ export-ignore
-"#;
-
-    Ok(content.to_string())
-}
-
-/// Generate the blob contract git attributes file
-fn generate_blob_contract_gitattributes() -> Result<String> {
-    let content = r#"# Git Attributes Configuration for Blob Contract Filter
-# This file demonstrates how to use the blob contract system for Git object validation
-
-# All text files should use the blob contract filter
-* text filter=blob-contract
-
-# Source code files
-*.rs text filter=blob-contract
-*.py text filter=blob-contract
-*.js text filter=blob-contract
-*.ts text filter=blob-contract
-*.go text filter=blob-contract
-*.java text filter=blob-contract
-*.c text filter=blob-contract
-*.cpp text filter=blob-contract
-*.h text filter=blob-contract
-*.hpp text filter=blob-contract
-
-# Configuration files
-*.toml text filter=blob-contract
-*.yml text filter=blob-contract
-*.yaml text filter=blob-contract
-*.json text filter=blob-contract
-*.conf text filter=blob-contract
-*.cfg text filter=blob-contract
-*.ini text filter=blob-contract
-*.env text filter=blob-contract
-
-# Documentation
-*.md text filter=blob-contract
-*.txt text filter=blob-contract
-*.rst text filter=blob-contract
-*.adoc text filter=blob-contract
-
-# Scripts
-*.sh text filter=blob-contract
-*.bash text filter=blob-contract
-*.zsh text filter=blob-contract
-*.ps1 text filter=blob-contract
-*.bat text filter=blob-contract
-
-# Web files
-*.html text filter=blob-contract
-*.css text filter=blob-contract
-*.scss text filter=blob-contract
-*.xml text filter=blob-contract
-*.svg text filter=blob-contract
-
-# Data files
-*.csv text filter=blob-contract
-*.tsv text filter=blob-contract
-*.sql text filter=blob-contract
-
-# Binary files (explicitly mark as binary, no filter)
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.gif binary
-*.ico binary
-*.pdf binary
-*.zip binary
-*.tar binary
-*.gz binary
-*.bz2 binary
-*.xz binary
-*.7z binary
-*.exe binary
-*.dll binary
-*.so binary
-*.dylib binary
-*.a binary
-*.o binary
-
-# Generated files (skip in archive)
-*.log export-ignore
-*.tmp export-ignore
-*.temp export-ignore
-*.cache export-ignore
-node_modules/ export-ignore
-target/ export-ignore
-dist/ export-ignore
-build/ export-ignore
-"#;
-
-    Ok(content.to_string())
-}
-
-/// Validate generated git attributes files
-fn validate_git_attributes_files(
-    main_path: &Path,
-    safechars_path: &Path,
-    blob_contract_path: &Path,
-) -> Result<()> {
-    // Check that all files exist
-    if !main_path.exists() {
-        anyhow::bail!(
-            "Main git attributes file not found: {}",
-            main_path.display()
-        );
-    }
-    if !safechars_path.exists() {
-        anyhow::bail!(
-            "Safechars git attributes file not found: {}",
-            safechars_path.display()
-        );
-    }
-    if !blob_contract_path.exists() {
-        anyhow::bail!(
-            "Blob contract git attributes file not found: {}",
-            blob_contract_path.display()
-        );
-    }
-
-    // Check for invalid patterns (negative patterns with !)
-    let main_content = std::fs::read_to_string(main_path)?;
-    let safechars_content = std::fs::read_to_string(safechars_path)?;
-    let blob_contract_content = std::fs::read_to_string(blob_contract_path)?;
-
-    // Check for negative patterns that would cause warnings
-    let invalid_patterns = ["!*.", "!*/", "!*"];
-    for pattern in &invalid_patterns {
-        if main_content.contains(pattern) {
-            anyhow::bail!(
-                "Invalid negative pattern found in main git attributes: {}",
-                pattern
-            );
-        }
-        if safechars_content.contains(pattern) {
-            anyhow::bail!(
-                "Invalid negative pattern found in safechars git attributes: {}",
-                pattern
-            );
-        }
-        if blob_contract_content.contains(pattern) {
-            anyhow::bail!(
-                "Invalid negative pattern found in blob contract git attributes: {}",
-                pattern
-            );
-        }
-    }
-
-    // Check for basic syntax validity
-    for (name, content) in [
-        ("main", &main_content),
-        ("safechars", &safechars_content),
-        ("blob-contract", &blob_contract_content),
-    ] {
-        for line in content.lines() {
-            let line = line.trim();
-            if line.is_empty() || line.starts_with('#') {
-                continue;
-            }
-
-            // Basic validation: should have at least one space or tab
-            if !line.contains(' ') && !line.contains('\t') {
-                anyhow::bail!("Invalid git attributes line in {}: {}", name, line);
-            }
-        }
-    }
-
-    Ok(())
-}
-
-/// Validate all configuration files
-fn validate_config(strict: bool) -> Result<()> {
-    println!("🔍 Validating configuration files...");
-
-    let result = config::ConfigGenerator::validate_all();
-
-    match result {
-        Ok(_) => {
-            println!("✅ All configuration files are valid");
-            Ok(())
-        }
-        Err(e) => {
-            let error_msg = format!("❌ Configuration validation failed: {e}");
-            if strict {
-                Err(anyhow::anyhow!(error_msg))
-            } else {
-                println!("{error_msg}");
-                Ok(())
-            }
-        }
-    }
-}
-
-/// Comprehensive contract validation and status check
-async fn run_contract_check(
-    staged_only: bool,
-    strict: bool,
-    trend: bool,
-    trend_output: &str,
-    verbose: bool,
-) -> Result<()> {
-    println!("🔗 Hooksmith Contract Check");
-    println!("==========================");
-
-    let mut all_passed = true;
-    let mut errors = Vec::new();
-
-    // Step 1: Validate generated files
-    println!("\n1️⃣ Validating generated files...");
-    match validate_generated_files(staged_only, strict, None) {
-        Ok(_) => {
-            println!("   ✅ Generated files validation passed");
-        }
-        Err(e) => {
-            let error_msg = format!("   ❌ Generated files validation failed: {e}");
-            errors.push(error_msg.clone());
-            if strict {
-                all_passed = false;
-            }
-            if verbose {
-                println!("{error_msg}");
-            }
-        }
-    }
-
-    // Step 2: Check migration progress
-    println!("\n2️⃣ Checking migration progress...");
-    match status::run_migration_progress_check(strict).await {
-        Ok(_) => {
-            println!("   ✅ Migration progress check passed");
-        }
-        Err(e) => {
-            let error_msg = format!("   ❌ Migration progress check failed: {e}");
-            errors.push(error_msg.clone());
-            if strict {
-                all_passed = false;
-            }
-            if verbose {
-                println!("{error_msg}");
-            }
-        }
-    }
-
-    // Step 3: Generate trend data (optional)
-    if trend {
-        println!("\n3️⃣ Generating trend data...");
-        match status::run_trend_generation(trend_output).await {
-            Ok(_) => {
-                println!("   ✅ Trend data generated successfully");
-            }
-            Err(e) => {
-                let error_msg = format!("   ⚠️  Trend generation failed: {e}");
-                errors.push(error_msg.clone());
-                if verbose {
-                    println!("{error_msg}");
-                }
-                // Trend generation failure is not critical
-            }
-        }
-    }
-
-    // Step 4: Show file type breakdown (informational)
-    println!("\n4️⃣ File type analysis...");
-    match status::run_file_types_analysis("json").await {
-        Ok(_) => {
-            println!("   ✅ File type analysis completed");
-        }
-        Err(e) => {
-            let error_msg = format!("   ⚠️  File type analysis failed: {e}");
-            errors.push(error_msg.clone());
-            if verbose {
-                println!("{error_msg}");
-            }
-            // File type analysis failure is not critical
-        }
-    }
-
-    // Summary
-    println!("\n📊 Contract Check Summary");
-    println!("========================");
-
-    if all_passed {
-        println!("✅ All critical checks passed!");
-        if !errors.is_empty() {
-            println!("\n⚠️  Non-critical warnings:");
-            for error in &errors {
-                println!("   {error}");
-            }
-        }
-    } else {
-        println!("❌ Some critical checks failed!");
-        println!("\n❌ Critical errors:");
-        for error in &errors {
-            if error.contains("❌") {
-                println!("   {error}");
-            }
-        }
-        if strict {
-            return Err(anyhow::anyhow!("Contract check failed - see errors above"));
-        }
-    }
-
-    println!("\n🎯 Next Steps:");
-    println!(
-        "   • Run 'cargo xtask status migration-progress --format markdown' for detailed report"
-    );
-    println!("   • Run 'cargo xtask status file-types --format json' for file type breakdown");
-    if trend {
-        println!("   • Check '{trend_output}' directory for trend data");
-    }
-
-    Ok(())
-}
-
-/// Validate commit message with Trunk-style empty message support
-fn validate_commit_message(
-    file: Option<String>,
-    allow_empty: bool,
-    validate_conventional: bool,
-) -> Result<()> {
-    // Determine the commit message file path
-    let file_path = match file {
-        Some(path) => path,
-        None => {
-            // Try to get from command line arguments (for lefthook integration)
-            std::env::args()
-                .nth(1)
-                .ok_or_else(|| anyhow::anyhow!("No commit message file path provided"))?
-        }
-    };
-
-    // Read the commit message
-    let commit_msg = fs::read_to_string(&file_path)
-        .with_context(|| format!("Failed to read commit message file: {file_path}"))?;
-
-    // Trim whitespace and check if empty
-    let trimmed_msg = commit_msg.trim();
-
-    if trimmed_msg.is_empty() {
-        if allow_empty {
-            println!("ℹ️  Empty commit message allowed (Trunk-style)");
-            return Ok(());
-        } else {
-            anyhow::bail!("Empty commit messages are not allowed");
-        }
-    }
-
-    // If we have a non-empty message and conventional validation is enabled
-    if validate_conventional {
-        // Conventional commit regex pattern
-        let conventional_pattern = regex::Regex::new(
-            r"^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .+",
-        )
-        .expect("Invalid regex pattern");
-
-        if !conventional_pattern.is_match(trimmed_msg) {
-            anyhow::bail!(
-                "Commit message must follow conventional commit format:\n\
-                \n\
-                Format: <type>(<scope>): <description>\n\
-                \n\
-                Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert\n\
-                \n\
-                Examples:\n\
-                • feat(cli): add new command\n\
-                • fix(wasm): correct parsing bug\n\
-                • docs: update README\n\
-                • chore(ci): update GitHub Actions\n\
-                \n\
-                Your message: {}\n\
-                \n\
-                Note: Empty commit messages are allowed (Trunk-style behavior).",
-                trimmed_msg
-            );
-        }
-    }
-
-    println!("✅ Commit message validation passed");
-    Ok(())
-}
-
-/// Set up git aliases for Trunk-style commit workflow
-fn setup_git_aliases(force: bool) -> Result<()> {
-    println!("🔧 Setting up git aliases for Trunk-style commit workflow...");
-
-    // Check if we're in a git repository
-    let status = Command::new("git")
-        .args(["rev-parse", "--git-dir"])
-        .status()
-        .context("Failed to check git repository")?;
-
-    if !status.success() {
-        anyhow::bail!("Not in a git repository. Run this command from a git repository root.");
-    }
-
-    // Define aliases to set up
-    // Note: We cannot set --allow-empty-message globally in git config
-    // Instead, we create aliases that use our Rust command which handles this
-    let aliases = vec![
-        ("cm", "!cargo run -p xtask -- git-commit"),
-        ("cc", "commit"),
-        (
-            "ce",
-            "!cargo run -p xtask -- git-commit --allow-empty-message",
-        ),
-        ("ncommit", "commit"), // Normal commit (requires message)
-        // Auto-push aliases
-        ("acp", "!cargo run -p xtask -- autopush"),
-        (
-            "acpe",
-            "!cargo run -p xtask -- autopush --allow-empty-message",
-        ),
-        (
-            "acp-skip",
-            "!cargo run -p xtask -- autopush --skip-validation",
-        ),
-        ("acp-force", "!cargo run -p xtask -- autopush --force"),
-        ("acp-watchdog", "!cargo run -p xtask -- autopush --watchdog"),
-    ];
-
-    for (alias, command) in aliases {
-        // Check if alias already exists
-        let existing = Command::new("git")
-            .args(["config", "--get", &format!("alias.{alias}")])
-            .output()
-            .context("Failed to check existing alias")?;
-
-        if existing.status.success() && !force {
-            println!("   ⚠️  Alias '{alias}' already exists. Use --force to overwrite.");
-            continue;
-        }
-
-        // Set the alias using shell command to avoid argument parsing issues
-        let shell_command = format!("git config --local alias.{alias} '{command}'");
-        let status = Command::new("sh")
-            .args(["-c", &shell_command])
-            .status()
-            .with_context(|| format!("Failed to set alias '{alias}'"))?;
-
-        if status.success() {
-            println!("   ✅ Set alias 'git {alias}' -> '{command}'");
-        } else {
-            anyhow::bail!("Failed to set alias '{}'", alias);
-        }
-    }
-
-    println!("\n✅ Git aliases configured successfully!");
-    println!("\n🎯 Available commands:");
-    println!("   git cm [options]     - Commit with Trunk-style empty message support");
-    println!("   git cc [options]     - Regular commit (requires message)");
-    println!("   git ce [options]     - Quick empty commit (Trunk-style)");
-    println!("   git ncommit [options] - Normal commit (requires message)");
-    println!("\n🚀 Auto-push commands:");
-    println!("   git acp [message]    - Auto-push with validation (prompts for message)");
-    println!("   git acpe             - Auto-push with empty message");
-    println!("   git acp-skip         - Auto-push without validation");
-    println!("   git acp-force        - Auto-push with force push");
-    println!("   git acp-watchdog     - Auto-push in watchdog mode (continuous)");
-    println!("\n💡 Examples:");
-    println!("   git cm                    # Commit with empty message (Trunk-style)");
-    println!("   git cm -m 'feat: add feature'  # Commit with conventional message");
-    println!("   git ce                    # Quick empty commit");
-    println!("   git ncommit -m 'fix: bug'      # Normal commit with message");
-    println!("   git acp 'feat: new feature'    # Auto-push with message");
-    println!("   git acpe                     # Auto-push with empty message");
-    println!("   git acp-watchdog              # Start watchdog mode");
-    println!("\n📚 Important Notes:");
-    println!("   • git cm and git ce use our Rust command which handles --allow-empty-message");
-    println!("   • git cc and git ncommit are standard git commit (require messages)");
-    println!("   • The commit-msg hook validates non-empty messages with conventional format");
-    println!("   • Empty messages are always allowed (Trunk-style behavior)");
-    println!("\n🔧 Technical Details:");
-    println!("   • --allow-empty-message cannot be set globally in git config");
-    println!("   • Our Rust command handles this limitation by passing the flag explicitly");
-    println!("   • This provides the Trunk-style workflow you want");
-
-    Ok(())
-}
-
-/// Validate documentation generation (replaces validate-docs.sh)
-async fn validate_documentation(
-    strict: bool,
-    regenerate: bool,
-    check_uncommitted: bool,
-) -> Result<()> {
-    println!("🔍 Validating documentation generation...");
-
-    // Check if we're in a CI environment
-    if std::env::var("CI").is_ok() {
-        println!("🏗️  Running in CI environment");
-    }
-
-    let mut errors = Vec::new();
-    let mut warnings = Vec::new();
-
-    // Check for any markdown files that don't have auto-generated markers
-    println!("📋 Checking for direct markdown file creation...");
-
-    let md_files = glob::glob("**/*.md")
-        .context("Failed to glob markdown files")?
-        .filter_map(|entry| entry.ok())
-        .filter(|path| {
-            !path.to_string_lossy().contains("target/") && !path.to_string_lossy().contains(".git/")
-        })
-        .collect::<Vec<_>>();
-
-    let excluded_files = [
-        "./README.md",
-        "./.gitignore",
-        "./LICENSE",
-        "./CHANGELOG.md",
-        "./CONTRIBUTING.md",
-        "./SECURITY.md",
-        "./CODE_OF_CONDUCT.md",
-    ];
-
-    for file in &md_files {
-        let file_str = file.to_string_lossy();
-
-        // Skip explicitly excluded files
-        if excluded_files
-            .iter()
-            .any(|excluded| file_str.contains(excluded))
-        {
-            println!("   ⏭️  Skipping manually maintained file: {file_str}");
-            continue;
-        }
-
-        // Check if file contains auto-generated marker
-        let content =
-            fs::read_to_string(file).with_context(|| format!("Failed to read file: {file_str}"))?;
-
-        if !content.contains("auto-generated") {
-            let error_msg = format!("Invalid file (no auto-generated marker): {file_str}");
-            errors.push(error_msg.clone());
-            println!("   ❌ {error_msg}");
-        } else {
-            println!("   ✅ Valid generated file: {file_str}");
-        }
-    }
-
-    // Validate checksums if available
-    println!();
-    println!("🔐 Validating checksums...");
-
-    let checksum_path = Path::new("docs/checksums.json");
-    if checksum_path.exists() {
-        match docs::validate_generated_files(Path::new("docs")) {
-            Ok(_) => println!("✅ Checksum validation passed"),
-            Err(e) => {
-                let error_msg = format!("Checksum validation failed: {e}");
-                if strict {
-                    errors.push(error_msg.clone());
-                } else {
-                    warnings.push(error_msg.clone());
-                }
-                println!("❌ {error_msg}");
-            }
-        }
-    } else {
-        println!("⚠️  No checksums.json found, skipping checksum validation");
-    }
-
-    // Check Git attributes
-    println!();
-    println!("🏷️  Checking Git attributes...");
-
-    let gitattributes_path = Path::new(".gitattributes");
-    if gitattributes_path.exists() {
-        let content =
-            fs::read_to_string(gitattributes_path).context("Failed to read .gitattributes")?;
-
-        if content.contains("linguist-generated=true") {
-            println!("✅ Git attributes properly configured");
-        } else {
-            let warning_msg = "Git attributes may not be properly configured".to_string();
-            warnings.push(warning_msg.clone());
-            println!("⚠️  {warning_msg}");
-        }
-    } else {
-        let warning_msg = "No .gitattributes file found".to_string();
-        warnings.push(warning_msg.clone());
-        println!("⚠️  {warning_msg}");
-    }
-
-    // Generate fresh documentation if requested
-    if regenerate {
-        println!();
-        println!("🔄 Generating fresh documentation...");
-
-        match generate_comprehensive_documentation(true, &None, "docs", true).await {
-            Ok(_) => println!("✅ Documentation generation successful"),
-            Err(e) => {
-                let error_msg = format!("Documentation generation failed: {e}");
-                if strict {
-                    errors.push(error_msg.clone());
-                } else {
-                    warnings.push(error_msg.clone());
-                }
-                println!("❌ {error_msg}");
-            }
-        }
-    }
-
-    // Check for uncommitted changes
-    if check_uncommitted {
-        println!();
-        println!("📝 Checking for uncommitted changes...");
-
-        let status = Command::new("git")
-            .args(["status", "--porcelain"])
-            .output()
-            .context("Failed to run git status")?;
-
-        if !status.stdout.is_empty() {
-            let output = String::from_utf8_lossy(&status.stdout);
-            let warning_msg = format!("Uncommitted changes detected:\n{output}");
-            warnings.push(warning_msg.clone());
-            println!("⚠️  {warning_msg}");
-
-            if strict {
-                println!();
-                println!("Please commit all changes or run:");
-                println!("cargo xtask gen-docs-comprehensive --all --validate");
-                println!("git add .");
-                println!("git commit -m 'Update generated documentation'");
-            }
-        } else {
-            println!("✅ No uncommitted changes");
-        }
-    }
-
-    // Summary
-    println!();
-    if errors.is_empty() && warnings.is_empty() {
-        println!("🎉 All documentation validation checks passed!");
-        println!("✅ No direct markdown file creation detected");
-        println!("✅ All files properly generated");
-        println!("✅ Checksums validated");
-        println!("✅ Git attributes configured");
-        if check_uncommitted {
-            println!("✅ No uncommitted changes");
-        }
-    } else {
-        if !warnings.is_empty() {
-            println!("⚠️  Warnings:");
-            for warning in &warnings {
-                println!("   {warning}");
-            }
-        }
-
-        if !errors.is_empty() {
-            println!("❌ Errors:");
-            for error in &errors {
-                println!("   {error}");
-            }
-
-            if strict {
-                anyhow::bail!(
-                    "Documentation validation failed with {} errors",
-                    errors.len()
-                );
-            }
-        }
-    }
-
-    Ok(())
-}
 
 /// Set up pre-commit hook (replaces setup-pre-commit.sh)
 async fn setup_pre_commit(enhanced: bool, force: bool, lefthook: bool) -> Result<()> {
@@ -9342,6 +8731,2601 @@ fn compare_file_states(
     // Check for modified files
     for (path, after_content) in after {
         if let Some(before_content) = before.get(path) {
+            if before_content != after_content {
+                differences.push(FileDifference::Modified(path.clone()));
+            }
+        }
+    }
+
+    Ok(differences)
+}
+
+/// Represents a difference between file states
+#[derive(Debug)]
+enum FileDifference {
+    Added(String),
+    Removed(String),
+    Modified(String),
+}
+
+/// Component smoke test configuration
+struct ComponentTest {
+    name: String,
+    wasm_path: String,
+    test_functions: Vec<TestFunction>,
+}
+
+/// Test function configuration
+struct TestFunction {
+    name: String,
+    args: Vec<String>,
+    expected_output: String,
+}
+
+/// Run component smoke tests using wasmtime --invoke
+async fn run_component_smoke_test(
+    component: String,
+    build: bool,
+    strict: bool,
+    verbose: bool,
+) -> Result<()> {
+    if verbose {
+        println!("🧪 Running component smoke tests for: {}", component);
+    }
+
+    // Define test configurations for each component
+    let component_tests = vec![
+        ComponentTest {
+            name: "hook-builder".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/hook_builder.wasm".to_string(),
+            test_functions: vec![TestFunction {
+                name: "validate-source".to_string(),
+                args: vec!["--source-path".to_string(), "src/main.rs".to_string()],
+                expected_output: "success".to_string(),
+            }],
+        },
+        ComponentTest {
+            name: "worktree-runner".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/worktree_runner.wasm".to_string(),
+            test_functions: vec![TestFunction {
+                name: "list-worktrees".to_string(),
+                args: vec![],
+                expected_output: "worktree".to_string(),
+            }],
+        },
+        ComponentTest {
+            name: "git-filter".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/git_filter.wasm".to_string(),
+            test_functions: vec![TestFunction {
+                name: "validate-blob".to_string(),
+                args: vec!["--blob".to_string(), "test-data".to_string()],
+                expected_output: "valid".to_string(),
+            }],
+        },
+        ComponentTest {
+            name: "validation-handler".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/validation_handler.wasm".to_string(),
+            test_functions: vec![TestFunction {
+                name: "validate".to_string(),
+                args: vec!["--input".to_string(), "test".to_string()],
+                expected_output: "valid".to_string(),
+            }],
+        },
+    ];
+
+    // Filter components to test
+    let tests_to_run = if component == "all" {
+        component_tests
+    } else {
+        component_tests
+            .into_iter()
+            .filter(|test| test.name == component)
+            .collect()
+    };
+
+    if tests_to_run.is_empty() {
+        anyhow::bail!("No components found matching: {}", component);
+    }
+
+    // Build components if requested
+    if build {
+        if verbose {
+            println!("🔨 Building components...");
+        }
+
+        // Add wasm32-wasip2 target if not present
+        let status = Command::new("rustup")
+            .args(["target", "add", "wasm32-wasip2"])
+            .status()
+            .context("Failed to add wasm32-wasip2 target")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to add wasm32-wasip2 target");
+        }
+
+        // Build components
+        let status = Command::new("cargo")
+            .args([
+                "component",
+                "build",
+                "--target",
+                "wasm32-wasip2",
+                "--release",
+                "--workspace",
+                "--exclude",
+                "xtask",
+            ])
+            .status()
+            .context("Failed to build components")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to build components");
+        }
+
+        if verbose {
+            println!("✅ Components built successfully");
+        }
+    }
+
+    // Check if wasmtime is available
+    let wasmtime_available = Command::new("wasmtime").arg("--version").output().is_ok();
+
+    if !wasmtime_available {
+        anyhow::bail!("wasmtime is not available. Please install it first: https://wasmtime.dev/");
+    }
+
+    // Run smoke tests
+    let mut all_passed = true;
+    let mut test_results = Vec::new();
+
+    for test in tests_to_run {
+        if verbose {
+            println!("🧪 Testing component: {}", test.name);
+        }
+
+        // Check if WASM file exists
+        if !Path::new(&test.wasm_path).exists() {
+            let error_msg = format!("WASM file not found: {}", test.wasm_path);
+            if strict {
+                anyhow::bail!("{}", error_msg);
+            } else {
+                println!("⚠️  {}", error_msg);
+                test_results.push((test.name.clone(), false, error_msg));
+                all_passed = false;
+                continue;
+            }
+        }
+
+        // Run each test function
+        for func in &test.test_functions {
+            if verbose {
+                println!("  Testing function: {}", func.name);
+            }
+
+            let mut args = vec!["run", "--invoke", &func.name, &test.wasm_path];
+            args.extend(func.args.iter().map(|s| s.as_str()));
+
+            let output = Command::new("wasmtime")
+                .args(&args)
+                .output()
+                .context(format!("Failed to run wasmtime for {}", func.name))?;
+
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+
+            let success = if output.status.success() {
+                stdout.contains(&func.expected_output)
+            } else {
+                false
+            };
+
+            let result_msg = if success {
+                format!("✅ {}:{} - PASSED", test.name, func.name)
+            } else {
+                format!(
+                    "❌ {}:{} - FAILED (expected: {}, got: {})",
+                    test.name, func.name, func.expected_output, stdout
+                )
+            };
+
+            if verbose || !success {
+                println!("    {}", result_msg);
+                if !stderr.is_empty() {
+                    println!("    stderr: {}", stderr);
+                }
+            }
+
+            test_results.push((test.name.clone(), success, result_msg));
+            if !success {
+                all_passed = false;
+            }
+        }
+    }
+
+    // Print summary
+    println!("\n📊 Component Smoke Test Summary:");
+    println!("=================================");
+
+    let passed = test_results
+        .iter()
+        .filter(|(_, success, _)| *success)
+        .count();
+    let total = test_results.len();
+
+    for (_, success, msg) in &test_results {
+        if *success {
+            println!("✅ {}", msg);
+        } else {
+            println!("❌ {}", msg);
+        }
+    }
+
+    println!("\nResults: {}/{} tests passed", passed, total);
+
+    if !all_passed && strict {
+        anyhow::bail!("Component smoke tests failed");
+    }
+
+    if all_passed {
+        println!("🎉 All component smoke tests passed!");
+    }
+
+    Ok(())
+}
+
+async fn validate_static_hooks_command(
+    strict: bool,
+    verbose: bool,
+    check_binaries: bool,
+) -> Result<()> {
+    let hooks_dir = std::path::Path::new(".hooksmith/hooks");
+    
+    if !hooks_dir.exists() {
+        if verbose {
+            println!("⚠️  No .hooksmith/hooks directory found - skipping validation");
+        }
+        return Ok(());
+    }
+    
+    let mut total_hooks = 0;
+    let mut valid_hooks = 0;
+    let mut errors = Vec::new();
+    
+    // Walk through all scope directories
+    for scope_entry in std::fs::read_dir(hooks_dir)? {
+        let scope_entry = scope_entry?;
+        let scope_path = scope_entry.path();
+        
+        if scope_path.is_dir() {
+            let scope_name = scope_path.file_name().unwrap().to_string_lossy();
+            
+            if verbose {
+                println!("📁 Scanning scope: {}", scope_name);
+            }
+            
+            // Walk through all hook files in this scope
+            for hook_entry in std::fs::read_dir(&scope_path)? {
+                let hook_entry = hook_entry?;
+                let hook_path = hook_entry.path();
+                
+                if hook_path.is_file() && hook_path.extension().map_or(false, |ext| ext == "jsonc") {
+                    total_hooks += 1;
+                    
+                    match validate_single_static_hook(&hook_path, check_binaries) {
+                        Ok(_) => {
+                            valid_hooks += 1;
+                            if verbose {
+                                println!("✅ Validated: {}", hook_path.display());
+                            }
+                        }
+                        Err(e) => {
+                            errors.push(format!("{}: {}", hook_path.display(), e));
+                            if verbose {
+                                println!("❌ Failed: {} - {}", hook_path.display(), e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Report results
+    println!("📊 Static Hook Validation Summary:");
+    println!("   Total hooks found: {}", total_hooks);
+    println!("   Valid hooks: {}", valid_hooks);
+    println!("   Invalid hooks: {}", total_hooks - valid_hooks);
+    
+    if !errors.is_empty() {
+        println!("\n❌ Validation errors:");
+        for error in &errors {
+            println!("   - {}", error);
+        }
+        
+        if strict {
+            anyhow::bail!("{} hook(s) failed validation", errors.len());
+        }
+    } else if total_hooks > 0 {
+        println!("✅ All static hooks validated successfully");
+    }
+    
+    Ok(())
+}
+
+fn validate_single_static_hook(
+    hook_path: &std::path::Path,
+    check_binaries: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Read and parse the hook definition
+    let content = std::fs::read_to_string(hook_path)?;
+    let hook: StaticHookDefinition = serde_json::from_str(&content)?;
+    
+    // Validate the hook structure
+    hook.validate()?;
+    
+    // Check if binary exists in target/release/
+    if check_binaries {
+        let binary_path = std::path::Path::new("target/release").join(&hook.bin);
+        if !binary_path.exists() {
+            return Err(format!("Binary '{}' not found in target/release/", hook.bin).into());
+        }
+        
+        if !binary_path.is_file() {
+            return Err(format!("Binary '{}' is not a file", hook.bin).into());
+        }
+    }
+    
+    Ok(())
+}
+
+// Static hook definition (simplified for xtask)
+#[derive(serde::Deserialize)]
+struct StaticHookDefinition {
+    name: String,
+    scope: String,
+    concerns: Vec<String>,
+    bin: String,
+}
+
+impl StaticHookDefinition {
+    fn validate(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Validate name format
+        if !self.name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+            return Err(format!("Invalid hook name '{}': must contain only alphanumeric characters, underscores, and hyphens", self.name).into());
+        }
+        
+        // Validate scope
+        let valid_scopes = ["git", "github", "fsmonitor", "reference", "email", "patch"];
+        if !valid_scopes.contains(&self.scope.as_str()) {
+            return Err(format!("Invalid scope '{}': must be one of {:?}", self.scope, valid_scopes).into());
+        }
+        
+        // Validate concerns
+        let valid_concerns = ["blob", "tree", "ref", "note", "attr", "contract-violation", "symbol-analysis"];
+        for concern in &self.concerns {
+            if !valid_concerns.contains(&concern.as_str()) {
+                return Err(format!("Invalid concern '{}': must be one of {:?}", concern, valid_concerns).into());
+            }
+        }
+        
+        // Check for duplicate concerns
+        let mut concerns = self.concerns.clone();
+        concerns.sort();
+        concerns.dedup();
+        if concerns.len() != self.concerns.len() {
+            return Err(format!("Duplicate concerns found in hook '{}'", self.name).into());
+        }
+        
+        Ok(())
+    }
+}
+
+async fn run_schema_registry_command(
+    discover: bool,
+    fetch: Option<&str>,
+    generate: bool,
+    status: bool,
+    output: Option<&str>,
+    timeout: u64,
+    retries: u32,
+) -> Result<()> {
+    use schema_registry::{SchemaRegistry, SchemaRegistryConfig};
+
+    let config = SchemaRegistryConfig {
+        timeout_seconds: timeout,
+        retry_attempts: retries,
+        retry_delay_seconds: 1,
+    };
+
+    let mut registry = SchemaRegistry::new(config);
+
+    if discover {
+        println!("🔍 Discovering schema endpoints...");
+        let endpoints = registry.discover_endpoints().await?;
+
+        println!("📋 Discovered {} endpoints:", endpoints.len());
+        for endpoint in endpoints {
+            let status_icon = if endpoint.accessible { "✅" } else { "❌" };
+            println!(
+                "  {} {} ({}) - {}",
+                status_icon, endpoint.name, endpoint.category, endpoint.url
+            );
+        }
+    }
+
+    if let Some(endpoint_name) = fetch {
+        println!("📥 Fetching schema from '{}'...", endpoint_name);
+        match registry.fetch_schema(endpoint_name).await {
+            Ok(schema) => {
+                let schema_json = serde_json::to_string_pretty(&schema)?;
+                if let Some(output_path) = output {
+                    std::fs::write(output_path, schema_json)?;
+                    println!("✅ Schema saved to: {}", output_path);
+                } else {
+                    println!("{}", schema_json);
+                }
+            }
+            Err(e) => {
+                eprintln!("❌ Failed to fetch schema: {}", e);
+                return Err(e);
+            }
+        }
+    }
+
+    if generate {
+        println!("🔧 Generating combined schema registry...");
+        match registry.generate_registry_schema().await {
+            Ok(registry_schema) => {
+                let registry_json = serde_json::to_string_pretty(&registry_schema)?;
+                if let Some(output_path) = output {
+                    std::fs::write(output_path, registry_json)?;
+                    println!("✅ Registry saved to: {}", output_path);
+                } else {
+                    println!("{}", registry_json);
+                }
+            }
+            Err(e) => {
+                eprintln!("❌ Failed to generate registry: {}", e);
+                return Err(e);
+            }
+        }
+    }
+
+    if status {
+        println!("📊 Schema registry status:");
+        let summary = registry.get_status_summary();
+        let summary_json = serde_json::to_string_pretty(&summary)?;
+        println!("{}", summary_json);
+    }
+
+    Ok(())
+}
+
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+
+    // Exit with error if strict mode and validation failed
+    if strict && !result.is_valid {
+        anyhow::bail!(
+            "Workflow contracts validation failed with {} errors",
+            result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count()
+        );
+    }
+
+    Ok(())
+}
+
+async fn run_test_workflow_contracts_command(
+    paths: Vec<String>,
+    use_act: bool,
+    act_dry_run: bool,
+    generate_inputs: bool,
+    test_all_triggers: bool,
+    output_dir: Option<String>,
+    act_inputs_file: Option<String>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: false,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    let test_config = workflow_contracts::WorkflowContractTestConfig {
+        use_act,
+        act_dry_run,
+        generate_inputs,
+        test_all_triggers,
+        output_dir: output_dir.map(|p| std::path::PathBuf::from(p)),
+        act_inputs_file: act_inputs_file.map(|p| std::path::PathBuf::from(p)),
+    };
+    let test_runner = workflow_contracts::WorkflowContractTestRunner::new(test_config, validator);
+    
+    println!("🧪 Testing workflow contracts with act...");
+
+    // Convert paths to PathBuf
+    let workflow_paths: Vec<std::path::PathBuf> = paths.into_iter().map(std::path::PathBuf::from).collect();
+
+    // Run tests
+    let results = test_runner.run_tests(&workflow_paths)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&results)?;
+            println!("{}", json_output);
+        }
+        "yaml" => {
+            let yaml_output = serde_yaml::to_string(&results)?;
+            println!("{}", yaml_output);
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+
+        "yaml" => {
+            let yaml_output = serde_yaml::to_string(&results)?;
+            println!("{}", yaml_output);
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+
+    Ok(())
+}
+
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+
+    Ok(())
+}
+
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+        "yaml" => {
+            let yaml_output = serde_yaml::to_string(&results)?;
+            println!("{}", yaml_output);
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+        strict_mode: false,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    let test_config = workflow_contracts::WorkflowContractTestConfig {
+        use_act,
+        act_dry_run,
+        generate_inputs,
+        test_all_triggers,
+        output_dir: output_dir.map(|p| std::path::PathBuf::from(p)),
+        act_inputs_file: act_inputs_file.map(|p| std::path::PathBuf::from(p)),
+    };
+    let test_runner = workflow_contracts::WorkflowContractTestRunner::new(test_config, validator);
+    
+    println!("🧪 Testing workflow contracts with act...");
+
+    // Convert paths to PathBuf
+    let workflow_paths: Vec<std::path::PathBuf> = paths.into_iter().map(std::path::PathBuf::from).collect();
+
+    // Run tests
+    let results = test_runner.run_tests(&workflow_paths)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&results)?;
+            println!("{}", json_output);
+        }
+        "yaml" => {
+            let yaml_output = serde_yaml::to_string(&results)?;
+            println!("{}", yaml_output);
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+                    println!("  • {}: {}", error.location.as_deref().unwrap_or("unknown"), error.message);
+                }
+            }
+
+            let warnings: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).collect();
+            if !warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in warnings {
+                    println!("  • {}: {}", warning.location.as_deref().unwrap_or("unknown"), warning.message);
+                }
+            }
+        }
+    }
+
+    // Exit with error if strict mode and validation failed
+    if strict && !result.is_valid {
+        anyhow::bail!(
+            "Workflow contracts validation failed with {} errors",
+            result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count()
+        );
+    }
+
+    Ok(())
+}
+
+async fn run_test_workflow_contracts_command(
+    paths: Vec<String>,
+    use_act: bool,
+    act_dry_run: bool,
+    generate_inputs: bool,
+    test_all_triggers: bool,
+    output_dir: Option<String>,
+    act_inputs_file: Option<String>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: false,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    let test_config = workflow_contracts::WorkflowContractTestConfig {
+        use_act,
+        act_dry_run,
+        generate_inputs,
+        test_all_triggers,
+        output_dir: output_dir.map(|p| std::path::PathBuf::from(p)),
+        act_inputs_file: act_inputs_file.map(|p| std::path::PathBuf::from(p)),
+    };
+    let test_runner = workflow_contracts::WorkflowContractTestRunner::new(test_config, validator);
+    
+    println!("🧪 Testing workflow contracts with act...");
+
+    // Convert paths to PathBuf
+    let workflow_paths: Vec<std::path::PathBuf> = paths.into_iter().map(std::path::PathBuf::from).collect();
+
+    // Run tests
+    let results = test_runner.run_tests(&workflow_paths)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&results)?;
+            println!("{}", json_output);
+        }
+        "yaml" => {
+            let yaml_output = serde_yaml::to_string(&results)?;
+            println!("{}", yaml_output);
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+                    println!("✅ Schema saved to: {}", output_path);
+                } else {
+                    println!("{}", schema_json);
+                }
+            }
+            Err(e) => {
+                eprintln!("❌ Failed to fetch schema: {}", e);
+                return Err(e);
+            }
+        }
+    }
+
+    if generate {
+        println!("🔧 Generating combined schema registry...");
+        match registry.generate_registry_schema().await {
+            Ok(registry_schema) => {
+                let registry_json = serde_json::to_string_pretty(&registry_schema)?;
+                if let Some(output_path) = output {
+                    std::fs::write(output_path, registry_json)?;
+                    println!("✅ Registry saved to: {}", output_path);
+                } else {
+                    println!("{}", registry_json);
+                }
+            }
+            Err(e) => {
+                eprintln!("❌ Failed to generate registry: {}", e);
+                return Err(e);
+            }
+        }
+    }
+
+    if status {
+        println!("📊 Schema registry status:");
+        let summary = registry.get_status_summary();
+        let summary_json = serde_json::to_string_pretty(&summary)?;
+        println!("{}", summary_json);
+    }
+
+    Ok(())
+}
+
+async fn run_validate_structure(strict: bool, verbose: bool, format: String) -> Result<()> {
+    let workspace_root = std::env::current_dir()?;
+
+    if verbose {
+        println!("🔍 Validating repository structure...");
+        println!("📁 Workspace root: {}", workspace_root.display());
+    }
+
+    // Run the validation
+    let result = repo_structure_validator::validate_repo_structure(workspace_root)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&result)?;
+            println!("{}", json_output);
+        }
+        "summary" => {
+            println!("📊 Repository Structure Validation Summary");
+            println!("==========================================");
+            println!("✅ Valid: {}", result.valid);
+            println!("❌ Errors: {}", result.errors.len());
+            println!("⚠️  Warnings: {}", result.warnings.len());
+
+            if !result.errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in &result.errors {
+                    println!("  • {}: {}", error.path, error.message);
+                }
+            }
+
+            if !result.warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in &result.warnings {
+                    println!("  • {}: {}", warning.path, warning.message);
+                }
+            }
+        }
+        "text" | _ => {
+            if result.valid {
+                println!("✅ Repository structure is valid!");
+            } else {
+                println!("❌ Repository structure validation failed!");
+            }
+
+            if !result.errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in &result.errors {
+                    println!("  • {}: {}", error.path, error.message);
+                }
+            }
+
+            if !result.warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in &result.warnings {
+                    println!("  • {}: {}", warning.path, warning.message);
+                }
+            }
+        }
+    }
+
+    // Exit with error if strict mode and validation failed
+    if strict && !result.valid {
+        anyhow::bail!(
+            "Repository structure validation failed with {} errors",
+            result.errors.len()
+        );
+    }
+
+    Ok(())
+}
+
+async fn run_workflow_contracts_command(
+    path: String,
+    strict: bool,
+    verbose: bool,
+    generate_stub: Option<&str>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: strict,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    if verbose {
+        println!("🔍 Validating workflow contracts at: {}", path);
+    }
+
+    // Run validation
+    let result = validator.validate_workflow(std::path::Path::new(&path))?;
+
+    // Generate stub if requested
+    if let Some(stub_type) = generate_stub {
+        let stub_content = workflow_contracts::generate_gated_workflow_stub(stub_type)?;
+        println!("📝 Generated {} workflow stub:", stub_type);
+        println!("{}", stub_content);
+    }
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&result)?;
+            println!("{}", json_output);
+        }
+        "summary" => {
+            println!("📊 Workflow Contracts Validation Summary");
+            println!("=====================================");
+            println!("✅ Valid: {}", result.is_valid);
+            println!("❌ Errors: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count());
+            println!("⚠️  Warnings: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).count());
+            println!("💰 Billing Impact: {:?}", result.trigger_analysis.billing_impact);
+        }
+        "text" | _ => {
+            if result.is_valid {
+                println!("✅ Workflow contracts validation passed!");
+            } else {
+                println!("❌ Workflow contracts validation failed!");
+            }
+
+            let errors: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).collect();
+            if !errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in errors {
+                    println!("  • {}: {}", error.location.as_deref().unwrap_or("unknown"), error.message);
+                }
+            }
+
+            let warnings: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).collect();
+            if !warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in warnings {
+                    println!("  • {}: {}", warning.location.as_deref().unwrap_or("unknown"), warning.message);
+                }
+            }
+        }
+    }
+
+    // Exit with error if strict mode and validation failed
+    if strict && !result.is_valid {
+        anyhow::bail!(
+            "Workflow contracts validation failed with {} errors",
+            result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count()
+        );
+    }
+
+    Ok(())
+}
+
+async fn run_test_workflow_contracts_command(
+    paths: Vec<String>,
+    use_act: bool,
+    act_dry_run: bool,
+    generate_inputs: bool,
+    test_all_triggers: bool,
+    output_dir: Option<String>,
+    act_inputs_file: Option<String>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: false,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    let test_config = workflow_contracts::WorkflowContractTestConfig {
+        use_act,
+        act_dry_run,
+        generate_inputs,
+        test_all_triggers,
+        output_dir: output_dir.map(|p| std::path::PathBuf::from(p)),
+        act_inputs_file: act_inputs_file.map(|p| std::path::PathBuf::from(p)),
+    };
+    let test_runner = workflow_contracts::WorkflowContractTestRunner::new(test_config, validator);
+    
+    println!("🧪 Testing workflow contracts with act...");
+
+    // Convert paths to PathBuf
+    let workflow_paths: Vec<std::path::PathBuf> = paths.into_iter().map(std::path::PathBuf::from).collect();
+
+    // Run tests
+    let results = test_runner.run_tests(&workflow_paths)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&results)?;
+            println!("{}", json_output);
+        }
+        "yaml" => {
+            let yaml_output = serde_yaml::to_string(&results)?;
+            println!("{}", yaml_output);
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+                if !stderr.is_empty() {
+                    println!("    stderr: {}", stderr);
+                }
+            }
+
+            test_results.push((test.name.clone(), success, result_msg));
+            if !success {
+                all_passed = false;
+            }
+        }
+    }
+
+    // Print summary
+    println!("\n📊 Component Smoke Test Summary:");
+    println!("=================================");
+
+    let passed = test_results
+        .iter()
+        .filter(|(_, success, _)| *success)
+        .count();
+    let total = test_results.len();
+
+    for (_, success, msg) in &test_results {
+        if *success {
+            println!("✅ {}", msg);
+        } else {
+            println!("❌ {}", msg);
+        }
+    }
+
+    println!("\nResults: {}/{} tests passed", passed, total);
+
+    if !all_passed && strict {
+        anyhow::bail!("Component smoke tests failed");
+    }
+
+    if all_passed {
+        println!("🎉 All component smoke tests passed!");
+    }
+
+    Ok(())
+}
+
+async fn validate_static_hooks_command(
+    strict: bool,
+    verbose: bool,
+    check_binaries: bool,
+) -> Result<()> {
+    let hooks_dir = std::path::Path::new(".hooksmith/hooks");
+    
+    if !hooks_dir.exists() {
+        if verbose {
+            println!("⚠️  No .hooksmith/hooks directory found - skipping validation");
+        }
+        return Ok(());
+    }
+    
+    let mut total_hooks = 0;
+    let mut valid_hooks = 0;
+    let mut errors = Vec::new();
+    
+    // Walk through all scope directories
+    for scope_entry in std::fs::read_dir(hooks_dir)? {
+        let scope_entry = scope_entry?;
+        let scope_path = scope_entry.path();
+        
+        if scope_path.is_dir() {
+            let scope_name = scope_path.file_name().unwrap().to_string_lossy();
+            
+            if verbose {
+                println!("📁 Scanning scope: {}", scope_name);
+            }
+            
+            // Walk through all hook files in this scope
+            for hook_entry in std::fs::read_dir(&scope_path)? {
+                let hook_entry = hook_entry?;
+                let hook_path = hook_entry.path();
+                
+                if hook_path.is_file() && hook_path.extension().map_or(false, |ext| ext == "jsonc") {
+                    total_hooks += 1;
+                    
+                    match validate_single_static_hook(&hook_path, check_binaries) {
+                        Ok(_) => {
+                            valid_hooks += 1;
+                            if verbose {
+                                println!("✅ Validated: {}", hook_path.display());
+                            }
+                        }
+                        Err(e) => {
+                            errors.push(format!("{}: {}", hook_path.display(), e));
+                            if verbose {
+                                println!("❌ Failed: {} - {}", hook_path.display(), e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Report results
+    println!("📊 Static Hook Validation Summary:");
+    println!("   Total hooks found: {}", total_hooks);
+    println!("   Valid hooks: {}", valid_hooks);
+    println!("   Invalid hooks: {}", total_hooks - valid_hooks);
+    
+    if !errors.is_empty() {
+        println!("\n❌ Validation errors:");
+        for error in &errors {
+            println!("   - {}", error);
+        }
+        
+        if strict {
+            anyhow::bail!("{} hook(s) failed validation", errors.len());
+        }
+    } else if total_hooks > 0 {
+        println!("✅ All static hooks validated successfully");
+    }
+    
+    Ok(())
+}
+
+fn validate_single_static_hook(
+    hook_path: &std::path::Path,
+    check_binaries: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Read and parse the hook definition
+    let content = std::fs::read_to_string(hook_path)?;
+    let hook: StaticHookDefinition = serde_json::from_str(&content)?;
+    
+    // Validate the hook structure
+    hook.validate()?;
+    
+    // Check if binary exists in target/release/
+    if check_binaries {
+        let binary_path = std::path::Path::new("target/release").join(&hook.bin);
+        if !binary_path.exists() {
+            return Err(format!("Binary '{}' not found in target/release/", hook.bin).into());
+        }
+        
+        if !binary_path.is_file() {
+            return Err(format!("Binary '{}' is not a file", hook.bin).into());
+        }
+    }
+    
+    Ok(())
+}
+
+// Static hook definition (simplified for xtask)
+#[derive(serde::Deserialize)]
+struct StaticHookDefinition {
+    name: String,
+    scope: String,
+    concerns: Vec<String>,
+    bin: String,
+}
+
+impl StaticHookDefinition {
+    fn validate(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Validate name format
+        if !self.name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+            return Err(format!("Invalid hook name '{}': must contain only alphanumeric characters, underscores, and hyphens", self.name).into());
+        }
+        
+        // Validate scope
+        let valid_scopes = ["git", "github", "fsmonitor", "reference", "email", "patch"];
+        if !valid_scopes.contains(&self.scope.as_str()) {
+            return Err(format!("Invalid scope '{}': must be one of {:?}", self.scope, valid_scopes).into());
+        }
+        
+        // Validate concerns
+        let valid_concerns = ["blob", "tree", "ref", "note", "attr", "contract-violation", "symbol-analysis"];
+        for concern in &self.concerns {
+            if !valid_concerns.contains(&concern.as_str()) {
+                return Err(format!("Invalid concern '{}': must be one of {:?}", concern, valid_concerns).into());
+            }
+        }
+        
+        // Check for duplicate concerns
+        let mut concerns = self.concerns.clone();
+        concerns.sort();
+        concerns.dedup();
+        if concerns.len() != self.concerns.len() {
+            return Err(format!("Duplicate concerns found in hook '{}'", self.name).into());
+        }
+        
+        Ok(())
+    }
+}
+
+async fn run_schema_registry_command(
+    discover: bool,
+    fetch: Option<&str>,
+    generate: bool,
+    status: bool,
+    output: Option<&str>,
+    timeout: u64,
+    retries: u32,
+) -> Result<()> {
+    use schema_registry::{SchemaRegistry, SchemaRegistryConfig};
+
+    let config = SchemaRegistryConfig {
+        timeout_seconds: timeout,
+        retry_attempts: retries,
+        retry_delay_seconds: 1,
+    };
+
+    let mut registry = SchemaRegistry::new(config);
+
+    if discover {
+        println!("🔍 Discovering schema endpoints...");
+        let endpoints = registry.discover_endpoints().await?;
+
+        println!("📋 Discovered {} endpoints:", endpoints.len());
+        for endpoint in endpoints {
+            let status_icon = if endpoint.accessible { "✅" } else { "❌" };
+            println!(
+                "  {} {} ({}) - {}",
+                status_icon, endpoint.name, endpoint.category, endpoint.url
+            );
+        }
+    }
+
+    if let Some(endpoint_name) = fetch {
+        println!("📥 Fetching schema from '{}'...", endpoint_name);
+        match registry.fetch_schema(endpoint_name).await {
+            Ok(schema) => {
+                let schema_json = serde_json::to_string_pretty(&schema)?;
+                if let Some(output_path) = output {
+                    std::fs::write(output_path, schema_json)?;
+                    println!("✅ Schema saved to: {}", output_path);
+                } else {
+                    println!("{}", schema_json);
+                }
+            }
+            Err(e) => {
+                eprintln!("❌ Failed to fetch schema: {}", e);
+                return Err(e);
+            }
+        }
+    }
+
+    if generate {
+        println!("🔧 Generating combined schema registry...");
+        match registry.generate_registry_schema().await {
+            Ok(registry_schema) => {
+                let registry_json = serde_json::to_string_pretty(&registry_schema)?;
+                if let Some(output_path) = output {
+                    std::fs::write(output_path, registry_json)?;
+                    println!("✅ Registry saved to: {}", output_path);
+                } else {
+                    println!("{}", registry_json);
+                }
+            }
+            Err(e) => {
+                eprintln!("❌ Failed to generate registry: {}", e);
+                return Err(e);
+            }
+        }
+    }
+
+    if status {
+        println!("📊 Schema registry status:");
+        let summary = registry.get_status_summary();
+        let summary_json = serde_json::to_string_pretty(&summary)?;
+        println!("{}", summary_json);
+    }
+
+    Ok(())
+}
+
+async fn run_validate_structure(strict: bool, verbose: bool, format: String) -> Result<()> {
+    let workspace_root = std::env::current_dir()?;
+
+    if verbose {
+        println!("🔍 Validating repository structure...");
+        println!("📁 Workspace root: {}", workspace_root.display());
+    }
+
+    // Run the validation
+    let result = repo_structure_validator::validate_repo_structure(workspace_root)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&result)?;
+            println!("{}", json_output);
+        }
+        "summary" => {
+            println!("📊 Repository Structure Validation Summary");
+            println!("==========================================");
+            println!("✅ Valid: {}", result.valid);
+            println!("❌ Errors: {}", result.errors.len());
+            println!("⚠️  Warnings: {}", result.warnings.len());
+
+            if !result.errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in &result.errors {
+                    println!("  • {}: {}", error.path, error.message);
+                }
+            }
+
+            if !result.warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in &result.warnings {
+                    println!("  • {}: {}", warning.path, warning.message);
+                }
+            }
+        }
+        "text" | _ => {
+            if result.valid {
+                println!("✅ Repository structure is valid!");
+            } else {
+                println!("❌ Repository structure validation failed!");
+            }
+
+            if !result.errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in &result.errors {
+                    println!("  • {}: {}", error.path, error.message);
+                }
+            }
+
+            if !result.warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in &result.warnings {
+                    println!("  • {}: {}", warning.path, warning.message);
+                }
+            }
+        }
+    }
+
+    // Exit with error if strict mode and validation failed
+    if strict && !result.valid {
+        anyhow::bail!(
+            "Repository structure validation failed with {} errors",
+            result.errors.len()
+        );
+    }
+
+    Ok(())
+}
+
+async fn run_workflow_contracts_command(
+    path: String,
+    strict: bool,
+    verbose: bool,
+    generate_stub: Option<&str>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: strict,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    if verbose {
+        println!("🔍 Validating workflow contracts at: {}", path);
+    }
+
+    // Run validation
+    let result = validator.validate_workflow(std::path::Path::new(&path))?;
+
+    // Generate stub if requested
+    if let Some(stub_type) = generate_stub {
+        let stub_content = workflow_contracts::generate_gated_workflow_stub(stub_type)?;
+        println!("📝 Generated {} workflow stub:", stub_type);
+        println!("{}", stub_content);
+    }
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&result)?;
+            println!("{}", json_output);
+        }
+        "summary" => {
+            println!("📊 Workflow Contracts Validation Summary");
+            println!("=====================================");
+            println!("✅ Valid: {}", result.is_valid);
+            println!("❌ Errors: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count());
+            println!("⚠️  Warnings: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).count());
+            println!("💰 Billing Impact: {:?}", result.trigger_analysis.billing_impact);
+        }
+        "text" | _ => {
+            if result.is_valid {
+                println!("✅ Workflow contracts validation passed!");
+            } else {
+                println!("❌ Workflow contracts validation failed!");
+            }
+
+            let errors: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).collect();
+            if !errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in errors {
+                    println!("  • {}: {}", error.location.as_deref().unwrap_or("unknown"), error.message);
+                }
+            }
+
+            let warnings: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).collect();
+            if !warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in warnings {
+                    println!("  • {}: {}", warning.location.as_deref().unwrap_or("unknown"), warning.message);
+                }
+            }
+        }
+    }
+
+    // Exit with error if strict mode and validation failed
+    if strict && !result.is_valid {
+        anyhow::bail!(
+            "Workflow contracts validation failed with {} errors",
+            result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count()
+        );
+    }
+
+    Ok(())
+}
+
+async fn run_test_workflow_contracts_command(
+    paths: Vec<String>,
+    use_act: bool,
+    act_dry_run: bool,
+    generate_inputs: bool,
+    test_all_triggers: bool,
+    output_dir: Option<String>,
+    act_inputs_file: Option<String>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: false,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    let test_config = workflow_contracts::WorkflowContractTestConfig {
+        use_act,
+        act_dry_run,
+        generate_inputs,
+        test_all_triggers,
+        output_dir: output_dir.map(|p| std::path::PathBuf::from(p)),
+        act_inputs_file: act_inputs_file.map(|p| std::path::PathBuf::from(p)),
+    };
+    let test_runner = workflow_contracts::WorkflowContractTestRunner::new(test_config, validator);
+    
+    println!("🧪 Testing workflow contracts with act...");
+
+    // Convert paths to PathBuf
+    let workflow_paths: Vec<std::path::PathBuf> = paths.into_iter().map(std::path::PathBuf::from).collect();
+
+    // Run tests
+    let results = test_runner.run_tests(&workflow_paths)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&results)?;
+            println!("{}", json_output);
+        }
+        "yaml" => {
+            let yaml_output = serde_yaml::to_string(&results)?;
+            println!("{}", yaml_output);
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+    if verbose {
+        println!("📊 Step 4: Capturing new state...");
+    }
+
+    let new_files = get_generated_files_state()?;
+
+    // Step 5: Compare states
+    if verbose {
+        println!("🔍 Step 5: Comparing states...");
+    }
+
+    let differences = compare_file_states(&current_files, &new_files)?;
+
+    if differences.is_empty() {
+        println!("✅ Regeneration check passed! All files are consistent.");
+    } else {
+        println!(
+            "❌ Regeneration check failed! Found {} differences:",
+            differences.len()
+        );
+
+        for diff in &differences {
+            match diff {
+                FileDifference::Added(path) => println!("   ➕ Added: {}", path),
+                FileDifference::Removed(path) => println!("   ➖ Removed: {}", path),
+                FileDifference::Modified(path) => println!("   🔄 Modified: {}", path),
+            }
+        }
+
+        if strict {
+            anyhow::bail!(
+                "Regeneration check failed with {} differences",
+                differences.len()
+            );
+        }
+    }
+
+    Ok(())
+}
+
+/// Get the current state of all generated files
+fn get_generated_files_state() -> Result<HashMap<String, String>> {
+    use unified_generator::UnifiedGenerator;
+
+    let project_root = std::env::current_dir()?;
+    let generator = UnifiedGenerator::new(project_root);
+    let registry = generator.load_registry()?;
+    let mut state = HashMap::new();
+
+    for file in &registry.files {
+        let content = std::fs::read_to_string(&file.path).unwrap_or_else(|_| String::new());
+        state.insert(file.path.clone(), content);
+    }
+
+    Ok(state)
+}
+
+/// Compare two file states and return differences
+fn compare_file_states(
+    before: &HashMap<String, String>,
+    after: &HashMap<String, String>,
+) -> Result<Vec<FileDifference>> {
+    let mut differences = Vec::new();
+
+    // Check for added files
+    for path in after.keys() {
+        if !before.contains_key(path) {
+            differences.push(FileDifference::Added(path.clone()));
+        }
+    }
+
+    // Check for removed files
+    for path in before.keys() {
+        if !after.contains_key(path) {
+            differences.push(FileDifference::Removed(path.clone()));
+        }
+    }
+
+    // Check for modified files
+    for (path, after_content) in after {
+        if let Some(before_content) = before.get(path) {
+            if before_content != after_content {
+                differences.push(FileDifference::Modified(path.clone()));
+            }
+        }
+    }
+
+    Ok(differences)
+}
+
+/// Represents a difference between file states
+#[derive(Debug)]
+enum FileDifference {
+    Added(String),
+    Removed(String),
+    Modified(String),
+}
+
+/// Component smoke test configuration
+struct ComponentTest {
+    name: String,
+    wasm_path: String,
+    test_functions: Vec<TestFunction>,
+}
+
+/// Test function configuration
+struct TestFunction {
+    name: String,
+    args: Vec<String>,
+    expected_output: String,
+}
+
+/// Run component smoke tests using wasmtime --invoke
+async fn run_component_smoke_test(
+    component: String,
+    build: bool,
+    strict: bool,
+    verbose: bool,
+) -> Result<()> {
+    if verbose {
+        println!("🧪 Running component smoke tests for: {}", component);
+    }
+
+    // Define test configurations for each component
+    let component_tests = vec![
+        ComponentTest {
+            name: "hook-builder".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/hook_builder.wasm".to_string(),
+            test_functions: vec![TestFunction {
+                name: "validate-source".to_string(),
+                args: vec!["--source-path".to_string(), "src/main.rs".to_string()],
+                expected_output: "success".to_string(),
+            }],
+        },
+        ComponentTest {
+            name: "worktree-runner".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/worktree_runner.wasm".to_string(),
+            test_functions: vec![TestFunction {
+                name: "list-worktrees".to_string(),
+                args: vec![],
+                expected_output: "worktree".to_string(),
+            }],
+        },
+        ComponentTest {
+            name: "git-filter".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/git_filter.wasm".to_string(),
+            test_functions: vec![TestFunction {
+                name: "validate-blob".to_string(),
+                args: vec!["--blob".to_string(), "test-data".to_string()],
+                expected_output: "valid".to_string(),
+            }],
+        },
+        ComponentTest {
+            name: "validation-handler".to_string(),
+            wasm_path: "target/wasm32-wasip2/release/validation_handler.wasm".to_string(),
+            test_functions: vec![TestFunction {
+                name: "validate".to_string(),
+                args: vec!["--input".to_string(), "test".to_string()],
+                expected_output: "valid".to_string(),
+            }],
+        },
+    ];
+
+    // Filter components to test
+    let tests_to_run = if component == "all" {
+        component_tests
+    } else {
+        component_tests
+            .into_iter()
+            .filter(|test| test.name == component)
+            .collect()
+    };
+
+    if tests_to_run.is_empty() {
+        anyhow::bail!("No components found matching: {}", component);
+    }
+
+    // Build components if requested
+    if build {
+        if verbose {
+            println!("🔨 Building components...");
+        }
+
+        // Add wasm32-wasip2 target if not present
+        let status = Command::new("rustup")
+            .args(["target", "add", "wasm32-wasip2"])
+            .status()
+            .context("Failed to add wasm32-wasip2 target")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to add wasm32-wasip2 target");
+        }
+
+        // Build components
+        let status = Command::new("cargo")
+            .args([
+                "component",
+                "build",
+                "--target",
+                "wasm32-wasip2",
+                "--release",
+                "--workspace",
+                "--exclude",
+                "xtask",
+            ])
+            .status()
+            .context("Failed to build components")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to build components");
+        }
+
+        if verbose {
+            println!("✅ Components built successfully");
+        }
+    }
+
+    // Check if wasmtime is available
+    let wasmtime_available = Command::new("wasmtime").arg("--version").output().is_ok();
+
+    if !wasmtime_available {
+        anyhow::bail!("wasmtime is not available. Please install it first: https://wasmtime.dev/");
+    }
+
+    // Run smoke tests
+    let mut all_passed = true;
+    let mut test_results = Vec::new();
+
+    for test in tests_to_run {
+        if verbose {
+            println!("🧪 Testing component: {}", test.name);
+        }
+
+        // Check if WASM file exists
+        if !Path::new(&test.wasm_path).exists() {
+            let error_msg = format!("WASM file not found: {}", test.wasm_path);
+            if strict {
+                anyhow::bail!("{}", error_msg);
+            } else {
+                println!("⚠️  {}", error_msg);
+                test_results.push((test.name.clone(), false, error_msg));
+                all_passed = false;
+                continue;
+            }
+        }
+
+        // Run each test function
+        for func in &test.test_functions {
+            if verbose {
+                println!("  Testing function: {}", func.name);
+            }
+
+            let mut args = vec!["run", "--invoke", &func.name, &test.wasm_path];
+            args.extend(func.args.iter().map(|s| s.as_str()));
+
+            let output = Command::new("wasmtime")
+                .args(&args)
+                .output()
+                .context(format!("Failed to run wasmtime for {}", func.name))?;
+
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+
+            let success = if output.status.success() {
+                stdout.contains(&func.expected_output)
+            } else {
+                false
+            };
+
+            let result_msg = if success {
+                format!("✅ {}:{} - PASSED", test.name, func.name)
+            } else {
+                format!(
+                    "❌ {}:{} - FAILED (expected: {}, got: {})",
+                    test.name, func.name, func.expected_output, stdout
+                )
+            };
+
+            if verbose || !success {
+                println!("    {}", result_msg);
+                if !stderr.is_empty() {
+                    println!("    stderr: {}", stderr);
+                }
+            }
+
+            test_results.push((test.name.clone(), success, result_msg));
+            if !success {
+                all_passed = false;
+            }
+        }
+    }
+
+    // Print summary
+    println!("\n📊 Component Smoke Test Summary:");
+    println!("=================================");
+
+    let passed = test_results
+        .iter()
+        .filter(|(_, success, _)| *success)
+        .count();
+    let total = test_results.len();
+
+    for (_, success, msg) in &test_results {
+        if *success {
+            println!("✅ {}", msg);
+        } else {
+            println!("❌ {}", msg);
+        }
+    }
+
+    println!("\nResults: {}/{} tests passed", passed, total);
+
+    if !all_passed && strict {
+        anyhow::bail!("Component smoke tests failed");
+    }
+
+    if all_passed {
+        println!("🎉 All component smoke tests passed!");
+    }
+
+    Ok(())
+}
+
+async fn validate_static_hooks_command(
+    strict: bool,
+    verbose: bool,
+    check_binaries: bool,
+) -> Result<()> {
+    let hooks_dir = std::path::Path::new(".hooksmith/hooks");
+    
+    if !hooks_dir.exists() {
+        if verbose {
+            println!("⚠️  No .hooksmith/hooks directory found - skipping validation");
+        }
+        return Ok(());
+    }
+    
+    let mut total_hooks = 0;
+    let mut valid_hooks = 0;
+    let mut errors = Vec::new();
+    
+    // Walk through all scope directories
+    for scope_entry in std::fs::read_dir(hooks_dir)? {
+        let scope_entry = scope_entry?;
+        let scope_path = scope_entry.path();
+        
+        if scope_path.is_dir() {
+            let scope_name = scope_path.file_name().unwrap().to_string_lossy();
+            
+            if verbose {
+                println!("📁 Scanning scope: {}", scope_name);
+            }
+            
+            // Walk through all hook files in this scope
+            for hook_entry in std::fs::read_dir(&scope_path)? {
+                let hook_entry = hook_entry?;
+                let hook_path = hook_entry.path();
+                
+                if hook_path.is_file() && hook_path.extension().map_or(false, |ext| ext == "jsonc") {
+                    total_hooks += 1;
+                    
+                    match validate_single_static_hook(&hook_path, check_binaries) {
+                        Ok(_) => {
+                            valid_hooks += 1;
+                            if verbose {
+                                println!("✅ Validated: {}", hook_path.display());
+                            }
+                        }
+                        Err(e) => {
+                            errors.push(format!("{}: {}", hook_path.display(), e));
+                            if verbose {
+                                println!("❌ Failed: {} - {}", hook_path.display(), e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Report results
+    println!("📊 Static Hook Validation Summary:");
+    println!("   Total hooks found: {}", total_hooks);
+    println!("   Valid hooks: {}", valid_hooks);
+    println!("   Invalid hooks: {}", total_hooks - valid_hooks);
+    
+    if !errors.is_empty() {
+        println!("\n❌ Validation errors:");
+        for error in &errors {
+            println!("   - {}", error);
+        }
+        
+        if strict {
+            anyhow::bail!("{} hook(s) failed validation", errors.len());
+        }
+    } else if total_hooks > 0 {
+        println!("✅ All static hooks validated successfully");
+    }
+    
+    Ok(())
+}
+
+fn validate_single_static_hook(
+    hook_path: &std::path::Path,
+    check_binaries: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Read and parse the hook definition
+    let content = std::fs::read_to_string(hook_path)?;
+    let hook: StaticHookDefinition = serde_json::from_str(&content)?;
+    
+    // Validate the hook structure
+    hook.validate()?;
+    
+    // Check if binary exists in target/release/
+    if check_binaries {
+        let binary_path = std::path::Path::new("target/release").join(&hook.bin);
+        if !binary_path.exists() {
+            return Err(format!("Binary '{}' not found in target/release/", hook.bin).into());
+        }
+        
+        if !binary_path.is_file() {
+            return Err(format!("Binary '{}' is not a file", hook.bin).into());
+        }
+    }
+    
+    Ok(())
+}
+
+// Static hook definition (simplified for xtask)
+#[derive(serde::Deserialize)]
+struct StaticHookDefinition {
+    name: String,
+    scope: String,
+    concerns: Vec<String>,
+    bin: String,
+}
+
+impl StaticHookDefinition {
+    fn validate(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Validate name format
+        if !self.name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+            return Err(format!("Invalid hook name '{}': must contain only alphanumeric characters, underscores, and hyphens", self.name).into());
+        }
+        
+        // Validate scope
+        let valid_scopes = ["git", "github", "fsmonitor", "reference", "email", "patch"];
+        if !valid_scopes.contains(&self.scope.as_str()) {
+            return Err(format!("Invalid scope '{}': must be one of {:?}", self.scope, valid_scopes).into());
+        }
+        
+        // Validate concerns
+        let valid_concerns = ["blob", "tree", "ref", "note", "attr", "contract-violation", "symbol-analysis"];
+        for concern in &self.concerns {
+            if !valid_concerns.contains(&concern.as_str()) {
+                return Err(format!("Invalid concern '{}': must be one of {:?}", concern, valid_concerns).into());
+            }
+        }
+        
+        // Check for duplicate concerns
+        let mut concerns = self.concerns.clone();
+        concerns.sort();
+        concerns.dedup();
+        if concerns.len() != self.concerns.len() {
+            return Err(format!("Duplicate concerns found in hook '{}'", self.name).into());
+        }
+        
+        Ok(())
+    }
+}
+
+async fn run_schema_registry_command(
+    discover: bool,
+    fetch: Option<&str>,
+    generate: bool,
+    status: bool,
+    output: Option<&str>,
+    timeout: u64,
+    retries: u32,
+) -> Result<()> {
+    use schema_registry::{SchemaRegistry, SchemaRegistryConfig};
+
+    let config = SchemaRegistryConfig {
+        timeout_seconds: timeout,
+        retry_attempts: retries,
+        retry_delay_seconds: 1,
+    };
+
+    let mut registry = SchemaRegistry::new(config);
+
+    if discover {
+        println!("🔍 Discovering schema endpoints...");
+        let endpoints = registry.discover_endpoints().await?;
+
+        println!("📋 Discovered {} endpoints:", endpoints.len());
+        for endpoint in endpoints {
+            let status_icon = if endpoint.accessible { "✅" } else { "❌" };
+            println!(
+                "  {} {} ({}) - {}",
+                status_icon, endpoint.name, endpoint.category, endpoint.url
+            );
+        }
+    }
+
+    if let Some(endpoint_name) = fetch {
+        println!("📥 Fetching schema from '{}'...", endpoint_name);
+        match registry.fetch_schema(endpoint_name).await {
+            Ok(schema) => {
+                let schema_json = serde_json::to_string_pretty(&schema)?;
+                if let Some(output_path) = output {
+                    std::fs::write(output_path, schema_json)?;
+                    println!("✅ Schema saved to: {}", output_path);
+                } else {
+                    println!("{}", schema_json);
+                }
+            }
+            Err(e) => {
+                eprintln!("❌ Failed to fetch schema: {}", e);
+                return Err(e);
+            }
+        }
+    }
+
+    if generate {
+        println!("🔧 Generating combined schema registry...");
+        match registry.generate_registry_schema().await {
+            Ok(registry_schema) => {
+                let registry_json = serde_json::to_string_pretty(&registry_schema)?;
+                if let Some(output_path) = output {
+                    std::fs::write(output_path, registry_json)?;
+                    println!("✅ Registry saved to: {}", output_path);
+                } else {
+                    println!("{}", registry_json);
+                }
+            }
+            Err(e) => {
+                eprintln!("❌ Failed to generate registry: {}", e);
+                return Err(e);
+            }
+        }
+    }
+
+    if status {
+        println!("📊 Schema registry status:");
+        let summary = registry.get_status_summary();
+        let summary_json = serde_json::to_string_pretty(&summary)?;
+        println!("{}", summary_json);
+    }
+
+    Ok(())
+}
+
+async fn run_validate_structure(strict: bool, verbose: bool, format: String) -> Result<()> {
+    let workspace_root = std::env::current_dir()?;
+
+    if verbose {
+        println!("🔍 Validating repository structure...");
+        println!("📁 Workspace root: {}", workspace_root.display());
+    }
+
+    // Run the validation
+    let result = repo_structure_validator::validate_repo_structure(workspace_root)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&result)?;
+            println!("{}", json_output);
+        }
+        "summary" => {
+            println!("📊 Repository Structure Validation Summary");
+            println!("==========================================");
+            println!("✅ Valid: {}", result.valid);
+            println!("❌ Errors: {}", result.errors.len());
+            println!("⚠️  Warnings: {}", result.warnings.len());
+
+            if !result.errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in &result.errors {
+                    println!("  • {}: {}", error.path, error.message);
+                }
+            }
+
+            if !result.warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in &result.warnings {
+                    println!("  • {}: {}", warning.path, warning.message);
+                }
+            }
+        }
+        "text" | _ => {
+            if result.valid {
+                println!("✅ Repository structure is valid!");
+            } else {
+                println!("❌ Repository structure validation failed!");
+            }
+
+            if !result.errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in &result.errors {
+                    println!("  • {}: {}", error.path, error.message);
+                }
+            }
+
+            if !result.warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in &result.warnings {
+                    println!("  • {}: {}", warning.path, warning.message);
+                }
+            }
+        }
+    }
+
+    // Exit with error if strict mode and validation failed
+    if strict && !result.valid {
+        anyhow::bail!(
+            "Repository structure validation failed with {} errors",
+            result.errors.len()
+        );
+    }
+
+    Ok(())
+}
+
+async fn run_workflow_contracts_command(
+    path: String,
+    strict: bool,
+    verbose: bool,
+    generate_stub: Option<&str>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: strict,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    if verbose {
+        println!("🔍 Validating workflow contracts at: {}", path);
+    }
+
+    // Run validation
+    let result = validator.validate_workflow(std::path::Path::new(&path))?;
+
+    // Generate stub if requested
+    if let Some(stub_type) = generate_stub {
+        let stub_content = workflow_contracts::generate_gated_workflow_stub(stub_type)?;
+        println!("📝 Generated {} workflow stub:", stub_type);
+        println!("{}", stub_content);
+    }
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&result)?;
+            println!("{}", json_output);
+        }
+        "summary" => {
+            println!("📊 Workflow Contracts Validation Summary");
+            println!("=====================================");
+            println!("✅ Valid: {}", result.is_valid);
+            println!("❌ Errors: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count());
+            println!("⚠️  Warnings: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).count());
+            println!("💰 Billing Impact: {:?}", result.trigger_analysis.billing_impact);
+        }
+        "text" | _ => {
+            if result.is_valid {
+                println!("✅ Workflow contracts validation passed!");
+            } else {
+                println!("❌ Workflow contracts validation failed!");
+            }
+
+            let errors: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).collect();
+            if !errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in errors {
+                    println!("  • {}: {}", error.location.as_deref().unwrap_or("unknown"), error.message);
+                }
+            }
+
+            let warnings: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).collect();
+            if !warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in warnings {
+                    println!("  • {}: {}", warning.location.as_deref().unwrap_or("unknown"), warning.message);
+                }
+            }
+        }
+    }
+
+    // Exit with error if strict mode and validation failed
+    if strict && !result.is_valid {
+        anyhow::bail!(
+            "Workflow contracts validation failed with {} errors",
+            result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count()
+        );
+    }
+
+    Ok(())
+}
+
+async fn run_test_workflow_contracts_command(
+    paths: Vec<String>,
+    use_act: bool,
+    act_dry_run: bool,
+    generate_inputs: bool,
+    test_all_triggers: bool,
+    output_dir: Option<String>,
+    act_inputs_file: Option<String>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: false,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    let test_config = workflow_contracts::WorkflowContractTestConfig {
+        use_act,
+        act_dry_run,
+        generate_inputs,
+        test_all_triggers,
+        output_dir: output_dir.map(|p| std::path::PathBuf::from(p)),
+        act_inputs_file: act_inputs_file.map(|p| std::path::PathBuf::from(p)),
+    };
+    let test_runner = workflow_contracts::WorkflowContractTestRunner::new(test_config, validator);
+    
+    println!("🧪 Testing workflow contracts with act...");
+
+    // Convert paths to PathBuf
+    let workflow_paths: Vec<std::path::PathBuf> = paths.into_iter().map(std::path::PathBuf::from).collect();
+
+    // Run tests
+    let results = test_runner.run_tests(&workflow_paths)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&results)?;
+            println!("{}", json_output);
+        }
+        "yaml" => {
+            let yaml_output = serde_yaml::to_string(&results)?;
+            println!("{}", yaml_output);
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
+        use_act,
+        act_dry_run,
+        generate_inputs,
+        test_all_triggers,
+        output_dir: output_dir.map(|p| std::path::PathBuf::from(p)),
+        act_inputs_file: act_inputs_file.map(|p| std::path::PathBuf::from(p)),
+    };
+    let test_runner = workflow_contracts::WorkflowContractTestRunner::new(test_config, validator);
+    
+    println!("🧪 Testing workflow contracts with act...");
+
+    // Convert paths to PathBuf
+    let workflow_paths: Vec<std::path::PathBuf> = paths.into_iter().map(std::path::PathBuf::from).collect();
+
+    // Run tests
+    let results = test_runner.run_tests(&workflow_paths)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&results)?;
+            println!("{}", json_output);
+        }
+        "yaml" => {
+            let yaml_output = serde_yaml::to_string(&results)?;
+            println!("{}", yaml_output);
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
+        );
+    }
+
+    Ok(())
+}
+
             if before_content != after_content {
                 differences.push(FileDifference::Modified(path.clone()));
             }

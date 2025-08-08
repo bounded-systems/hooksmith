@@ -1,4 +1,6 @@
-use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, ContractSymbol, RuleSeverity, RuleType};
+use crate::modules::functional_contract_pipeline::symbols::{
+    ConcernSymbol, ContractSymbol, RuleSeverity, RuleType,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -106,7 +108,8 @@ impl ContractTemplateRegistry {
         template_name: &str,
         parameters: HashMap<String, serde_json::Value>,
     ) -> Result<Vec<ContractSymbol>, TemplateError> {
-        let template = self.get_template(template_name)
+        let template = self
+            .get_template(template_name)
             .ok_or(TemplateError::TemplateNotFound(template_name.to_string()))?;
 
         // Validate parameters
@@ -152,7 +155,11 @@ impl ContractTemplateRegistry {
     }
 
     /// Validate parameter type
-    fn validate_parameter_type(&self, param: &TemplateParameter, value: &serde_json::Value) -> bool {
+    fn validate_parameter_type(
+        &self,
+        param: &TemplateParameter,
+        value: &serde_json::Value,
+    ) -> bool {
         match param.param_type {
             ParameterType::String => value.is_string(),
             ParameterType::Boolean => value.is_boolean(),
@@ -185,14 +192,14 @@ impl ContractTemplateRegistry {
         parameters: &HashMap<String, serde_json::Value>,
     ) -> String {
         let mut name = format!("{}-{}", template.name, rule.name);
-        
+
         // Add parameter values to name for uniqueness
         for (param_name, value) in parameters {
             if let Some(s) = value.as_str() {
                 name.push_str(&format!("-{}={}", param_name, s));
             }
         }
-        
+
         name
     }
 }
@@ -247,16 +254,14 @@ pub mod predefined {
                     default: Some(serde_json::Value::String("error".to_string())),
                 },
             ],
-            rules: vec![
-                TemplateRule {
-                    name: "mode-validation".to_string(),
-                    description: "Validate file mode matches expected value".to_string(),
-                    rule_type: RuleType::Custom,
-                    parameters: HashMap::new(),
-                    severity: RuleSeverity::Error,
-                    required: true,
-                },
-            ],
+            rules: vec![TemplateRule {
+                name: "mode-validation".to_string(),
+                description: "Validate file mode matches expected value".to_string(),
+                rule_type: RuleType::Custom,
+                parameters: HashMap::new(),
+                severity: RuleSeverity::Error,
+                required: true,
+            }],
             metadata: HashMap::new(),
         }
     }
@@ -283,16 +288,14 @@ pub mod predefined {
                     default: None,
                 },
             ],
-            rules: vec![
-                TemplateRule {
-                    name: "line-ending-validation".to_string(),
-                    description: "Validate line ending normalization".to_string(),
-                    rule_type: RuleType::Custom,
-                    parameters: HashMap::new(),
-                    severity: RuleSeverity::Warning,
-                    required: true,
-                },
-            ],
+            rules: vec![TemplateRule {
+                name: "line-ending-validation".to_string(),
+                description: "Validate line ending normalization".to_string(),
+                rule_type: RuleType::Custom,
+                parameters: HashMap::new(),
+                severity: RuleSeverity::Warning,
+                required: true,
+            }],
             metadata: HashMap::new(),
         }
     }
@@ -319,16 +322,14 @@ pub mod predefined {
                     default: None,
                 },
             ],
-            rules: vec![
-                TemplateRule {
-                    name: "size-validation".to_string(),
-                    description: "Validate file size is within limits".to_string(),
-                    rule_type: RuleType::FileSize,
-                    parameters: HashMap::new(),
-                    severity: RuleSeverity::Error,
-                    required: true,
-                },
-            ],
+            rules: vec![TemplateRule {
+                name: "size-validation".to_string(),
+                description: "Validate file size is within limits".to_string(),
+                rule_type: RuleType::FileSize,
+                parameters: HashMap::new(),
+                severity: RuleSeverity::Error,
+                required: true,
+            }],
             metadata: HashMap::new(),
         }
     }
@@ -355,16 +356,14 @@ pub mod predefined {
                     default: Some(serde_json::Value::String("warning".to_string())),
                 },
             ],
-            rules: vec![
-                TemplateRule {
-                    name: "extension-validation".to_string(),
-                    description: "Validate file has allowed extension".to_string(),
-                    rule_type: RuleType::FileExtension,
-                    parameters: HashMap::new(),
-                    severity: RuleSeverity::Warning,
-                    required: true,
-                },
-            ],
+            rules: vec![TemplateRule {
+                name: "extension-validation".to_string(),
+                description: "Validate file has allowed extension".to_string(),
+                rule_type: RuleType::FileExtension,
+                parameters: HashMap::new(),
+                severity: RuleSeverity::Warning,
+                required: true,
+            }],
             metadata: HashMap::new(),
         }
     }
@@ -378,7 +377,7 @@ mod tests {
     fn test_template_registry() {
         let mut registry = ContractTemplateRegistry::new();
         let template = predefined::file_mode_template();
-        
+
         registry.register_template(template);
         assert_eq!(registry.list_templates().len(), 1);
         assert!(registry.get_template("file-mode").is_some());
@@ -391,10 +390,15 @@ mod tests {
         registry.register_template(template);
 
         let mut parameters = HashMap::new();
-        parameters.insert("pattern".to_string(), serde_json::Value::String("*.rs".to_string()));
+        parameters.insert(
+            "pattern".to_string(),
+            serde_json::Value::String("*.rs".to_string()),
+        );
         parameters.insert("executable".to_string(), serde_json::Value::Bool(false));
 
-        let contracts = registry.instantiate_template("file-mode", parameters).unwrap();
+        let contracts = registry
+            .instantiate_template("file-mode", parameters)
+            .unwrap();
         assert_eq!(contracts.len(), 1);
     }
 

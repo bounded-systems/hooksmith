@@ -44,10 +44,10 @@ pub mod index {
             "unstaged_files": [],
             "untracked_files": []
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-index"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::Index, data, metadata)
     }
 }
@@ -64,10 +64,10 @@ pub mod attr_line_ending {
             "binary_files": [],
             "line_ending_rules": []
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("gitattributes"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::AttrLineEndingNormalization, data, metadata)
     }
 }
@@ -83,10 +83,10 @@ pub mod attr_diff_strategy {
             "diff_rules": [],
             "binary_files": []
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("gitattributes"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::AttrDiffStrategy, data, metadata)
     }
 }
@@ -103,10 +103,10 @@ pub mod ref_mod {
             "tags": [],
             "remotes": []
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-refs"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::Ref, data, metadata)
     }
 }
@@ -122,10 +122,10 @@ pub mod branch {
             "current": "main",
             "branches": []
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-branch"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::Branch, data, metadata)
     }
 }
@@ -140,10 +140,10 @@ pub mod remote {
         let data = serde_json::json!({
             "remotes": []
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-remote"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::Remote, data, metadata)
     }
 }
@@ -158,10 +158,10 @@ pub mod tree_executable {
         let data = serde_json::json!({
             "executable_files": []
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-tree"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::TreeExecutable, data, metadata)
     }
 }
@@ -176,10 +176,10 @@ pub mod commit {
         let data = serde_json::json!({
             "commits": []
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-commit"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::Commit, data, metadata)
     }
 }
@@ -194,10 +194,10 @@ pub mod tree {
         let data = serde_json::json!({
             "trees": []
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-tree"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::Tree, data, metadata)
     }
 }
@@ -212,10 +212,10 @@ pub mod head {
         let data = serde_json::json!({
             "head": "refs/heads/main"
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-head"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::Head, data, metadata)
     }
 }
@@ -230,10 +230,10 @@ pub mod config_commit {
         let data = serde_json::json!({
             "commit_config": {}
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-config"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::ConfigCommit, data, metadata)
     }
 }
@@ -248,10 +248,10 @@ pub mod config_user {
         let data = serde_json::json!({
             "user_config": {}
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-config"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::ConfigUser, data, metadata)
     }
 }
@@ -266,10 +266,10 @@ pub mod config_gc {
         let data = serde_json::json!({
             "gc_config": {}
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-config"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::ConfigGc, data, metadata)
     }
 }
@@ -284,10 +284,10 @@ pub mod config_rebase {
         let data = serde_json::json!({
             "rebase_config": {}
         });
-        
+
         let mut metadata = HashMap::new();
         metadata.insert("source".to_string(), serde_json::json!("git-config"));
-        
+
         ConcernSnapshot::new(ConcernSymbol::ConfigRebase, data, metadata)
     }
 }

@@ -1,33 +1,33 @@
 //! Repair Planning System
-//! 
+//!
 //! This module implements the repair planning pipeline with the following roles:
-//! 
+//!
 //! - **Auditor**: Declares failure; emits SARIF log (post-verification)
 //! - **Investigator**: Analyzes failing concern (diagnosis)
 //! - **Dispatcher**: Routes to a fixer set (assignment)
 //! - **Triage Officer**: Plans full fix strategy across concern space (orchestration)
 //! - **Fixers**: Stateless tools that attempt repair (execution)
-//! 
+//!
 //! ## Architecture
-//! 
+//!
 //! ```rust
 //! Hook → Concern → Contract → Auditor → Investigator → Dispatcher → Triage Officer → Fixers → Repeat
 //! ```
-//! 
+//!
 //! ## Core Principles
-//! 
+//!
 //! 1. **Single Visit**: Each concern is visited exactly once per phase
 //! 2. **Isolated Pipelines**: Each concern executes its own self-contained audit → plan → fix sequence
 //! 3. **Deterministic Caching**: Cache keyed by (concern.hash, contract.id)
 //! 4. **CRD-Only Output**: Repair output is not an applied patch—it's a regenerated CRD from the fixer tree
 //! 5. **Note-Driven**: Everything hangs off Git Notes; they're versionable, mergeable, and scoped
 
+use crate::modules::functional_contract_pipeline::sarif_roles::{AuditResult, SarifResult};
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, RuleSeverity};
 use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ValidationDiff};
-use crate::modules::functional_contract_pipeline::sarif_roles::{SarifResult, AuditResult};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use anyhow::Result;
 use uuid::Uuid;
 
 /// Violation context for a failing concern
@@ -214,7 +214,11 @@ impl Investigator {
     }
 
     /// Analyze a violation to determine root cause
-    pub fn investigate(&self, violation: &Violation, snapshot: &ConcernSnapshot) -> Result<RootCause> {
+    pub fn investigate(
+        &self,
+        violation: &Violation,
+        snapshot: &ConcernSnapshot,
+    ) -> Result<RootCause> {
         let mut causes = Vec::new();
         let mut factors = Vec::new();
         let mut categories = Vec::new();
@@ -251,7 +255,7 @@ impl Investigator {
         let base_confidence = 0.5;
         let cause_bonus = (causes.len() as f64 * 0.1).min(0.3);
         let factor_bonus = (factors.len() as f64 * 0.05).min(0.2);
-        
+
         (base_confidence + cause_bonus + factor_bonus).min(1.0)
     }
 }
@@ -278,7 +282,11 @@ impl AnalysisStrategy {
     }
 
     /// Analyze patterns in the violation
-    fn analyze_patterns(&self, violation: &Violation, _snapshot: &ConcernSnapshot) -> Result<AnalysisResult> {
+    fn analyze_patterns(
+        &self,
+        violation: &Violation,
+        _snapshot: &ConcernSnapshot,
+    ) -> Result<AnalysisResult> {
         let mut causes = Vec::new();
         let factors = Vec::new();
         let mut categories = Vec::new();
@@ -307,7 +315,11 @@ impl AnalysisStrategy {
     }
 
     /// Analyze rule violations
-    fn analyze_rule_violation(&self, violation: &Violation, _snapshot: &ConcernSnapshot) -> Result<AnalysisResult> {
+    fn analyze_rule_violation(
+        &self,
+        violation: &Violation,
+        _snapshot: &ConcernSnapshot,
+    ) -> Result<AnalysisResult> {
         let mut causes = Vec::new();
         let factors = Vec::new();
         let mut categories = Vec::new();
@@ -340,7 +352,11 @@ impl AnalysisStrategy {
     }
 
     /// Analyze tool output
-    fn analyze_tool_output(&self, violation: &Violation, _snapshot: &ConcernSnapshot) -> Result<AnalysisResult> {
+    fn analyze_tool_output(
+        &self,
+        violation: &Violation,
+        _snapshot: &ConcernSnapshot,
+    ) -> Result<AnalysisResult> {
         let mut causes = Vec::new();
         let factors = Vec::new();
         let mut categories = Vec::new();
@@ -382,7 +398,7 @@ impl Dispatcher {
     /// Create a new dispatcher
     pub fn new() -> Self {
         let mut pipelines = HashMap::new();
-        
+
         // Register default pipelines
         pipelines.insert("default".to_string(), FixerPipeline::default());
         pipelines.insert("formatting".to_string(), FixerPipeline::formatting());
@@ -397,7 +413,7 @@ impl Dispatcher {
     pub fn dispatch(&self, violation: &Violation, root_cause: &RootCause) -> Result<String> {
         // Determine the best pipeline based on root cause
         let pipeline_name = self.select_pipeline(violation, root_cause)?;
-        
+
         Ok(pipeline_name)
     }
 
@@ -544,7 +560,8 @@ impl TriageOfficer {
 
         // Dispatch to appropriate pipeline
         let pipeline_name = self.dispatcher.dispatch(violation, &root_cause)?;
-        let pipeline = self.dispatcher
+        let pipeline = self
+            .dispatcher
             .get_pipeline(&pipeline_name)
             .ok_or_else(|| anyhow::anyhow!("Pipeline '{}' not found", pipeline_name))?;
 
@@ -599,7 +616,10 @@ impl TriageOfficer {
 
     /// Create a cache key for memoization
     fn create_cache_key(&self, violation: &Violation, snapshot: &ConcernSnapshot) -> String {
-        format!("{:?}:{}:{}", violation.concern, violation.contract, snapshot.hash)
+        format!(
+            "{:?}:{}:{}",
+            violation.concern, violation.contract, snapshot.hash
+        )
     }
 }
 
@@ -631,7 +651,10 @@ impl Fixer for TrunkFixer {
 
         let mut parameters = HashMap::new();
         parameters.insert("command".to_string(), serde_json::json!("check --apply"));
-        parameters.insert("path".to_string(), serde_json::json!(violation.location.clone().unwrap_or_default()));
+        parameters.insert(
+            "path".to_string(),
+            serde_json::json!(violation.location.clone().unwrap_or_default()),
+        );
 
         Ok(Some(RepairAction {
             id: String::new(), // Will be set by triage officer
@@ -674,7 +697,10 @@ impl Fixer for DprintFixer {
 
         let mut parameters = HashMap::new();
         parameters.insert("command".to_string(), serde_json::json!("fmt"));
-        parameters.insert("path".to_string(), serde_json::json!(violation.location.clone().unwrap_or_default()));
+        parameters.insert(
+            "path".to_string(),
+            serde_json::json!(violation.location.clone().unwrap_or_default()),
+        );
 
         Ok(Some(RepairAction {
             id: String::new(),
@@ -716,7 +742,10 @@ impl Fixer for RustfmtFixer {
 
         let mut parameters = HashMap::new();
         parameters.insert("command".to_string(), serde_json::json!("fmt"));
-        parameters.insert("path".to_string(), serde_json::json!(violation.location.clone().unwrap_or_default()));
+        parameters.insert(
+            "path".to_string(),
+            serde_json::json!(violation.location.clone().unwrap_or_default()),
+        );
 
         Ok(Some(RepairAction {
             id: String::new(),
@@ -752,13 +781,19 @@ impl Fixer for PrettierFixer {
 
     fn plan(&self, violation: &Violation, _root_cause: &RootCause) -> Result<Option<RepairAction>> {
         // Only plan for JavaScript/TypeScript formatting violations
-        if !violation.message.contains("js") && !violation.message.contains("ts") && !violation.message.contains("format") {
+        if !violation.message.contains("js")
+            && !violation.message.contains("ts")
+            && !violation.message.contains("format")
+        {
             return Ok(None);
         }
 
         let mut parameters = HashMap::new();
         parameters.insert("command".to_string(), serde_json::json!("--write"));
-        parameters.insert("path".to_string(), serde_json::json!(violation.location.clone().unwrap_or_default()));
+        parameters.insert(
+            "path".to_string(),
+            serde_json::json!(violation.location.clone().unwrap_or_default()),
+        );
 
         Ok(Some(RepairAction {
             id: String::new(),
@@ -800,7 +835,10 @@ impl Fixer for ClippyFixer {
 
         let mut parameters = HashMap::new();
         parameters.insert("command".to_string(), serde_json::json!("fix"));
-        parameters.insert("path".to_string(), serde_json::json!(violation.location.clone().unwrap_or_default()));
+        parameters.insert(
+            "path".to_string(),
+            serde_json::json!(violation.location.clone().unwrap_or_default()),
+        );
 
         Ok(Some(RepairAction {
             id: String::new(),
@@ -842,7 +880,10 @@ impl Fixer for EslintFixer {
 
         let mut parameters = HashMap::new();
         parameters.insert("command".to_string(), serde_json::json!("--fix"));
-        parameters.insert("path".to_string(), serde_json::json!(violation.location.clone().unwrap_or_default()));
+        parameters.insert(
+            "path".to_string(),
+            serde_json::json!(violation.location.clone().unwrap_or_default()),
+        );
 
         Ok(Some(RepairAction {
             id: String::new(),
@@ -884,7 +925,10 @@ impl Fixer for FileOrganizationFixer {
 
         let mut parameters = HashMap::new();
         parameters.insert("action".to_string(), serde_json::json!("organize"));
-        parameters.insert("path".to_string(), serde_json::json!(violation.location.clone().unwrap_or_default()));
+        parameters.insert(
+            "path".to_string(),
+            serde_json::json!(violation.location.clone().unwrap_or_default()),
+        );
 
         Ok(Some(RepairAction {
             id: String::new(),
@@ -926,7 +970,10 @@ impl Fixer for NamingFixer {
 
         let mut parameters = HashMap::new();
         parameters.insert("action".to_string(), serde_json::json!("rename"));
-        parameters.insert("path".to_string(), serde_json::json!(violation.location.clone().unwrap_or_default()));
+        parameters.insert(
+            "path".to_string(),
+            serde_json::json!(violation.location.clone().unwrap_or_default()),
+        );
 
         Ok(Some(RepairAction {
             id: String::new(),
@@ -968,7 +1015,10 @@ impl Fixer for StructuralFixer {
 
         let mut parameters = HashMap::new();
         parameters.insert("action".to_string(), serde_json::json!("fix"));
-        parameters.insert("path".to_string(), serde_json::json!(violation.location.clone().unwrap_or_default()));
+        parameters.insert(
+            "path".to_string(),
+            serde_json::json!(violation.location.clone().unwrap_or_default()),
+        );
 
         Ok(Some(RepairAction {
             id: String::new(),
@@ -1052,7 +1102,10 @@ impl Fixer for ConfigFixer {
 
         let mut parameters = HashMap::new();
         parameters.insert("action".to_string(), serde_json::json!("fix"));
-        parameters.insert("path".to_string(), serde_json::json!(violation.location.clone().unwrap_or_default()));
+        parameters.insert(
+            "path".to_string(),
+            serde_json::json!(violation.location.clone().unwrap_or_default()),
+        );
 
         Ok(Some(RepairAction {
             id: String::new(),
@@ -1094,7 +1147,10 @@ impl Fixer for ConfigurationFixer {
 
         let mut parameters = HashMap::new();
         parameters.insert("action".to_string(), serde_json::json!("fix"));
-        parameters.insert("path".to_string(), serde_json::json!(violation.location.clone().unwrap_or_default()));
+        parameters.insert(
+            "path".to_string(),
+            serde_json::json!(violation.location.clone().unwrap_or_default()),
+        );
 
         Ok(Some(RepairAction {
             id: String::new(),
@@ -1191,7 +1247,10 @@ mod tests {
         };
 
         let rustfmt_fixer = RustfmtFixer;
-        let action = rustfmt_fixer.plan(&violation, &root_cause).unwrap().unwrap();
+        let action = rustfmt_fixer
+            .plan(&violation, &root_cause)
+            .unwrap()
+            .unwrap();
 
         assert_eq!(action.fixer_id, "fixer.rustfmt");
         assert_eq!(action.action_type, ActionType::RunCommand);

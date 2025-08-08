@@ -1,21 +1,21 @@
-use clap::{App, Arg};
+use clap::{Command, Arg};
 use hooksmith::modules::functional_contract_pipeline::{
-    FunctionalContractPipeline, HookEvent, run_hook, run_hook_with_diffs
+    FunctionalContractPipeline, symbols::HookEvent
 };
 use std::process;
 
 fn main() {
-    let matches = App::new("Functional Contract Runner")
+    let matches = Command::new("Functional Contract Runner")
         .version("1.0")
         .about("Runs functional contract validation for Git hooks")
         .arg(
-            Arg::with_name("hook")
-                .short("h")
+            Arg::new("hook")
+                .short('h')
                 .long("hook")
                 .value_name("HOOK")
                 .help("Git hook to validate")
                 .required(true)
-                .possible_values(&[
+                .value_parser([
                     "pre-commit", "pre-push", "pre-receive", "post-receive",
                     "update", "post-update", "pre-auto-gc", "post-merge",
                     "pre-rebase", "post-checkout", "post-commit", "pre-apply-patch",
@@ -24,27 +24,27 @@ fn main() {
                 ])
         )
         .arg(
-            Arg::with_name("repo")
-                .short("r")
+            Arg::new("repo")
+                .short('r')
                 .long("repo")
                 .value_name("PATH")
                 .help("Repository path (default: current directory)")
                 .default_value(".")
         )
         .arg(
-            Arg::with_name("verbose")
-                .short("v")
+            Arg::new("verbose")
+                .short('v')
                 .long("verbose")
                 .help("Show detailed diff information")
         )
         .get_matches();
 
-    let hook_name = matches.value_of("hook").unwrap();
-    let repo_path = matches.value_of("repo").unwrap();
-    let verbose = matches.is_present("verbose");
+    let hook_name = matches.get_one::<String>("hook").unwrap();
+    let repo_path = matches.get_one::<String>("repo").unwrap();
+    let verbose = matches.contains_id("verbose");
 
     // Convert hook name to enum
-    let hook = match hook_name {
+    let hook = match hook_name.as_str() {
         "pre-commit" => HookEvent::PreCommit,
         "pre-push" => HookEvent::PrePush,
         "pre-receive" => HookEvent::PreReceive,
@@ -74,43 +74,29 @@ fn main() {
     println!("Repository: {}", repo_path);
     println!();
 
+    // Create pipeline and run validation
+    let mut pipeline = FunctionalContractPipeline::new(repo_path);
+    
     if verbose {
         // Run with detailed diffs
-        let diff_set = run_hook_with_diffs(hook, repo_path);
-        
-        if diff_set.is_valid() {
-            println!("✅ Validation passed");
-            if diff_set.diff_count() > 0 {
-                println!("⚠️  {} warnings found:", diff_set.warnings().len());
-                for diff in diff_set.warnings() {
-                    println!("  - {}: {}", diff.concern.name(), diff.description);
+        match pipeline.run_hook_with_diff(hook) {
+            Ok(diff_set) => {
+                println!("✅ Validation passed");
+                if diff_set.diffs.len() > 0 {
+                    println!("⚠️  {} diffs found:", diff_set.diffs.len());
+                    for diff in &diff_set.diffs {
+                        println!("  - {}: {}", diff.concern.name(), diff.description);
+                    }
                 }
             }
-        } else {
-            println!("❌ Validation failed");
-            println!("Errors:");
-            for diff in diff_set.errors() {
-                println!("  - {}: {}", diff.concern.name(), diff.description);
-                if let Some(observed) = &diff.observed {
-                    println!("    Observed: {}", observed);
-                }
-                if let Some(expected) = &diff.expected {
-                    println!("    Expected: {}", expected);
-                }
+            Err(error) => {
+                eprintln!("❌ Validation failed: {}", error);
+                process::exit(1);
             }
-            
-            if diff_set.warnings().len() > 0 {
-                println!("Warnings:");
-                for diff in diff_set.warnings() {
-                    println!("  - {}: {}", diff.concern.name(), diff.description);
-                }
-            }
-            
-            process::exit(1);
         }
     } else {
         // Run with simple result
-        match run_hook(hook, repo_path) {
+        match pipeline.run_hook(hook) {
             Ok(()) => {
                 println!("✅ Validation passed");
             }

@@ -255,7 +255,7 @@ mod tests {
         metadata.insert("source".to_string(), serde_json::json!("git-index"));
 
         let snapshot = ConcernSnapshot::new(ConcernSymbol::TreeFile, data.clone(), metadata);
-        
+
         assert_eq!(snapshot.symbol, ConcernSymbol::TreeFile);
         assert_eq!(snapshot.data, data);
         assert!(!snapshot.hash.is_empty());
@@ -275,7 +275,7 @@ mod tests {
             "1.0".to_string(),
             metadata,
         );
-        
+
         assert_eq!(snapshot.symbol, ConcernSymbol::TreeFile);
         assert_eq!(snapshot.expectation, expectation);
         assert_eq!(snapshot.contract, "test-contract");
@@ -293,7 +293,7 @@ mod tests {
             RuleSeverity::Error,
             HashMap::new(),
         );
-        
+
         assert_eq!(diff.concern, ConcernSymbol::TreeFile);
         assert_eq!(diff.diff_type, DiffType::Mismatch);
         assert_eq!(diff.description, "File does not exist");
@@ -302,20 +302,18 @@ mod tests {
 
     #[test]
     fn test_diff_set_creation() {
-        let diffs = vec![
-            ValidationDiff::new(
-                ConcernSymbol::TreeFile,
-                DiffType::Mismatch,
-                "File does not exist".to_string(),
-                Some(serde_json::json!(false)),
-                Some(serde_json::json!(true)),
-                RuleSeverity::Error,
-                HashMap::new(),
-            ),
-        ];
+        let diffs = vec![ValidationDiff::new(
+            ConcernSymbol::TreeFile,
+            DiffType::Mismatch,
+            "File does not exist".to_string(),
+            Some(serde_json::json!(false)),
+            Some(serde_json::json!(true)),
+            RuleSeverity::Error,
+            HashMap::new(),
+        )];
 
         let diff_set = DiffSet::new(diffs);
-        
+
         assert!(!diff_set.is_valid());
         assert_eq!(diff_set.diff_count(), 1);
         assert_eq!(diff_set.errors().len(), 1);
@@ -324,20 +322,18 @@ mod tests {
 
     #[test]
     fn test_diff_set_with_warnings() {
-        let diffs = vec![
-            ValidationDiff::new(
-                ConcernSymbol::TreeFile,
-                DiffType::Unexpected,
-                "Unexpected file".to_string(),
-                Some(serde_json::json!(true)),
-                None,
-                RuleSeverity::Warning,
-                HashMap::new(),
-            ),
-        ];
+        let diffs = vec![ValidationDiff::new(
+            ConcernSymbol::TreeFile,
+            DiffType::Unexpected,
+            "Unexpected file".to_string(),
+            Some(serde_json::json!(true)),
+            None,
+            RuleSeverity::Warning,
+            HashMap::new(),
+        )];
 
         let diff_set = DiffSet::new(diffs);
-        
+
         assert!(diff_set.is_valid());
         assert_eq!(diff_set.diff_count(), 1);
         assert_eq!(diff_set.errors().len(), 0);

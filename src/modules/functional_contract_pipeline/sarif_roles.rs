@@ -1,4 +1,6 @@
-use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, ContractSymbol, HookEvent, RuleSeverity};
+use crate::modules::functional_contract_pipeline::symbols::{
+    ConcernSymbol, ContractSymbol, HookEvent, RuleSeverity,
+};
 use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ExpectedSnapshot};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -108,7 +110,11 @@ pub mod roles {
         pub fn generate_expectations(&self, contracts: &[ContractSymbol]) -> Vec<ExpectedSnapshot> {
             contracts
                 .iter()
-                .map(|contract| crate::modules::functional_contract_pipeline::specifier::build_expectation(contract))
+                .map(|contract| {
+                    crate::modules::functional_contract_pipeline::specifier::build_expectation(
+                        contract,
+                    )
+                })
                 .collect()
         }
     }
@@ -116,12 +122,15 @@ pub mod roles {
     /// Verifier role: Compares snapshots to contracts, emits SARIF (never fails)
     pub struct Verifier {
         /// The diffing strategy to use for comparison
-        pub strategy: crate::modules::functional_contract_pipeline::high_performance_diff::DiffStrategy,
+        pub strategy:
+            crate::modules::functional_contract_pipeline::high_performance_diff::DiffStrategy,
     }
 
     impl Verifier {
         /// Create a new verifier role
-        pub fn new(strategy: crate::modules::functional_contract_pipeline::high_performance_diff::DiffStrategy) -> Self {
+        pub fn new(
+            strategy: crate::modules::functional_contract_pipeline::high_performance_diff::DiffStrategy,
+        ) -> Self {
             Self { strategy }
         }
 
@@ -142,7 +151,11 @@ pub mod roles {
         }
 
         /// Convert validation diffs to SARIF format
-        fn convert_diffs_to_sarif(&self, diff_set: &crate::modules::functional_contract_pipeline::types::DiffSet, hook_event: &HookEvent) -> SarifLog {
+        fn convert_diffs_to_sarif(
+            &self,
+            diff_set: &crate::modules::functional_contract_pipeline::types::DiffSet,
+            hook_event: &HookEvent,
+        ) -> SarifLog {
             let mut results = Vec::new();
 
             for diff in &diff_set.diffs {
@@ -199,16 +212,21 @@ pub mod roles {
         }
 
         /// Index SARIF entries and add provenance (stateless, never fails)
-        pub fn index_and_tag_sarif(&mut self, sarif_log: &SarifLog, git_metadata: &GitMetadata) -> SarifLog {
+        pub fn index_and_tag_sarif(
+            &mut self,
+            sarif_log: &SarifLog,
+            git_metadata: &GitMetadata,
+        ) -> SarifLog {
             let mut indexed_results = Vec::new();
 
             for run in &sarif_log.runs {
                 for result in &run.results {
                     let entry_id = Uuid::new_v4().to_string();
-                    
+
                     // Index the entry
-                    self.indexed_entries.insert(entry_id.clone(), result.clone());
-                    
+                    self.indexed_entries
+                        .insert(entry_id.clone(), result.clone());
+
                     // Add provenance metadata
                     let mut provenance = HashMap::new();
                     provenance.insert("entry_id".to_string(), entry_id.clone());
@@ -216,15 +234,16 @@ pub mod roles {
                     provenance.insert("tree_hash".to_string(), git_metadata.tree_hash.clone());
                     provenance.insert("timestamp".to_string(), git_metadata.timestamp.to_string());
                     provenance.insert("hook_event".to_string(), git_metadata.hook_event.clone());
-                    
-                    self.provenance_map.insert(entry_id.clone(), provenance.clone());
-                    
+
+                    self.provenance_map
+                        .insert(entry_id.clone(), provenance.clone());
+
                     // Create indexed result with provenance
                     let mut indexed_result = result.clone();
                     for (key, value) in provenance {
                         indexed_result.properties.insert(key, value);
                     }
-                    
+
                     indexed_results.push(indexed_result);
                 }
             }
@@ -259,7 +278,7 @@ pub mod roles {
                     }
                 }
             }
-            
+
             if let Some(severity) = &criteria.severity {
                 if let Some(result_severity) = result.properties.get("severity") {
                     if result_severity != &severity.to_string() {
@@ -267,7 +286,7 @@ pub mod roles {
                     }
                 }
             }
-            
+
             if let Some(hook_event) = &criteria.hook_event {
                 if let Some(result_hook) = result.properties.get("hook_event") {
                     if result_hook != hook_event {
@@ -275,7 +294,7 @@ pub mod roles {
                     }
                 }
             }
-            
+
             true
         }
     }
@@ -311,7 +330,7 @@ pub mod roles {
                             match policy.action {
                                 AuditAction::Fail => violations.push(result.clone()),
                                 AuditAction::Warn => warnings.push(result.clone()),
-                                AuditAction::Info => {}, // Just log
+                                AuditAction::Info => {} // Just log
                             }
                         }
                     }
@@ -324,15 +343,18 @@ pub mod roles {
                     warnings,
                 }
             } else {
-                AuditResult::Pass {
-                    warnings,
-                }
+                AuditResult::Pass { warnings }
             }
         }
 
         /// Query SARIF logs with custom criteria
-        pub fn query_sarif<'a>(&self, sarif_log: &'a SarifLog, criteria: &QueryCriteria) -> Vec<&'a SarifResult> {
-            sarif_log.runs
+        pub fn query_sarif<'a>(
+            &self,
+            sarif_log: &'a SarifLog,
+            criteria: &QueryCriteria,
+        ) -> Vec<&'a SarifResult> {
+            sarif_log
+                .runs
                 .iter()
                 .flat_map(|run| &run.results)
                 .filter(|result| self.matches_criteria(result, criteria))
@@ -348,7 +370,7 @@ pub mod roles {
                     }
                 }
             }
-            
+
             if let Some(severity) = &criteria.severity {
                 if let Some(result_severity) = result.properties.get("severity") {
                     if result_severity != &severity.to_string() {
@@ -356,7 +378,7 @@ pub mod roles {
                     }
                 }
             }
-            
+
             if let Some(hook_event) = &criteria.hook_event {
                 if let Some(result_hook) = result.properties.get("hook_event") {
                     if result_hook != hook_event {
@@ -364,7 +386,7 @@ pub mod roles {
                     }
                 }
             }
-            
+
             true
         }
     }
@@ -391,7 +413,10 @@ impl GitMetadata {
         Self {
             commit_hash,
             tree_hash,
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             hook_event: format!("{:?}", hook_event),
             repository: ".".to_string(),
         }
@@ -462,7 +487,12 @@ pub struct AuditPolicy {
 
 impl AuditPolicy {
     /// Create a new audit policy
-    pub fn new(name: String, description: String, criteria: QueryCriteria, action: AuditAction) -> Self {
+    pub fn new(
+        name: String,
+        description: String,
+        criteria: QueryCriteria,
+        action: AuditAction,
+    ) -> Self {
         Self {
             name,
             description,
@@ -480,7 +510,7 @@ impl AuditPolicy {
                 }
             }
         }
-        
+
         if let Some(severity) = &self.criteria.severity {
             if let Some(result_severity) = result.properties.get("severity") {
                 if result_severity != &severity.to_string() {
@@ -488,7 +518,7 @@ impl AuditPolicy {
                 }
             }
         }
-        
+
         if let Some(hook_event) = &self.criteria.hook_event {
             if let Some(result_hook) = result.properties.get("hook_event") {
                 if result_hook != hook_event {
@@ -496,7 +526,7 @@ impl AuditPolicy {
                 }
             }
         }
-        
+
         true
     }
 }
@@ -582,7 +612,11 @@ impl SarifFirstPipeline {
     }
 
     /// Run the complete SARIF-first pipeline
-    pub fn run_pipeline(&mut self, hook_event: HookEvent, git_metadata: GitMetadata) -> (SarifLog, AuditResult) {
+    pub fn run_pipeline(
+        &mut self,
+        hook_event: HookEvent,
+        git_metadata: GitMetadata,
+    ) -> (SarifLog, AuditResult) {
         // 1. Hook: Collect concerns (never fails)
         self.hook.event = hook_event;
         let concerns = self.hook.collect_concerns();
@@ -597,14 +631,19 @@ impl SarifFirstPipeline {
             .collect();
 
         // 3. Specifier: Generate expectations (never fails)
-        let contracts = crate::modules::functional_contract_pipeline::contracts::get_all_contracts(&concerns);
+        let contracts =
+            crate::modules::functional_contract_pipeline::contracts::get_all_contracts(&concerns);
         let expectations = self.specifier.generate_expectations(&contracts);
 
         // 4. Verifier: Compare and emit SARIF (never fails)
-        let sarif_log = self.verifier.verify_and_emit_sarif(&snapshots, &expectations, &hook_event);
+        let sarif_log = self
+            .verifier
+            .verify_and_emit_sarif(&snapshots, &expectations, &hook_event);
 
         // 5. Stegrapher: Index and tag SARIF (never fails)
-        let indexed_sarif = self.stegrapher.index_and_tag_sarif(&sarif_log, &git_metadata);
+        let indexed_sarif = self
+            .stegrapher
+            .index_and_tag_sarif(&sarif_log, &git_metadata);
 
         // 6. Auditor: Query and determine pass/fail (can fail)
         let audit_result = self.auditor.audit_sarif(&indexed_sarif);
@@ -630,7 +669,7 @@ mod tests {
 
         // Verify SARIF log was generated
         assert!(!sarif_log.runs.is_empty());
-        
+
         // Verify audit result (should pass by default with no policies)
         assert!(audit_result.is_pass());
     }
@@ -638,22 +677,22 @@ mod tests {
     #[test]
     fn test_audit_policy() {
         let mut auditor = roles::Auditor::new();
-        
+
         let policy = AuditPolicy::new(
             "no-executable-files".to_string(),
             "Prevent executable files".to_string(),
             QueryCriteria::new().with_concern("TreeExecutable".to_string()),
             AuditAction::Fail,
         );
-        
+
         auditor.add_policy(policy);
-        
+
         // Test with empty SARIF log
         let empty_sarif = SarifLog {
             version: "2.1.0".to_string(),
             runs: vec![],
         };
-        
+
         let result = auditor.audit_sarif(&empty_sarif);
         assert!(result.is_pass());
     }
@@ -664,7 +703,7 @@ mod tests {
             .with_concern("Index".to_string())
             .with_severity(RuleSeverity::Error)
             .with_hook_event("PreCommit".to_string());
-        
+
         assert_eq!(criteria.concern, Some("Index".to_string()));
         assert_eq!(criteria.severity, Some(RuleSeverity::Error));
         assert_eq!(criteria.hook_event, Some("PreCommit".to_string()));
