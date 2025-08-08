@@ -346,7 +346,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let groups = find_delta_groups(&candidates);
     
     // Generate comprehensive report
-    let analysis = generate_delta_report(&candidates, &groups);
+    let _analysis = generate_delta_report(&candidates, &groups);
     
     println!("\n✅ Analysis complete!");
     println!("🔍 Delta candidates identified");
