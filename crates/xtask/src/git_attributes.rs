@@ -151,7 +151,7 @@ impl GitAttributes {
         }
 
         let pattern = parts[0].to_string();
-        let attributes: Vec<String> = parts[1..].iter().map(|s| s.to_string()).collect();
+        let attributes = parts[1..].to_vec();
 
         Some((
             pattern,
