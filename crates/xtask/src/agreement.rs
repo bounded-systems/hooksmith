@@ -671,6 +671,9 @@ pub enum AgreementCommands {
         /// Worktree directory name (defaults to scope SHA)
         #[arg(long)]
         worktree_name: Option<String>,
+        /// Whether to open the worktree in Cursor
+        #[arg(long, default_value = "true")]
+        open_in_cursor: bool,
     },
 }
 
