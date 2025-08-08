@@ -11,6 +11,7 @@ struct RustFileInfo {
     is_generated: bool,
     dependency_count: u32,
     complexity_score: f64,
+    performance_impact: PerformanceImpact,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -22,6 +23,37 @@ enum RustFileType {
     Binary,      // executables, libraries
     Asset,       // images, data files
     Other,
+}
+
+#[derive(Debug, Clone)]
+struct PerformanceImpact {
+    compilation_speed: CompilationSpeed,
+    ide_performance: IDEPerformance,
+    cache_efficiency: CacheEfficiency,
+    recommendations: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+enum CompilationSpeed {
+    Fast,      // < 10KB
+    Moderate,  // 10-50KB
+    Slow,      // 50-100KB
+    VerySlow,  // > 100KB
+}
+
+#[derive(Debug, Clone)]
+enum IDEPerformance {
+    Excellent, // < 5KB
+    Good,      // 5-20KB
+    Moderate,  // 20-50KB
+    Poor,      // > 50KB
+}
+
+#[derive(Debug, Clone)]
+enum CacheEfficiency {
+    High,      // Small files, good for incremental compilation
+    Medium,    // Moderate size, some cache pressure
+    Low,       // Large files, poor cache efficiency
 }
 
 impl RustFileType {
@@ -70,6 +102,51 @@ impl RustFileType {
     }
 }
 
+impl PerformanceImpact {
+    fn new(size: u64) -> Self {
+        let compilation_speed = match size {
+            0..=10*1024 => CompilationSpeed::Fast,
+            10*1024..=50*1024 => CompilationSpeed::Moderate,
+            50*1024..=100*1024 => CompilationSpeed::Slow,
+            _ => CompilationSpeed::VerySlow,
+        };
+        
+        let ide_performance = match size {
+            0..=5*1024 => IDEPerformance::Excellent,
+            5*1024..=20*1024 => IDEPerformance::Good,
+            20*1024..=50*1024 => IDEPerformance::Moderate,
+            _ => IDEPerformance::Poor,
+        };
+        
+        let cache_efficiency = match size {
+            0..=20*1024 => CacheEfficiency::High,
+            20*1024..=50*1024 => CacheEfficiency::Medium,
+            _ => CacheEfficiency::Low,
+        };
+        
+        let mut recommendations = Vec::new();
+        
+        if size > 100*1024 {
+            recommendations.push("Consider splitting into submodules".to_string());
+            recommendations.push("Large files slow down incremental compilation".to_string());
+        } else if size > 50*1024 {
+            recommendations.push("Monitor compilation performance".to_string());
+            recommendations.push("Consider breaking into smaller modules".to_string());
+        }
+        
+        if size > 20*1024 {
+            recommendations.push("May impact IDE performance (rust-analyzer)".to_string());
+        }
+        
+        PerformanceImpact {
+            compilation_speed,
+            ide_performance,
+            cache_efficiency,
+            recommendations,
+        }
+    }
+}
+
 #[derive(Debug)]
 struct RustProjectStats {
     total_files: u32,
@@ -86,6 +163,8 @@ struct RustProjectStats {
     by_type_size: HashMap<RustFileType, u64>,
     duplicate_blobs: u32,
     large_files: u32,
+    oversized_rust_files: u32,
+    performance_issues: u32,
 }
 
 fn format_size(size: u64) -> String {
@@ -145,6 +224,7 @@ fn get_rust_project_files() -> Result<Vec<RustFileInfo>, Box<dyn std::error::Err
                         is_generated,
                         dependency_count: 0, // Would need more complex analysis
                         complexity_score: calculate_complexity_score(&path, size),
+                        performance_impact: PerformanceImpact::new(size),
                     });
                 }
             }
@@ -213,6 +293,8 @@ fn calculate_project_stats(files: &[RustFileInfo]) -> RustProjectStats {
         by_type_size: HashMap::new(),
         duplicate_blobs: 0,
         large_files: 0,
+        oversized_rust_files: 0,
+        performance_issues: 0,
     };
     
     for file in files {
@@ -226,6 +308,16 @@ fn calculate_project_stats(files: &[RustFileInfo]) -> RustProjectStats {
             RustFileType::Source => {
                 stats.source_files += 1;
                 stats.source_size += file.size;
+                
+                // Check for oversized Rust files
+                if file.size > 100 * 1024 { // > 100KB
+                    stats.oversized_rust_files += 1;
+                }
+                
+                // Check for performance issues
+                if file.size > 50 * 1024 { // > 50KB
+                    stats.performance_issues += 1;
+                }
             }
             RustFileType::Config => {
                 stats.config_files += 1;
@@ -287,7 +379,78 @@ fn show_rust_project_analysis(stats: &RustProjectStats) {
     println!("   Source files: {} ({})", stats.source_files, format_size(stats.source_size));
     println!("   Config files: {} ({})", stats.config_files, format_size(stats.config_size));
     println!("   Large files (>1MB): {}", stats.large_files);
+    println!("   Oversized Rust files (>100KB): {}", stats.oversized_rust_files);
+    println!("   Performance issues (>50KB): {}", stats.performance_issues);
     println!();
+}
+
+fn show_performance_analysis(files: &[RustFileInfo]) {
+    println!("⚡ Performance Analysis:");
+    println!("=======================");
+    
+    let rust_files: Vec<&RustFileInfo> = files.iter()
+        .filter(|f| f.file_type == RustFileType::Source)
+        .collect();
+    
+    if rust_files.is_empty() {
+        println!("No Rust source files found.");
+        return;
+    }
+    
+    // Compilation speed analysis
+    let mut fast_count = 0;
+    let mut moderate_count = 0;
+    let mut slow_count = 0;
+    let mut very_slow_count = 0;
+    
+    // IDE performance analysis
+    let mut excellent_count = 0;
+    let mut good_count = 0;
+    let mut moderate_count_ide = 0;
+    let mut poor_count = 0;
+    
+    for file in &rust_files {
+        match file.performance_impact.compilation_speed {
+            CompilationSpeed::Fast => fast_count += 1,
+            CompilationSpeed::Moderate => moderate_count += 1,
+            CompilationSpeed::Slow => slow_count += 1,
+            CompilationSpeed::VerySlow => very_slow_count += 1,
+        }
+        
+        match file.performance_impact.ide_performance {
+            IDEPerformance::Excellent => excellent_count += 1,
+            IDEPerformance::Good => good_count += 1,
+            IDEPerformance::Moderate => moderate_count_ide += 1,
+            IDEPerformance::Poor => poor_count += 1,
+        }
+    }
+    
+    println!("🔧 Compilation Speed:");
+    println!("   Fast (<10KB): {} files", fast_count);
+    println!("   Moderate (10-50KB): {} files", moderate_count);
+    println!("   Slow (50-100KB): {} files", slow_count);
+    println!("   Very Slow (>100KB): {} files", very_slow_count);
+    println!();
+    
+    println!("💻 IDE Performance (rust-analyzer):");
+    println!("   Excellent (<5KB): {} files", excellent_count);
+    println!("   Good (5-20KB): {} files", good_count);
+    println!("   Moderate (20-50KB): {} files", moderate_count_ide);
+    println!("   Poor (>50KB): {} files", poor_count);
+    println!();
+    
+    // Show oversized files
+    let oversized: Vec<&RustFileInfo> = rust_files.iter()
+        .filter(|f| f.size > 100 * 1024)
+        .collect();
+    
+    if !oversized.is_empty() {
+        println!("⚠️  Oversized Rust Files (>100KB):");
+        for file in oversized {
+            println!("   • {} ({})", file.path, format_size(file.size));
+        }
+        println!();
+    }
 }
 
 fn show_rust_specific_recommendations(stats: &RustProjectStats, files: &[RustFileInfo]) {
@@ -303,6 +466,23 @@ fn show_rust_specific_recommendations(stats: &RustProjectStats, files: &[RustFil
         println!("     build/");
         println!("     *.generated.rs");
         println!("     generated/");
+    }
+    
+    // Check for oversized Rust files
+    if stats.oversized_rust_files > 0 {
+        println!("🔧 Oversized Rust files detected:");
+        println!("   • {} files > 100KB", stats.oversized_rust_files);
+        println!("   • These slow down incremental compilation");
+        println!("   • Consider splitting into submodules");
+        println!("   • Large files hurt IDE performance (rust-analyzer)");
+    }
+    
+    // Check for performance issues
+    if stats.performance_issues > 0 {
+        println!("🔧 Performance issues detected:");
+        println!("   • {} files > 50KB", stats.performance_issues);
+        println!("   • Monitor compilation times");
+        println!("   • Consider breaking into smaller modules");
     }
     
     // Check for large files
@@ -338,6 +518,7 @@ fn show_rust_specific_recommendations(stats: &RustProjectStats, files: &[RustFil
     println!("• Use cargo vendor sparingly (can bloat repo)");
     println!("• Consider rustfmt in pre-commit hooks");
     println!("• Use cargo check in CI, not cargo build");
+    println!("• Monitor file sizes for IDE performance");
 }
 
 fn show_cargo_optimization_tips() {
@@ -366,6 +547,8 @@ fn show_cargo_optimization_tips() {
     println!("• Consider sccache for build caching");
     println!("• Use cargo-udeps to find unused dependencies");
     println!("• Profile with cargo build --release");
+    println!("• Keep .rs files under 100KB for optimal performance");
+    println!("• Monitor rust-analyzer performance with large files");
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -382,6 +565,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stats = calculate_project_stats(&files);
     
     show_rust_project_analysis(&stats);
+    show_performance_analysis(&files);
     show_rust_specific_recommendations(&stats, &files);
     show_cargo_optimization_tips();
     
@@ -393,6 +577,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("• Large generated files can bloat Git history");
     println!("• Rust source files compress well with delta compression");
     println!("• Consider Git LFS for large assets or binaries");
+    println!("• File size affects incremental compilation performance");
+    println!("• Large .rs files slow down rust-analyzer and IDE tools");
     
     Ok(())
 }

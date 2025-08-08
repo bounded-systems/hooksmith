@@ -127,6 +127,20 @@ cargo run --bin git_attributes_analyzer
 cargo run --bin rust_git_analyzer
 ```
 
+### 8. `file_type_analyzer.rs` - File Type Optimization
+**Purpose**: Analyzes files by type and provides targeted recommendations based on delta compression characteristics
+
+**Features**:
+- Categorizes files by type (text code, binary assets, archives, etc.)
+- Analyzes delta compression effectiveness per file type
+- Provides file-type-specific optimization recommendations
+- Identifies problematic file types for Git storage
+
+**Usage**:
+```bash
+cargo run --bin file_type_analyzer
+```
+
 ## 📊 Understanding the Results
 
 ### Blob Size Categories
