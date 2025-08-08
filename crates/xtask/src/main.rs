@@ -2837,9 +2837,9 @@ async fn main() -> Result<()> {
                 format,
                 output,
             } => {
-                let attributes = git_attributes::parse_git_attributes(&input)?;
+                let attributes = git_attributes::GitAttributes::from_file(&input)?;
                 let exported = match format.as_str() {
-                    "jsonc" => git_attributes::convert_to_jsonc(&attributes)?,
+                    "jsonc" => attributes.to_jsonc()?,
                     "json" => {
                         let json = serde_json::to_string_pretty(&attributes)?;
                         json
@@ -2853,8 +2853,7 @@ async fn main() -> Result<()> {
                         toml
                     }
                     "gitattributes" => {
-                        let gitattributes = git_attributes::convert_to_gitattributes(&attributes)?;
-                        gitattributes
+                        attributes.to_gitattributes()?
                     }
                     _ => {
                         anyhow::bail!("Invalid output format: {format}");
@@ -2864,7 +2863,6 @@ async fn main() -> Result<()> {
                 println!("✅ Exported .gitattributes to {format}: {output}");
             }
             GitAttributesCommands::Validate { input, strict } => {
-<<<<<<< HEAD
                 let attributes = git_attributes::GitAttributes::from_file(&input)?;
                 match attributes.validate() {
                     Ok(_) => println!("✅ Git attributes are valid"),
@@ -2876,17 +2874,6 @@ async fn main() -> Result<()> {
                         if strict {
                             anyhow::bail!("Git attributes validation failed");
                         }
-=======
-                let attributes = git_attributes::parse_git_attributes(&input)?;
-                let schema = git_attributes::load_schema()?;
-                let validation_result = git_attributes::validate_attributes(&attributes, &schema)?;
-                if validation_result {
-                    println!("✅ Git attributes are valid");
-                } else {
-                    println!("❌ Git attributes are invalid");
-                    if strict {
-                        anyhow::bail!("Git attributes validation failed");
->>>>>>> b8de56de (GitHub actions hooksmith (#48))
                     }
                 }
             }
