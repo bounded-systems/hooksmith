@@ -55,6 +55,15 @@ struct FrequentWriteConcern {
     recommendation: String,
 }
 
+#[derive(Debug)]
+struct LfsConcern {
+    file_path: String,
+    size: u64,
+    file_type: String,
+    reason: String,
+    lfs_command: String,
+}
+
 fn get_git_files() -> Result<Vec<GitFileInfo>, Box<dyn std::error::Error>> {
     println!("📁 Gathering Git file information...");
     
