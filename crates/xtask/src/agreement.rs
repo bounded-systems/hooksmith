@@ -729,7 +729,8 @@ impl AgreementManager {
                             .output()?;
 
                         if log_output.status.success() {
-                            let commit_msg = String::from_utf8(log_output.stdout)?.trim().to_string();
+                            let commit_msg =
+                                String::from_utf8(log_output.stdout)?.trim().to_string();
                             return Ok(Some((commit.to_string(), commit_msg)));
                         }
                     }
@@ -756,7 +757,10 @@ impl AgreementManager {
     }
 
     /// Enhanced agreement validation with detailed resolution
-    pub fn validate_agreement_with_resolution(&self, scope: &str) -> Result<(bool, TreePathResolution)> {
+    pub fn validate_agreement_with_resolution(
+        &self,
+        scope: &str,
+    ) -> Result<(bool, TreePathResolution)> {
         let resolution = self.resolve_tree_path(scope)?;
 
         // Check if the contract blob exists in current HEAD
@@ -764,7 +768,7 @@ impl AgreementManager {
 
         // Determine validity based on resolution
         let is_valid = match resolution.resolution_type {
-            ResolutionType::Path(_) => true, // Tree exists in HEAD
+            ResolutionType::Path(_) => true,   // Tree exists in HEAD
             ResolutionType::Commit(_) => true, // Tree exists in history
             ResolutionType::Tree(_) => resolution.is_reachable, // Tree is reachable
             ResolutionType::NotFound => false, // Tree not found
@@ -774,7 +778,9 @@ impl AgreementManager {
     }
 
     /// Enhanced agreement listing with resolution details
-    pub fn list_agreements_with_resolution(&self) -> Result<Vec<(AgreementMetadata, TreePathResolution)>> {
+    pub fn list_agreements_with_resolution(
+        &self,
+    ) -> Result<Vec<(AgreementMetadata, TreePathResolution)>> {
         let agreements = self.list_agreements()?;
         let mut resolved_agreements = Vec::new();
 
@@ -809,6 +815,24 @@ impl AgreementCLI {
     }
 
     /// List all agreements
+    ///
+    /// Format: <indicator> <short-sha> (<contract>): <path-scope> [<tree-slug>]
+    ///
+    /// ~ c785760 (object-names): detached [detached]
+    /// │ │        │              │        │
+    /// │ │        │              │        └── Tree slug
+    /// │ │        │              └── Path scope
+    /// │ │        └── Contract name
+    /// │ └── Short scope SHA (7 chars)
+    /// └── Status indicator
+    ///
+    /// Status indicators:
+    ///   * = Current agreement (matches current tree SHA)
+    ///   + = Active agreement with worktree
+    ///   ~ = Active agreement (no worktree)
+    ///   ✓ = Fulfilled agreement
+    ///   ✗ = Revoked agreement
+    ///     = Default/unknown status
     pub fn list(&self) -> Result<()> {
         let agreements = self.manager.list_agreements()?;
 
@@ -825,14 +849,52 @@ impl AgreementCLI {
             .trim()
             .to_string();
 
-        for metadata in agreements {
+        // Sort agreements: current first, then by scope
+        let mut sorted_agreements = agreements;
+        sorted_agreements.sort_by(|a, b| {
+            let a_is_current = a.agreement.scope == current_tree_sha;
+            let b_is_current = b.agreement.scope == current_tree_sha;
+
+            if a_is_current && !b_is_current {
+                std::cmp::Ordering::Less
+            } else if !a_is_current && b_is_current {
+                std::cmp::Ordering::Greater
+            } else {
+                a.agreement.scope.cmp(&b.agreement.scope)
+            }
+        });
+
+        for metadata in sorted_agreements {
             let short_scope = &metadata.agreement.scope[..7];
+
+            // Get path scope and tree slug
+            let resolution = self.manager.resolve_tree_path(&metadata.agreement.scope)?;
+            let path_scope = match resolution.resolution_type {
+                ResolutionType::Path(path) => {
+                    if path.is_empty() {
+                        "root".to_string()
+                    } else {
+                        path
+                    }
+                }
+                ResolutionType::Commit(_) => "history".to_string(),
+                ResolutionType::Tree(_) => "detached".to_string(),
+                ResolutionType::NotFound => "unknown".to_string(),
+            };
+
+            // Generate tree slug from path scope
+            let tree_slug = path_scope.replace('/', "-").replace('.', "");
+
+            // Check if worktree exists for this agreement
+            let worktree_exists = self.check_worktree_exists(&metadata.agreement.scope)?;
 
             // Determine status indicator
             let indicator = if metadata.agreement.scope == current_tree_sha {
-                "* " // Active/current agreement
+                "* " // Current agreement
+            } else if worktree_exists {
+                "+ " // Has worktree
             } else if metadata.status == "active" {
-                "+ " // Active but not current
+                "~ " // Active but no worktree
             } else if metadata.status == "fulfilled" {
                 "✓ " // Fulfilled
             } else if metadata.status == "revoked" {
@@ -845,8 +907,11 @@ impl AgreementCLI {
             let contract_name = get_contract_name(&metadata.agreement.contract)
                 .unwrap_or_else(|_| "unknown".to_string());
 
-            // Format like git branch --list
-            println!("{}{} ({})", indicator, short_scope, contract_name);
+            // Format like git branch --list with additional info
+            println!(
+                "{}{} ({}): {} [{}]",
+                indicator, short_scope, contract_name, path_scope, tree_slug
+            );
         }
         Ok(())
     }
@@ -1102,7 +1167,14 @@ impl AgreementCLI {
             ResolutionType::Path(path) => {
                 println!("  Type: Path-based");
                 println!("  Path: {}", path);
-                println!("  In HEAD: {}", if resolution.exists_in_head { "✅ Yes" } else { "❌ No" });
+                println!(
+                    "  In HEAD: {}",
+                    if resolution.exists_in_head {
+                        "✅ Yes"
+                    } else {
+                        "❌ No"
+                    }
+                );
             }
             ResolutionType::Commit(commit) => {
                 println!("  Type: Commit-based");
@@ -1110,12 +1182,26 @@ impl AgreementCLI {
                 if let Some(msg) = resolution.commit_message {
                     println!("  Message: {}", msg);
                 }
-                println!("  Reachable: {}", if resolution.is_reachable { "✅ Yes" } else { "❌ No" });
+                println!(
+                    "  Reachable: {}",
+                    if resolution.is_reachable {
+                        "✅ Yes"
+                    } else {
+                        "❌ No"
+                    }
+                );
             }
             ResolutionType::Tree(sha) => {
                 println!("  Type: Tree-based");
                 println!("  Tree: {}", sha);
-                println!("  Reachable: {}", if resolution.is_reachable { "✅ Yes" } else { "❌ No" });
+                println!(
+                    "  Reachable: {}",
+                    if resolution.is_reachable {
+                        "✅ Yes"
+                    } else {
+                        "❌ No"
+                    }
+                );
             }
             ResolutionType::NotFound => {
                 println!("  Type: Not found");
@@ -1151,24 +1237,39 @@ impl AgreementCLI {
             match resolution.resolution_type {
                 ResolutionType::Path(_) => {
                     in_head += 1;
-                    println!("  ✅ {} - Active in HEAD", metadata.agreement.scope[..7].to_string());
+                    println!(
+                        "  ✅ {} - Active in HEAD",
+                        metadata.agreement.scope[..7].to_string()
+                    );
                 }
                 ResolutionType::Commit(_) => {
                     in_history += 1;
-                    println!("  ⚠️  {} - In history", metadata.agreement.scope[..7].to_string());
+                    println!(
+                        "  ⚠️  {} - In history",
+                        metadata.agreement.scope[..7].to_string()
+                    );
                 }
                 ResolutionType::Tree(_) => {
                     if resolution.is_reachable {
                         in_history += 1;
-                        println!("  ⚠️  {} - Detached but reachable", metadata.agreement.scope[..7].to_string());
+                        println!(
+                            "  ⚠️  {} - Detached but reachable",
+                            metadata.agreement.scope[..7].to_string()
+                        );
                     } else {
                         unreachable += 1;
-                        println!("  ❌ {} - Unreachable", metadata.agreement.scope[..7].to_string());
+                        println!(
+                            "  ❌ {} - Unreachable",
+                            metadata.agreement.scope[..7].to_string()
+                        );
                     }
                 }
                 ResolutionType::NotFound => {
                     not_found += 1;
-                    println!("  💀 {} - Not found", metadata.agreement.scope[..7].to_string());
+                    println!(
+                        "  💀 {} - Not found",
+                        metadata.agreement.scope[..7].to_string()
+                    );
                 }
             }
         }
@@ -1184,6 +1285,26 @@ impl AgreementCLI {
         }
 
         Ok(())
+    }
+
+    /// Check if a worktree exists for this agreement
+    fn check_worktree_exists(&self, scope: &str) -> Result<bool> {
+        // Get worktree list
+        let output = std::process::Command::new("git")
+            .args(&["worktree", "list"])
+            .output()?;
+
+        if !output.status.success() {
+            return Ok(false);
+        }
+
+        let worktree_list = String::from_utf8_lossy(&output.stdout);
+        let short_scope = &scope[..7];
+
+        // Check if any worktree directory contains the scope SHA
+        Ok(worktree_list
+            .lines()
+            .any(|line| line.contains(short_scope) || line.contains(scope)))
     }
 }
 
