@@ -472,8 +472,16 @@ impl AgreementCLI {
 
         println!("📝 Agreements:");
         for metadata in agreements {
-            println!("  Scope: {}", metadata.agreement.scope);
-            println!("  Contract: {}", metadata.agreement.contract);
+            // Get contract name
+            let contract_name = get_contract_name(&metadata.agreement.contract)
+                .unwrap_or_else(|_| "Unknown".to_string());
+            
+            // Get tree path
+            let tree_path = get_tree_path(&metadata.agreement.scope)
+                .unwrap_or_else(|_| "Unknown".to_string());
+
+            println!("  Scope: {} ({})", metadata.agreement.scope, tree_path);
+            println!("  Contract: {} ({})", metadata.agreement.contract, contract_name);
             println!("  Status: {:?}", metadata.status);
             println!("  Created: {}", metadata.created_at);
             println!("  By: {}", metadata.created_by);
