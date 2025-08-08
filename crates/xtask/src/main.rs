@@ -1670,6 +1670,11 @@ enum Commands {
         #[command(subcommand)]
         command: GitAttributesCommands,
     },
+    /// Git hooks management and validation
+    GitHooks {
+        #[command(subcommand)]
+        command: GitHooksCommands,
+    },
     /// SBOM generation and management
     Sbom {
         /// SBOM command to execute
@@ -2348,52 +2353,6 @@ async fn main() -> Result<()> {
         Commands::ValidateSchema { input, strict } => {
             validate_schema_command(input, strict)?;
         }
-        Commands::Sarif { command } => match command {
-            SarifCommands::JsonlToSarif {
-                input,
-                output,
-                validate,
-            } => run_jsonl_to_sarif_command(input, output, validate).await?,
-            SarifCommands::SarifToJsonl {
-                input,
-                output,
-                validate,
-            } => run_sarif_to_jsonl_command(input, output, validate).await?,
-            SarifCommands::CodeqlAnalysis {
-                cli_path,
-                db_dir,
-                query_suite,
-                language,
-                build_command,
-                output,
-                to_jsonl,
-            } => {
-                run_codeql_analysis_command(
-                    cli_path.as_deref(),
-                    db_dir,
-                    query_suite,
-                    language,
-                    build_command,
-                    output.as_deref(),
-                    to_jsonl,
-                )
-                .await?
-            }
-            SarifCommands::ValidateSarif { file, strict } => {
-                run_validate_sarif_command(file, strict)?
-            }
-            SarifCommands::MergeSarif {
-                inputs,
-                output,
-                validate,
-            } => run_merge_sarif_command(inputs, output, validate)?,
-            SarifCommands::IntegrateCodeql {
-                run_analysis,
-                to_jsonl,
-                merge,
-                output_dir,
-            } => run_integrate_codeql_command(run_analysis, to_jsonl, merge, output_dir).await?,
-        },
         Commands::GitLefthook { command } => match command {
             GitLefthookCommands::Workflow {
                 message,
@@ -2768,8 +2727,8 @@ async fn main() -> Result<()> {
                 }
             }
         },
-        Commands::GitHooks { command } => match command {
-            GitHooksCommands::Validate { strict, verbose } => {
+        Commands::GitLefthook { command } => match command {
+            GitLefthookCommands::Validate { strict, verbose } => {
                 println!("Git hooks validation not yet implemented");
                 if strict {
                     anyhow::bail!("Git hooks validation failed");
