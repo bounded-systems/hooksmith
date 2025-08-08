@@ -1593,6 +1593,80 @@ async fn main() -> Result<()> {
                         );
                     }
                 }
+                WorktreeCommands::EnsureOneToOne {
+                    create_missing,
+                    remove_orphaned,
+                    force,
+                    dry_run,
+                } => {
+                    println!(
+                        "{} {}",
+                        style("🔄").blue(),
+                        style("Ensuring 1:1 worktree relationship:").blue()
+                    );
+                    println!("  Create missing: {}", create_missing);
+                    println!("  Remove orphaned: {}", remove_orphaned);
+                    println!("  Force: {}", force);
+                    println!("  Dry run: {}", dry_run);
+                    println!("{}", style("TODO: Implement 1:1 worktree sync").yellow());
+                }
+                WorktreeCommands::CreatePullRequests {
+                    all,
+                    worktree_name,
+                    title_template,
+                    body_template,
+                    force,
+                    draft,
+                } => {
+                    println!(
+                        "{} {}",
+                        style("📝").blue(),
+                        style("Creating pull requests:").blue()
+                    );
+                    println!("  All: {}", all);
+                    println!("  Worktree: {:?}", worktree_name);
+                    println!("  Title template: {}", title_template);
+                    println!("  Body template: {}", body_template);
+                    println!("  Force: {}", force);
+                    println!("  Draft: {}", draft);
+                    println!("{}", style("TODO: Implement PR creation").yellow());
+                }
+                WorktreeCommands::MergeToMain {
+                    all,
+                    worktree_name,
+                    strategy,
+                    delete_branch,
+                    force,
+                } => {
+                    println!(
+                        "{} {}",
+                        style("🔀").blue(),
+                        style("Merging to main:").blue()
+                    );
+                    println!("  All: {}", all);
+                    println!("  Worktree: {:?}", worktree_name);
+                    println!("  Strategy: {}", strategy);
+                    println!("  Delete branch: {}", delete_branch);
+                    println!("  Force: {}", force);
+                    println!("{}", style("TODO: Implement merge to main").yellow());
+                }
+                WorktreeCommands::SyncAndPr {
+                    all,
+                    worktree_name,
+                    auto_merge,
+                    draft,
+                } => {
+                    println!(
+                        "{} {}",
+                        style("🔄").blue(),
+                        style("Syncing and creating PRs:").blue()
+                    );
+                    println!("  All: {}", all);
+                    println!("  Worktree: {:?}", worktree_name);
+                    println!("  Auto-merge: {}", auto_merge);
+                    println!("  Draft: {}", draft);
+                    println!("{}", style("TODO: Implement sync and PR creation").yellow());
+                }
             }
         }
         Commands::Contract { contract } => match contract {

@@ -705,6 +705,18 @@ enum GitConfigCommands {
 
 /// Git attributes management commands
 #[derive(Debug, Clone, clap::Subcommand)]
+enum GitHooksCommands {
+    /// Validate Git hooks configuration
+    Validate {
+        /// Whether to exit with error on validation failures
+        #[arg(long)]
+        strict: bool,
+        /// Show detailed validation output
+        #[arg(long)]
+        verbose: bool,
+    },
+}
+
 enum GitAttributesCommands {
     /// Convert .gitattributes to JSONC format
     Convert {
@@ -789,6 +801,7 @@ mod event_stream;
 mod events;
 mod file_audit;
 mod generated_file_validator;
+mod git_attributes;
 mod git_config;
 mod git_lefthook_integration;
 mod git_notes_manager;
@@ -809,9 +822,8 @@ mod unified_generator;
 mod wasm_event_bus;
 mod workflow;
 mod worktree;
-mod worktree_sync;
 mod worktree_contract;
-mod git_attributes;
+mod worktree_sync;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -1640,31 +1652,43 @@ enum Commands {
         retries: u32,
     },
     /// Worktree management and tool integration
-Worktree {
-    #[command(subcommand)]
-    command: WorktreeCommands,
-},
-/// Git configuration management and conversion
-GitConfig {
-    #[command(subcommand)]
-    command: GitConfigCommands,
-},
-/// Git attributes management and conversion
-GitAttributes {
-    #[command(subcommand)]
-    command: GitAttributesCommands,
-},
-/// Git hooks management with Rust binaries
-GitHooks {
-    #[command(subcommand)]
-    command: GitHooksCommands,
-},
-/// SBOM generation and management
-Sbom {
-    /// SBOM command to execute
-    #[arg(trailing_var_arg = true)]
-    args: Vec<String>,
-},
+    Worktree {
+        #[command(subcommand)]
+        command: WorktreeCommands,
+    },
+    /// Git configuration management and conversion
+    GitConfig {
+        #[command(subcommand)]
+        command: GitConfigCommands,
+    },
+    /// Git attributes management and conversion
+    GitAttributes {
+        #[command(subcommand)]
+        command: GitAttributesCommands,
+    },
+    /// Git hooks management with Rust binaries
+    GitHooks {
+        #[command(subcommand)]
+        command: GitHooksCommands,
+    },
+    /// SBOM generation and management
+    Sbom {
+        /// SBOM command to execute
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
+    },
+    /// Validate static hook definitions
+    ValidateStaticHooks {
+        /// Whether to exit with error on validation failures
+        #[arg(long)]
+        strict: bool,
+        /// Show detailed validation output
+        #[arg(long)]
+        verbose: bool,
+        /// Check binary existence in target/release/
+        #[arg(long, default_value = "true")]
+        check_binaries: bool,
+    },
 }
 
 /// WIT schema for function definition
@@ -2459,6 +2483,13 @@ async fn main() -> Result<()> {
         Commands::Sbom { args } => {
             sbom::handle_sbom_command(&args).await?;
         }
+        Commands::ValidateStaticHooks {
+            strict,
+            verbose,
+            check_binaries,
+        } => {
+            validate_static_hooks_command(strict, verbose, check_binaries).await?;
+        }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
                 config_dir,
@@ -2613,9 +2644,7 @@ async fn main() -> Result<()> {
             } => {
                 let config = git_config::parse_git_config(&input)?;
                 let exported = match format.as_str() {
-                    "jsonc" => {
-                        git_config::convert_to_jsonc(&config)?
-                    }
+                    "jsonc" => git_config::convert_to_jsonc(&config)?,
                     "json" => {
                         let json = serde_json::to_string_pretty(&config)?;
                         json
@@ -2635,10 +2664,7 @@ async fn main() -> Result<()> {
                 fs::write(&output, exported)?;
                 println!("✅ Exported .git/config to {format}: {output}");
             }
-            GitConfigCommands::Validate {
-                input,
-                strict,
-            } => {
+            GitConfigCommands::Validate { input, strict } => {
                 let config = git_config::parse_git_config(&input)?;
                 let schema = git_config::load_schema()?;
                 let validation_result = git_config::validate_config(&config, &schema)?;
@@ -2652,6 +2678,14 @@ async fn main() -> Result<()> {
                     if strict {
                         anyhow::bail!("Git configuration validation failed");
                     }
+                }
+            }
+        },
+        Commands::GitHooks { command } => match command {
+            GitHooksCommands::Validate { strict, verbose } => {
+                println!("Git hooks validation not yet implemented");
+                if strict {
+                    anyhow::bail!("Git hooks validation failed");
                 }
             }
         },
@@ -2723,9 +2757,7 @@ async fn main() -> Result<()> {
             } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 let exported = match format.as_str() {
-                    "jsonc" => {
-                        git_attributes::convert_to_jsonc(&attributes)?
-                    }
+                    "jsonc" => git_attributes::convert_to_jsonc(&attributes)?,
                     "json" => {
                         let json = serde_json::to_string_pretty(&attributes)?;
                         json
@@ -2749,10 +2781,7 @@ async fn main() -> Result<()> {
                 fs::write(&output, exported)?;
                 println!("✅ Exported .gitattributes to {format}: {output}");
             }
-            GitAttributesCommands::Validate {
-                input,
-                strict,
-            } => {
+            GitAttributesCommands::Validate { input, strict } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 let schema = git_attributes::load_schema()?;
                 let validation_result = git_attributes::validate_attributes(&attributes, &schema)?;
@@ -2768,10 +2797,7 @@ async fn main() -> Result<()> {
                     }
                 }
             }
-            GitAttributesCommands::TestMatching {
-                input,
-                files,
-            } => {
+            GitAttributesCommands::TestMatching { input, files } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 for file in files {
                     let matched_attributes = git_attributes::match_attributes(&attributes, &file);
@@ -9651,6 +9677,153 @@ async fn run_component_smoke_test(
     }
 
     Ok(())
+}
+
+async fn validate_static_hooks_command(
+    strict: bool,
+    verbose: bool,
+    check_binaries: bool,
+) -> Result<()> {
+    let hooks_dir = std::path::Path::new(".hooksmith/hooks");
+    
+    if !hooks_dir.exists() {
+        if verbose {
+            println!("⚠️  No .hooksmith/hooks directory found - skipping validation");
+        }
+        return Ok(());
+    }
+    
+    let mut total_hooks = 0;
+    let mut valid_hooks = 0;
+    let mut errors = Vec::new();
+    
+    // Walk through all scope directories
+    for scope_entry in std::fs::read_dir(hooks_dir)? {
+        let scope_entry = scope_entry?;
+        let scope_path = scope_entry.path();
+        
+        if scope_path.is_dir() {
+            let scope_name = scope_path.file_name().unwrap().to_string_lossy();
+            
+            if verbose {
+                println!("📁 Scanning scope: {}", scope_name);
+            }
+            
+            // Walk through all hook files in this scope
+            for hook_entry in std::fs::read_dir(&scope_path)? {
+                let hook_entry = hook_entry?;
+                let hook_path = hook_entry.path();
+                
+                if hook_path.is_file() && hook_path.extension().map_or(false, |ext| ext == "jsonc") {
+                    total_hooks += 1;
+                    
+                    match validate_single_static_hook(&hook_path, check_binaries) {
+                        Ok(_) => {
+                            valid_hooks += 1;
+                            if verbose {
+                                println!("✅ Validated: {}", hook_path.display());
+                            }
+                        }
+                        Err(e) => {
+                            errors.push(format!("{}: {}", hook_path.display(), e));
+                            if verbose {
+                                println!("❌ Failed: {} - {}", hook_path.display(), e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Report results
+    println!("📊 Static Hook Validation Summary:");
+    println!("   Total hooks found: {}", total_hooks);
+    println!("   Valid hooks: {}", valid_hooks);
+    println!("   Invalid hooks: {}", total_hooks - valid_hooks);
+    
+    if !errors.is_empty() {
+        println!("\n❌ Validation errors:");
+        for error in &errors {
+            println!("   - {}", error);
+        }
+        
+        if strict {
+            anyhow::bail!("{} hook(s) failed validation", errors.len());
+        }
+    } else if total_hooks > 0 {
+        println!("✅ All static hooks validated successfully");
+    }
+    
+    Ok(())
+}
+
+fn validate_single_static_hook(
+    hook_path: &std::path::Path,
+    check_binaries: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Read and parse the hook definition
+    let content = std::fs::read_to_string(hook_path)?;
+    let hook: StaticHookDefinition = serde_json::from_str(&content)?;
+    
+    // Validate the hook structure
+    hook.validate()?;
+    
+    // Check if binary exists in target/release/
+    if check_binaries {
+        let binary_path = std::path::Path::new("target/release").join(&hook.bin);
+        if !binary_path.exists() {
+            return Err(format!("Binary '{}' not found in target/release/", hook.bin).into());
+        }
+        
+        if !binary_path.is_file() {
+            return Err(format!("Binary '{}' is not a file", hook.bin).into());
+        }
+    }
+    
+    Ok(())
+}
+
+// Static hook definition (simplified for xtask)
+#[derive(serde::Deserialize)]
+struct StaticHookDefinition {
+    name: String,
+    scope: String,
+    concerns: Vec<String>,
+    bin: String,
+}
+
+impl StaticHookDefinition {
+    fn validate(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Validate name format
+        if !self.name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+            return Err(format!("Invalid hook name '{}': must contain only alphanumeric characters, underscores, and hyphens", self.name).into());
+        }
+        
+        // Validate scope
+        let valid_scopes = ["git", "github", "fsmonitor", "reference", "email", "patch"];
+        if !valid_scopes.contains(&self.scope.as_str()) {
+            return Err(format!("Invalid scope '{}': must be one of {:?}", self.scope, valid_scopes).into());
+        }
+        
+        // Validate concerns
+        let valid_concerns = ["blob", "tree", "ref", "note", "attr", "contract-violation", "symbol-analysis"];
+        for concern in &self.concerns {
+            if !valid_concerns.contains(&concern.as_str()) {
+                return Err(format!("Invalid concern '{}': must be one of {:?}", concern, valid_concerns).into());
+            }
+        }
+        
+        // Check for duplicate concerns
+        let mut concerns = self.concerns.clone();
+        concerns.sort();
+        concerns.dedup();
+        if concerns.len() != self.concerns.len() {
+            return Err(format!("Duplicate concerns found in hook '{}'", self.name).into());
+        }
+        
+        Ok(())
+    }
 }
 
 async fn run_schema_registry_command(

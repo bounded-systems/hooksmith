@@ -5,39 +5,39 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum GitHook {
     // Patch management hooks
-    ApplyPatchMsg,      // arg[0]: commit msg file
-    PreApplyPatch,      // no args
-    PostApplyPatch,     // no args
-    
+    ApplyPatchMsg,  // arg[0]: commit msg file
+    PreApplyPatch,  // no args
+    PostApplyPatch, // no args
+
     // Commit lifecycle hooks
-    PreCommit,          // no args
-    PrepareCommitMsg,   // args: commit msg file, source, [SHA]
-    CommitMsg,          // arg[0]: commit msg file
-    PostCommit,         // no args
-    
+    PreCommit,        // no args
+    PrepareCommitMsg, // args: commit msg file, source, [SHA]
+    CommitMsg,        // arg[0]: commit msg file
+    PostCommit,       // no args
+
     // Merge and rebase hooks
-    PreMergeCommit,     // no args
-    PreRebase,          // args: upstream, [branch]
-    PostRebase,         // args: command (amend|rebase)
-    PostRewrite,        // arg[0]: command (amend|rebase)
-    
+    PreMergeCommit, // no args
+    PreRebase,      // args: upstream, [branch]
+    PostRebase,     // args: command (amend|rebase)
+    PostRewrite,    // arg[0]: command (amend|rebase)
+
     // Branch management hooks
-    PostCheckout,       // args: old HEAD, new HEAD, flag
-    PostMerge,          // arg[0]: squash?
-    
+    PostCheckout, // args: old HEAD, new HEAD, flag
+    PostMerge,    // arg[0]: squash?
+
     // Push and receive hooks
-    PrePush,            // args: remote, url — stdin: ref lines
-    PreReceive,         // stdin: ref lines
-    Update,             // args: ref name, old SHA, new SHA
-    PostReceive,        // stdin: ref lines
-    PostUpdate,         // args: ref names...
-    PushToCheckout,     // arg[0]: commit SHA
-    
+    PrePush,        // args: remote, url — stdin: ref lines
+    PreReceive,     // stdin: ref lines
+    Update,         // args: ref name, old SHA, new SHA
+    PostReceive,    // stdin: ref lines
+    PostUpdate,     // args: ref names...
+    PushToCheckout, // arg[0]: commit SHA
+
     // Specialized hooks
-    SendEmailValidate,  // args: file, header
-    FSMonitorWatchman,  // args: version, token — stdout: JSON
+    SendEmailValidate,    // args: file, header
+    FSMonitorWatchman,    // args: version, token — stdout: JSON
     ReferenceTransaction, // args: prepared|committed|aborted
-    PostIndexChange,    // args: working_dir_updated, skip_worktree_updated
+    PostIndexChange,      // args: working_dir_updated, skip_worktree_updated
 }
 
 impl GitHook {
@@ -101,10 +101,9 @@ impl GitHook {
 
     /// Check if hook expects stdin
     pub fn expects_stdin(&self) -> bool {
-        matches!(self, 
-            GitHook::PrePush | 
-            GitHook::PreReceive | 
-            GitHook::PostReceive
+        matches!(
+            self,
+            GitHook::PrePush | GitHook::PreReceive | GitHook::PostReceive
         )
     }
 
@@ -117,12 +116,12 @@ impl GitHook {
     pub fn working_directory(&self) -> WorkingDirectory {
         match self {
             // Server-side hooks always use $GIT_DIR
-            GitHook::PreReceive | 
-            GitHook::Update | 
-            GitHook::PostReceive | 
-            GitHook::PostUpdate | 
-            GitHook::PushToCheckout => WorkingDirectory::GitDir,
-            
+            GitHook::PreReceive
+            | GitHook::Update
+            | GitHook::PostReceive
+            | GitHook::PostUpdate
+            | GitHook::PushToCheckout => WorkingDirectory::GitDir,
+
             // Client-side hooks use repository root
             _ => WorkingDirectory::RepositoryRoot,
         }
@@ -133,16 +132,20 @@ impl GitHook {
         match self {
             GitHook::PreCommit | GitHook::PrepareCommitMsg | GitHook::CommitMsg => {
                 vec!["GIT_EDITOR"]
-            },
+            }
             GitHook::PrePush => {
-                vec!["GIT_PUSH_OPTION_COUNT", "GIT_PUSH_OPTION_0", "GIT_PUSH_OPTION_1"]
-            },
+                vec![
+                    "GIT_PUSH_OPTION_COUNT",
+                    "GIT_PUSH_OPTION_0",
+                    "GIT_PUSH_OPTION_1",
+                ]
+            }
             GitHook::SendEmailValidate => {
                 vec!["GIT_SENDEMAIL_FILE_COUNTER", "GIT_SENDEMAIL_FILE_TOTAL"]
-            },
+            }
             GitHook::FSMonitorWatchman => {
                 vec!["GIT_WORK_TREE"]
-            },
+            }
             _ => vec![],
         }
     }
@@ -172,13 +175,13 @@ impl HookContext {
 
         let hook_name = &args[0];
         let hook_args = args[1..].to_vec();
-        
+
         let hook = GitHook::from_name(hook_name)?;
-        
+
         // Validate argument count
         let expected = hook.expected_args();
         let actual = hook_args.len();
-        
+
         match expected {
             usize::MIN..=usize::MAX => {
                 if actual != expected {
@@ -215,8 +218,8 @@ impl HookContext {
         }
 
         // Validate working directory
-        let current_dir = std::env::current_dir()
-            .map_err(|e| HookError::WorkingDirectoryError(e.to_string()))?;
+        let current_dir =
+            std::env::current_dir().map_err(|e| HookError::WorkingDirectoryError(e.to_string()))?;
 
         match self.hook.working_directory() {
             WorkingDirectory::RepositoryRoot => {
@@ -291,30 +294,27 @@ impl GitHook {
 pub enum HookError {
     #[error("No hook name provided")]
     NoHookName,
-    
+
     #[error("Unknown hook: {0}")]
     UnknownHook(String),
-    
+
     #[error("Invalid argument count for {hook}: expected {expected}, got {actual}")]
     InvalidArgCount {
         hook: String,
         expected: usize,
         actual: usize,
     },
-    
+
     #[error("Missing environment variable for {hook}: {env_var}")]
-    MissingEnvVar {
-        hook: String,
-        env_var: String,
-    },
-    
+    MissingEnvVar { hook: String, env_var: String },
+
     #[error("Invalid working directory for {hook}: expected {expected}, got {actual}")]
     InvalidWorkingDirectory {
         hook: String,
         expected: String,
         actual: String,
     },
-    
+
     #[error("Working directory error: {0}")]
     WorkingDirectoryError(String),
 }
@@ -378,7 +378,11 @@ impl Default for HookManifest {
                 },
                 HookDefinition {
                     name: "update".to_string(),
-                    args: vec!["ref_name".to_string(), "old_sha".to_string(), "new_sha".to_string()],
+                    args: vec![
+                        "ref_name".to_string(),
+                        "old_sha".to_string(),
+                        "new_sha".to_string(),
+                    ],
                     stdin: false,
                     stdin_format: None,
                     stdout_format: None,
@@ -412,9 +416,18 @@ mod tests {
 
     #[test]
     fn test_hook_from_name() {
-        assert!(matches!(GitHook::from_name("pre-commit"), Ok(GitHook::PreCommit)));
-        assert!(matches!(GitHook::from_name("commit-msg"), Ok(GitHook::CommitMsg)));
-        assert!(matches!(GitHook::from_name("unknown"), Err(HookError::UnknownHook(_))));
+        assert!(matches!(
+            GitHook::from_name("pre-commit"),
+            Ok(GitHook::PreCommit)
+        ));
+        assert!(matches!(
+            GitHook::from_name("commit-msg"),
+            Ok(GitHook::CommitMsg)
+        ));
+        assert!(matches!(
+            GitHook::from_name("unknown"),
+            Err(HookError::UnknownHook(_))
+        ));
     }
 
     #[test]
@@ -433,7 +446,13 @@ mod tests {
 
     #[test]
     fn test_working_directory() {
-        assert_eq!(GitHook::PreCommit.working_directory(), WorkingDirectory::RepositoryRoot);
-        assert_eq!(GitHook::PreReceive.working_directory(), WorkingDirectory::GitDir);
+        assert_eq!(
+            GitHook::PreCommit.working_directory(),
+            WorkingDirectory::RepositoryRoot
+        );
+        assert_eq!(
+            GitHook::PreReceive.working_directory(),
+            WorkingDirectory::GitDir
+        );
     }
 }

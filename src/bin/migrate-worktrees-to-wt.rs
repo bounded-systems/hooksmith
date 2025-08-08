@@ -1,6 +1,4 @@
-use hooksmith::{
-    get_worktree_paths, log_error, log_info, log_success, log_warning, run_git_command,
-};
+use hooksmith::{get_worktrees, log_error, log_info, log_success, log_warning, run_git_command};
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -44,11 +42,12 @@ fn migrate_worktrees() -> Result<(), Box<dyn std::error::Error>> {
     log_info("Starting worktree migration to .wt directory");
 
     let current_dir = env::current_dir()?;
-    let worktrees = get_worktree_paths()?;
+    let worktrees = get_worktrees()?;
     let mut migrated_count = 0;
     let mut skipped_count = 0;
 
     for worktree_path in worktrees {
+        let worktree_path = std::path::PathBuf::from(worktree_path);
         // Skip the main worktree
         if worktree_path == current_dir {
             log_info(&format!(

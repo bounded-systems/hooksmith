@@ -6,6 +6,8 @@ authors = ["Pushd Team"]
 description = "CLI tools for Git worktree management and safety"
 license = "MIT"
 
+[features]
+
 [workspace]
 members = [
     ".",
@@ -13,7 +15,7 @@ members = [
     "crates/components/worktree-runner",
     "crates/components/git-proxy",
     "crates/xtask",
-    "scripts/ensure-clean-main",
+    # "scripts/ensure-clean-main",  # Temporarily disabled for Docker build
                     "crates/tree",
                 "crates/files",
                 "crates/core",
@@ -85,6 +87,9 @@ jsonschema = "0.17"
 schemars = "0.8"
 reqwest = { version = "0.11", features = ["json", "blocking"] }
 
+# JSONC parsing
+jsonc-parser = "0.2"
+
 # Cryptographic hashing
 sha2 = "0.10"
 hex = "0.4"
@@ -103,6 +108,7 @@ num_cpus = "1.0"
 # Additional dependencies
 uuid = { version = "1.0", features = ["v4"] }
 hyperpolyglot = "0.1.0"
+itertools = "0.12"
 
 [[bin]]
 name = "hooksmith"
@@ -146,6 +152,9 @@ chrono.workspace = true
 jsonschema.workspace = true
 schemars.workspace = true
 
+# JSONC parsing
+jsonc-parser.workspace = true
+
 # Cryptographic hashing
 sha2.workspace = true
 
@@ -159,6 +168,7 @@ num_cpus.workspace = true
 # Additional dependencies
 uuid.workspace = true
 hyperpolyglot.workspace = true
+itertools.workspace = true
 serde_yaml.workspace = true
 reqwest.workspace = true
 
@@ -168,6 +178,15 @@ wasmtime.workspace = true
 # Internal component dependencies
 cli-core = { path = "crates/components/cli-core" }
 event-types = { path = "crates/event-types" }
+json-patch = "4.0.0"
+sonic-rs = "0.5.3"
+json_fast = "0.1.0"
+jzon = "0.12.5"
+ajson = "0.3.1"
+serde-sarif = "0.8.0"
 
 [dev-dependencies]
 tempfile = "3.0"
+
+[build-dependencies]
+serde_json = "1.0"

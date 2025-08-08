@@ -5,10 +5,11 @@
 use anyhow::Result;
 use git_proxy::{
     config::ConfigManager,
-    sync::{SyncConfig, SyncManager},
     server::CombinedServer,
+    sync::{SyncConfig, SyncManager},
     validation::ValidationEngine,
-    GitProxyConfig, GitProxyEvent, ValidationRequest, ValidationOperationType, ClientInfo, GitProtocol,
+    ClientInfo, GitProtocol, GitProxyConfig, GitProxyEvent, ValidationOperationType,
+    ValidationRequest,
 };
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -21,39 +22,45 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter("git_proxy=info")
         .init();
-    
+
     info!("🚀 Git Proxy Demo");
     info!("================");
-    
+
     // Create a demo configuration
     let config = create_demo_config();
-    
+
     // Create event channel
     let (event_sender, mut event_receiver) = mpsc::channel::<GitProxyEvent>(100);
-    
+
     // Initialize components
     let mut validation_engine = ValidationEngine::new(config.clone());
     let mut sync_manager = create_sync_manager(&config, event_sender.clone());
     let mut server = CombinedServer::new(config.clone(), event_sender.clone());
-    
+
     info!("Configuration:");
     info!("  Upstream URL: {}", config.upstream_url);
     info!("  Proxy Repo Path: {}", config.proxy_repo_path.display());
-    info!("  HTTP Server: {}:{}", config.server.http_host, config.server.http_port);
-    info!("  Validation Rules: {}", config.validation.required_patterns.len());
-    
+    info!(
+        "  HTTP Server: {}:{}",
+        config.server.http_host, config.server.http_port
+    );
+    info!(
+        "  Validation Rules: {}",
+        config.validation.required_patterns.len()
+    );
+
     // Start sync manager (in a real scenario)
     // sync_manager.initialize().await?;
-    
+
     // Start server (in a real scenario)
     // server.start().await?;
-    
+
     // Demo validation
     demo_validation(&mut validation_engine).await?;
-    
+
     // Demo sync operations
     demo_sync_operations(&mut sync_manager).await?;
-    
+
     // Event processing loop
     tokio::spawn(async move {
         while let Some(event) = event_receiver.recv().await {
@@ -62,16 +69,25 @@ async fn main() -> Result<()> {
                     info!("Received validation request: {}", request.request_id);
                 }
                 GitProxyEvent::PushRequest(request) => {
-                    info!("Received push request: {} ({} refs)", 
-                          request.request_id, request.refs.len());
+                    info!(
+                        "Received push request: {} ({} refs)",
+                        request.request_id,
+                        request.refs.len()
+                    );
                 }
                 GitProxyEvent::PullRequest(request) => {
-                    info!("Received pull request: {} ({} refs)", 
-                          request.request_id, request.refs.len());
+                    info!(
+                        "Received pull request: {} ({} refs)",
+                        request.request_id,
+                        request.refs.len()
+                    );
                 }
                 GitProxyEvent::FetchRequest(request) => {
-                    info!("Received fetch request: {} ({} refs)", 
-                          request.request_id, request.refs.len());
+                    info!(
+                        "Received fetch request: {} ({} refs)",
+                        request.request_id,
+                        request.refs.len()
+                    );
                 }
                 _ => {
                     info!("Received event: {:?}", event);
@@ -79,12 +95,12 @@ async fn main() -> Result<()> {
             }
         }
     });
-    
+
     // Simulate some operations
     simulate_git_operations(&event_sender).await?;
-    
+
     info!("✅ Demo completed successfully");
-    
+
     Ok(())
 }
 
@@ -151,7 +167,7 @@ fn create_sync_manager(
         audit_logging: true,
         max_refs: Some(1000),
     };
-    
+
     let mut sync_manager = SyncManager::new(sync_config, config.clone());
     sync_manager.set_event_sender(event_sender);
     sync_manager
@@ -160,7 +176,7 @@ fn create_sync_manager(
 async fn demo_validation(validation_engine: &mut ValidationEngine) -> Result<()> {
     info!("🧪 Demo: Validation Engine");
     info!("=========================");
-    
+
     // Create a validation request
     let request = ValidationRequest {
         request_id: "demo-validation-001".to_string(),
@@ -176,7 +192,7 @@ async fn demo_validation(validation_engine: &mut ValidationEngine) -> Result<()>
         metadata: HashMap::new(),
         timestamp: chrono::Utc::now(),
     };
-    
+
     // Validate the request
     match validation_engine.validate_operation(request).await {
         Ok(result) => {
@@ -191,7 +207,7 @@ async fn demo_validation(validation_engine: &mut ValidationEngine) -> Result<()>
             warn!("❌ Validation error: {}", e);
         }
     }
-    
+
     info!("");
     Ok(())
 }
@@ -199,7 +215,7 @@ async fn demo_validation(validation_engine: &mut ValidationEngine) -> Result<()>
 async fn demo_sync_operations(sync_manager: &mut SyncManager) -> Result<()> {
     info!("🔄 Demo: Sync Operations");
     info!("=======================");
-    
+
     // Get sync status
     let status = sync_manager.get_sync_status();
     info!("Sync Status:");
@@ -207,11 +223,11 @@ async fn demo_sync_operations(sync_manager: &mut SyncManager) -> Result<()> {
     info!("  Interval: {} seconds", status.sync_interval_seconds);
     info!("  Total Refs: {}", status.total_refs);
     info!("  Repository: {}", status.repository_url);
-    
+
     // In a real scenario, you would call:
     // let sync_result = sync_manager.force_sync().await?;
     // info!("Force sync result: {:?}", sync_result);
-    
+
     info!("");
     Ok(())
 }
@@ -219,7 +235,7 @@ async fn demo_sync_operations(sync_manager: &mut SyncManager) -> Result<()> {
 async fn simulate_git_operations(event_sender: &mpsc::Sender<GitProxyEvent>) -> Result<()> {
     info!("📝 Demo: Simulating Git Operations");
     info!("=================================");
-    
+
     // Simulate a push request
     let push_request = git_proxy::GitPushRequest {
         request_id: "demo-push-001".to_string(),
@@ -234,11 +250,14 @@ async fn simulate_git_operations(event_sender: &mpsc::Sender<GitProxyEvent>) -> 
         metadata: HashMap::new(),
         timestamp: chrono::Utc::now(),
     };
-    
-    if let Err(e) = event_sender.send(GitProxyEvent::PushRequest(push_request)).await {
+
+    if let Err(e) = event_sender
+        .send(GitProxyEvent::PushRequest(push_request))
+        .await
+    {
         warn!("Failed to send push request: {}", e);
     }
-    
+
     // Simulate a pull request
     let pull_request = git_proxy::GitPullRequest {
         request_id: "demo-pull-001".to_string(),
@@ -252,11 +271,14 @@ async fn simulate_git_operations(event_sender: &mpsc::Sender<GitProxyEvent>) -> 
         metadata: HashMap::new(),
         timestamp: chrono::Utc::now(),
     };
-    
-    if let Err(e) = event_sender.send(GitProxyEvent::PullRequest(pull_request)).await {
+
+    if let Err(e) = event_sender
+        .send(GitProxyEvent::PullRequest(pull_request))
+        .await
+    {
         warn!("Failed to send pull request: {}", e);
     }
-    
+
     // Simulate a fetch request
     let fetch_request = git_proxy::GitFetchRequest {
         request_id: "demo-fetch-001".to_string(),
@@ -270,13 +292,16 @@ async fn simulate_git_operations(event_sender: &mpsc::Sender<GitProxyEvent>) -> 
         metadata: HashMap::new(),
         timestamp: chrono::Utc::now(),
     };
-    
-    if let Err(e) = event_sender.send(GitProxyEvent::FetchRequest(fetch_request)).await {
+
+    if let Err(e) = event_sender
+        .send(GitProxyEvent::FetchRequest(fetch_request))
+        .await
+    {
         warn!("Failed to send fetch request: {}", e);
     }
-    
+
     info!("✅ Simulated Git operations sent");
     info!("");
-    
+
     Ok(())
 }

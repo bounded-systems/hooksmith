@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use dircheck_core::git_snapshot::{GitSnapshotCollector, format_snapshot_line_based};
+use dircheck_core::git_snapshot::{format_snapshot_line_based, GitSnapshotCollector};
 use std::fs;
 use std::path::Path;
 
@@ -101,7 +101,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("  Config    - Git configuration entries");
             println!("  Unreachable - Unreachable Git objects");
         }
-        Commands::Stats { include_unreachable } => {
+        Commands::Stats {
+            include_unreachable,
+        } => {
             println!("📊 Collecting Git snapshot statistics...");
             if include_unreachable {
                 println!("📦 Including unreachable objects...");

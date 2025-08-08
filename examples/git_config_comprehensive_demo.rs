@@ -1,5 +1,5 @@
 //! Comprehensive Git Configuration Demo
-//! 
+//!
 //! This example demonstrates the complete Git configuration system including:
 //! - Tracked Git config files (.gitattributes, .gitignore, .gitmodules, .mailmap)
 //! - Git hooks with Rust binaries and Git aliases
@@ -14,33 +14,37 @@ use std::path::Path;
 fn run_comprehensive_demo() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚀 Comprehensive Git Configuration Demo");
     println!("=====================================");
-    
+
     // 1. Tracked Git Configuration Files
     println!("\n📁 1. Tracked Git Configuration Files");
     println!("=====================================");
-    
+
     let tracked_configs = vec![
-        (".gitattributes", "File behavior: diff, merge, binary, eol", "line-based"),
+        (
+            ".gitattributes",
+            "File behavior: diff, merge, binary, eol",
+            "line-based",
+        ),
         (".gitignore", "Ignore untracked files", "glob"),
         (".gitmodules", "Submodule configuration", "ini"),
         (".mailmap", "Canonical author mapping", "line-based"),
     ];
-    
+
     for (file, purpose, format) in tracked_configs {
         println!("• {}: {} ({})", file, purpose, format);
     }
-    
+
     // 2. Git Hooks with Rust Binaries
     println!("\n🔗 2. Git Hooks with Rust Binaries");
     println!("===================================");
-    
+
     let hooks = vec![
         ("pre-commit", "Run linting and tests before commit"),
         ("commit-msg", "Validate commit message format"),
         ("pre-push", "Run security checks before push"),
         ("post-merge", "Update dependencies after merge"),
     ];
-    
+
     for (hook, description) in hooks {
         println!("• {}: {}", hook, description);
         println!("  Binary: hook-{}", hook.replace('-', "_"));
@@ -48,19 +52,35 @@ fn run_comprehensive_demo() -> Result<(), Box<dyn std::error::Error>> {
         println!("  Stub: exec git hook-{}\"$@\"", hook);
         println!();
     }
-    
+
     // 3. Git Configuration Categories
     println!("\n⚙️ 3. Git Configuration Categories");
     println!("=================================");
-    
+
     let config_categories = vec![
-        ("Identity", "User identity and commit behavior", vec!["user", "commit", "gpg"]),
-        ("Remote", "Remotes, branches, and syncing", vec!["remote", "branch", "push", "pull"]),
-        ("Behavior", "Behavior customization and safety", vec!["core", "merge", "rebase", "diff"]),
+        (
+            "Identity",
+            "User identity and commit behavior",
+            vec!["user", "commit", "gpg"],
+        ),
+        (
+            "Remote",
+            "Remotes, branches, and syncing",
+            vec!["remote", "branch", "push", "pull"],
+        ),
+        (
+            "Behavior",
+            "Behavior customization and safety",
+            vec!["core", "merge", "rebase", "diff"],
+        ),
         ("Alias", "Aliases and custom commands", vec!["alias"]),
-        ("Tooling", "Tooling integration and custom sections", vec!["vscode", "github", "xtask"]),
+        (
+            "Tooling",
+            "Tooling integration and custom sections",
+            vec!["vscode", "github", "xtask"],
+        ),
     ];
-    
+
     for (category, description, sections) in config_categories {
         println!("• {}: {}", category, description);
         for section in sections {
@@ -68,41 +88,49 @@ fn run_comprehensive_demo() -> Result<(), Box<dyn std::error::Error>> {
         }
         println!();
     }
-    
+
     // 4. includeIf Conditional Configuration
     println!("\n🔀 4. includeIf Conditional Configuration");
     println!("=======================================");
-    
+
     let include_if_examples = vec![
         ("gitdir:~/work/", "Work repositories", "~/.gitconfig-work"),
-        ("gitdir:~/personal/", "Personal repositories", "~/.gitconfig-personal"),
-        ("gitdir:~/repos/**/", "All repositories in repos/", "~/.gitconfig-default"),
+        (
+            "gitdir:~/personal/",
+            "Personal repositories",
+            "~/.gitconfig-personal",
+        ),
+        (
+            "gitdir:~/repos/**/",
+            "All repositories in repos/",
+            "~/.gitconfig-default",
+        ),
     ];
-    
+
     for (condition, description, path) in include_if_examples {
         println!("• {}: {} → {}", condition, description, path);
     }
-    
+
     // 5. Generate Example Files
     println!("\n📝 5. Generating Example Files");
     println!("=============================");
-    
+
     generate_example_files()?;
-    
+
     // 6. Show JSONC Manifest
     println!("\n📋 6. JSONC Manifest Example");
     println!("============================");
-    
+
     let manifest = generate_jsonc_manifest();
     println!("{}", manifest);
-    
+
     println!("\n✅ Comprehensive demo completed successfully!");
     println!("\nTo use this system:");
     println!("1. cargo xtask git-tracked-config scan");
     println!("2. cargo xtask git-hooks install");
     println!("3. cargo xtask git-config convert");
     println!("4. cargo xtask git-attributes convert");
-    
+
     Ok(())
 }
 
@@ -110,7 +138,7 @@ fn run_comprehensive_demo() -> Result<(), Box<dyn std::error::Error>> {
 fn generate_example_files() -> Result<(), Box<dyn std::error::Error>> {
     // Create examples directory
     fs::create_dir_all("examples/git-config")?;
-    
+
     // 1. .gitattributes example
     let gitattributes = r#"# Git Attributes Example
 # 
@@ -145,7 +173,7 @@ secret.key export-ignore
 docs/** linguist-documentation
 "#;
     fs::write("examples/git-config/.gitattributes", gitattributes)?;
-    
+
     // 2. .gitignore example
     let gitignore = r#"# Git Ignore Example
 # 
@@ -198,7 +226,7 @@ tmp/
 generated/
 "#;
     fs::write("examples/git-config/.gitignore", gitignore)?;
-    
+
     // 3. .gitmodules example
     let gitmodules = r#"# Git Submodules Example
 # 
@@ -217,7 +245,7 @@ generated/
 #   branch = master
 "#;
     fs::write("examples/git-config/.gitmodules", gitmodules)?;
-    
+
     // 4. .mailmap example
     let mailmap = r#"# Mailmap Example
 # 
@@ -234,7 +262,7 @@ generated/
 # alice@company.com Alice Johnson alice@personal.com Alice
 "#;
     fs::write("examples/git-config/.mailmap", mailmap)?;
-    
+
     // 5. Git config example
     let git_config = r#"[user]
 	name = Robert DeLanghe
@@ -277,7 +305,7 @@ generated/
 	pr-number = 42
 "#;
     fs::write("examples/git-config/.git-config", git_config)?;
-    
+
     // 6. includeIf example
     let include_if = r#"# Global Git Config with includeIf
 # 
@@ -309,7 +337,7 @@ generated/
 	path = ~/.gitconfig-default
 "#;
     fs::write("examples/git-config/.gitconfig-global", include_if)?;
-    
+
     println!("✅ Example files generated in examples/git-config/");
     Ok(())
 }
@@ -504,7 +532,8 @@ fn generate_jsonc_manifest() -> String {
       "description": "Personal repositories"
     }
   ]
-}"#.to_string()
+}"#
+    .to_string()
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

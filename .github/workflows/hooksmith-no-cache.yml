@@ -1,0 +1,76 @@
+name: Hooksmith (No Cache)
+
+# Environment variable to control whether validation is enabled
+env:
+  ENABLE_HOOKSMITH_VALIDATION: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+on:
+  # Core events
+  push:
+  pull_request:
+  workflow_dispatch:
+  
+  # Repository events
+  create:
+  delete:
+  fork:
+  gollum:
+  page_build:
+  public:
+  watch:
+  
+  # Issue and PR events
+  issues:
+  issue_comment:
+  pull_request_review:
+  pull_request_review_comment:
+  
+  # Release and deployment events
+  release:
+  deployment:
+  deployment_status:
+  
+  # Check and status events
+  check_suite:
+  check_run:
+  status:
+  
+  # Discussion events
+  discussion:
+  discussion_comment:
+  
+  # Label and milestone events
+  label:
+  milestone:
+  
+  # Schedule and dispatch events
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  repository_dispatch:
+  
+  # Package and protection events
+  registry_package:
+  branch_protection_rule:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Build Hooksmith
+        run: cargo build --release
+      
+      - name: Run Hooksmith Dispatch
+        run: ./target/release/hooksmith-dispatch

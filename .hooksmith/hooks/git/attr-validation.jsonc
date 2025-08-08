@@ -1,0 +1,14 @@
+{
+  "name": "attr-validation",
+  "scope": "git",
+  "concerns": [
+    "attr-line-ending-normalization",
+    "attr-diff-strategy",
+    "attr-merge-strategy",
+    "attr-export-control",
+    "attr-filter-driver",
+    "attr-external-tool-hint",
+    "attr-locking-hint"
+  ],
+  "bin": "hooksmith-validate-tree"
+}
