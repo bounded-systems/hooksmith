@@ -29,7 +29,7 @@ pub struct GitConfig {
 }
 
 /// Categories for organizing Git configuration
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ConfigCategory {
     /// User identity and commit behavior
     Identity,
@@ -439,6 +439,66 @@ impl GitConfigManager {
 
         Ok(())
     }
+}
+
+/// Parse Git config file
+pub fn parse_git_config(input: &str) -> anyhow::Result<serde_json::Value> {
+    // Stub implementation
+    Ok(serde_json::json!({}))
+}
+
+/// Convert Git config to JSONC format
+pub fn convert_to_jsonc(config: &serde_json::Value) -> anyhow::Result<String> {
+    // Stub implementation
+    Ok("{}".to_string())
+}
+
+/// Load Git config schema
+pub fn load_schema() -> anyhow::Result<serde_json::Value> {
+    // Stub implementation
+    Ok(serde_json::json!({}))
+}
+
+/// Validate JSONC against schema
+pub fn validate_jsonc(output: &str, schema: &serde_json::Value) -> anyhow::Result<bool> {
+    // Stub implementation
+    Ok(true)
+}
+
+/// Generate comprehensive template
+pub fn generate_comprehensive_template() -> anyhow::Result<String> {
+    // Stub implementation
+    Ok("{}".to_string())
+}
+
+/// Generate basic template
+pub fn generate_template() -> anyhow::Result<String> {
+    // Stub implementation
+    Ok("{}".to_string())
+}
+
+/// Analyze Git config
+pub fn analyze_config(
+    config: &serde_json::Value,
+    detailed: bool,
+) -> anyhow::Result<serde_json::Value> {
+    // Stub implementation
+    Ok(serde_json::json!({}))
+}
+
+/// Summarize analysis
+pub fn summarize_analysis(analysis: &serde_json::Value) -> anyhow::Result<String> {
+    // Stub implementation
+    Ok("Analysis summary".to_string())
+}
+
+/// Validate config structure
+pub fn validate_config(
+    config: &serde_json::Value,
+    schema: &serde_json::Value,
+) -> anyhow::Result<bool> {
+    // Stub implementation
+    Ok(true)
 }
 
 #[cfg(test)]

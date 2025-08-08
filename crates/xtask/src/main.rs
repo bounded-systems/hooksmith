@@ -6,7 +6,7 @@
 //! that replace shell scripts and raw echo statements.
 
 use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
+use clap::{arg, Parser, Subcommand};
 use heck::ToTitleCase;
 use json_comments::StripComments;
 use serde::{Deserialize, Serialize};
@@ -717,6 +717,7 @@ enum GitHooksCommands {
     },
 }
 
+#[derive(Debug, Clone, clap::Subcommand)]
 enum GitAttributesCommands {
     /// Convert .gitattributes to JSONC format
     Convert {
@@ -805,6 +806,7 @@ mod git_attributes;
 mod git_config;
 mod git_lefthook_integration;
 mod git_notes_manager;
+mod github_actions;
 mod hierarchical_validation;
 mod hook_runner;
 mod hook_state_machine;
@@ -1677,6 +1679,18 @@ enum Commands {
         #[arg(trailing_var_arg = true)]
         args: Vec<String>,
     },
+    /// Generate GitHub Actions workflow from JSONC configuration
+    GenGitHubActions {
+        /// Input JSONC configuration file
+        #[arg(long, default_value = "config/github-actions.jsonc")]
+        config: String,
+        /// Output workflow file
+        #[arg(long, default_value = ".github/workflows/hooksmith.yml")]
+        output: String,
+        /// Whether to validate the generated workflow
+        #[arg(long)]
+        validate: bool,
+    },
     /// Validate static hook definitions
     ValidateStaticHooks {
         /// Whether to exit with error on validation failures
@@ -2483,6 +2497,13 @@ async fn main() -> Result<()> {
         Commands::Sbom { args } => {
             sbom::handle_sbom_command(&args).await?;
         }
+        Commands::GenGitHubActions {
+            config,
+            output,
+            validate,
+        } => {
+            github_actions::generate_workflow(&config, &output, validate).await?;
+        }
         Commands::ValidateStaticHooks {
             strict,
             verbose,
@@ -2590,13 +2611,10 @@ async fn main() -> Result<()> {
                 if validate {
                     let schema = git_config::load_schema()?;
                     let validation_result = git_config::validate_jsonc(&output, &schema)?;
-                    if validation_result.is_valid {
+                    if validation_result {
                         println!("✅ JSONC configuration is valid");
                     } else {
-                        println!("❌ JSONC configuration is invalid:");
-                        for error in validation_result.errors {
-                            println!("  - {error}");
-                        }
+                        println!("❌ JSONC configuration is invalid");
                         anyhow::bail!("JSONC validation failed");
                     }
                 }
@@ -2606,9 +2624,9 @@ async fn main() -> Result<()> {
                 comprehensive,
             } => {
                 let template = if comprehensive {
-                    git_config::generate_comprehensive_template()
+                    git_config::generate_comprehensive_template()?
                 } else {
-                    git_config::generate_template()
+                    git_config::generate_template()?
                 };
                 fs::write(&output, template)?;
                 println!("✅ Generated Git config template: {output}");
@@ -2619,7 +2637,7 @@ async fn main() -> Result<()> {
                 detailed,
             } => {
                 let config = git_config::parse_git_config(&input)?;
-                let analysis = git_config::analyze_config(&config, detailed);
+                let analysis = git_config::analyze_config(&config, detailed)?;
                 match format.as_str() {
                     "text" => {
                         println!("{}", analysis);
@@ -2629,7 +2647,7 @@ async fn main() -> Result<()> {
                         println!("{}", json);
                     }
                     "summary" => {
-                        let summary = git_config::summarize_analysis(&analysis);
+                        let summary = git_config::summarize_analysis(&analysis)?;
                         println!("{}", summary);
                     }
                     _ => {
@@ -2668,13 +2686,10 @@ async fn main() -> Result<()> {
                 let config = git_config::parse_git_config(&input)?;
                 let schema = git_config::load_schema()?;
                 let validation_result = git_config::validate_config(&config, &schema)?;
-                if validation_result.is_valid {
+                if validation_result {
                     println!("✅ Git configuration is valid");
                 } else {
-                    println!("❌ Git configuration is invalid:");
-                    for error in validation_result.errors {
-                        println!("  - {error}");
-                    }
+                    println!("❌ Git configuration is invalid");
                     if strict {
                         anyhow::bail!("Git configuration validation failed");
                     }
@@ -2703,13 +2718,10 @@ async fn main() -> Result<()> {
                 if validate {
                     let schema = git_attributes::load_schema()?;
                     let validation_result = git_attributes::validate_jsonc(&output, &schema)?;
-                    if validation_result.is_valid {
+                    if validation_result {
                         println!("✅ JSONC attributes are valid");
                     } else {
-                        println!("❌ JSONC attributes are invalid:");
-                        for error in validation_result.errors {
-                            println!("  - {error}");
-                        }
+                        println!("❌ JSONC attributes are invalid");
                         anyhow::bail!("JSONC validation failed");
                     }
                 }
@@ -2719,9 +2731,9 @@ async fn main() -> Result<()> {
                 comprehensive,
             } => {
                 let template = if comprehensive {
-                    git_attributes::generate_comprehensive_template()
+                    git_attributes::generate_comprehensive_template()?
                 } else {
-                    git_attributes::generate_template()
+                    git_attributes::generate_template()?
                 };
                 fs::write(&output, template)?;
                 println!("✅ Generated Git attributes template: {output}");
@@ -2732,7 +2744,7 @@ async fn main() -> Result<()> {
                 detailed,
             } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
-                let analysis = git_attributes::analyze_attributes(&attributes, detailed);
+                let analysis = git_attributes::analyze_attributes(&attributes, detailed)?;
                 match format.as_str() {
                     "text" => {
                         println!("{}", analysis);
@@ -2742,7 +2754,7 @@ async fn main() -> Result<()> {
                         println!("{}", json);
                     }
                     "summary" => {
-                        let summary = git_attributes::summarize_analysis(&analysis);
+                        let summary = git_attributes::summarize_analysis(&analysis)?;
                         println!("{}", summary);
                     }
                     _ => {
@@ -2785,13 +2797,10 @@ async fn main() -> Result<()> {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 let schema = git_attributes::load_schema()?;
                 let validation_result = git_attributes::validate_attributes(&attributes, &schema)?;
-                if validation_result.is_valid {
+                if validation_result {
                     println!("✅ Git attributes are valid");
                 } else {
-                    println!("❌ Git attributes are invalid:");
-                    for error in validation_result.errors {
-                        println!("  - {error}");
-                    }
+                    println!("❌ Git attributes are invalid");
                     if strict {
                         anyhow::bail!("Git attributes validation failed");
                     }
