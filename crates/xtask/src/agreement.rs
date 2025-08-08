@@ -164,17 +164,17 @@ impl AgreementManager {
     /// Validate an agreement (check if contract exists in scope)
     pub fn validate_agreement(&self, scope: &str) -> Result<bool> {
         if let Some(metadata) = self.get_agreement(scope)? {
-            // Check if the contract blob exists
-            let _contract_blob = self.repo.find_blob(git2::Oid::from_str(&metadata.agreement.contract)?)?;
-            
             // Get current HEAD tree SHA for comparison
             let current_head_tree = std::process::Command::new("git")
                 .args(&["rev-parse", "HEAD^{tree}"])
                 .output()?;
             let current_head_tree_sha = String::from_utf8_lossy(&current_head_tree.stdout).trim().to_string();
             
+            // Check if the contract blob exists in current HEAD
+            let contract_exists = self.validate_contract_exists(&metadata.agreement.contract)?;
+
             // Determine validation strategy based on agreement configuration
-            let is_valid = if metadata.agreement.anchored {
+            let scope_valid = if metadata.agreement.anchored {
                 // Path-based validation: check if the path still exists in current HEAD
                 if let Some(path) = &metadata.agreement.path {
                     self.validate_path_exists(path)?
@@ -187,6 +187,9 @@ impl AgreementManager {
                 self.validate_tree_exists(&metadata.agreement.scope)?
             };
             
+            // Overall validation: both scope and contract must be valid
+            let is_valid = scope_valid && contract_exists;
+
             if is_valid {
                 println!("✅ Agreement is valid");
                 if metadata.agreement.anchored {
@@ -196,14 +199,20 @@ impl AgreementManager {
                 } else {
                     println!("   Tree scope '{}' exists in current HEAD", metadata.agreement.scope);
                 }
+                println!("   Contract '{}' exists in current HEAD", metadata.agreement.contract);
             } else {
                 println!("❌ Agreement is invalid");
-                if metadata.agreement.anchored {
-                    if let Some(path) = &metadata.agreement.path {
-                        println!("   Path '{}' no longer exists in current HEAD", path);
+                if !scope_valid {
+                    if metadata.agreement.anchored {
+                        if let Some(path) = &metadata.agreement.path {
+                            println!("   Path '{}' no longer exists in current HEAD", path);
+                        }
+                    } else {
+                        println!("   Tree scope '{}' no longer exists in current HEAD", metadata.agreement.scope);
                     }
-                } else {
-                    println!("   Tree scope '{}' no longer exists in current HEAD", metadata.agreement.scope);
+                }
+                if !contract_exists {
+                    println!("   Contract '{}' no longer exists in current HEAD", metadata.agreement.contract);
                 }
                 println!("   Current HEAD tree: {}", current_head_tree_sha);
             }
@@ -247,6 +256,21 @@ impl AgreementManager {
             .any(|line| {
                 let parts: Vec<&str> = line.split_whitespace().collect();
                 parts.len() >= 3 && parts[1] == "tree" && parts[2] == tree_sha
+            }))
+    }
+
+    /// Validate if a contract blob exists in current HEAD
+    fn validate_contract_exists(&self, contract_sha: &str) -> Result<bool> {
+        // Check if the contract blob exists in current HEAD
+        let output = std::process::Command::new("git")
+            .args(&["ls-tree", "-r", "HEAD"])
+            .output()?;
+        let tree_output = String::from_utf8_lossy(&output.stdout);
+
+        Ok(tree_output.lines()
+            .any(|line| {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                parts.len() >= 3 && parts[1] == "blob" && parts[2] == contract_sha
             }))
     }
 
