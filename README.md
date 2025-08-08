@@ -43,6 +43,9 @@ cargo run --bin crate_granularity_analyzer
 
 # Analyze crate stability for extraction readiness
 cargo run --bin crate_stability_analyzer
+
+# Analyze repository size and health
+cargo run --bin repository_size_auditor
 ```
 
 ## 📊 Analysis Tools
@@ -356,6 +359,40 @@ cargo run --bin crate_stability_analyzer
     • Focus on API stability
     • Reduce change velocity
     • Build usage and coupling
+```
+
+### 📏 Repository Size Auditor (`repository_size_auditor`)
+**Purpose**: Analyze repository size and health, enforcing ideal thresholds for Git performance, CI/CD efficiency, and Hooksmith contract system health.
+
+**Features**:
+- **Size Thresholds**: Enforces ideal limits for .git directory, working directory, file count, and crate count
+- **Health Scoring**: Calculates overall repository health based on multiple metrics
+- **Split Candidates**: Identifies large crates or directories that could be extracted
+- **Optimization Planning**: Provides phased approach for repository size optimization
+- **Performance Monitoring**: Tracks metrics that affect Git, CI/CD, and IDE performance
+
+**Example Output**:
+```
+📏 Repository Size Audit
+=========================
+
+📊 Repository Metrics:
+  • Git directory size: 0.0 MB
+  • Working directory size: 2764.8 MB
+  • Total tracked files: 1073
+  • Crate count: 22
+
+🎯 Size Thresholds:
+  🟢 Git Directory Size: 0.0 MB (threshold: 300.0 MB)
+  🔴 Working Directory Size: 2764.8 MB (threshold: 200.0 MB)
+
+📈 Health Score:
+  • Overall health: 78.3%
+  • Critical thresholds: 1
+
+🔧 Optimization Plan:
+  Phase 1 - Critical Issues (Immediate):
+    • Consider splitting large files or using Git LFS
 ```
 
 ## 🎯 Key Concepts

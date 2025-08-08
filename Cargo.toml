@@ -198,6 +198,10 @@ path = "scripts/crate_stability_analyzer.rs"
 name = "repository_size_auditor"
 path = "scripts/repository_size_auditor.rs"
 
+[[bin]]
+name = "git_history_rewriter"
+path = "scripts/git_history_rewriter.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
