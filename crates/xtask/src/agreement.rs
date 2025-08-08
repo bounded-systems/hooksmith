@@ -21,6 +21,12 @@ pub struct Agreement {
     pub scope: String,
     /// Blob SHA - the contract that defines expectations or validation
     pub contract: String,
+    /// Optional path that this agreement applies to (for path-based validation)
+    #[serde(default)]
+    pub path: Option<String>,
+    /// Whether this agreement is anchored to a specific path (immutable validation)
+    #[serde(default)]
+    pub anchored: bool,
 }
 
 /// Agreement status
