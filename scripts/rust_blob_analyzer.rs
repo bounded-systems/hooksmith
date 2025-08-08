@@ -166,7 +166,7 @@ fn analyze_rust_modules(rust_files: &[RustBlobInfo]) -> Vec<RustModuleAnalysis> 
             .max_by_key(|f| f.blob_size)
             .unwrap();
         
-        let optimization_opportunities = generate_module_optimizations(&module_path, files);
+        let optimization_opportunities = generate_module_optimizations(&module_path, &files);
         
         modules.push(RustModuleAnalysis {
             module_path,
@@ -195,7 +195,7 @@ fn get_module_path(file_path: &str) -> String {
     "root".to_string()
 }
 
-fn generate_module_optimizations(module_path: &str, files: &[&RustBlobInfo]) -> Vec<String> {
+fn generate_module_optimizations(_module_path: &str, files: &[&RustBlobInfo]) -> Vec<String> {
     let mut opportunities = Vec::new();
     
     let total_size: u64 = files.iter().map(|f| f.blob_size).sum();
@@ -351,7 +351,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let modules = analyze_rust_modules(&rust_files);
     
     // Generate comprehensive report
-    let analysis = generate_rust_blob_report(&rust_files, &modules);
+    let _analysis = generate_rust_blob_report(&rust_files, &modules);
     
     println!("\n✅ Analysis complete!");
     println!("🦀 Rust blob sizes analyzed");

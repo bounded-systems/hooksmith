@@ -81,7 +81,7 @@ fn calculate_similarity_score(path: &str, blob_size: u64) -> f64 {
     let path_lower = path.to_lowercase();
     
     // Heuristic scoring based on file characteristics
-    let mut score = 0.0;
+    let mut score: f64 = 0.0;
     
     // File extension similarity
     if path_lower.ends_with(".rs") {
@@ -132,7 +132,7 @@ fn find_delta_groups(candidates: &[DeltaCandidate]) -> Vec<DeltaGroup> {
         extension_groups.entry(key).or_insert_with(Vec::new).push(candidate);
     }
     
-    for (group_key, files) in extension_groups {
+    for (_group_key, files) in extension_groups {
         if files.len() < 2 {
             continue; // Need at least 2 files for delta compression
         }
@@ -200,11 +200,11 @@ fn get_file_extension(path: &str) -> String {
 
 fn get_size_category(size: u64) -> String {
     match size {
-        0..=1024 => "tiny",
-        1025..=10240 => "small",
-        10241..=102400 => "medium",
-        102401..=1024000 => "large",
-        _ => "huge",
+        0..=1024 => "tiny".to_string(),
+        1025..=10240 => "small".to_string(),
+        10241..=102400 => "medium".to_string(),
+        102401..=1024000 => "large".to_string(),
+        _ => "huge".to_string(),
     }
 }
 

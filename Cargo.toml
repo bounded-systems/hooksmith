@@ -158,6 +158,14 @@ path = "scripts/modularization_analyzer.rs"
 name = "rust_blob_analyzer"
 path = "scripts/rust_blob_analyzer.rs"
 
+[[bin]]
+name = "git_delta_analyzer"
+path = "scripts/git_delta_analyzer.rs"
+
+[[bin]]
+name = "git_hygiene_reporter"
+path = "scripts/git_hygiene_reporter.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
