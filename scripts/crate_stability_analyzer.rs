@@ -18,7 +18,7 @@ struct CrateStabilityInfo {
     extraction_recommendations: Vec<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 enum ExtractionReadiness {
     Ready,
     NeedsStabilization,
@@ -356,9 +356,9 @@ fn generate_stabilization_plan(crates: &[CrateStabilityInfo]) -> Vec<String> {
     
     if !needs_stabilization.is_empty() {
         plan.push("Phase 1 - Stabilize APIs:".to_string());
-        for crate in needs_stabilization {
-            plan.push(format!("  • {}: Reduce change velocity ({:.1})", crate.crate_name, crate.change_velocity));
-            plan.push(format!("    Improve API stability ({:.1})", crate.api_stability_score));
+        for crate_analysis in needs_stabilization {
+            plan.push(format!("  • {}: Reduce change velocity ({:.1})", crate_analysis.crate_name, crate_analysis.change_velocity));
+            plan.push(format!("    Improve API stability ({:.1})", crate_analysis.api_stability_score));
         }
     }
     
@@ -368,9 +368,9 @@ fn generate_stabilization_plan(crates: &[CrateStabilityInfo]) -> Vec<String> {
     
     if !too_volatile.is_empty() {
         plan.push("Phase 2 - Reduce Volatility:".to_string());
-        for crate in too_volatile {
-            plan.push(format!("  • {}: High change velocity ({:.1})", crate.crate_name, crate.change_velocity));
-            plan.push(format!("    Focus on API stability ({:.1})", crate.api_stability_score));
+        for crate_analysis in too_volatile {
+            plan.push(format!("  • {}: High change velocity ({:.1})", crate_analysis.crate_name, crate_analysis.change_velocity));
+            plan.push(format!("    Focus on API stability ({:.1})", crate_analysis.api_stability_score));
         }
     }
     
@@ -391,9 +391,9 @@ fn generate_external_repo_strategy(crates: &[CrateStabilityInfo]) -> Vec<String>
     
     if !ready_crates.is_empty() {
         strategy.push("Immediate Extraction Candidates:".to_string());
-        for crate in ready_crates {
-            strategy.push(format!("  • {} → hooksmith-{}", crate.crate_name, crate.crate_name));
-            strategy.push(format!("    Commits: {} | Dependents: {}", crate.git_commits, crate.dependent_crates.len()));
+        for crate_analysis in ready_crates {
+            strategy.push(format!("  • {} → hooksmith-{}", crate_analysis.crate_name, crate_analysis.crate_name));
+            strategy.push(format!("    Commits: {} | Dependents: {}", crate_analysis.git_commits, crate_analysis.dependent_crates.len()));
         }
     }
     
@@ -435,8 +435,8 @@ fn generate_crate_stability_report(analysis: &CrateStabilityAnalysis) {
     
     // Show crate analysis
     println!("\n📊 Crate Stability Overview:");
-    for crate in &analysis.crates {
-        let readiness_icon = match crate.extraction_readiness {
+    for crate_analysis in &analysis.crates {
+        let readiness_icon = match crate_analysis.extraction_readiness {
             ExtractionReadiness::Ready => "🟢",
             ExtractionReadiness::NeedsStabilization => "🟡",
             ExtractionReadiness::TooVolatile => "🔴",
@@ -444,19 +444,19 @@ fn generate_crate_stability_report(analysis: &CrateStabilityAnalysis) {
         };
         
         println!("  {} {} ({} commits, {:.1} velocity, {:.1} API stability)", 
-            readiness_icon, crate.crate_name, crate.git_commits, 
-            crate.change_velocity, crate.api_stability_score);
+            readiness_icon, crate_analysis.crate_name, crate_analysis.git_commits, 
+            crate_analysis.change_velocity, crate_analysis.api_stability_score);
         
-        if !crate.dependent_crates.is_empty() {
-            println!("    Dependents: {}", crate.dependent_crates.join(", "));
+        if !crate_analysis.dependent_crates.is_empty() {
+            println!("    Dependents: {}", crate_analysis.dependent_crates.join(", "));
         }
         
-        if !crate.stability_issues.is_empty() {
-            println!("    Issues: {}", crate.stability_issues.join(", "));
+        if !crate_analysis.stability_issues.is_empty() {
+            println!("    Issues: {}", crate_analysis.stability_issues.join(", "));
         }
         
-        if !crate.extraction_recommendations.is_empty() {
-            println!("    Recommendations: {}", crate.extraction_recommendations.join(", "));
+        if !crate_analysis.extraction_recommendations.is_empty() {
+            println!("    Recommendations: {}", crate_analysis.extraction_recommendations.join(", "));
         }
         println!();
     }
