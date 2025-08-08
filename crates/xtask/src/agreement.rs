@@ -1431,7 +1431,7 @@ impl AgreementCLI {
                 // Find the actual worktree directory
                 let worktree_dir = worktree_dirs.iter()
                     .find(|dir| {
-                        dir.contains(short_scope) || 
+                        dir.contains(short_scope) ||
                         dir.contains(&metadata.agreement.scope) ||
                         dir.contains(&format!("~{}", short_scope))
                     })
@@ -1614,6 +1614,8 @@ pub enum AgreementCommands {
     },
     /// Audit all agreements for trust decay
     Audit,
+    /// List local agreements (agreements with worktrees)
+    Local,
 }
 
 /// Run agreement management command
@@ -1710,6 +1712,9 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
         }
         AgreementCommands::Audit => {
             cli.audit()?;
+        }
+        AgreementCommands::Local => {
+            cli.list_local()?;
         }
     }
 
