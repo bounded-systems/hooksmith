@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+// use std::collections::HashMap;
 use std::process::Command;
 use std::str::FromStr;
 
@@ -354,7 +354,7 @@ fn generate_hygiene_report() -> Result<HygieneReport, Box<dyn std::error::Error>
         let total_savings = 0; // Will calculate if needed
         categories.push(HygieneCategory {
             name: "Files to Ignore".to_string(),
-            issues: ignore_issues,
+            issues: ignore_issues.clone(),
             total_savings,
             priority: "High".to_string(),
         });
@@ -366,7 +366,7 @@ fn generate_hygiene_report() -> Result<HygieneReport, Box<dyn std::error::Error>
             .sum();
         categories.push(HygieneCategory {
             name: "Large Files for LFS".to_string(),
-            issues: lfs_issues,
+            issues: lfs_issues.clone(),
             total_savings,
             priority: "Medium".to_string(),
         });
@@ -375,7 +375,7 @@ fn generate_hygiene_report() -> Result<HygieneReport, Box<dyn std::error::Error>
     if !gitattributes_issues.is_empty() {
         categories.push(HygieneCategory {
             name: "Git Attributes".to_string(),
-            issues: gitattributes_issues,
+            issues: gitattributes_issues.clone(),
             total_savings: 0,
             priority: "Low".to_string(),
         });
@@ -463,7 +463,7 @@ fn generate_hygiene_report() -> Result<HygieneReport, Box<dyn std::error::Error>
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let report = generate_hygiene_report()?;
+    let _report = generate_hygiene_report()?;
     
     println!("\n✅ Hygiene analysis complete!");
     println!("🧹 Repository hygiene assessed");
