@@ -238,7 +238,7 @@ impl AgreementManager {
         let branch_exists = self.check_branch_exists(scope)?;
 
         if !branch_exists {
-            return Ok("pending".to_string());
+            return Ok("backlog".to_string());
         }
 
         // Check if the branch has been merged into origin/main
@@ -247,7 +247,7 @@ impl AgreementManager {
         if is_merged {
             Ok("fulfilled".to_string())
         } else {
-            Ok("active".to_string())
+            Ok("developing".to_string())
         }
     }
 
@@ -587,7 +587,10 @@ impl AgreementManager {
         // Check if tree SHA is reachable from anywhere in history
         let tree_reachable = self.validate_tree_reachable_from_history(scope)?;
         if !tree_reachable {
-            return Ok((false, format!("Tree SHA {} is not reachable from Git history", scope)));
+            return Ok((
+                false,
+                format!("Tree SHA {} is not reachable from Git history", scope),
+            ));
         }
 
         // Get the agreement to check the contract
@@ -599,10 +602,30 @@ impl AgreementManager {
             }
         };
 
+        // Check if tree SHA is reachable from origin/main
+        let tree_reachable_from_main =
+            self.is_tree_sha_reachable_from_origin_main(&agreement.agreement.scope)?;
+        if !tree_reachable_from_main {
+            return Ok((
+                false,
+                format!(
+                    "Tree SHA {} is not reachable from origin/main",
+                    agreement.agreement.scope
+                ),
+            ));
+        }
+
         // Check if contract blob SHA is reachable from origin/main
-        let contract_reachable = self.validate_blob_reachable_from_main(&agreement.agreement.contract)?;
+        let contract_reachable =
+            self.validate_blob_reachable_from_main(&agreement.agreement.contract)?;
         if !contract_reachable {
-            return Ok((false, format!("Contract SHA {} is not reachable from origin/main", agreement.agreement.contract)));
+            return Ok((
+                false,
+                format!(
+                    "Contract SHA {} is not reachable from origin/main",
+                    agreement.agreement.contract
+                ),
+            ));
         }
 
         // Additional validation: check if tree exists and contract exists
@@ -613,10 +636,19 @@ impl AgreementManager {
 
         let contract_exists = self.validate_contract_exists(&agreement.agreement.contract)?;
         if !contract_exists {
-            return Ok((false, format!("Contract SHA {} does not exist", agreement.agreement.contract)));
+            return Ok((
+                false,
+                format!(
+                    "Contract SHA {} does not exist",
+                    agreement.agreement.contract
+                ),
+            ));
         }
 
-        Ok((true, "Agreement is valid and contract is reachable from origin/main".to_string()))
+        Ok((
+            true,
+            "Agreement is valid and contract is reachable from origin/main".to_string(),
+        ))
     }
 }
 
@@ -789,7 +821,8 @@ impl AgreementManager {
                             .context("Failed to get commit message")?;
 
                         if log_output.status.success() {
-                            let commit_msg = String::from_utf8(log_output.stdout)?.trim().to_string();
+                            let commit_msg =
+                                String::from_utf8(log_output.stdout)?.trim().to_string();
                             return Ok(Some((commit.to_string(), commit_msg)));
                         }
                     }
@@ -849,6 +882,17 @@ impl AgreementManager {
         }
 
         Ok(resolved_agreements)
+    }
+
+    /// Check if a tree SHA is reachable from origin/main
+    fn is_tree_sha_reachable_from_origin_main(&self, tree_sha: &str) -> Result<bool> {
+        // Get all objects reachable from origin/main
+        let output = std::process::Command::new("git")
+            .args(&["rev-list", "origin/main", "--objects"])
+            .output()?;
+
+        let objects_list = String::from_utf8_lossy(&output.stdout);
+        Ok(objects_list.lines().any(|line| line.contains(tree_sha)))
     }
 }
 
@@ -959,12 +1003,12 @@ impl AgreementCLI {
                 "* " // Current agreement
             } else if worktree_exists {
                 "+ " // Has worktree
-            } else if metadata.status == "active" {
-                "~ " // Active but no worktree
+            } else if metadata.status == "backlog" {
+                "📋 " // Backlog
+            } else if metadata.status == "developing" {
+                "🔄 " // Developing
             } else if metadata.status == "fulfilled" {
                 "✓ " // Fulfilled
-            } else if metadata.status == "revoked" {
-                "✗ " // Revoked
             } else {
                 "  " // Default
             };
@@ -1020,7 +1064,9 @@ impl AgreementCLI {
         println!("🔍 Validating agreement: {}", scope);
 
         // Use the enhanced validation with origin/main reachability
-        let (is_valid, message) = self.manager.validate_agreement_with_main_reachability(scope)?;
+        let (is_valid, message) = self
+            .manager
+            .validate_agreement_with_main_reachability(scope)?;
 
         if is_valid {
             println!("✅ {}", message);
@@ -1182,7 +1228,7 @@ impl AgreementCLI {
                 .replace('/', "-")
                 .replace('.', "")
                 .replace(' ', "_");
-            
+
             if sanitized_path == "root" {
                 format!("~{}-{}", short_scope, contract_name)
             } else {
@@ -1416,27 +1462,25 @@ impl AgreementCLI {
     }
 
     /// Check if a worktree exists for the given scope
-    /// 
+    ///
     /// Looks for worktrees that match the new naming convention:
     /// ~<short-sha>-<contract-name> or ~<short-sha>-<contract-name>-<path-scope>
     fn check_worktree_exists(&self, scope: &str) -> Result<bool> {
         let short_scope = &scope[..7];
-        
+
         // Get list of worktrees
         let worktree_output = std::process::Command::new("git")
             .args(&["worktree", "list", "--porcelain"])
             .output()?;
-        
+
         let worktree_list = String::from_utf8(worktree_output.stdout)?;
-        
+
         // Check if any worktree directory contains the scope SHA or follows the naming pattern
-        Ok(worktree_list
-            .lines()
-            .any(|line| {
-                line.contains(short_scope) || 
-                line.contains(scope) ||
-                line.contains(&format!("~{}", short_scope))
-            }))
+        Ok(worktree_list.lines().any(|line| {
+            line.contains(short_scope)
+                || line.contains(scope)
+                || line.contains(&format!("~{}", short_scope))
+        }))
     }
 
     /// Check if a tree represents the root directory structure
@@ -1457,16 +1501,16 @@ impl AgreementCLI {
         // Check if the tree has the same structure as root by comparing key files
         let key_files = vec![
             "Cargo.toml",
-            "README.md", 
+            "README.md",
             ".gitignore",
-            "rust-toolchain.toml"
+            "rust-toolchain.toml",
         ];
 
         for file in key_files {
             let current_file = std::process::Command::new("git")
                 .args(&["ls-tree", &current_tree_sha, file])
                 .output();
-            
+
             let tree_file = std::process::Command::new("git")
                 .args(&["ls-tree", tree_sha, file])
                 .output();
@@ -1477,11 +1521,11 @@ impl AgreementCLI {
                 let tree_output = String::from_utf8_lossy(&tree.stdout);
                 let current_sha = current_output.trim();
                 let tree_sha_output = tree_output.trim();
-                
+
                 if !current_sha.is_empty() && !tree_sha_output.is_empty() {
                     let current_parts: Vec<&str> = current_sha.split_whitespace().collect();
                     let tree_parts: Vec<&str> = tree_sha_output.split_whitespace().collect();
-                    
+
                     if current_parts.len() >= 3 && tree_parts.len() >= 3 {
                         if current_parts[2] == tree_parts[2] {
                             return Ok(true);
@@ -1535,9 +1579,9 @@ impl AgreementCLI {
 
             // Check if this agreement has a local worktree
             let has_worktree = worktree_dirs.iter().any(|dir| {
-                dir.contains(short_scope) ||
-                dir.contains(&metadata.agreement.scope) ||
-                dir.contains(&format!("~{}", short_scope))
+                dir.contains(short_scope)
+                    || dir.contains(&metadata.agreement.scope)
+                    || dir.contains(&format!("~{}", short_scope))
             });
 
             if has_worktree {
@@ -1566,11 +1610,12 @@ impl AgreementCLI {
                 let tree_slug = metadata.status.clone();
 
                 // Find the actual worktree directory
-                let worktree_dir = worktree_dirs.iter()
+                let worktree_dir = worktree_dirs
+                    .iter()
                     .find(|dir| {
-                        dir.contains(short_scope) ||
-                        dir.contains(&metadata.agreement.scope) ||
-                        dir.contains(&format!("~{}", short_scope))
+                        dir.contains(short_scope)
+                            || dir.contains(&metadata.agreement.scope)
+                            || dir.contains(&format!("~{}", short_scope))
                     })
                     .cloned()
                     .unwrap_or_else(|| "unknown".to_string());
@@ -1586,7 +1631,14 @@ impl AgreementCLI {
                 let contract_name = get_contract_name(&metadata.agreement.contract)
                     .unwrap_or_else(|_| "unknown".to_string());
 
-                local_agreements.push((metadata, path_scope, tree_slug, worktree_dir, indicator, contract_name));
+                local_agreements.push((
+                    metadata,
+                    path_scope,
+                    tree_slug,
+                    worktree_dir,
+                    indicator,
+                    contract_name,
+                ));
             }
         }
 
@@ -1612,10 +1664,15 @@ impl AgreementCLI {
         println!("🏠 Local Agreements (with worktrees):");
         println!();
 
-        for (metadata, path_scope, tree_slug, worktree_dir, indicator, contract_name) in local_agreements {
+        for (metadata, path_scope, tree_slug, worktree_dir, indicator, contract_name) in
+            local_agreements
+        {
             let short_scope = &metadata.agreement.scope[..7];
 
-            println!("{}{} ({}): {} [{}]", indicator, short_scope, contract_name, path_scope, tree_slug);
+            println!(
+                "{}{} ({}): {} [{}]",
+                indicator, short_scope, contract_name, path_scope, tree_slug
+            );
             println!("  📁 Worktree: {}", worktree_dir);
             println!("  📅 Created: {}", metadata.created_at);
             println!("  👤 By: {}", metadata.created_by);
@@ -1701,7 +1758,7 @@ pub enum AgreementCommands {
     UpdateStatus {
         /// Scope SHA of the agreement to update
         scope: String,
-        /// New status (active, fulfilled, revoked, pending)
+        /// New status (backlog, developing, fulfilled)
         #[arg(long)]
         status: String,
     },
@@ -1722,6 +1779,9 @@ pub enum AgreementCommands {
         /// Optional description of the agreement
         #[arg(long)]
         description: Option<String>,
+        /// Optional scope tree SHA (defaults to current HEAD tree)
+        #[arg(long)]
+        scope: Option<String>,
     },
     /// Honor an agreement by creating a remote branch and worktree
     Honor {
@@ -1786,7 +1846,11 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
         AgreementCommands::Show { scope } => {
             cli.show(&scope)?;
         }
-        AgreementCommands::Validate { scope, strict, check_main } => {
+        AgreementCommands::Validate {
+            scope,
+            strict,
+            check_main,
+        } => {
             cli.validate(&scope)?;
             if strict {
                 // In a real implementation, you'd check the actual validation result
@@ -1807,10 +1871,10 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
             cli.log(scope.as_deref())?;
         }
         AgreementCommands::UpdateStatus { scope, status } => {
-            let valid_statuses = ["active", "fulfilled", "revoked", "pending"];
+            let valid_statuses = ["backlog", "developing", "fulfilled"];
             if !valid_statuses.contains(&status.as_str()) {
                 anyhow::bail!(
-                    "Invalid status: {}. Valid values: active, fulfilled, revoked, pending",
+                    "Invalid status: {}. Valid values: backlog, developing, fulfilled",
                     status
                 );
             }
@@ -1822,8 +1886,10 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
         AgreementCommands::CreateFromFile {
             contract_file,
             description,
+            scope,
         } => {
-            create_agreement_from_file(&contract_file, description.as_deref()).await?;
+            create_agreement_from_file(&contract_file, description.as_deref(), scope.as_deref())
+                .await?;
         }
         AgreementCommands::Prune { dry_run, force } => {
             cli.prune(dry_run, force)?;
@@ -1867,21 +1933,43 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
 }
 
 /// Create an agreement from a contract file
-async fn create_agreement_from_file(contract_file: &str, description: Option<&str>) -> Result<()> {
+async fn create_agreement_from_file(
+    contract_file: &str,
+    description: Option<&str>,
+    scope: Option<&str>,
+) -> Result<()> {
     let current_dir = std::env::current_dir()?;
     let manager = AgreementManager::new(&current_dir)?;
 
-    // Get current tree SHA
-    let tree_sha = get_current_tree_sha()?;
+    // Get tree SHA - use provided scope or current HEAD tree
+    let tree_sha = if let Some(provided_scope) = scope {
+        provided_scope.to_string()
+    } else {
+        let output = std::process::Command::new("git")
+            .args(&["rev-parse", "HEAD^{tree}"])
+            .output()?;
+        String::from_utf8_lossy(&output.stdout).trim().to_string()
+    };
+
     println!("📋 Current tree SHA: {}", tree_sha);
 
-    // Get contract file blob SHA
+    // Get contract file SHA
     let contract_sha = get_file_blob_sha(contract_file)?;
     println!("📄 Contract file SHA: {}", contract_sha);
 
+    // Validate that the tree SHA is reachable from origin/main
+    if !manager.is_tree_sha_reachable_from_origin_main(&tree_sha)? {
+        anyhow::bail!(
+            "Agreement tree scope must be reachable from origin/main. Tree SHA: {}",
+            tree_sha
+        );
+    }
+
     // Create agreement
-    let result = manager.create_agreement(&tree_sha, &contract_sha, description)?;
-    println!("✅ {}", result);
+    manager.create_agreement(&tree_sha, &contract_sha, description)?;
+    println!("✅ Agreement created successfully!");
+    println!("   Scope: {}", tree_sha);
+    println!("   Contract: {}", contract_sha);
 
     Ok(())
 }
