@@ -71,14 +71,10 @@ impl AgreementManager {
         scope: &str,
         contract: &str,
         description: Option<&str>,
-        path: Option<&str>,
-        anchored: bool,
     ) -> Result<String> {
         let agreement = Agreement {
             scope: scope.to_string(),
             contract: contract.to_string(),
-            path: path.map(|p| p.to_string()),
-            anchored,
         };
 
         let metadata = AgreementMetadata {
@@ -159,13 +155,13 @@ impl AgreementManager {
     pub fn prune_invalid_agreements(&self, dry_run: bool, force: bool) -> Result<()> {
         let agreements = self.list_agreements()?;
         let mut to_prune = Vec::new();
-        
+
         println!("🔍 Checking {} agreements for validity...", agreements.len());
-        
+
         for metadata in &agreements {
             let scope = &metadata.agreement.scope;
             let contract = &metadata.agreement.contract;
-            
+
             // Check if scope path exists in current HEAD
             let scope_path = self.get_tree_path(scope)?;
             let scope_valid = if let Some(path) = scope_path {
@@ -173,20 +169,20 @@ impl AgreementManager {
             } else {
                 false
             };
-            
+
             // Check if contract blob exists in current HEAD
             let contract_exists = self.validate_contract_exists(contract)?;
-            
+
             if !scope_valid || !contract_exists {
                 to_prune.push((metadata.clone(), scope_valid, contract_exists));
             }
         }
-        
+
         if to_prune.is_empty() {
             println!("✅ All agreements are valid - nothing to prune");
             return Ok(());
         }
-        
+
         println!("\n📋 Found {} invalid agreements to prune:", to_prune.len());
         for (metadata, scope_valid, contract_exists) in &to_prune {
             println!("   Scope: {}", metadata.agreement.scope);
@@ -200,23 +196,23 @@ impl AgreementManager {
             }
             println!();
         }
-        
+
         if dry_run {
             println!("🔍 Dry run - no agreements were actually removed");
             return Ok(());
         }
-        
+
         if !force {
             println!("⚠️  This will permanently remove {} agreements.", to_prune.len());
             println!("   Use --force to proceed without confirmation");
             return Ok(());
         }
-        
+
         // Remove the invalid agreements
         for (metadata, _, _) in &to_prune {
             self.remove_agreement(&metadata.agreement.scope)?;
         }
-        
+
         println!("✅ Successfully pruned {} invalid agreements", to_prune.len());
         Ok(())
     }
@@ -251,7 +247,17 @@ impl AgreementManager {
         } else {
             // No existing notes, create initial commit
             let empty_tree = self.repo.treebuilder(None)?.write()?;
-            self.repo.find_tree(empty_tree)?
+            let tree = self.repo.find_tree(empty_tree)?;
+            let signature = self.repo.signature()?;
+            let commit_oid = self.repo.commit(
+                Some(&self.notes_ref),
+                &signature,
+                &signature,
+                "Initial notes commit",
+                &tree,
+                &[],
+            )?;
+            self.repo.find_commit(commit_oid)?
         };
         
         let commit_id = self.repo.commit(
@@ -270,60 +276,34 @@ impl AgreementManager {
     /// Validate an agreement (check if contract exists in scope)
     pub fn validate_agreement(&self, scope: &str) -> Result<bool> {
         if let Some(metadata) = self.get_agreement(scope)? {
-            // Get current HEAD tree SHA for comparison
-            let current_head_tree = std::process::Command::new("git")
-                .args(&["rev-parse", "HEAD^{tree}"])
-                .output()?;
-            let current_head_tree_sha = String::from_utf8_lossy(&current_head_tree.stdout).trim().to_string();
-            
             // Check if the contract blob exists in current HEAD
             let contract_exists = self.validate_contract_exists(&metadata.agreement.contract)?;
 
-            // Determine validation strategy based on agreement configuration
-            let scope_valid = if metadata.agreement.anchored {
-                // Path-based validation: check if the path still exists in current HEAD
-                if let Some(path) = &metadata.agreement.path {
-                    self.validate_path_exists(path)?
-                } else {
-                    // Fallback to tree SHA validation if no path specified
-                    self.validate_tree_exists(&metadata.agreement.scope)?
-                }
+            // Get the path from the old tree SHA to validate against current HEAD
+            let scope_path = self.get_tree_path(&metadata.agreement.scope)?;
+            let scope_valid = if let Some(path) = scope_path {
+                self.validate_path_exists(&path)?
             } else {
-                // Tree SHA validation: check if the exact tree SHA exists in current HEAD
+                // If we can't determine the path, fall back to tree existence check
                 self.validate_tree_exists(&metadata.agreement.scope)?
             };
-            
-            // Overall validation: both scope and contract must be valid
-            let is_valid = scope_valid && contract_exists;
+
+            // Overall validation: scope must be valid, contract existence is a warning
+            let is_valid = scope_valid;
 
             if is_valid {
                 println!("✅ Agreement is valid");
-                if metadata.agreement.anchored {
-                    if let Some(path) = &metadata.agreement.path {
-                        println!("   Path '{}' exists in current HEAD", path);
-                    }
-                } else {
-                    println!("   Tree scope '{}' exists in current HEAD", metadata.agreement.scope);
-                }
-                println!("   Contract '{}' exists in current HEAD", metadata.agreement.contract);
-            } else {
-                println!("❌ Agreement is invalid");
-                if !scope_valid {
-                    if metadata.agreement.anchored {
-                        if let Some(path) = &metadata.agreement.path {
-                            println!("   Path '{}' no longer exists in current HEAD", path);
-                        }
-                    } else {
-                        println!("   Tree scope '{}' no longer exists in current HEAD", metadata.agreement.scope);
-                    }
-                }
                 if !contract_exists {
-                    println!("   Contract '{}' no longer exists in current HEAD", metadata.agreement.contract);
+                    println!("⚠️  Warning: Contract blob no longer exists in current HEAD");
                 }
-                println!("   Current HEAD tree: {}", current_head_tree_sha);
+                Ok(true)
+            } else {
+                println!("❌ Scope validation failed");
+                if !contract_exists {
+                    println!("⚠️  Warning: Contract blob no longer exists in current HEAD");
+                }
+                Ok(false)
             }
-            
-            Ok(is_valid)
         } else {
             println!("❌ Agreement not found for scope: {}", scope);
             Ok(false)
@@ -441,8 +421,8 @@ impl AgreementCLI {
     }
 
     /// Create a new agreement
-    pub fn create(&self, scope: &str, contract: &str, description: Option<&str>, path: Option<&str>, anchored: bool) -> Result<()> {
-        let result = self.manager.create_agreement(scope, contract, description, path, anchored)?;
+    pub fn create(&self, scope: &str, contract: &str, description: Option<&str>) -> Result<()> {
+        let result = self.manager.create_agreement(scope, contract, description)?;
         println!("✅ {}", result);
         Ok(())
     }
@@ -506,6 +486,12 @@ impl AgreementCLI {
         } else {
             println!("❌ No agreement found for scope: {}", scope);
         }
+        Ok(())
+    }
+
+    /// Prune invalid agreements
+    pub fn prune(&self, dry_run: bool, force: bool) -> Result<()> {
+        self.manager.prune_invalid_agreements(dry_run, force)?;
         Ok(())
     }
 }
@@ -610,10 +596,10 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
             scope,
             contract,
             description,
-            path,
-            anchored,
+            path: _,
+            anchored: _,
         } => {
-            cli.create(&scope, &contract, description.as_deref(), path.as_deref(), anchored)?;
+            cli.create(&scope, &contract, description.as_deref())?;
         }
         AgreementCommands::List {
             active_only: _,
@@ -664,6 +650,9 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
         } => {
             create_agreement_from_file(&contract_file, description.as_deref()).await?;
         }
+        AgreementCommands::Prune { dry_run, force } => {
+            cli.prune(dry_run, force)?;
+        }
     }
 
     Ok(())
@@ -683,7 +672,7 @@ async fn create_agreement_from_file(contract_file: &str, description: Option<&st
     println!("📄 Contract file SHA: {}", contract_sha);
 
     // Create agreement
-    let result = manager.create_agreement(&tree_sha, &contract_sha, description, None, false)?;
+    let result = manager.create_agreement(&tree_sha, &contract_sha, description)?;
     println!("✅ {}", result);
 
     Ok(())
