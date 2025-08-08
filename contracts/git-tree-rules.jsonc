@@ -2,6 +2,7 @@
   "name": "git-tree-rules",
   "version": "1.0.0",
   "description": "Simple contract for Git tree member inclusion rules with flat object name patterns",
+  "$schema": "https://hooksmith.dev/schemas/git-tree-rules.schema.json",
   "schema": {
     "type": "object",
     "properties": {
