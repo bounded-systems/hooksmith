@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hooksmith.dev/schemas/contract.schema.json",
+  "title": "Hooksmith Contract Wrapper",
+  "description": "Canonical contract structure that enforces consistent metadata and schema references across all agreements",
+  "type": "object",
+  "required": ["name", "version", "description", "$schema", "schema", "spec"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+      "description": "Contract name identifier (must start with letter, alphanumeric with hyphens/underscores)"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version of the contract"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "Description of what this contract enforces"
+    },
+    "$schema": {
+      "type": "string",
+      "const": "https://hooksmith.dev/schemas/contract.schema.json",
+      "description": "Reference to this canonical contract schema"
+    },
+    "schema": {
+      "type": "object",
+      "required": ["$ref"],
+      "properties": {
+        "$ref": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://hooksmith\\.dev/schemas/.*\\.schema\\.json$",
+          "description": "URL to the schema that validates the spec field"
+        }
+      },
+      "additionalProperties": false
+    },
+    "spec": {
+      "description": "Contract-specific validation logic and data",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

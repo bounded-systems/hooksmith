@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/object-names.schema.json",
+  "title": "Object Names Schema",
+  "description": "Schema for defining object naming rules in Git tree structures",
+  "type": "object",
+  "definitions": {
+    "object-name": {
+      "type": "string",
+      "pattern": "^[^/]+$",
+      "description": "Object name (no slashes allowed for flat structure)"
+    },
+    "object-name-pattern": {
+      "type": "string",
+      "description": "Pattern for object names, can include wildcards like *"
+    },
+    "object-names-rules": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/object-name"
+          },
+          "description": "Files/directories that must exist in the tree"
+        },
+        "allowed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/object-name-pattern"
+          },
+          "description": "Files/directories that are permitted but not required"
+        },
+        "rejected": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/object-name-pattern"
+          },
+          "description": "Files/directories that must not exist in the tree"
+        },
+        "ignored": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/object-name-pattern"
+          },
+          "description": "Files/directories that are Git-ignored and should not be in tree"
+        }
+      },
+      "required": ["required", "allowed", "rejected", "ignored"]
+    },
+    "git-tree-objects": {
+      "type": "object",
+      "properties": {
+        "names": {
+          "$ref": "#/definitions/object-names-rules"
+        }
+      },
+      "required": ["names"]
+    },
+    "git-tree": {
+      "type": "object",
+      "properties": {
+        "objects": {
+          "$ref": "#/definitions/git-tree-objects"
+        }
+      },
+      "required": ["objects"]
+    },
+    "git-data": {
+      "type": "object",
+      "properties": {
+        "tree": {
+          "$ref": "#/definitions/git-tree"
+        }
+      },
+      "required": ["tree"]
+    }
+  },
+  "properties": {
+    "git": {
+      "$ref": "#/definitions/git-data"
+    }
+  },
+  "required": ["git"],
+  "additionalProperties": false
+}

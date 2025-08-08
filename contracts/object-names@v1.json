@@ -1,37 +1,46 @@
 {
-  "git": {
-    "tree": {
-      "objects": {
-        "names": {
-          "required": [
-            ".gitignore",
-            "projects"
-          ],
-          "allowed": [
-            ".gitignore",
-            ".gitattributes",
-            ".meta",
-            "docs",
-            "generated",
-            "projects",
-            "src",
-            "tests",
-            "tools",
-            "wit"
-          ],
-          "rejected": [
-            "README.md",
-            "Cargo.toml",
-            "rustfmt.toml",
-            "*.md",
-            "*.toml"
-          ],
-          "ignored": [
-            ".DS_Store",
-            "Thumbs.db",
-            ".idea",
-            ".vscode"
-          ]
+  "name": "object-names",
+  "version": "1.0.0",
+  "description": "Contract defining object naming rules for Git tree structures",
+  "$schema": "https://hooksmith.dev/schemas/contract.schema.json",
+  "schema": {
+    "$ref": "https://hooksmith.dev/schemas/object-names.schema.json"
+  },
+  "spec": {
+    "git": {
+      "tree": {
+        "objects": {
+          "names": {
+            "required": [
+              ".gitignore",
+              "projects"
+            ],
+            "allowed": [
+              ".gitignore",
+              ".gitattributes",
+              ".meta",
+              "docs",
+              "generated",
+              "projects",
+              "src",
+              "tests",
+              "tools",
+              "wit"
+            ],
+            "rejected": [
+              "README.md",
+              "Cargo.toml",
+              "rustfmt.toml",
+              "*.md",
+              "*.toml"
+            ],
+            "ignored": [
+              ".DS_Store",
+              "Thumbs.db",
+              ".idea",
+              ".vscode"
+            ]
+          }
         }
       }
     }
