@@ -1,0 +1,39 @@
+{
+  "git": {
+    "tree": {
+      "objects": {
+        "names": {
+          "required": [
+            ".gitignore",
+            "projects"
+          ],
+          "allowed": [
+            ".gitignore",
+            ".gitattributes",
+            ".meta",
+            "docs",
+            "generated",
+            "projects",
+            "src",
+            "tests",
+            "tools",
+            "wit"
+          ],
+          "rejected": [
+            "README.md",
+            "Cargo.toml",
+            "rustfmt.toml",
+            "*.md",
+            "*.toml"
+          ],
+          "ignored": [
+            ".DS_Store",
+            "Thumbs.db",
+            ".idea",
+            ".vscode"
+          ]
+        }
+      }
+    }
+  }
+}

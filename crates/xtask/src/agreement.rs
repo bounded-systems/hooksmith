@@ -11,8 +11,8 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use git2::{Repository, Signature};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use std::collections::HashMap;
+use std::path::Path;
 
 /// Canonical agreement schema as specified
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,13 +86,23 @@ impl AgreementManager {
 
         // Store in Git notes
         let note_content = serde_json::to_string(&metadata)?;
-        
+
         // Create or update the note
         let signature = Signature::now("Hooksmith", "hooksmith@example.com")?;
         let scope_oid = git2::Oid::from_str(scope)?;
-        self.repo.note(&signature, &signature, Some(&self.notes_ref), scope_oid, &note_content, false)?;
+        self.repo.note(
+            &signature,
+            &signature,
+            Some(&self.notes_ref),
+            scope_oid,
+            &note_content,
+            false,
+        )?;
 
-        Ok(format!("Agreement created: scope={}, contract={}", scope, contract))
+        Ok(format!(
+            "Agreement created: scope={}, contract={}",
+            scope, contract
+        ))
     }
 
     /// Get an agreement by scope
@@ -121,8 +131,12 @@ impl AgreementManager {
                     for entry in notes_tree.iter() {
                         if let Ok(note_blob) = self.repo.find_blob(entry.id()) {
                             // Try to parse the note content as agreement metadata
-                            if let Ok(note_content) = String::from_utf8(note_blob.content().to_vec()) {
-                                if let Ok(metadata) = serde_json::from_str::<AgreementMetadata>(&note_content) {
+                            if let Ok(note_content) =
+                                String::from_utf8(note_blob.content().to_vec())
+                            {
+                                if let Ok(metadata) =
+                                    serde_json::from_str::<AgreementMetadata>(&note_content)
+                                {
                                     agreements.push(metadata);
                                 }
                             }
@@ -136,17 +150,20 @@ impl AgreementManager {
     }
 
     /// Update agreement status
-    pub fn update_agreement_status(
-        &self,
-        scope: &str,
-        status: AgreementStatus,
-    ) -> Result<()> {
+    pub fn update_agreement_status(&self, scope: &str, status: AgreementStatus) -> Result<()> {
         if let Some(mut metadata) = self.get_agreement(scope)? {
             metadata.status = status;
             let note_content = serde_json::to_string(&metadata)?;
             let signature = Signature::now("Hooksmith", "hooksmith@example.com")?;
             let scope_oid = git2::Oid::from_str(scope)?;
-            self.repo.note(&signature, &signature, Some(&self.notes_ref), scope_oid, &note_content, false)?;
+            self.repo.note(
+                &signature,
+                &signature,
+                Some(&self.notes_ref),
+                scope_oid,
+                &note_content,
+                false,
+            )?;
         }
         Ok(())
     }
@@ -156,7 +173,10 @@ impl AgreementManager {
         let agreements = self.list_agreements()?;
         let mut to_prune = Vec::new();
 
-        println!("🔍 Checking {} agreements for validity...", agreements.len());
+        println!(
+            "🔍 Checking {} agreements for validity...",
+            agreements.len()
+        );
 
         for metadata in &agreements {
             let scope = &metadata.agreement.scope;
@@ -203,7 +223,10 @@ impl AgreementManager {
         }
 
         if !force {
-            println!("⚠️  This will permanently remove {} agreements.", to_prune.len());
+            println!(
+                "⚠️  This will permanently remove {} agreements.",
+                to_prune.len()
+            );
             println!("   Use --force to proceed without confirmation");
             return Ok(());
         }
@@ -213,7 +236,10 @@ impl AgreementManager {
             self.remove_agreement(&metadata.agreement.scope)?;
         }
 
-        println!("✅ Successfully pruned {} invalid agreements", to_prune.len());
+        println!(
+            "✅ Successfully pruned {} invalid agreements",
+            to_prune.len()
+        );
         Ok(())
     }
 
@@ -221,25 +247,29 @@ impl AgreementManager {
     fn remove_agreement(&self, scope: &str) -> Result<()> {
         // Get all agreements
         let agreements = self.list_agreements()?;
-        
+
         // Filter out the agreement to remove
         let remaining_agreements: Vec<_> = agreements
             .into_iter()
             .filter(|metadata| metadata.agreement.scope != scope)
             .collect();
-        
+
         // Create new notes tree with remaining agreements
         let mut tree_builder = self.repo.treebuilder(None)?;
-        
+
         for metadata in remaining_agreements {
             let note_content = serde_json::to_string_pretty(&metadata)?;
             let note_blob = self.repo.blob(&note_content.as_bytes())?;
-            tree_builder.insert(&format!("agreement_{}", metadata.agreement.scope), note_blob, 0o100644)?;
+            tree_builder.insert(
+                &format!("agreement_{}", metadata.agreement.scope),
+                note_blob,
+                0o100644,
+            )?;
         }
-        
+
         let tree_id = tree_builder.write()?;
         let tree = self.repo.find_tree(tree_id)?;
-        
+
         // Create a new commit
         let signature = self.repo.signature()?;
         let parent_commit = if let Ok(notes_ref) = self.repo.find_reference(&self.notes_ref) {
@@ -259,7 +289,7 @@ impl AgreementManager {
             )?;
             self.repo.find_commit(commit_oid)?
         };
-        
+
         let commit_id = self.repo.commit(
             Some(&self.notes_ref),
             &signature,
@@ -268,7 +298,7 @@ impl AgreementManager {
             &tree,
             &[&parent_commit],
         )?;
-        
+
         println!("   Removed agreement: {} (commit: {})", scope, commit_id);
         Ok(())
     }
@@ -326,7 +356,9 @@ impl AgreementManager {
         let current_head_tree = std::process::Command::new("git")
             .args(&["rev-parse", "HEAD^{tree}"])
             .output()?;
-        let current_head_tree_sha = String::from_utf8_lossy(&current_head_tree.stdout).trim().to_string();
+        let current_head_tree_sha = String::from_utf8_lossy(&current_head_tree.stdout)
+            .trim()
+            .to_string();
 
         if tree_sha == current_head_tree_sha {
             return Ok(Some("".to_string())); // Root tree
@@ -354,7 +386,9 @@ impl AgreementManager {
         let current_head_tree = std::process::Command::new("git")
             .args(&["rev-parse", "HEAD^{tree}"])
             .output()?;
-        let current_head_tree_sha = String::from_utf8_lossy(&current_head_tree.stdout).trim().to_string();
+        let current_head_tree_sha = String::from_utf8_lossy(&current_head_tree.stdout)
+            .trim()
+            .to_string();
 
         if tree_sha == current_head_tree_sha {
             return Ok(true);
@@ -366,11 +400,10 @@ impl AgreementManager {
             .output()?;
         let tree_output = String::from_utf8_lossy(&tree_exists.stdout);
 
-        Ok(tree_output.lines()
-            .any(|line| {
-                let parts: Vec<&str> = line.split_whitespace().collect();
-                parts.len() >= 3 && parts[1] == "tree" && parts[2] == tree_sha
-            }))
+        Ok(tree_output.lines().any(|line| {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            parts.len() >= 3 && parts[1] == "tree" && parts[2] == tree_sha
+        }))
     }
 
     /// Validate if a contract blob exists in current HEAD
@@ -381,11 +414,10 @@ impl AgreementManager {
             .output()?;
         let tree_output = String::from_utf8_lossy(&output.stdout);
 
-        Ok(tree_output.lines()
-            .any(|line| {
-                let parts: Vec<&str> = line.split_whitespace().collect();
-                parts.len() >= 3 && parts[1] == "blob" && parts[2] == contract_sha
-            }))
+        Ok(tree_output.lines().any(|line| {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            parts.len() >= 3 && parts[1] == "blob" && parts[2] == contract_sha
+        }))
     }
 
     /// Resolve contract from agreement
@@ -422,7 +454,9 @@ impl AgreementCLI {
 
     /// Create a new agreement
     pub fn create(&self, scope: &str, contract: &str, description: Option<&str>) -> Result<()> {
-        let result = self.manager.create_agreement(scope, contract, description)?;
+        let result = self
+            .manager
+            .create_agreement(scope, contract, description)?;
         println!("✅ {}", result);
         Ok(())
     }
@@ -430,12 +464,12 @@ impl AgreementCLI {
     /// List all agreements
     pub fn list(&self) -> Result<()> {
         let agreements = self.manager.list_agreements()?;
-        
+
         if agreements.is_empty() {
             println!("📝 No agreements found");
             return Ok(());
         }
-        
+
         println!("📝 Agreements:");
         for metadata in agreements {
             println!("  Scope: {}", metadata.agreement.scope);
