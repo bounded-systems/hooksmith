@@ -18,7 +18,7 @@ pub struct ContractCrateMapping {
 }
 
 /// Isolation level for contract boundaries
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum IsolationLevel {
     Private,      // Only accessible within the crate
     Internal,     // Accessible within the workspace
@@ -111,7 +111,7 @@ impl CrateContractMapper {
 
     /// Map contracts to their crate boundaries
     pub fn map_contracts_to_crates(&mut self, tree_sha: &str) -> Result<Vec<ContractCrateMapping>, String> {
-        let tree = self.repo.find_tree(git2::Oid::from_str(tree_sha)?)?;
+        let tree = self.repo.find_tree(git2::Oid::from_str(tree_sha).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
         let mut mappings = Vec::new();
 
         self.walk_tree_for_contracts(&tree, PathBuf::new(), &mut mappings)?;
@@ -142,7 +142,7 @@ impl CrateContractMapper {
                     }
                 }
                 Some(git2::ObjectType::Tree) => {
-                    let subtree = self.repo.find_tree(entry.id())?;
+                    let subtree = self.repo.find_tree(entry.id()).map_err(|e| e.to_string())?;
                     self.walk_tree_for_contracts(&subtree, entry_path, mappings)?;
                 }
                 _ => {}
@@ -337,8 +337,9 @@ impl CrateContractMapper {
     pub fn detect_boundary_violations(&mut self) -> Vec<BoundaryViolation> {
         self.violations.clear();
         
-        for mapping in self.mappings.values() {
-            self.check_contract_boundaries(mapping);
+        let mappings: Vec<_> = self.mappings.values().cloned().collect();
+        for mapping in mappings {
+            self.check_contract_boundaries(&mapping);
         }
         
         self.violations.clone()

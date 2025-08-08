@@ -142,20 +142,20 @@ impl TreeSplitPlanner {
 
     /// Count commits that touched a file
     fn count_file_commits(&self, file_path: &Path) -> Result<u64, String> {
-        let mut revwalk = self.repo.revwalk()?;
-        revwalk.push_head()?;
+        let mut revwalk = self.repo.revwalk().map_err(|e| e.to_string())?;
+        revwalk.push_head().map_err(|e| e.to_string())?;
 
         let mut count = 0;
         for commit_id in revwalk {
-            let commit = self.repo.find_commit(commit_id?)?;
+            let commit = self.repo.find_commit(commit_id.map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
             let parent = commit.parent(0).ok();
             
             if let Some(parent) = parent {
                 let diff = self.repo.diff_tree_to_tree(
-                    Some(&commit.tree()?),
-                    Some(&parent.tree()?),
+                    Some(&commit.tree().map_err(|e| e.to_string())?),
+                    Some(&parent.tree().map_err(|e| e.to_string())?),
                     None,
-                )?;
+                ).map_err(|e| e.to_string())?;
 
                 for delta in diff.deltas() {
                     if let Some(path) = delta.new_file().path() {
@@ -173,19 +173,19 @@ impl TreeSplitPlanner {
 
     /// Get last modified timestamp for a file
     fn get_last_modified(&self, file_path: &Path) -> Result<chrono::DateTime<chrono::Utc>, String> {
-        let mut revwalk = self.repo.revwalk()?;
-        revwalk.push_head()?;
+        let mut revwalk = self.repo.revwalk().map_err(|e| e.to_string())?;
+        revwalk.push_head().map_err(|e| e.to_string())?;
 
         for commit_id in revwalk {
-            let commit = self.repo.find_commit(commit_id?)?;
+            let commit = self.repo.find_commit(commit_id.map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
             let parent = commit.parent(0).ok();
             
             if let Some(parent) = parent {
                 let diff = self.repo.diff_tree_to_tree(
-                    Some(&commit.tree()?),
-                    Some(&parent.tree()?),
+                    Some(&commit.tree().map_err(|e| e.to_string())?),
+                    Some(&parent.tree().map_err(|e| e.to_string())?),
                     None,
-                )?;
+                ).map_err(|e| e.to_string())?;
 
                 for delta in diff.deltas() {
                     if let Some(path) = delta.new_file().path() {
@@ -443,7 +443,7 @@ impl TreeSplitPlanner {
     }
 
     /// Export analysis results to JSON
-    pub fn export_analysis(&self, tree_sha: &str) -> Result<serde_json::Value, String> {
+    pub fn export_analysis(&mut self, tree_sha: &str) -> Result<serde_json::Value, String> {
         let analyses = self.analyze_churn(tree_sha)?;
         let suggestions = self.generate_split_suggestions(tree_sha)?;
         let warnings = self.generate_warnings(&suggestions);
