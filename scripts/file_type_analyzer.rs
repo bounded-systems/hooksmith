@@ -193,7 +193,7 @@ fn format_size(size: u64) -> String {
     const GB: u64 = 1024 * 1024 * 1024;
     
     match size {
-        0..=KB-1 => format!("{} B", size),
+        0..KB => format!("{} B", size),
         KB..=MB-1 => format!("{:.1} KB", size as f64 / KB as f64),
         MB..=GB-1 => format!("{:.1} MB", size as f64 / MB as f64),
         _ => format!("{:.1} GB", size as f64 / GB as f64),
