@@ -186,6 +186,10 @@ path = "scripts/contract_stability_analyzer.rs"
 name = "tree_stability_analyzer"
 path = "scripts/tree_stability_analyzer.rs"
 
+[[bin]]
+name = "crate_granularity_analyzer"
+path = "scripts/crate_granularity_analyzer.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
