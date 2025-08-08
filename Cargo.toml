@@ -134,6 +134,14 @@ path = "src/bin/hooksmith-validate-tree.rs"
 name = "hooksmith-validate-push"
 path = "src/bin/hooksmith-validate-push.rs"
 
+[[bin]]
+name = "integrated_git_analyzer"
+path = "scripts/integrated_git_analyzer.rs"
+
+[[bin]]
+name = "modular_analyzer"
+path = "scripts/modular_analyzer.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
