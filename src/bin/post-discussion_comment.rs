@@ -10,7 +10,9 @@ use std::env;
 /// Hook Type: post
 /// Status: Stub (ready for implementation)
 fn main() -> Result<()> {
-    println!("✅ post-discussion_comment hook (stub mode) - would handle post discussion_comment events");
+    println!(
+        "✅ post-discussion_comment hook (stub mode) - would handle post discussion_comment events"
+    );
 
     // Read GitHub event data
     if let Ok(event_path) = env::var("GITHUB_EVENT_PATH") {

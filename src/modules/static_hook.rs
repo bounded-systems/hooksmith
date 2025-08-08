@@ -1,7 +1,7 @@
+use crate::modules::git_native::GitNativeValidator;
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use crate::modules::git_native::GitNativeValidator;
 
 /// Static hook definition with zero dynamic resolution
 #[derive(Debug, Serialize, Deserialize)]
@@ -406,13 +406,24 @@ impl StaticHook {
     /// Validate the static hook definition
     pub fn validate(&self) -> Result<()> {
         // Validate name format
-        if !self.name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+        if !self
+            .name
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
+        {
             bail!("Invalid hook name '{}': must contain only alphanumeric characters, underscores, and hyphens", self.name);
         }
 
         // Validate concerns are Git-native
-        let concern_strings: Vec<String> = self.concerns.iter()
-            .map(|c| serde_json::to_string(c).unwrap().trim_matches('"').to_string())
+        let concern_strings: Vec<String> = self
+            .concerns
+            .iter()
+            .map(|c| {
+                serde_json::to_string(c)
+                    .unwrap()
+                    .trim_matches('"')
+                    .to_string()
+            })
             .collect();
         GitNativeValidator::validate_concerns(&concern_strings)?;
 
@@ -430,7 +441,7 @@ impl StaticHook {
         } else {
             PathBuf::from("target/release").join(&self.bin)
         };
-        
+
         if !path.exists() {
             bail!("Missing hook binary: {}", path.display());
         }
@@ -455,7 +466,7 @@ impl StaticHook {
     pub fn scope_str(&self) -> &'static str {
         match self.scope {
             HookScope::Git => "git",
-            HookScope::Github => "github", 
+            HookScope::Github => "github",
             HookScope::FsMonitor => "fsmonitor",
             HookScope::Reference => "reference",
             HookScope::Email => "email",
@@ -467,26 +478,26 @@ impl StaticHook {
 /// Load and validate a static hook from a JSONC file
 pub fn load_static_hook(path: &Path) -> Result<StaticHook> {
     let content = std::fs::read_to_string(path)?;
-    
+
     // For now, parse as regular JSON (we can add JSONC support later)
     let hook: StaticHook = serde_json::from_str(&content)?;
     hook.validate()?;
-    
+
     Ok(hook)
 }
 
 /// Validate all static hooks in a directory
 pub fn validate_static_hooks(dir: &Path) -> Result<Vec<StaticHook>> {
     let mut hooks = Vec::new();
-    
+
     if !dir.exists() {
         return Ok(hooks);
     }
-    
+
     for entry in std::fs::read_dir(dir)? {
         let entry = entry?;
         let path = entry.path();
-        
+
         if path.is_file() && path.extension().map_or(false, |ext| ext == "jsonc") {
             match load_static_hook(&path) {
                 Ok(hook) => hooks.push(hook),
@@ -496,15 +507,15 @@ pub fn validate_static_hooks(dir: &Path) -> Result<Vec<StaticHook>> {
             }
         }
     }
-    
+
     Ok(hooks)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
     use std::fs;
+    use tempfile::tempdir;
 
     #[test]
     fn test_valid_static_hook() {
@@ -514,7 +525,7 @@ mod tests {
             concerns: vec![HookConcern::Blob, HookConcern::Tree],
             bin: "target/release/hooksmith-validate-tree".to_string(),
         };
-        
+
         // This will fail if the binary doesn't exist, which is expected
         let result = hook.validate();
         assert!(result.is_err()); // Binary doesn't exist in test
@@ -528,7 +539,7 @@ mod tests {
             concerns: vec![HookConcern::Blob],
             bin: "target/release/hooksmith-validate-tree".to_string(),
         };
-        
+
         let result = hook.validate();
         assert!(result.is_err());
     }
@@ -541,7 +552,7 @@ mod tests {
             concerns: vec![HookConcern::Blob, HookConcern::Blob], // Duplicate
             bin: "target/release/hooksmith-validate-tree".to_string(),
         };
-        
+
         let result = hook.validate();
         assert!(result.is_err());
     }
@@ -550,16 +561,16 @@ mod tests {
     fn test_load_static_hook() {
         let temp_dir = tempdir().unwrap();
         let hook_file = temp_dir.path().join("test-hook.jsonc");
-        
+
         let hook_content = r#"{
             "name": "pre-commit",
             "scope": "git",
             "concerns": ["blob", "tree"],
             "bin": "target/release/hooksmith-validate-tree"
         }"#;
-        
+
         fs::write(&hook_file, hook_content).unwrap();
-        
+
         let result = load_static_hook(&hook_file);
         assert!(result.is_err()); // Binary doesn't exist
     }

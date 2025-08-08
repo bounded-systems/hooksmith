@@ -15,6 +15,7 @@ members = [
     "crates/components/worktree-runner",
     "crates/components/git-proxy",
     "crates/xtask",
+    "crates/git-agreement",
     # "scripts/ensure-clean-main",  # Temporarily disabled for Docker build
                     "crates/tree",
                 "crates/files",

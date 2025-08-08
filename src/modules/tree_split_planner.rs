@@ -1,9 +1,9 @@
+use crate::modules::contract_validation::Contract;
+use crate::modules::git_model::{GitPath, GitTree};
+use git2::{Commit, Repository, Tree};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
-use git2::{Repository, Commit, Tree};
-use crate::modules::git_model::{GitTree, GitPath};
-use crate::modules::contract_validation::Contract;
 
 /// Analysis of file churn patterns for split planning
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -97,7 +97,7 @@ impl TreeSplitPlanner {
     ) -> Result<(), String> {
         for entry in tree.iter() {
             let entry_path = current_path.join(entry.name().unwrap());
-            
+
             match entry.kind() {
                 Some(git2::ObjectType::Blob) => {
                     if self.is_rust_file(&entry_path) {
@@ -136,7 +136,8 @@ impl TreeSplitPlanner {
             dependency_count,
         };
 
-        self.churn_cache.insert(file_path.to_path_buf(), analysis.clone());
+        self.churn_cache
+            .insert(file_path.to_path_buf(), analysis.clone());
         Ok(analysis)
     }
 
@@ -147,15 +148,21 @@ impl TreeSplitPlanner {
 
         let mut count = 0;
         for commit_id in revwalk {
-            let commit = self.repo.find_commit(commit_id.map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+            let commit = self
+                .repo
+                .find_commit(commit_id.map_err(|e| e.to_string())?)
+                .map_err(|e| e.to_string())?;
             let parent = commit.parent(0).ok();
-            
+
             if let Some(parent) = parent {
-                let diff = self.repo.diff_tree_to_tree(
-                    Some(&commit.tree().map_err(|e| e.to_string())?),
-                    Some(&parent.tree().map_err(|e| e.to_string())?),
-                    None,
-                ).map_err(|e| e.to_string())?;
+                let diff = self
+                    .repo
+                    .diff_tree_to_tree(
+                        Some(&commit.tree().map_err(|e| e.to_string())?),
+                        Some(&parent.tree().map_err(|e| e.to_string())?),
+                        None,
+                    )
+                    .map_err(|e| e.to_string())?;
 
                 for delta in diff.deltas() {
                     if let Some(path) = delta.new_file().path() {
@@ -177,15 +184,21 @@ impl TreeSplitPlanner {
         revwalk.push_head().map_err(|e| e.to_string())?;
 
         for commit_id in revwalk {
-            let commit = self.repo.find_commit(commit_id.map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+            let commit = self
+                .repo
+                .find_commit(commit_id.map_err(|e| e.to_string())?)
+                .map_err(|e| e.to_string())?;
             let parent = commit.parent(0).ok();
-            
+
             if let Some(parent) = parent {
-                let diff = self.repo.diff_tree_to_tree(
-                    Some(&commit.tree().map_err(|e| e.to_string())?),
-                    Some(&parent.tree().map_err(|e| e.to_string())?),
-                    None,
-                ).map_err(|e| e.to_string())?;
+                let diff = self
+                    .repo
+                    .diff_tree_to_tree(
+                        Some(&commit.tree().map_err(|e| e.to_string())?),
+                        Some(&parent.tree().map_err(|e| e.to_string())?),
+                        None,
+                    )
+                    .map_err(|e| e.to_string())?;
 
                 for delta in diff.deltas() {
                     if let Some(path) = delta.new_file().path() {
@@ -193,7 +206,8 @@ impl TreeSplitPlanner {
                             return Ok(chrono::DateTime::from_timestamp(
                                 commit.time().seconds(),
                                 0,
-                            ).unwrap_or_default());
+                            )
+                            .unwrap_or_default());
                         }
                     }
                 }
@@ -204,14 +218,18 @@ impl TreeSplitPlanner {
     }
 
     /// Calculate volatility score based on commit frequency and recency
-    fn calculate_volatility_score(&self, file_path: &Path, commit_count: u64) -> Result<f64, String> {
+    fn calculate_volatility_score(
+        &self,
+        file_path: &Path,
+        commit_count: u64,
+    ) -> Result<f64, String> {
         let last_modified = self.get_last_modified(file_path)?;
         let days_since_modified = (chrono::Utc::now() - last_modified).num_days() as f64;
-        
+
         // Higher score for more commits and recent modifications
         let commit_factor = (commit_count as f64).min(100.0) / 100.0;
         let recency_factor = 1.0 / (1.0 + days_since_modified / 30.0);
-        
+
         Ok((commit_factor + recency_factor) / 2.0)
     }
 
@@ -233,7 +251,10 @@ impl TreeSplitPlanner {
     }
 
     /// Generate split suggestions based on churn analysis
-    pub fn generate_split_suggestions(&mut self, tree_sha: &str) -> Result<Vec<CrateSplitSuggestion>, String> {
+    pub fn generate_split_suggestions(
+        &mut self,
+        tree_sha: &str,
+    ) -> Result<Vec<CrateSplitSuggestion>, String> {
         let analyses = self.analyze_churn(tree_sha)?;
         let mut suggestions = Vec::new();
 
@@ -274,7 +295,8 @@ impl TreeSplitPlanner {
     fn create_volatility_split(&self, files: &[ChurnAnalysis]) -> CrateSplitSuggestion {
         let total_loc: u64 = files.iter().map(|f| self.estimate_loc(&f.file_path)).sum();
         let total_contracts: u64 = files.iter().map(|f| f.contract_count).sum();
-        let avg_volatility: f64 = files.iter().map(|f| f.volatility_score).sum::<f64>() / files.len() as f64;
+        let avg_volatility: f64 =
+            files.iter().map(|f| f.volatility_score).sum::<f64>() / files.len() as f64;
 
         CrateSplitSuggestion {
             crate_name: "high_volatility".to_string(),
@@ -314,7 +336,10 @@ impl TreeSplitPlanner {
     }
 
     /// Check for dependency cycles in suggested splits
-    fn check_dependency_cycles(&self, suggestions: &mut [CrateSplitSuggestion]) -> Result<(), String> {
+    fn check_dependency_cycles(
+        &self,
+        suggestions: &mut [CrateSplitSuggestion],
+    ) -> Result<(), String> {
         for suggestion in suggestions.iter_mut() {
             let cycle_detected = self.detect_cycles_in_files(&suggestion.files)?;
             suggestion.dependency_risk = if cycle_detected {
@@ -330,7 +355,7 @@ impl TreeSplitPlanner {
     fn detect_cycles_in_files(&self, files: &[PathBuf]) -> Result<bool, String> {
         // Build dependency graph
         let mut graph: HashMap<PathBuf, Vec<PathBuf>> = HashMap::new();
-        
+
         for file in files {
             let dependencies = self.extract_file_dependencies(file)?;
             graph.insert(file.clone(), dependencies);
@@ -392,11 +417,9 @@ impl TreeSplitPlanner {
         for file in files {
             let deps = self.extract_file_dependencies(file)?;
             total_deps += deps.len();
-            
+
             // Count external dependencies (outside the suggested crate)
-            external_deps += deps.iter()
-                .filter(|dep| !files.contains(dep))
-                .count();
+            external_deps += deps.iter().filter(|dep| !files.contains(dep)).count();
         }
 
         let external_ratio = if total_deps > 0 {
@@ -468,22 +491,24 @@ mod tests {
     fn create_test_repo() -> (Repository, TempDir) {
         let temp_dir = tempfile::tempdir().unwrap();
         let repo = Repository::init(temp_dir.path()).unwrap();
-        
+
         // Create test files and commits
         let signature = git2::Signature::now("test", "test@example.com").unwrap();
-        
+
         // Create initial tree
         let tree_id = repo.treebuilder(None).unwrap().write().unwrap();
         let tree = repo.find_tree(tree_id).unwrap();
-        
-        let commit_id = repo.commit(
-            Some("HEAD"),
-            &signature,
-            &signature,
-            "Initial commit",
-            &tree,
-            &[],
-        ).unwrap();
+
+        let commit_id = repo
+            .commit(
+                Some("HEAD"),
+                &signature,
+                &signature,
+                "Initial commit",
+                &tree,
+                &[],
+            )
+            .unwrap();
 
         (repo, temp_dir)
     }
@@ -493,7 +518,7 @@ mod tests {
         let (repo, _temp_dir) = create_test_repo();
         let config = SplitPlannerConfig::default();
         let planner = TreeSplitPlanner::new(repo, Some(config));
-        
+
         assert_eq!(planner.config.max_crate_size, 1000);
         assert_eq!(planner.config.min_crate_size, 100);
     }
@@ -502,7 +527,7 @@ mod tests {
     fn test_rust_file_detection() {
         let (repo, _temp_dir) = create_test_repo();
         let planner = TreeSplitPlanner::new(repo, None);
-        
+
         assert!(planner.is_rust_file(Path::new("src/lib.rs")));
         assert!(planner.is_rust_file(Path::new("main.rs")));
         assert!(!planner.is_rust_file(Path::new("README.md")));

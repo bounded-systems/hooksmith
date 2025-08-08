@@ -10,7 +10,9 @@ use std::env;
 /// Hook Type: post
 /// Status: Stub (ready for implementation)
 fn main() -> Result<()> {
-    println!("✅ post-dependabot_alert hook (stub mode) - would handle post dependabot_alert events");
+    println!(
+        "✅ post-dependabot_alert hook (stub mode) - would handle post dependabot_alert events"
+    );
 
     // Read GitHub event data
     if let Ok(event_path) = env::var("GITHUB_EVENT_PATH") {

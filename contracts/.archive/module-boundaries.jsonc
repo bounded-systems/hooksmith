@@ -1,0 +1,89 @@
+{
+  "name": "module-boundaries",
+  "version": "1.0.0",
+  "description": "Contract for validating module boundaries and structure",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "module_structure": {
+        "type": "object",
+        "properties": {
+          "max_depth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Maximum module nesting depth"
+          },
+          "naming_convention": {
+            "type": "string",
+            "enum": ["snake_case", "kebab-case", "PascalCase"],
+            "description": "Module naming convention"
+          },
+          "forbidden_patterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Forbidden module name patterns"
+          }
+        },
+        "required": ["max_depth", "naming_convention"]
+      },
+      "visibility_rules": {
+        "type": "object",
+        "properties": {
+          "public_modules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Modules that must be public"
+          },
+          "private_modules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Modules that must be private"
+          }
+        }
+      }
+    },
+    "required": ["module_structure"]
+  },
+  "rules": [
+    {
+      "name": "module_depth_limit",
+      "description": "Enforce maximum module nesting depth",
+      "rule_type": "Custom",
+      "parameters": {
+        "max_depth": 5
+      },
+      "required": true,
+      "severity": "Error"
+    },
+    {
+      "name": "module_naming",
+      "description": "Enforce module naming convention",
+      "rule_type": "Pattern",
+      "parameters": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "required": true,
+      "severity": "Warning"
+    },
+    {
+      "name": "public_api_stability",
+      "description": "Ensure public modules have stable APIs",
+      "rule_type": "Custom",
+      "parameters": {},
+      "required": false,
+      "severity": "Info"
+    }
+  ],
+  "metadata": {
+    "contract_type": "module_validation",
+    "scope": "repository",
+    "enforcement_level": "strict"
+  }
+}

@@ -21,7 +21,11 @@ fn main() -> Result<()> {
     println!("\n🔍 Available FSMonitor strategies:");
 
     for (strategy, available) in &strategies {
-        let status = if *available { "✅ Available" } else { "❌ Not available" };
+        let status = if *available {
+            "✅ Available"
+        } else {
+            "❌ Not available"
+        };
         println!("   {}: {}", strategy, status);
     }
 
@@ -49,14 +53,10 @@ enum FSMonitorStrategy {
 }
 
 fn get_git_version() -> Result<String> {
-    let output = Command::new("git")
-        .args(&["--version"])
-        .output()?;
+    let output = Command::new("git").args(&["--version"]).output()?;
 
     if output.status.success() {
-        let version = String::from_utf8(output.stdout)?
-            .trim()
-            .to_string();
+        let version = String::from_utf8(output.stdout)?.trim().to_string();
         Ok(version)
     } else {
         Err(anyhow::anyhow!("Failed to get Git version"))
@@ -72,7 +72,10 @@ fn detect_fsmonitor_strategies() -> Result<Vec<(String, bool)>> {
 
     // Check rs-git-fsmonitor
     let rs_git_available = is_rs_git_fsmonitor_available()?;
-    strategies.push(("rs-git-fsmonitor (Rust Watchman)".to_string(), rs_git_available));
+    strategies.push((
+        "rs-git-fsmonitor (Rust Watchman)".to_string(),
+        rs_git_available,
+    ));
 
     // Our Rust implementation is always available
     strategies.push(("Hooksmith Rust implementation".to_string(), true));
@@ -84,7 +87,14 @@ fn supports_builtin_fsmonitor(version: &str) -> Result<bool> {
     // Git 2.37.0+ supports built-in FSMonitor
     // Parse version like "git version 2.37.0"
     if let Some(version_part) = version.split_whitespace().nth(2) {
-        if let Some(major_minor) = version_part.split('.').take(2).collect::<Vec<_>>().join(".").parse::<f32>().ok() {
+        if let Some(major_minor) = version_part
+            .split('.')
+            .take(2)
+            .collect::<Vec<_>>()
+            .join(".")
+            .parse::<f32>()
+            .ok()
+        {
             return Ok(major_minor >= 2.37);
         }
     }
@@ -93,9 +103,7 @@ fn supports_builtin_fsmonitor(version: &str) -> Result<bool> {
 
 fn is_rs_git_fsmonitor_available() -> Result<bool> {
     // Check if rs-git-fsmonitor is installed and available
-    let output = Command::new("which")
-        .args(&["rs-git-fsmonitor"])
-        .output()?;
+    let output = Command::new("which").args(&["rs-git-fsmonitor"]).output()?;
 
     Ok(output.status.success())
 }
@@ -103,12 +111,18 @@ fn is_rs_git_fsmonitor_available() -> Result<bool> {
 fn select_best_strategy(strategies: &[(String, bool)]) -> Result<FSMonitorStrategy> {
     // Priority order: Built-in > rs-git-fsmonitor > Rust implementation
 
-    if strategies.iter().any(|(name, available)| name.contains("Built-in") && *available) {
+    if strategies
+        .iter()
+        .any(|(name, available)| name.contains("Built-in") && *available)
+    {
         println!("\n🚀 Using built-in FSMonitor daemon (recommended)");
         return Ok(FSMonitorStrategy::BuiltIn);
     }
 
-    if strategies.iter().any(|(name, available)| name.contains("rs-git-fsmonitor") && *available) {
+    if strategies
+        .iter()
+        .any(|(name, available)| name.contains("rs-git-fsmonitor") && *available)
+    {
         println!("\n⚡ Using rs-git-fsmonitor (Rust-based Watchman hook)");
         return Ok(FSMonitorStrategy::RsGitFsmonitor);
     }

@@ -4,7 +4,7 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 
 /// Hooksmith Docker Entrypoint - Pure Rust Implementation
-/// 
+///
 /// This binary replaces the shell entrypoint script with:
 /// - Clean argument passing
 /// - Environment setup for GitHub Actions and act
@@ -12,7 +12,7 @@ use std::process::{Command, Stdio};
 /// - Proper workspace handling
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
-    
+
     println!("🔧 Hooksmith entrypoint starting...");
     println!("📦 Arguments: {}", args.len() - 1);
     println!("🔍 Command: {}", args[1..].join(" "));
@@ -37,7 +37,7 @@ fn main() -> Result<()> {
 
     // Execute the command
     println!("🚀 Executing: {}", args[1..].join(" "));
-    
+
     if args.len() > 1 {
         let status = Command::new(&args[1])
             .args(&args[2..])
@@ -45,7 +45,7 @@ fn main() -> Result<()> {
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
             .status()?;
-        
+
         std::process::exit(status.code().unwrap_or(1));
     } else {
         // Default command
@@ -55,7 +55,7 @@ fn main() -> Result<()> {
             .stdout(Stdio::inherit())
             .stderr(Stdio::inherit())
             .status()?;
-        
+
         std::process::exit(status.code().unwrap_or(1));
     }
 }

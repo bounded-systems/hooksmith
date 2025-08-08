@@ -67,9 +67,7 @@ fn get_repo_root() -> Result<String> {
         .output()?;
 
     if output.status.success() {
-        let root = String::from_utf8(output.stdout)?
-            .trim()
-            .to_string();
+        let root = String::from_utf8(output.stdout)?.trim().to_string();
         Ok(root)
     } else {
         Err(anyhow::anyhow!("Failed to get repository root"))
@@ -96,15 +94,20 @@ fn select_fsmonitor_strategy() -> Result<FSMonitorStrategy> {
 
 fn is_git_fsmonitor_available() -> Result<bool> {
     // Check Git version for built-in FSMonitor support (2.37.0+)
-    let output = Command::new("git")
-        .args(&["--version"])
-        .output()?;
+    let output = Command::new("git").args(&["--version"]).output()?;
 
     if output.status.success() {
         let version = String::from_utf8(output.stdout)?;
         // Parse version like "git version 2.37.0"
         if let Some(version_part) = version.split_whitespace().nth(2) {
-            if let Some(major_minor) = version_part.split('.').take(2).collect::<Vec<_>>().join(".").parse::<f32>().ok() {
+            if let Some(major_minor) = version_part
+                .split('.')
+                .take(2)
+                .collect::<Vec<_>>()
+                .join(".")
+                .parse::<f32>()
+                .ok()
+            {
                 return Ok(major_minor >= 2.37);
             }
         }
@@ -126,9 +129,7 @@ fn is_git_fsmonitor_enabled() -> Result<bool> {
 
 fn is_rs_git_fsmonitor_available() -> Result<bool> {
     // Check if rs-git-fsmonitor is installed and available
-    let output = Command::new("which")
-        .args(&["rs-git-fsmonitor"])
-        .output()?;
+    let output = Command::new("which").args(&["rs-git-fsmonitor"]).output()?;
 
     Ok(output.status.success())
 }
@@ -162,8 +163,10 @@ fn use_rs_git_fsmonitor(repo_root: String, version: &str, timestamp_or_token: &s
         // Forward the output from rs-git-fsmonitor
         io::stdout().write_all(&output.stdout)?;
     } else {
-        return Err(anyhow::anyhow!("rs-git-fsmonitor failed: {}",
-            String::from_utf8_lossy(&output.stderr)));
+        return Err(anyhow::anyhow!(
+            "rs-git-fsmonitor failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
     }
 
     Ok(())
@@ -173,7 +176,8 @@ fn use_rust_fsmonitor(repo_root: String, version: &str, timestamp_or_token: &str
     // Implement a Rust-based file system monitor
     // This is a simplified version - in production you'd use a proper file watcher
 
-    let timestamp_secs: u64 = timestamp_or_token.parse()
+    let timestamp_secs: u64 = timestamp_or_token
+        .parse()
         .map_err(|_| anyhow::anyhow!("Invalid timestamp: {}", timestamp_or_token))?;
 
     let timestamp = UNIX_EPOCH + std::time::Duration::from_secs(timestamp_secs);
@@ -187,7 +191,10 @@ fn use_rust_fsmonitor(repo_root: String, version: &str, timestamp_or_token: &str
 
     if version == "2" {
         // v2 protocol: output new token followed by NUL and changed files
-        let new_token = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos().to_string();
+        let new_token = SystemTime::now()
+            .duration_since(UNIX_EPOCH)?
+            .as_nanos()
+            .to_string();
         handle.write_all(new_token.as_bytes())?;
         handle.write_all(&[0])?; // NUL separator
     }
@@ -260,7 +267,14 @@ mod tests {
 
     fn is_git_fsmonitor_available_from_version(version: &str) -> Result<bool> {
         if let Some(version_part) = version.split_whitespace().nth(2) {
-            if let Some(major_minor) = version_part.split('.').take(2).collect::<Vec<_>>().join(".").parse::<f32>().ok() {
+            if let Some(major_minor) = version_part
+                .split('.')
+                .take(2)
+                .collect::<Vec<_>>()
+                .join(".")
+                .parse::<f32>()
+                .ok()
+            {
                 return Ok(major_minor >= 2.37);
             }
         }

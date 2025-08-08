@@ -74,7 +74,7 @@ pub enum GitAttributeType {
 }
 
 /// Git-native API bindings for hook concerns
-/// 
+///
 /// This module provides pattern-matching logic for each HookConcern
 /// using git2 and gix (gitoxide) APIs. Each concern maps to real,
 /// queryable Git data types.
@@ -101,7 +101,11 @@ impl GitBindings {
     }
 
     /// Validate a Git tree entry using git2
-    pub fn validate_git_tree_entry(&self, tree_entry_type: &GitTreeEntryType, entry_path: &str) -> Result<()> {
+    pub fn validate_git_tree_entry(
+        &self,
+        tree_entry_type: &GitTreeEntryType,
+        entry_path: &str,
+    ) -> Result<()> {
         match tree_entry_type {
             GitTreeEntryType::File => self.validate_tree_file_git2(entry_path),
             GitTreeEntryType::Executable => self.validate_tree_executable_git2(entry_path),
@@ -112,7 +116,11 @@ impl GitBindings {
     }
 
     /// Validate Git metadata using git2
-    pub fn validate_git_metadata(&self, metadata_type: &GitMetadataType, identifier: &str) -> Result<()> {
+    pub fn validate_git_metadata(
+        &self,
+        metadata_type: &GitMetadataType,
+        identifier: &str,
+    ) -> Result<()> {
         match metadata_type {
             GitMetadataType::Ref => self.validate_ref_git2(identifier),
             GitMetadataType::Note => self.validate_note_git2(identifier),
@@ -128,9 +136,15 @@ impl GitBindings {
     }
 
     /// Validate Git attributes using git2
-    pub fn validate_git_attribute(&self, attribute_type: &GitAttributeType, file_path: &str) -> Result<()> {
+    pub fn validate_git_attribute(
+        &self,
+        attribute_type: &GitAttributeType,
+        file_path: &str,
+    ) -> Result<()> {
         match attribute_type {
-            GitAttributeType::LineEndingNormalization => self.validate_attr_line_ending_git2(file_path),
+            GitAttributeType::LineEndingNormalization => {
+                self.validate_attr_line_ending_git2(file_path)
+            }
             GitAttributeType::DiffStrategy => self.validate_attr_diff_strategy_git2(file_path),
             GitAttributeType::MergeStrategy => self.validate_attr_merge_strategy_git2(file_path),
             GitAttributeType::ExportControl => self.validate_attr_export_control_git2(file_path),
@@ -297,28 +311,40 @@ impl GitBindings {
     fn validate_tree_executable_git2(&self, entry_path: &str) -> Result<()> {
         // git2::Repository::open(&self.repo_path)?
         //     .find_tree(entry_path)?;
-        println!("✅ Validated tree executable {} (100755) using git2", entry_path);
+        println!(
+            "✅ Validated tree executable {} (100755) using git2",
+            entry_path
+        );
         Ok(())
     }
 
     fn validate_tree_symlink_git2(&self, entry_path: &str) -> Result<()> {
         // git2::Repository::open(&self.repo_path)?
         //     .find_tree(entry_path)?;
-        println!("✅ Validated tree symlink {} (120000) using git2", entry_path);
+        println!(
+            "✅ Validated tree symlink {} (120000) using git2",
+            entry_path
+        );
         Ok(())
     }
 
     fn validate_tree_directory_git2(&self, entry_path: &str) -> Result<()> {
         // git2::Repository::open(&self.repo_path)?
         //     .find_tree(entry_path)?;
-        println!("✅ Validated tree directory {} (040000) using git2", entry_path);
+        println!(
+            "✅ Validated tree directory {} (040000) using git2",
+            entry_path
+        );
         Ok(())
     }
 
     fn validate_tree_submodule_git2(&self, entry_path: &str) -> Result<()> {
         // git2::Repository::open(&self.repo_path)?
         //     .find_tree(entry_path)?;
-        println!("✅ Validated tree submodule {} (160000) using git2", entry_path);
+        println!(
+            "✅ Validated tree submodule {} (160000) using git2",
+            entry_path
+        );
         Ok(())
     }
 
@@ -326,7 +352,10 @@ impl GitBindings {
     fn validate_attr_line_ending_git2(&self, file_path: &str) -> Result<()> {
         // git2::Repository::open(&self.repo_path)?
         //     .get_attributes(file_path)?;
-        println!("✅ Validated line ending normalization for {} using git2", file_path);
+        println!(
+            "✅ Validated line ending normalization for {} using git2",
+            file_path
+        );
         Ok(())
     }
 
@@ -361,7 +390,10 @@ impl GitBindings {
     fn validate_attr_external_tool_git2(&self, file_path: &str) -> Result<()> {
         // git2::Repository::open(&self.repo_path)?
         //     .get_attributes(file_path)?;
-        println!("✅ Validated external tool hints for {} using git2", file_path);
+        println!(
+            "✅ Validated external tool hints for {} using git2",
+            file_path
+        );
         Ok(())
     }
 
@@ -446,7 +478,11 @@ impl GitBindings {
     }
 
     /// Validate a Git object using gix (gitoxide)
-    pub fn validate_git_object_gix(&self, object_type: &GitObjectType, object_id: &str) -> Result<()> {
+    pub fn validate_git_object_gix(
+        &self,
+        object_type: &GitObjectType,
+        object_id: &str,
+    ) -> Result<()> {
         match object_type {
             GitObjectType::Blob => self.validate_blob_gix(object_id),
             GitObjectType::Tree => self.validate_tree_gix(object_id),
@@ -456,7 +492,11 @@ impl GitBindings {
     }
 
     /// Validate a Git tree entry using gix (gitoxide)
-    pub fn validate_git_tree_entry_gix(&self, tree_entry_type: &GitTreeEntryType, entry_path: &str) -> Result<()> {
+    pub fn validate_git_tree_entry_gix(
+        &self,
+        tree_entry_type: &GitTreeEntryType,
+        entry_path: &str,
+    ) -> Result<()> {
         match tree_entry_type {
             GitTreeEntryType::File => self.validate_tree_file_gix(entry_path),
             GitTreeEntryType::Executable => self.validate_tree_executable_gix(entry_path),
@@ -467,7 +507,11 @@ impl GitBindings {
     }
 
     /// Validate Git metadata using gix (gitoxide)
-    pub fn validate_git_metadata_gix(&self, metadata_type: &GitMetadataType, identifier: &str) -> Result<()> {
+    pub fn validate_git_metadata_gix(
+        &self,
+        metadata_type: &GitMetadataType,
+        identifier: &str,
+    ) -> Result<()> {
         match metadata_type {
             GitMetadataType::Ref => self.validate_ref_gix(identifier),
             GitMetadataType::Note => self.validate_note_gix(identifier),
@@ -483,9 +527,15 @@ impl GitBindings {
     }
 
     /// Validate Git attributes using gix (gitoxide)
-    pub fn validate_git_attribute_gix(&self, attribute_type: &GitAttributeType, file_path: &str) -> Result<()> {
+    pub fn validate_git_attribute_gix(
+        &self,
+        attribute_type: &GitAttributeType,
+        file_path: &str,
+    ) -> Result<()> {
         match attribute_type {
-            GitAttributeType::LineEndingNormalization => self.validate_attr_line_ending_gix(file_path),
+            GitAttributeType::LineEndingNormalization => {
+                self.validate_attr_line_ending_gix(file_path)
+            }
             GitAttributeType::DiffStrategy => self.validate_attr_diff_strategy_gix(file_path),
             GitAttributeType::MergeStrategy => self.validate_attr_merge_strategy_gix(file_path),
             GitAttributeType::ExportControl => self.validate_attr_export_control_gix(file_path),
@@ -609,28 +659,40 @@ impl GitBindings {
     fn validate_tree_executable_gix(&self, entry_path: &str) -> Result<()> {
         // gix::Repository::open(&self.repo_path)?
         //     .find_tree(entry_path)?;
-        println!("✅ Validated tree executable {} (100755) using gix", entry_path);
+        println!(
+            "✅ Validated tree executable {} (100755) using gix",
+            entry_path
+        );
         Ok(())
     }
 
     fn validate_tree_symlink_gix(&self, entry_path: &str) -> Result<()> {
         // gix::Repository::open(&self.repo_path)?
         //     .find_tree(entry_path)?;
-        println!("✅ Validated tree symlink {} (120000) using gix", entry_path);
+        println!(
+            "✅ Validated tree symlink {} (120000) using gix",
+            entry_path
+        );
         Ok(())
     }
 
     fn validate_tree_directory_gix(&self, entry_path: &str) -> Result<()> {
         // gix::Repository::open(&self.repo_path)?
         //     .find_tree(entry_path)?;
-        println!("✅ Validated tree directory {} (040000) using gix", entry_path);
+        println!(
+            "✅ Validated tree directory {} (040000) using gix",
+            entry_path
+        );
         Ok(())
     }
 
     fn validate_tree_submodule_gix(&self, entry_path: &str) -> Result<()> {
         // gix::Repository::open(&self.repo_path)?
         //     .find_tree(entry_path)?;
-        println!("✅ Validated tree submodule {} (160000) using gix", entry_path);
+        println!(
+            "✅ Validated tree submodule {} (160000) using gix",
+            entry_path
+        );
         Ok(())
     }
 
@@ -638,7 +700,10 @@ impl GitBindings {
     fn validate_attr_line_ending_gix(&self, file_path: &str) -> Result<()> {
         // gix::Repository::open(&self.repo_path)?
         //     .get_attributes(file_path)?;
-        println!("✅ Validated line ending normalization for {} using gix", file_path);
+        println!(
+            "✅ Validated line ending normalization for {} using gix",
+            file_path
+        );
         Ok(())
     }
 
@@ -673,7 +738,10 @@ impl GitBindings {
     fn validate_attr_external_tool_gix(&self, file_path: &str) -> Result<()> {
         // gix::Repository::open(&self.repo_path)?
         //     .get_attributes(file_path)?;
-        println!("✅ Validated external tool hints for {} using gix", file_path);
+        println!(
+            "✅ Validated external tool hints for {} using gix",
+            file_path
+        );
         Ok(())
     }
 
@@ -689,10 +757,10 @@ impl GitBindings {
 pub trait GitConcernValidator {
     /// Validate a specific concern using git2
     fn validate_concern_git2(&self, concern: &str, identifier: &str) -> Result<()>;
-    
+
     /// Validate a specific concern using gix
     fn validate_concern_gix(&self, concern: &str, identifier: &str) -> Result<()>;
-    
+
     /// Get statistics for a specific concern
     fn get_concern_stats(&self, concern: &str) -> Result<u32>;
 }
@@ -705,10 +773,16 @@ impl GitConcernValidator for GitBindings {
             "commit" => self.validate_git_object(&GitObjectType::Commit, identifier),
             "tag" => self.validate_git_object(&GitObjectType::Tag, identifier),
             "tree-file" => self.validate_git_tree_entry(&GitTreeEntryType::File, identifier),
-            "tree-executable" => self.validate_git_tree_entry(&GitTreeEntryType::Executable, identifier),
+            "tree-executable" => {
+                self.validate_git_tree_entry(&GitTreeEntryType::Executable, identifier)
+            }
             "tree-symlink" => self.validate_git_tree_entry(&GitTreeEntryType::Symlink, identifier),
-            "tree-directory" => self.validate_git_tree_entry(&GitTreeEntryType::Directory, identifier),
-            "tree-submodule" => self.validate_git_tree_entry(&GitTreeEntryType::Submodule, identifier),
+            "tree-directory" => {
+                self.validate_git_tree_entry(&GitTreeEntryType::Directory, identifier)
+            }
+            "tree-submodule" => {
+                self.validate_git_tree_entry(&GitTreeEntryType::Submodule, identifier)
+            }
             "ref" => self.validate_git_metadata(&GitMetadataType::Ref, identifier),
             "note" => self.validate_git_metadata(&GitMetadataType::Note, identifier),
             "attr" => self.validate_git_metadata(&GitMetadataType::Attr, identifier),
@@ -719,13 +793,27 @@ impl GitConcernValidator for GitBindings {
             "branch" => self.validate_git_metadata(&GitMetadataType::Branch, identifier),
             "head" => self.validate_git_metadata(&GitMetadataType::Head, identifier),
             "reflog" => self.validate_git_metadata(&GitMetadataType::Reflog, identifier),
-            "attr-line-ending-normalization" => self.validate_git_attribute(&GitAttributeType::LineEndingNormalization, identifier),
-            "attr-diff-strategy" => self.validate_git_attribute(&GitAttributeType::DiffStrategy, identifier),
-            "attr-merge-strategy" => self.validate_git_attribute(&GitAttributeType::MergeStrategy, identifier),
-            "attr-export-control" => self.validate_git_attribute(&GitAttributeType::ExportControl, identifier),
-            "attr-filter-driver" => self.validate_git_attribute(&GitAttributeType::FilterDriver, identifier),
-            "attr-external-tool-hint" => self.validate_git_attribute(&GitAttributeType::ExternalToolHint, identifier),
-            "attr-locking-hint" => self.validate_git_attribute(&GitAttributeType::LockingHint, identifier),
+            "attr-line-ending-normalization" => {
+                self.validate_git_attribute(&GitAttributeType::LineEndingNormalization, identifier)
+            }
+            "attr-diff-strategy" => {
+                self.validate_git_attribute(&GitAttributeType::DiffStrategy, identifier)
+            }
+            "attr-merge-strategy" => {
+                self.validate_git_attribute(&GitAttributeType::MergeStrategy, identifier)
+            }
+            "attr-export-control" => {
+                self.validate_git_attribute(&GitAttributeType::ExportControl, identifier)
+            }
+            "attr-filter-driver" => {
+                self.validate_git_attribute(&GitAttributeType::FilterDriver, identifier)
+            }
+            "attr-external-tool-hint" => {
+                self.validate_git_attribute(&GitAttributeType::ExternalToolHint, identifier)
+            }
+            "attr-locking-hint" => {
+                self.validate_git_attribute(&GitAttributeType::LockingHint, identifier)
+            }
             _ => bail!("Unknown concern: {}", concern),
         }
     }
@@ -737,10 +825,18 @@ impl GitConcernValidator for GitBindings {
             "commit" => self.validate_git_object_gix(&GitObjectType::Commit, identifier),
             "tag" => self.validate_git_object_gix(&GitObjectType::Tag, identifier),
             "tree-file" => self.validate_git_tree_entry_gix(&GitTreeEntryType::File, identifier),
-            "tree-executable" => self.validate_git_tree_entry_gix(&GitTreeEntryType::Executable, identifier),
-            "tree-symlink" => self.validate_git_tree_entry_gix(&GitTreeEntryType::Symlink, identifier),
-            "tree-directory" => self.validate_git_tree_entry_gix(&GitTreeEntryType::Directory, identifier),
-            "tree-submodule" => self.validate_git_tree_entry_gix(&GitTreeEntryType::Submodule, identifier),
+            "tree-executable" => {
+                self.validate_git_tree_entry_gix(&GitTreeEntryType::Executable, identifier)
+            }
+            "tree-symlink" => {
+                self.validate_git_tree_entry_gix(&GitTreeEntryType::Symlink, identifier)
+            }
+            "tree-directory" => {
+                self.validate_git_tree_entry_gix(&GitTreeEntryType::Directory, identifier)
+            }
+            "tree-submodule" => {
+                self.validate_git_tree_entry_gix(&GitTreeEntryType::Submodule, identifier)
+            }
             "ref" => self.validate_git_metadata_gix(&GitMetadataType::Ref, identifier),
             "note" => self.validate_git_metadata_gix(&GitMetadataType::Note, identifier),
             "attr" => self.validate_git_metadata_gix(&GitMetadataType::Attr, identifier),
@@ -751,13 +847,26 @@ impl GitConcernValidator for GitBindings {
             "branch" => self.validate_git_metadata_gix(&GitMetadataType::Branch, identifier),
             "head" => self.validate_git_metadata_gix(&GitMetadataType::Head, identifier),
             "reflog" => self.validate_git_metadata_gix(&GitMetadataType::Reflog, identifier),
-            "attr-line-ending-normalization" => self.validate_git_attribute_gix(&GitAttributeType::LineEndingNormalization, identifier),
-            "attr-diff-strategy" => self.validate_git_attribute_gix(&GitAttributeType::DiffStrategy, identifier),
-            "attr-merge-strategy" => self.validate_git_attribute_gix(&GitAttributeType::MergeStrategy, identifier),
-            "attr-export-control" => self.validate_git_attribute_gix(&GitAttributeType::ExportControl, identifier),
-            "attr-filter-driver" => self.validate_git_attribute_gix(&GitAttributeType::FilterDriver, identifier),
-            "attr-external-tool-hint" => self.validate_git_attribute_gix(&GitAttributeType::ExternalToolHint, identifier),
-            "attr-locking-hint" => self.validate_git_attribute_gix(&GitAttributeType::LockingHint, identifier),
+            "attr-line-ending-normalization" => self
+                .validate_git_attribute_gix(&GitAttributeType::LineEndingNormalization, identifier),
+            "attr-diff-strategy" => {
+                self.validate_git_attribute_gix(&GitAttributeType::DiffStrategy, identifier)
+            }
+            "attr-merge-strategy" => {
+                self.validate_git_attribute_gix(&GitAttributeType::MergeStrategy, identifier)
+            }
+            "attr-export-control" => {
+                self.validate_git_attribute_gix(&GitAttributeType::ExportControl, identifier)
+            }
+            "attr-filter-driver" => {
+                self.validate_git_attribute_gix(&GitAttributeType::FilterDriver, identifier)
+            }
+            "attr-external-tool-hint" => {
+                self.validate_git_attribute_gix(&GitAttributeType::ExternalToolHint, identifier)
+            }
+            "attr-locking-hint" => {
+                self.validate_git_attribute_gix(&GitAttributeType::LockingHint, identifier)
+            }
             _ => bail!("Unknown concern: {}", concern),
         }
     }
@@ -768,15 +877,23 @@ impl GitConcernValidator for GitBindings {
                 let stats = self.get_object_stats_git2()?;
                 Ok(*stats.get(concern).unwrap_or(&0))
             }
-            "tree-file" | "tree-executable" | "tree-symlink" | "tree-directory" | "tree-submodule" => {
+            "tree-file" | "tree-executable" | "tree-symlink" | "tree-directory"
+            | "tree-submodule" => {
                 let stats = self.get_tree_entry_stats_git2()?;
                 Ok(*stats.get(concern).unwrap_or(&0))
             }
-            "ref" | "note" | "attr" | "index" | "stash" | "worktree" | "remote" | "branch" | "head" | "reflog" => {
+            "ref" | "note" | "attr" | "index" | "stash" | "worktree" | "remote" | "branch"
+            | "head" | "reflog" => {
                 let stats = self.get_metadata_stats_git2()?;
                 Ok(*stats.get(concern).unwrap_or(&0))
             }
-            "attr-line-ending-normalization" | "attr-diff-strategy" | "attr-merge-strategy" | "attr-export-control" | "attr-filter-driver" | "attr-external-tool-hint" | "attr-locking-hint" => {
+            "attr-line-ending-normalization"
+            | "attr-diff-strategy"
+            | "attr-merge-strategy"
+            | "attr-export-control"
+            | "attr-filter-driver"
+            | "attr-external-tool-hint"
+            | "attr-locking-hint" => {
                 let stats = self.get_attribute_stats_git2()?;
                 Ok(*stats.get(concern).unwrap_or(&0))
             }
@@ -798,41 +915,75 @@ mod tests {
     #[test]
     fn test_concern_validation_git2() {
         let bindings = GitBindings::new(".");
-        
+
         // Test object concerns
         assert!(bindings.validate_concern_git2("blob", "test-id").is_ok());
         assert!(bindings.validate_concern_git2("tree", "test-id").is_ok());
         assert!(bindings.validate_concern_git2("commit", "test-id").is_ok());
         assert!(bindings.validate_concern_git2("tag", "test-id").is_ok());
-        
+
         // Test tree entry concerns
-        assert!(bindings.validate_concern_git2("tree-file", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_git2("tree-executable", "scripts/build.sh").is_ok());
-        assert!(bindings.validate_concern_git2("tree-symlink", "link-to-file").is_ok());
-        assert!(bindings.validate_concern_git2("tree-directory", "src/").is_ok());
-        assert!(bindings.validate_concern_git2("tree-submodule", "external-lib").is_ok());
-        
+        assert!(bindings
+            .validate_concern_git2("tree-file", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_git2("tree-executable", "scripts/build.sh")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_git2("tree-symlink", "link-to-file")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_git2("tree-directory", "src/")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_git2("tree-submodule", "external-lib")
+            .is_ok());
+
         // Test attribute concerns
-        assert!(bindings.validate_concern_git2("attr-line-ending-normalization", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_git2("attr-diff-strategy", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_git2("attr-merge-strategy", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_git2("attr-export-control", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_git2("attr-filter-driver", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_git2("attr-external-tool-hint", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_git2("attr-locking-hint", "src/main.rs").is_ok());
-        
+        assert!(bindings
+            .validate_concern_git2("attr-line-ending-normalization", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_git2("attr-diff-strategy", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_git2("attr-merge-strategy", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_git2("attr-export-control", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_git2("attr-filter-driver", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_git2("attr-external-tool-hint", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_git2("attr-locking-hint", "src/main.rs")
+            .is_ok());
+
         // Test metadata concerns
-        assert!(bindings.validate_concern_git2("ref", "refs/heads/main").is_ok());
+        assert!(bindings
+            .validate_concern_git2("ref", "refs/heads/main")
+            .is_ok());
         assert!(bindings.validate_concern_git2("note", "test-note").is_ok());
-        assert!(bindings.validate_concern_git2("attr", ".gitattributes").is_ok());
+        assert!(bindings
+            .validate_concern_git2("attr", ".gitattributes")
+            .is_ok());
         assert!(bindings.validate_concern_git2("index", "").is_ok());
-        assert!(bindings.validate_concern_git2("stash", "refs/stash").is_ok());
-        assert!(bindings.validate_concern_git2("worktree", "feature-branch").is_ok());
+        assert!(bindings
+            .validate_concern_git2("stash", "refs/stash")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_git2("worktree", "feature-branch")
+            .is_ok());
         assert!(bindings.validate_concern_git2("remote", "origin").is_ok());
         assert!(bindings.validate_concern_git2("branch", "main").is_ok());
         assert!(bindings.validate_concern_git2("head", "HEAD").is_ok());
-        assert!(bindings.validate_concern_git2("reflog", "refs/heads/main").is_ok());
-        
+        assert!(bindings
+            .validate_concern_git2("reflog", "refs/heads/main")
+            .is_ok());
+
         // Test invalid concern
         assert!(bindings.validate_concern_git2("invalid", "test").is_err());
     }
@@ -840,41 +991,73 @@ mod tests {
     #[test]
     fn test_concern_validation_gix() {
         let bindings = GitBindings::new(".");
-        
+
         // Test object concerns
         assert!(bindings.validate_concern_gix("blob", "test-id").is_ok());
         assert!(bindings.validate_concern_gix("tree", "test-id").is_ok());
         assert!(bindings.validate_concern_gix("commit", "test-id").is_ok());
         assert!(bindings.validate_concern_gix("tag", "test-id").is_ok());
-        
+
         // Test tree entry concerns
-        assert!(bindings.validate_concern_gix("tree-file", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_gix("tree-executable", "scripts/build.sh").is_ok());
-        assert!(bindings.validate_concern_gix("tree-symlink", "link-to-file").is_ok());
-        assert!(bindings.validate_concern_gix("tree-directory", "src/").is_ok());
-        assert!(bindings.validate_concern_gix("tree-submodule", "external-lib").is_ok());
-        
+        assert!(bindings
+            .validate_concern_gix("tree-file", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_gix("tree-executable", "scripts/build.sh")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_gix("tree-symlink", "link-to-file")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_gix("tree-directory", "src/")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_gix("tree-submodule", "external-lib")
+            .is_ok());
+
         // Test attribute concerns
-        assert!(bindings.validate_concern_gix("attr-line-ending-normalization", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_gix("attr-diff-strategy", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_gix("attr-merge-strategy", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_gix("attr-export-control", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_gix("attr-filter-driver", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_gix("attr-external-tool-hint", "src/main.rs").is_ok());
-        assert!(bindings.validate_concern_gix("attr-locking-hint", "src/main.rs").is_ok());
-        
+        assert!(bindings
+            .validate_concern_gix("attr-line-ending-normalization", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_gix("attr-diff-strategy", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_gix("attr-merge-strategy", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_gix("attr-export-control", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_gix("attr-filter-driver", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_gix("attr-external-tool-hint", "src/main.rs")
+            .is_ok());
+        assert!(bindings
+            .validate_concern_gix("attr-locking-hint", "src/main.rs")
+            .is_ok());
+
         // Test metadata concerns
-        assert!(bindings.validate_concern_gix("ref", "refs/heads/main").is_ok());
+        assert!(bindings
+            .validate_concern_gix("ref", "refs/heads/main")
+            .is_ok());
         assert!(bindings.validate_concern_gix("note", "test-note").is_ok());
-        assert!(bindings.validate_concern_gix("attr", ".gitattributes").is_ok());
+        assert!(bindings
+            .validate_concern_gix("attr", ".gitattributes")
+            .is_ok());
         assert!(bindings.validate_concern_gix("index", "").is_ok());
         assert!(bindings.validate_concern_gix("stash", "refs/stash").is_ok());
-        assert!(bindings.validate_concern_gix("worktree", "feature-branch").is_ok());
+        assert!(bindings
+            .validate_concern_gix("worktree", "feature-branch")
+            .is_ok());
         assert!(bindings.validate_concern_gix("remote", "origin").is_ok());
         assert!(bindings.validate_concern_gix("branch", "main").is_ok());
         assert!(bindings.validate_concern_gix("head", "HEAD").is_ok());
-        assert!(bindings.validate_concern_gix("reflog", "refs/heads/main").is_ok());
-        
+        assert!(bindings
+            .validate_concern_gix("reflog", "refs/heads/main")
+            .is_ok());
+
         // Test invalid concern
         assert!(bindings.validate_concern_gix("invalid", "test").is_err());
     }

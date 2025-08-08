@@ -10,7 +10,9 @@ use std::env;
 /// Hook Type: post
 /// Status: Stub (ready for implementation)
 fn main() -> Result<()> {
-    println!("✅ post-deployment_status hook (stub mode) - would handle post deployment_status events");
+    println!(
+        "✅ post-deployment_status hook (stub mode) - would handle post deployment_status events"
+    );
 
     // Read GitHub event data
     if let Ok(event_path) = env::var("GITHUB_EVENT_PATH") {

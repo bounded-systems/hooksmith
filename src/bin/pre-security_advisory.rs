@@ -10,7 +10,9 @@ use std::env;
 /// Hook Type: pre
 /// Status: Stub (ready for implementation)
 fn main() -> Result<()> {
-    println!("✅ pre-security_advisory hook (stub mode) - would handle pre security_advisory events");
+    println!(
+        "✅ pre-security_advisory hook (stub mode) - would handle pre security_advisory events"
+    );
 
     // Read GitHub event data
     if let Ok(event_path) = env::var("GITHUB_EVENT_PATH") {

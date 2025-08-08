@@ -1,19 +1,19 @@
 //! Repair Planning System Demo
-//! 
+//!
 //! This example demonstrates the complete repair planning pipeline:
-//! 
+//!
 //! 1. Detect a formatting violation
 //! 2. Investigate the root cause
 //! 3. Dispatch to appropriate fixers
 //! 4. Create a repair plan
 //! 5. Execute the repairs
 
+use anyhow::Result;
 use hooksmith::modules::functional_contract_pipeline::repair_planning::{
-    TriageOfficer, Violation, ConcernSnapshot, RepairPlan, FixCategory, RuleSeverity
+    ConcernSnapshot, FixCategory, RepairPlan, RuleSeverity, TriageOfficer, Violation,
 };
 use hooksmith::modules::functional_contract_pipeline::symbols::ConcernSymbol;
 use std::collections::HashMap;
-use anyhow::Result;
 
 fn main() -> Result<()> {
     println!("🔧 Repair Planning System Demo");
@@ -39,7 +39,7 @@ fn main() -> Result<()> {
     // Step 3: Create Triage Officer and generate repair plan
     let mut triage_officer = TriageOfficer::new();
     let plan = triage_officer.create_plan(&violation, &snapshot)?;
-    
+
     println!("🎯 Repair Plan Generated:");
     println!("   Plan ID: {}", plan.id);
     println!("   Dispatcher: {}", plan.dispatcher);
@@ -60,7 +60,12 @@ fn main() -> Result<()> {
     // Step 5: Display the repair actions
     println!("🛠️  Repair Actions:");
     for (i, action) in plan.actions.iter().enumerate() {
-        println!("   {}. {} ({})", i + 1, action.fixer_id, action.action_type.name());
+        println!(
+            "   {}. {} ({})",
+            i + 1,
+            action.fixer_id,
+            action.action_type.name()
+        );
         println!("      Target: {:?}", action.target_path);
         println!("      Required: {}", action.required);
         println!("      Priority: {}", action.priority);
@@ -73,8 +78,11 @@ fn main() -> Result<()> {
     // Step 6: Simulate executing the repairs
     println!("⚡ Executing Repairs:");
     for action in &plan.actions {
-        println!("   Running: {} on {:?}", action.fixer_id, action.target_path);
-        
+        println!(
+            "   Running: {} on {:?}",
+            action.fixer_id, action.target_path
+        );
+
         // In a real implementation, this would execute the actual fixer
         match action.fixer_id.as_str() {
             "fixer.rustfmt" => {
@@ -95,7 +103,10 @@ fn main() -> Result<()> {
 
     // Step 7: Show the final result
     println!("🎉 Repair Complete!");
-    println!("   All {} actions executed successfully", plan.actions.len());
+    println!(
+        "   All {} actions executed successfully",
+        plan.actions.len()
+    );
     println!("   Concern should now pass validation");
     println!();
 
@@ -114,7 +125,9 @@ fn create_formatting_violation() -> Violation {
     Violation {
         concern: ConcernSymbol::TreeFile,
         contract: "format".to_string(),
-        message: "Rust formatting violation: inconsistent indentation and missing newline at end of file".to_string(),
+        message:
+            "Rust formatting violation: inconsistent indentation and missing newline at end of file"
+                .to_string(),
         location: Some("src/main.rs".to_string()),
         severity: RuleSeverity::Error,
         details: {
@@ -134,7 +147,7 @@ fn create_concern_snapshot() -> ConcernSnapshot {
     let content = r#"fn main() {
   println!("Hello, world!");
 }"#;
-    
+
     ConcernSnapshot::new(
         ConcernSymbol::TreeFile,
         serde_json::json!({
@@ -177,9 +190,9 @@ mod tests {
         let violation = create_formatting_violation();
         let snapshot = create_concern_snapshot();
         let mut triage_officer = TriageOfficer::new();
-        
+
         let plan = triage_officer.create_plan(&violation, &snapshot).unwrap();
-        
+
         assert_eq!(plan.concern, ConcernSymbol::TreeFile);
         assert_eq!(plan.contract, "format");
         assert!(!plan.actions.is_empty());

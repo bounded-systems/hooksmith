@@ -56,7 +56,10 @@ mod tests {
             (HookConcern::PackfileData, ".git/objects/pack/*.pack"),
             (HookConcern::PackfileBitmap, ".git/objects/pack/*.bitmap"),
             (HookConcern::PackfileKeep, ".git/objects/pack/*.keep"),
-            (HookConcern::PackfilePromisor, ".git/objects/pack/*.promisor"),
+            (
+                HookConcern::PackfilePromisor,
+                ".git/objects/pack/*.promisor",
+            ),
             (HookConcern::LooseObject, ".git/objects/??/*"),
             (HookConcern::ObjectDatabase, ".git/objects/"),
         ];
@@ -90,7 +93,10 @@ mod tests {
             (HookConcern::WorkTreeOverride, "GIT_WORK_TREE"),
             (HookConcern::IndexFileOverride, "GIT_INDEX_FILE"),
             (HookConcern::ObjectDirectoryOverride, "GIT_OBJECT_DIRECTORY"),
-            (HookConcern::AlternateObjectDatabase, "GIT_ALTERNATE_OBJECT_DIRECTORIES"),
+            (
+                HookConcern::AlternateObjectDatabase,
+                "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+            ),
             (HookConcern::GitConfigOverride, "GIT_CONFIG"),
             (HookConcern::TraceOverride, "GIT_TRACE"),
             (HookConcern::AuthorOverride, "GIT_AUTHOR_NAME"),
@@ -216,11 +222,7 @@ mod tests {
     /// Test concern uniqueness in a hook
     #[test]
     fn test_concern_uniqueness() {
-        let concerns = vec![
-            HookConcern::Blob,
-            HookConcern::Tree,
-            HookConcern::Commit,
-        ];
+        let concerns = vec![HookConcern::Blob, HookConcern::Tree, HookConcern::Commit];
 
         let mut seen = std::collections::HashSet::new();
         for concern in &concerns {
@@ -231,14 +233,10 @@ mod tests {
     /// Test concern ordering and comparison
     #[test]
     fn test_concern_ordering() {
-        let mut concerns = vec![
-            HookConcern::Commit,
-            HookConcern::Blob,
-            HookConcern::Tree,
-        ];
+        let mut concerns = vec![HookConcern::Commit, HookConcern::Blob, HookConcern::Tree];
 
         concerns.sort();
-        
+
         assert_eq!(concerns[0], HookConcern::Blob);
         assert_eq!(concerns[1], HookConcern::Commit);
         assert_eq!(concerns[2], HookConcern::Tree);
@@ -248,14 +246,15 @@ mod tests {
 /// Validation functions for each concern category
 
 fn is_valid_git_object_concern(concern: &HookConcern) -> bool {
-    matches!(concern,
-        HookConcern::Blob |
-        HookConcern::Tree |
-        HookConcern::Commit |
-        HookConcern::Tag |
-        HookConcern::Ref |
-        HookConcern::Note |
-        HookConcern::Attr
+    matches!(
+        concern,
+        HookConcern::Blob
+            | HookConcern::Tree
+            | HookConcern::Commit
+            | HookConcern::Tag
+            | HookConcern::Ref
+            | HookConcern::Note
+            | HookConcern::Attr
     )
 }
 
@@ -307,7 +306,9 @@ fn is_valid_environment_concern(concern: &HookConcern, expected_env_var: &str) -
         HookConcern::WorkTreeOverride => expected_env_var == "GIT_WORK_TREE",
         HookConcern::IndexFileOverride => expected_env_var == "GIT_INDEX_FILE",
         HookConcern::ObjectDirectoryOverride => expected_env_var == "GIT_OBJECT_DIRECTORY",
-        HookConcern::AlternateObjectDatabase => expected_env_var == "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        HookConcern::AlternateObjectDatabase => {
+            expected_env_var == "GIT_ALTERNATE_OBJECT_DIRECTORIES"
+        }
         HookConcern::GitConfigOverride => expected_env_var == "GIT_CONFIG",
         HookConcern::TraceOverride => expected_env_var == "GIT_TRACE",
         HookConcern::AuthorOverride => expected_env_var == "GIT_AUTHOR_NAME",

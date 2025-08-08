@@ -1,5 +1,5 @@
 use std::env;
-use std::process::{Command, exit};
+use std::process::{exit, Command};
 
 fn main() {
     let event = env::var("GITHUB_EVENT_NAME").unwrap_or_default();
@@ -8,7 +8,10 @@ fn main() {
     // Log event information
     println!("::group::🔍 Hooksmith Dispatch");
     println!("Event: {}", event);
-    println!("Repository: {}", env::var("GITHUB_REPOSITORY").unwrap_or_default());
+    println!(
+        "Repository: {}",
+        env::var("GITHUB_REPOSITORY").unwrap_or_default()
+    );
     println!("Actor: {}", env::var("GITHUB_ACTOR").unwrap_or_default());
     println!("Run ID: {}", env::var("GITHUB_RUN_ID").unwrap_or_default());
     println!("::endgroup::");
@@ -22,7 +25,7 @@ fn main() {
     // Map event to binary
     let binary = match event.as_str() {
         "push" => "github-push",
-        "pull_request" => "github-pull-request", 
+        "pull_request" => "github-pull-request",
         "issues" => "github-issues",
         "release" => "github-release",
         "create" => "github-create",
@@ -57,7 +60,7 @@ fn main() {
     };
 
     let binary_path = format!("./target/release/{}", binary);
-    
+
     println!("::group::🚀 Running Hooksmith Validation");
     println!("Binary: {}", binary);
     println!("Path: {}", binary_path);
@@ -66,10 +69,19 @@ fn main() {
     // Execute the binary
     let status = Command::new(&binary_path)
         .env("GITHUB_EVENT_NAME", &event)
-        .env("GITHUB_REPOSITORY", env::var("GITHUB_REPOSITORY").unwrap_or_default())
+        .env(
+            "GITHUB_REPOSITORY",
+            env::var("GITHUB_REPOSITORY").unwrap_or_default(),
+        )
         .env("GITHUB_ACTOR", env::var("GITHUB_ACTOR").unwrap_or_default())
-        .env("GITHUB_RUN_ID", env::var("GITHUB_RUN_ID").unwrap_or_default())
-        .env("GITHUB_WORKFLOW", env::var("GITHUB_WORKFLOW").unwrap_or_default())
+        .env(
+            "GITHUB_RUN_ID",
+            env::var("GITHUB_RUN_ID").unwrap_or_default(),
+        )
+        .env(
+            "GITHUB_WORKFLOW",
+            env::var("GITHUB_WORKFLOW").unwrap_or_default(),
+        )
         .env("GITHUB_REF", env::var("GITHUB_REF").unwrap_or_default())
         .env("GITHUB_SHA", env::var("GITHUB_SHA").unwrap_or_default())
         .status();
@@ -79,7 +91,11 @@ fn main() {
             if exit_status.success() {
                 println!("::notice::✅ {} completed successfully", binary);
             } else {
-                println!("::warning::❌ {} failed with exit code: {}", binary, exit_status.code().unwrap_or(1));
+                println!(
+                    "::warning::❌ {} failed with exit code: {}",
+                    binary,
+                    exit_status.code().unwrap_or(1)
+                );
                 exit(exit_status.code().unwrap_or(1));
             }
         }

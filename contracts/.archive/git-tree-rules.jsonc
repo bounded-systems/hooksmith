@@ -1,0 +1,229 @@
+{
+  "name": "git-tree-rules",
+  "version": "1.0.0",
+  "description": "Simple contract for Git tree member inclusion rules with flat object name patterns",
+  "$schema": "https://hooksmith.dev/schemas/git-tree-rules.schema.json",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "git": {
+        "type": "object",
+        "properties": {
+          "tree": {
+            "type": "object",
+            "properties": {
+              "objects": {
+                "type": "object",
+                "properties": {
+                  "names": {
+                    "type": "object",
+                    "properties": {
+                      "required": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Files/directories that must exist in the tree (flat names only)"
+                      },
+                      "allowed": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Files/directories that are permitted but not required (flat names only)"
+                      },
+                      "rejected": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Files/directories that must not exist in the tree (flat names only)"
+                      },
+                      "ignored": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Files/directories that are Git-ignored and should not be in tree (flat names only)"
+                      }
+                    },
+                    "required": ["required", "allowed", "rejected", "ignored"]
+                  }
+                },
+                "required": ["names"]
+              }
+            },
+            "required": ["objects"]
+          }
+        },
+        "required": ["tree"]
+      }
+    },
+    "required": ["git"]
+  },
+  "data": {
+    "git": {
+      "tree": {
+        "objects": {
+          "names": {
+            "required": [
+              ".gitignore",
+              "projects"
+            ],
+            "allowed": [
+              ".gitignore",
+              ".gitattributes",
+              ".meta",
+              "docs",
+              "generated",
+              "projects",
+              "src",
+              "tests",
+              "tools",
+              "wit"
+            ],
+            "rejected": [
+              "README.md",
+              "Cargo.toml",
+              "rustfmt.toml",
+              "*.md",
+              "*.toml"
+            ],
+            "ignored": [
+              ".DS_Store",
+              "Thumbs.db",
+              ".idea",
+              ".vscode"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "rules": [
+    {
+      "name": "required_files_exist",
+      "description": "Ensure all required files and directories exist in the tree",
+      "rule_type": "TreeValidation",
+      "parameters": {
+        "data_path": "git.tree.objects.names.required"
+      },
+      "required": true,
+      "severity": "Error"
+    },
+    {
+      "name": "allowed_files_only",
+      "description": "Ensure only allowed files and directories are present",
+      "rule_type": "TreeValidation",
+      "parameters": {
+        "data_path": "git.tree.objects.names.allowed"
+      },
+      "required": true,
+      "severity": "Error"
+    },
+    {
+      "name": "rejected_files_absent",
+      "description": "Ensure rejected files and directories are not present",
+      "rule_type": "TreeValidation",
+      "parameters": {
+        "data_path": "git.tree.objects.names.rejected"
+      },
+      "required": true,
+      "severity": "Error"
+    },
+    {
+      "name": "ignored_files_absent",
+      "description": "Ensure Git-ignored files are not present in the tree",
+      "rule_type": "TreeValidation",
+      "parameters": {
+        "data_path": "git.tree.objects.names.ignored"
+      },
+      "required": true,
+      "severity": "Warning"
+    },
+    {
+      "name": "glob_pattern_validation",
+      "description": "Validate that glob patterns only match flat object names at root level",
+      "rule_type": "PatternValidation",
+      "parameters": {
+        "allowed_patterns": [
+          "literal_names",
+          "suffix_wildcards",
+          "prefix_wildcards",
+          "negated_globs"
+        ],
+        "disallowed_patterns": [
+          "path_traversal",
+          "double_star_globs",
+          "slash_based_matching",
+          "nested_paths"
+        ],
+        "validation_rules": {
+          "no_slashes": true,
+          "no_double_star": true,
+          "flat_names_only": true,
+          "root_scope_only": true
+        }
+      },
+      "required": true,
+      "severity": "Error"
+    },
+    {
+      "name": "object_name_scope",
+      "description": "Ensure all object names are flat entries at root level",
+      "rule_type": "TreeValidation",
+      "parameters": {
+        "scope": "root_only",
+        "depth": 1,
+        "allow_directories": true,
+        "allow_files": true,
+        "forbid_nested_paths": true
+      },
+      "required": true,
+      "severity": "Error"
+    }
+  ],
+  "metadata": {
+    "contract_type": "git_tree_validation",
+    "scope": "repository",
+    "enforcement_level": "strict",
+    "auto_fix": false,
+    "tags": [
+      "git",
+      "tree",
+      "validation",
+      "inclusion",
+      "flat_names"
+    ],
+    "pattern_constraints": {
+      "description": "Git tree object names are flat entries at root level",
+      "allowed_glob_types": [
+        "literal_names",
+        "suffix_wildcards",
+        "prefix_wildcards",
+        "negated_globs"
+      ],
+      "disallowed_glob_types": [
+        "path_traversal",
+        "double_star_globs",
+        "slash_based_matching",
+        "nested_paths"
+      ],
+      "examples": {
+        "valid": [
+          "Cargo.toml",
+          "*.md",
+          "README.*",
+          "!*.lock"
+        ],
+        "invalid": [
+          "src/main.rs",
+          "docs/*.md",
+          "**/*.toml",
+          "*/foo",
+          "bar/*"
+        ]
+      }
+    }
+  }
+}
