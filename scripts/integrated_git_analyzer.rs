@@ -315,11 +315,96 @@ fn analyze_frequent_writes(files: &[GitFileInfo]) -> Vec<FrequentWriteConcern> {
     concerns
 }
 
+fn analyze_lfs_candidates(files: &[GitFileInfo]) -> Vec<LfsConcern> {
+    println!("📦 Analyzing Git LFS candidates...");
+    
+    let mut concerns = Vec::new();
+    
+    for file in files {
+        let path_lower = file.path.to_lowercase();
+        
+        // Check if file should be tracked with Git LFS
+        let (should_track, reason) = if file.size > 50 * 1024 * 1024 { // 50 MB
+            (true, "Very large file (>50 MB)".to_string())
+        } else if file.size > 10 * 1024 * 1024 { // 10 MB
+            (true, "Large file (>10 MB)".to_string())
+        } else if path_lower.contains(".psd") || path_lower.contains(".ai") || path_lower.contains(".sketch") {
+            (true, "Design file (Photoshop, Illustrator, Sketch)".to_string())
+        } else if path_lower.contains(".mp4") || path_lower.contains(".mov") || path_lower.contains(".avi") {
+            (true, "Video file".to_string())
+        } else if path_lower.contains(".wav") || path_lower.contains(".mp3") || path_lower.contains(".flac") {
+            (true, "Audio file".to_string())
+        } else if path_lower.contains(".zip") || path_lower.contains(".tar.gz") || path_lower.contains(".rar") {
+            (true, "Archive file".to_string())
+        } else if path_lower.contains(".iso") || path_lower.contains(".dmg") {
+            (true, "Disk image".to_string())
+        } else if path_lower.contains(".bin") || path_lower.contains(".exe") || path_lower.contains(".dll") {
+            (true, "Binary executable".to_string())
+        } else if path_lower.contains(".model") || path_lower.contains(".pkl") || path_lower.contains(".h5") {
+            (true, "Machine learning model".to_string())
+        } else if path_lower.contains(".pdf") && file.size > 5 * 1024 * 1024 { // 5 MB PDFs
+            (true, "Large PDF file".to_string())
+        } else if path_lower.contains(".png") && file.size > 2 * 1024 * 1024 { // 2 MB PNGs
+            (true, "Large image file".to_string())
+        } else if path_lower.contains(".jpg") && file.size > 5 * 1024 * 1024 { // 5 MB JPGs
+            (true, "Large image file".to_string())
+        } else {
+            (false, "".to_string())
+        };
+        
+        if should_track {
+            let file_type = determine_lfs_file_type(&path_lower);
+            let extension = if let Some(dot_pos) = file.path.rfind('.') {
+                &file.path[dot_pos..]
+            } else {
+                ""
+            };
+            let lfs_command = format!("git lfs track \"*{}\"", extension);
+            
+            concerns.push(LfsConcern {
+                file_path: file.path.clone(),
+                size: file.size,
+                file_type,
+                reason,
+                lfs_command,
+            });
+        }
+    }
+    
+    println!("📦 Found {} Git LFS candidates", concerns.len());
+    concerns
+}
+
+fn determine_lfs_file_type(path_lower: &str) -> String {
+    if path_lower.contains(".psd") || path_lower.contains(".ai") || path_lower.contains(".sketch") {
+        "Design".to_string()
+    } else if path_lower.contains(".mp4") || path_lower.contains(".mov") || path_lower.contains(".avi") {
+        "Video".to_string()
+    } else if path_lower.contains(".wav") || path_lower.contains(".mp3") || path_lower.contains(".flac") {
+        "Audio".to_string()
+    } else if path_lower.contains(".zip") || path_lower.contains(".tar.gz") || path_lower.contains(".rar") {
+        "Archive".to_string()
+    } else if path_lower.contains(".iso") || path_lower.contains(".dmg") {
+        "Disk Image".to_string()
+    } else if path_lower.contains(".bin") || path_lower.contains(".exe") || path_lower.contains(".dll") {
+        "Binary".to_string()
+    } else if path_lower.contains(".model") || path_lower.contains(".pkl") || path_lower.contains(".h5") {
+        "ML Model".to_string()
+    } else if path_lower.contains(".pdf") {
+        "PDF".to_string()
+    } else if path_lower.contains(".png") || path_lower.contains(".jpg") || path_lower.contains(".jpeg") {
+        "Image".to_string()
+    } else {
+        "Other".to_string()
+    }
+}
+
 fn generate_concerns_report(
     blob_concerns: &[BlobSizeConcern],
     dedup_concerns: &[DeduplicationConcern], 
     file_type_concerns: &[FileTypeConcern],
     frequent_write_concerns: &[FrequentWriteConcern],
+    lfs_concerns: &[LfsConcern],
 ) {
     println!("\n📊 Integrated Git Analysis Report");
     println!("================================");
@@ -379,6 +464,19 @@ fn generate_concerns_report(
         }
     }
     
+    // Git LFS Concerns
+    if !lfs_concerns.is_empty() {
+        println!("\n📦 Git LFS Candidates ({}):", lfs_concerns.len());
+        for concern in lfs_concerns.iter().take(5) {
+            println!("  • {} ({} bytes) - {}: {}", 
+                concern.file_path, concern.size, concern.file_type, concern.reason);
+            println!("    Command: {}", concern.lfs_command);
+        }
+        if lfs_concerns.len() > 5 {
+            println!("  ... and {} more", lfs_concerns.len() - 5);
+        }
+    }
+    
     // Summary
     println!("\n📈 Summary:");
     println!("  • Total files analyzed: {}", blob_concerns.len() + file_type_concerns.len());
@@ -386,6 +484,7 @@ fn generate_concerns_report(
     println!("  • Deduplication patterns: {}", dedup_concerns.len());
     println!("  • File type categories: {}", file_type_concerns.len());
     println!("  • Frequent write concerns: {}", frequent_write_concerns.len());
+    println!("  • Git LFS candidates: {}", lfs_concerns.len());
     
     println!("\n💡 Recommendations:");
     if !blob_concerns.is_empty() {
@@ -393,6 +492,9 @@ fn generate_concerns_report(
     }
     if !frequent_write_concerns.is_empty() {
         println!("  • Update .gitignore for frequent write files");
+    }
+    if !lfs_concerns.is_empty() {
+        println!("  • Consider Git LFS for large binary files");
     }
     if dedup_concerns.len() > 10 {
         println!("  • Good deduplication - efficient storage");
@@ -419,6 +521,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dedup_concerns = analyze_deduplication(&files);
     let file_type_concerns = analyze_file_types(&files);
     let frequent_write_concerns = analyze_frequent_writes(&files);
+    let lfs_concerns = analyze_lfs_candidates(&files);
     
     // Generate comprehensive report
     generate_concerns_report(
@@ -426,6 +529,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &dedup_concerns,
         &file_type_concerns,
         &frequent_write_concerns,
+        &lfs_concerns,
     );
     
     println!("\n✅ Analysis complete!");

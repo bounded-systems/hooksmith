@@ -146,6 +146,10 @@ path = "scripts/modular_analyzer.rs"
 name = "git_lfs_analyzer"
 path = "scripts/git_lfs_analyzer.rs"
 
+[[bin]]
+name = "lfs_hook_optimizer"
+path = "scripts/lfs_hook_optimizer.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
