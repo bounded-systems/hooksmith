@@ -10,15 +10,12 @@ env:
   ENABLE_HOOKSMITH_VALIDATION: true
 
 permissions:
-  pull-requests: read
   issues: read
+  pull-requests: read
   contents: read
 
 on:
   push:
-    types:
-      - created
-      - deleted
   pull_request:
     types:
       - opened
@@ -27,13 +24,7 @@ on:
       - closed
   workflow_dispatch:
   create:
-    types:
-      - tag
-      - branch
   delete:
-    types:
-      - tag
-      - branch
   fork:
   gollum:
   page_build:
@@ -71,8 +62,6 @@ on:
   deployment_status:
   check_suite:
     types:
-      - requested
-      - rerequested
       - completed
   check_run:
     types:
@@ -121,7 +110,7 @@ on:
   branch_protection_rule:
     types:
       - created
-      - updated
+      - edited
       - deleted
 
 jobs:
@@ -131,19 +120,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch_depth: 0
+          fetch-depth: 0
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
       - name: Cache Rust dependencies
         uses: actions/cache@v4
         with:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          path:
-            - "target"
-            - "~/.cargo/registry"
-            - "~/.cargo/git"
-          restore_keys:
-            - "${{ runner.os }}-cargo-"
+          path: target,~/.cargo/registry,~/.cargo/git
+          restore-keys: ${{ runner.os }}-cargo-
       - name: Build Hooksmith
         run: cargo build --release
       - name: Run Hooksmith Dispatch

@@ -805,6 +805,7 @@ mod generated_file_validator;
 mod git_attributes;
 mod git_config;
 mod git_lefthook_integration;
+mod workflow_contracts;
 mod git_notes_manager;
 mod github_actions;
 mod hierarchical_validation;
@@ -1703,6 +1704,24 @@ enum Commands {
         #[arg(long, default_value = "true")]
         check_binaries: bool,
     },
+    /// Validate GitHub Actions workflow contracts
+    WorkflowContracts {
+        /// Workflow file or directory to validate
+        #[arg(long, default_value = ".github/workflows")]
+        path: String,
+        /// Whether to exit with error on validation failures
+        #[arg(long)]
+        strict: bool,
+        /// Show detailed validation output
+        #[arg(long)]
+        verbose: bool,
+        /// Generate a disabled workflow stub
+        #[arg(long)]
+        generate_stub: Option<String>,
+        /// Output format (text, json, summary)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
 }
 
 /// WIT schema for function definition
@@ -2510,6 +2529,15 @@ async fn main() -> Result<()> {
             check_binaries,
         } => {
             validate_static_hooks_command(strict, verbose, check_binaries).await?;
+        }
+        Commands::WorkflowContracts {
+            path,
+            strict,
+            verbose,
+            generate_stub,
+            format,
+        } => {
+            run_workflow_contracts_command(path, strict, verbose, generate_stub.as_deref(), format).await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {

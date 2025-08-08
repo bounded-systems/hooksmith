@@ -31,8 +31,7 @@
       {
         "name": "push",
         "description": "Validates commits and changes pushed to the repository",
-        "hooks": ["pre-commit", "commit-msg", "post-commit"],
-        "types": ["created", "deleted"]
+        "hooks": ["pre-commit", "commit-msg", "post-commit"]
       },
       {
         "name": "pull_request", 
@@ -43,8 +42,7 @@
       {
         "name": "workflow_dispatch",
         "description": "Manual workflow trigger for validation",
-        "hooks": ["pre-commit", "post-commit"],
-        "types": []
+        "hooks": ["pre-commit", "post-commit"]
       }
     ],
 
@@ -52,44 +50,37 @@
       {
         "name": "create",
         "description": "Validates branch and tag creation",
-        "hooks": ["pre-receive", "post-receive"],
-        "types": ["tag", "branch"]
+        "hooks": ["pre-receive", "post-receive"]
       },
       {
         "name": "delete",
         "description": "Validates branch and tag deletion", 
-        "hooks": ["pre-receive", "post-receive"],
-        "types": ["tag", "branch"]
+        "hooks": ["pre-receive", "post-receive"]
       },
       {
         "name": "fork",
         "description": "Validates repository forks",
-        "hooks": ["pre-receive", "post-receive"],
-        "types": []
+        "hooks": ["pre-receive", "post-receive"]
       },
       {
         "name": "gollum",
         "description": "Validates wiki page updates",
-        "hooks": ["commit-msg"],
-        "types": []
+        "hooks": ["commit-msg"]
       },
       {
         "name": "page_build",
         "description": "Validates GitHub Pages builds",
-        "hooks": ["pre-receive", "post-receive"],
-        "types": []
+        "hooks": ["pre-receive", "post-receive"]
       },
       {
         "name": "public",
         "description": "Validates repository publicity changes",
-        "hooks": ["pre-receive", "post-receive"],
-        "types": []
+        "hooks": ["pre-receive", "post-receive"]
       },
       {
         "name": "watch",
         "description": "Validates repository watching events",
-        "hooks": ["commit-msg"],
-        "types": []
+        "hooks": ["commit-msg"]
       }
     ],
 
@@ -130,14 +121,12 @@
       {
         "name": "deployment",
         "description": "Validates deployment events",
-        "hooks": ["pre-receive", "post-receive"],
-        "types": []
+        "hooks": ["pre-receive", "post-receive"]
       },
       {
         "name": "deployment_status",
         "description": "Validates deployment status updates",
-        "hooks": ["pre-receive", "post-receive"],
-        "types": []
+        "hooks": ["pre-receive", "post-receive"]
       }
     ],
 
@@ -146,7 +135,7 @@
         "name": "check_suite",
         "description": "Validates check suite events",
         "hooks": ["pre-commit", "post-commit"],
-        "types": ["requested", "rerequested", "completed"]
+        "types": ["completed"]
       },
       {
         "name": "check_run",
@@ -157,8 +146,7 @@
       {
         "name": "status",
         "description": "Validates commit status events",
-        "hooks": ["pre-commit", "post-commit"],
-        "types": []
+        "hooks": ["pre-commit", "post-commit"]
       }
     ],
 
@@ -197,14 +185,12 @@
         "name": "schedule",
         "description": "Scheduled validation runs",
         "hooks": ["pre-commit", "post-commit"],
-        "cron": "0 0 * * *",
-        "types": []
+        "cron": "0 0 * * *"
       },
       {
         "name": "repository_dispatch",
         "description": "External repository dispatch events",
-        "hooks": ["pre-commit", "post-commit"],
-        "types": []
+        "hooks": ["pre-commit", "post-commit"]
       }
     ],
 
@@ -219,7 +205,7 @@
         "name": "branch_protection_rule",
         "description": "Validates branch protection rule events",
         "hooks": ["pre-receive", "post-receive"],
-        "types": ["created", "updated", "deleted"]
+        "types": ["created", "edited", "deleted"]
       }
     ]
   },
@@ -233,7 +219,7 @@
           "name": "Checkout code",
           "uses": "actions/checkout@v4",
           "with": {
-            "fetch_depth": 0
+            "fetch-depth": 0
           }
         },
         {
@@ -244,15 +230,9 @@
           "name": "Cache Rust dependencies",
           "uses": "actions/cache@v4",
           "with": {
-            "path": [
-              "target",
-              "~/.cargo/registry",
-              "~/.cargo/git"
-            ],
+            "path": "target,~/.cargo/registry,~/.cargo/git",
             "key": "${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}",
-            "restore_keys": [
-              "${{ runner.os }}-cargo-"
-            ]
+            "restore-keys": "${{ runner.os }}-cargo-"
           }
         },
         {

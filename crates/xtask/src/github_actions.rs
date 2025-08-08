@@ -57,6 +57,7 @@ pub struct EventDefinition {
     pub name: String,
     pub description: String,
     pub hooks: Vec<String>,
+    #[serde(default)]
     pub types: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cron: Option<String>,
@@ -163,19 +164,22 @@ impl GitHubActionsGenerator {
         // Add all events from all categories
         let all_events = self.collect_all_events();
         for event in all_events {
-            yaml.push_str(&format!("  {}:\n", event.name));
-
-            // Add types if specified
-            if !event.types.is_empty() {
-                yaml.push_str("    types:\n");
-                for event_type in &event.types {
-                    yaml.push_str(&format!("      - {}\n", event_type));
+            if event.name == "schedule" {
+                // Handle schedule events specially
+                if let Some(cron) = &event.cron {
+                    yaml.push_str(&format!("  {}:\n", event.name));
+                    yaml.push_str(&format!("    - cron: '{}'\n", cron));
                 }
-            }
+            } else {
+                yaml.push_str(&format!("  {}:\n", event.name));
 
-            // Add cron for schedule events
-            if let Some(cron) = &event.cron {
-                yaml.push_str(&format!("    - cron: '{}'\n", cron));
+                // Add types if specified
+                if !event.types.is_empty() {
+                    yaml.push_str("    types:\n");
+                    for event_type in &event.types {
+                        yaml.push_str(&format!("      - {}\n", event_type));
+                    }
+                }
             }
         }
 
@@ -271,6 +275,81 @@ impl GitHubActionsGenerator {
         fs::write(output_path, yaml).context("Failed to write GitHub Actions workflow file")?;
         Ok(())
     }
+
+    /// Validate the generated workflow
+    pub fn validate_workflow_schema(&self) -> Result<()> {
+        let yaml = self.generate_workflow()?;
+
+        // Basic YAML validation
+        let _: serde_yaml::Value =
+            serde_yaml::from_str(&yaml).with_context(|| "Generated workflow YAML is invalid")?;
+
+        // Check for required fields
+        if !yaml.contains("name:") {
+            anyhow::bail!("Workflow must have a name");
+        }
+
+        if !yaml.contains("on:") {
+            anyhow::bail!("Workflow must have triggers");
+        }
+
+        if !yaml.contains("jobs:") {
+            anyhow::bail!("Workflow must have jobs");
+        }
+
+        // Validate GitHub Actions specific structure
+        self.validate_github_actions_structure(&yaml)?;
+
+        println!("✅ Workflow YAML validation passed");
+        Ok(())
+    }
+
+    /// Validate GitHub Actions specific structure
+    fn validate_github_actions_structure(&self, yaml: &str) -> Result<()> {
+        // Check for valid event types
+        let valid_events = [
+            "push",
+            "pull_request",
+            "workflow_dispatch",
+            "create",
+            "delete",
+            "fork",
+            "gollum",
+            "page_build",
+            "public",
+            "watch",
+            "issues",
+            "issue_comment",
+            "pull_request_review",
+            "pull_request_review_comment",
+            "release",
+            "deployment",
+            "deployment_status",
+            "check_suite",
+            "check_run",
+            "status",
+            "discussion",
+            "discussion_comment",
+            "label",
+            "milestone",
+            "schedule",
+            "repository_dispatch",
+            "registry_package",
+            "branch_protection_rule",
+        ];
+
+        // Check for valid job structure
+        if !yaml.contains("runs-on:") {
+            anyhow::bail!("Jobs must specify runs-on");
+        }
+
+        // Check for valid step structure
+        if !yaml.contains("steps:") {
+            anyhow::bail!("Jobs must have steps");
+        }
+
+        Ok(())
+    }
 }
 
 /// Strip JSONC comments from content
@@ -348,8 +427,7 @@ pub async fn generate_workflow(config_path: &str, output_path: &str, validate: b
     generator.write_workflow(output_path)?;
 
     if validate {
-        let yaml = generator.generate_workflow()?;
-        validate_workflow_yaml(&yaml)?;
+        generator.validate_workflow_schema()?;
     }
 
     println!("✅ Generated GitHub Actions workflow: {}", output_path);
