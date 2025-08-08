@@ -134,6 +134,94 @@ path = "src/bin/hooksmith-validate-tree.rs"
 name = "hooksmith-validate-push"
 path = "src/bin/hooksmith-validate-push.rs"
 
+[[bin]]
+name = "integrated_git_analyzer"
+path = "scripts/integrated_git_analyzer.rs"
+
+[[bin]]
+name = "modular_analyzer"
+path = "scripts/modular_analyzer.rs"
+
+[[bin]]
+name = "git_lfs_analyzer"
+path = "scripts/git_lfs_analyzer.rs"
+
+[[bin]]
+name = "lfs_hook_optimizer"
+path = "scripts/lfs_hook_optimizer.rs"
+
+[[bin]]
+name = "modularization_analyzer"
+path = "scripts/modularization_analyzer.rs"
+
+[[bin]]
+name = "rust_blob_analyzer"
+path = "scripts/rust_blob_analyzer.rs"
+
+[[bin]]
+name = "git_delta_analyzer"
+path = "scripts/git_delta_analyzer.rs"
+
+[[bin]]
+name = "git_hygiene_reporter"
+path = "scripts/git_hygiene_reporter.rs"
+
+[[bin]]
+name = "packfile_delta_analyzer"
+path = "scripts/packfile_delta_analyzer.rs"
+
+[[bin]]
+name = "git_lfs_auto_tracker"
+path = "scripts/git_lfs_auto_tracker.rs"
+
+[[bin]]
+name = "modularization_packing_estimator"
+path = "scripts/modularization_packing_estimator.rs"
+
+[[bin]]
+name = "contract_stability_analyzer"
+path = "scripts/contract_stability_analyzer.rs"
+
+[[bin]]
+name = "tree_stability_analyzer"
+path = "scripts/tree_stability_analyzer.rs"
+
+[[bin]]
+name = "crate_granularity_analyzer"
+path = "scripts/crate_granularity_analyzer.rs"
+
+[[bin]]
+name = "crate_stability_analyzer"
+path = "scripts/crate_stability_analyzer.rs"
+
+[[bin]]
+name = "repository_size_auditor"
+path = "scripts/repository_size_auditor.rs"
+
+[[bin]]
+name = "git_history_rewriter"
+path = "scripts/git_history_rewriter.rs"
+
+[[bin]]
+name = "git_history_cleanliness_analyzer"
+path = "scripts/git_history_cleanliness_analyzer.rs"
+
+[[bin]]
+name = "tree_to_repo_extractor"
+path = "scripts/tree_to_repo_extractor.rs"
+
+[[bin]]
+name = "hooksmith_xtask_extractor"
+path = "scripts/hooksmith_xtask_extractor.rs"
+
+[[bin]]
+name = "file_churn_analyzer"
+path = "scripts/file_churn_analyzer.rs"
+
+[[bin]]
+name = "tree_object_stability_auditor"
+path = "scripts/tree_object_stability_auditor.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
@@ -192,6 +280,10 @@ json_fast = "0.1.0"
 jzon = "0.12.5"
 ajson = "0.3.1"
 serde-sarif = "0.8.0"
+
+# Git pack analysis dependencies
+git-pack = "0.31"
+gix = { version = "0.60", features = ["blocking-network-client"] }
 
 [dev-dependencies]
 tempfile = "3.0"

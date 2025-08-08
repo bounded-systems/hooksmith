@@ -24,3 +24,9 @@ pub mod lefthook;
 pub mod wasm;
 /// Code generator
 pub mod generator;
+/// Tree-aware fix plan cache
+pub mod tree_fix_cache;
+/// Tree split planning and analysis
+pub mod tree_split_planner;
+/// Contract-to-crate boundary mapping
+pub mod crate_contract_mapper;
