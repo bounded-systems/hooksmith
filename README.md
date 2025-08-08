@@ -326,6 +326,38 @@ cargo run --bin crate_stability_analyzer
     • Split git-proxy (4786 LOC) into focused modules
 ```
 
+### 🔧 Crate Stability Analyzer (`crate_stability_analyzer`)
+**Purpose**: Analyze crate stability for extraction readiness, supporting the internal → stable → external flow for Hooksmith's architecture.
+
+**Features**:
+- **Change Velocity Analysis**: Measures recent changes vs total Git history
+- **API Stability Scoring**: Evaluates public interface stability
+- **Coupling Analysis**: Identifies crates used by multiple dependents
+- **Extraction Readiness**: Flags crates ready for external repository extraction
+- **Stabilization Planning**: Provides roadmap for internal → external transition
+
+**Example Output**:
+```
+🔧 Crate Stability Analysis
+===========================
+
+📊 Crate Stability Overview:
+  🔴 unknown (522 commits, 1.0 velocity, 0.9 API stability)
+  🔴 core (2 commits, 1.0 velocity, 1.0 API stability)
+    Dependents: tree, snapshot, inspector, hooks, files
+
+📈 Stability Metrics:
+  • Overall stability score: 35.8%
+  • Total crates: 22
+  • Too volatile: 22
+
+🔧 Stabilization Plan:
+  Phase 2 - Reduce Volatility:
+    • Focus on API stability
+    • Reduce change velocity
+    • Build usage and coupling
+```
+
 ## 🎯 Key Concepts
 
 ### Git Blob Sizes
