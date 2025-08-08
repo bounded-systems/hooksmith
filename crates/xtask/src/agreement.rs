@@ -561,6 +561,232 @@ impl AgreementManager {
     }
 }
 
+/// Enhanced tree path resolution result
+#[derive(Debug, Clone)]
+pub struct TreePathResolution {
+    /// The tree SHA being resolved
+    pub tree_sha: String,
+    /// The resolved path in HEAD (if found)
+    pub path: Option<String>,
+    /// The commit that contains this tree (if found)
+    pub commit: Option<String>,
+    /// The commit message (if found)
+    pub commit_message: Option<String>,
+    /// Whether the tree exists in current HEAD
+    pub exists_in_head: bool,
+    /// Whether the tree is reachable in history
+    pub is_reachable: bool,
+    /// Resolution type
+    pub resolution_type: ResolutionType,
+    /// Last seen timestamp (if available)
+    pub last_seen_at: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub enum ResolutionType {
+    /// Tree found at specific path in HEAD
+    Path(String),
+    /// Tree found in specific commit
+    Commit(String),
+    /// Tree SHA only (unreachable or detached)
+    Tree(String),
+    /// Tree not found anywhere
+    NotFound,
+}
+
+impl std::fmt::Display for TreePathResolution {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.resolution_type {
+            ResolutionType::Path(path) => {
+                write!(f, "Path: {}", path)?;
+                if !self.exists_in_head {
+                    write!(f, " (not in HEAD)")?;
+                }
+            }
+            ResolutionType::Commit(commit) => {
+                write!(f, "Commit: {}", commit)?;
+                if let Some(msg) = &self.commit_message {
+                    write!(f, " - {}", msg)?;
+                }
+            }
+            ResolutionType::Tree(sha) => {
+                write!(f, "Tree: {}", sha)?;
+                if !self.is_reachable {
+                    write!(f, " (unreachable)")?;
+                }
+            }
+            ResolutionType::NotFound => {
+                write!(f, "Not found")?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl AgreementManager {
+    /// Enhanced tree path resolution with detailed audit information
+    pub fn resolve_tree_path(&self, tree_sha: &str) -> Result<TreePathResolution> {
+        let mut resolution = TreePathResolution {
+            tree_sha: tree_sha.to_string(),
+            path: None,
+            commit: None,
+            commit_message: None,
+            exists_in_head: false,
+            is_reachable: false,
+            resolution_type: ResolutionType::NotFound,
+            last_seen_at: None,
+        };
+
+        // Check if tree exists in current HEAD
+        let head_path = self.find_tree_in_head(tree_sha)?;
+        if let Some(path) = head_path {
+            resolution.path = Some(path.clone());
+            resolution.exists_in_head = true;
+            resolution.resolution_type = ResolutionType::Path(path);
+            resolution.last_seen_at = Some(chrono::Utc::now().to_rfc3339());
+            return Ok(resolution);
+        }
+
+        // Check if tree exists in any commit
+        let commit_info = self.find_tree_in_history(tree_sha)?;
+        if let Some((commit_sha, commit_msg)) = commit_info {
+            resolution.commit = Some(commit_sha.clone());
+            resolution.commit_message = Some(commit_msg);
+            resolution.is_reachable = true;
+            resolution.resolution_type = ResolutionType::Commit(commit_sha);
+            return Ok(resolution);
+        }
+
+        // Check if tree SHA is reachable at all
+        let is_reachable = self.check_tree_reachability(tree_sha)?;
+        resolution.is_reachable = is_reachable;
+
+        if is_reachable {
+            resolution.resolution_type = ResolutionType::Tree(tree_sha.to_string());
+        } else {
+            resolution.resolution_type = ResolutionType::NotFound;
+        }
+
+        Ok(resolution)
+    }
+
+    /// Find tree in current HEAD
+    fn find_tree_in_head(&self, tree_sha: &str) -> Result<Option<String>> {
+        // Check if it's the root tree
+        let current_head_tree = std::process::Command::new("git")
+            .args(&["rev-parse", "HEAD^{tree}"])
+            .output()?;
+        let current_head_tree_sha = String::from_utf8_lossy(&current_head_tree.stdout)
+            .trim()
+            .to_string();
+
+        if tree_sha == current_head_tree_sha {
+            return Ok(Some("".to_string())); // Root tree
+        }
+
+        // Find the path of the tree SHA in current HEAD
+        let tree_paths = std::process::Command::new("git")
+            .args(&["ls-tree", "-r", "-t", "HEAD^{tree}"])
+            .output()?;
+        let tree_output = String::from_utf8_lossy(&tree_paths.stdout);
+
+        for line in tree_output.lines() {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 4 && parts[1] == "tree" && parts[2] == tree_sha {
+                return Ok(Some(parts[3].to_string()));
+            }
+        }
+
+        Ok(None)
+    }
+
+    /// Find tree in commit history
+    fn find_tree_in_history(&self, tree_sha: &str) -> Result<Option<(String, String)>> {
+        // Get all commits
+        let output = std::process::Command::new("git")
+            .args(&["rev-list", "--all"])
+            .output()?;
+
+        if !output.status.success() {
+            return Ok(None);
+        }
+
+        let commits = String::from_utf8(output.stdout)?;
+
+        // Search for commits that contain this tree
+        for commit in commits.lines() {
+            let tree_output = std::process::Command::new("git")
+                .args(&["rev-parse", &format!("{}:^{{tree}}", commit)])
+                .output();
+
+            if let Ok(tree_output) = tree_output {
+                if tree_output.status.success() {
+                    let commit_tree = String::from_utf8(tree_output.stdout)?.trim().to_string();
+                    if commit_tree == tree_sha {
+                        // Found the commit, now get the commit message
+                        let log_output = std::process::Command::new("git")
+                            .args(&["log", "--oneline", "-1", commit])
+                            .output()?;
+
+                        if log_output.status.success() {
+                            let commit_msg = String::from_utf8(log_output.stdout)?.trim().to_string();
+                            return Ok(Some((commit.to_string(), commit_msg)));
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(None)
+    }
+
+    /// Check if tree SHA is reachable in history
+    fn check_tree_reachability(&self, tree_sha: &str) -> Result<bool> {
+        // Use git rev-list to check if tree is reachable
+        let output = std::process::Command::new("git")
+            .args(&["rev-list", "--all", "--objects"])
+            .output()?;
+
+        if !output.status.success() {
+            return Ok(false);
+        }
+
+        let objects = String::from_utf8(output.stdout)?;
+        Ok(objects.lines().any(|line| line.contains(tree_sha)))
+    }
+
+    /// Enhanced agreement validation with detailed resolution
+    pub fn validate_agreement_with_resolution(&self, scope: &str) -> Result<(bool, TreePathResolution)> {
+        let resolution = self.resolve_tree_path(scope)?;
+
+        // Check if the contract blob exists in current HEAD
+        let contract_exists = self.validate_contract_exists(scope)?;
+
+        // Determine validity based on resolution
+        let is_valid = match resolution.resolution_type {
+            ResolutionType::Path(_) => true, // Tree exists in HEAD
+            ResolutionType::Commit(_) => true, // Tree exists in history
+            ResolutionType::Tree(_) => resolution.is_reachable, // Tree is reachable
+            ResolutionType::NotFound => false, // Tree not found
+        };
+
+        Ok((is_valid, resolution))
+    }
+
+    /// Enhanced agreement listing with resolution details
+    pub fn list_agreements_with_resolution(&self) -> Result<Vec<(AgreementMetadata, TreePathResolution)>> {
+        let agreements = self.list_agreements()?;
+        let mut resolved_agreements = Vec::new();
+
+        for metadata in agreements {
+            let resolution = self.resolve_tree_path(&metadata.agreement.scope)?;
+            resolved_agreements.push((metadata, resolution));
+        }
+
+        Ok(resolved_agreements)
+    }
+}
+
 /// CLI tool for managing agreements
 pub struct AgreementCLI {
     manager: AgreementManager,
@@ -591,26 +817,36 @@ impl AgreementCLI {
             return Ok(());
         }
 
-        println!("📝 Agreements:");
+        // Get current tree SHA to mark active agreements
+        let current_tree = std::process::Command::new("git")
+            .args(&["rev-parse", "HEAD^{tree}"])
+            .output()?;
+        let current_tree_sha = String::from_utf8_lossy(&current_tree.stdout)
+            .trim()
+            .to_string();
+
         for metadata in agreements {
-            // Get contract name
-            let contract_name = get_contract_name(&metadata.agreement.contract)
-                .unwrap_or_else(|_| "Unknown".to_string());
-
-            // Get tree path
-            let tree_path =
-                get_tree_path(&metadata.agreement.scope).unwrap_or_else(|_| "Unknown".to_string());
-
-            // Get short SHA hashes (7 characters)
             let short_scope = &metadata.agreement.scope[..7];
-            let short_contract = &metadata.agreement.contract[..7];
+            
+            // Determine status indicator
+            let indicator = if metadata.agreement.scope == current_tree_sha {
+                "* " // Active/current agreement
+            } else if metadata.status == "active" {
+                "+ " // Active but not current
+            } else if metadata.status == "fulfilled" {
+                "✓ " // Fulfilled
+            } else if metadata.status == "revoked" {
+                "✗ " // Revoked
+            } else {
+                "  " // Default
+            };
 
-            println!("  Scope: {} ({})", tree_path, short_scope);
-            println!("  Contract: {} ({})", contract_name, short_contract);
-            println!("  Status: {:?}", metadata.status);
-            println!("  Created: {}", metadata.created_at);
-            println!("  By: {}", metadata.created_by);
-            println!();
+            // Get contract name for display
+            let contract_name = get_contract_name(&metadata.agreement.contract)
+                .unwrap_or_else(|_| "unknown".to_string());
+
+            // Format like git branch --list
+            println!("{}{} ({})", indicator, short_scope, contract_name);
         }
         Ok(())
     }
@@ -626,7 +862,7 @@ impl AgreementCLI {
             let tree_path =
                 get_tree_path(&metadata.agreement.scope).unwrap_or_else(|_| "Unknown".to_string());
 
-            // Get short SHA hashes
+            // Get short SHA hashes (7 characters)
             let short_scope = &metadata.agreement.scope[..7];
             let short_contract = &metadata.agreement.contract[..7];
 
@@ -807,6 +1043,148 @@ impl AgreementCLI {
         }
         Ok(())
     }
+
+    /// Enhanced list with resolution details
+    pub fn list_with_resolution(&self) -> Result<()> {
+        let resolved_agreements = self.manager.list_agreements_with_resolution()?;
+
+        if resolved_agreements.is_empty() {
+            println!("📝 No agreements found");
+            return Ok(());
+        }
+
+        println!("📝 Agreements with Resolution:");
+        for (metadata, resolution) in resolved_agreements {
+            // Get contract name
+            let contract_name = get_contract_name(&metadata.agreement.contract)
+                .unwrap_or_else(|_| "Unknown".to_string());
+
+            // Get short SHA hashes (7 characters)
+            let short_scope = &metadata.agreement.scope[..7];
+            let short_contract = &metadata.agreement.contract[..7];
+
+            println!("  Scope: {} ({})", resolution, short_scope);
+            println!("  Contract: {} ({})", contract_name, short_contract);
+            println!("  Status: {:?}", metadata.status);
+            println!("  Created: {}", metadata.created_at);
+            println!("  By: {}", metadata.created_by);
+
+            // Show resolution details
+            if let Some(path) = &resolution.path {
+                println!("  📁 Path: {}", path);
+            }
+            if let Some(commit) = &resolution.commit {
+                println!("  📜 Commit: {}", commit);
+            }
+            if let Some(msg) = &resolution.commit_message {
+                println!("  📝 Message: {}", msg);
+            }
+            if let Some(timestamp) = &resolution.last_seen_at {
+                println!("  ⏰ Last seen: {}", timestamp);
+            }
+            println!();
+        }
+        Ok(())
+    }
+
+    /// Verify agreement with detailed resolution
+    pub fn verify(&self, scope: &str) -> Result<()> {
+        let (is_valid, resolution) = self.manager.validate_agreement_with_resolution(scope)?;
+
+        println!("🔍 Agreement Verification:");
+        println!("  Scope: {}", scope);
+        println!("  Resolution: {}", resolution);
+        println!("  Valid: {}", if is_valid { "✅ Yes" } else { "❌ No" });
+
+        // Show detailed resolution information
+        println!("\n📋 Resolution Details:");
+        match resolution.resolution_type {
+            ResolutionType::Path(path) => {
+                println!("  Type: Path-based");
+                println!("  Path: {}", path);
+                println!("  In HEAD: {}", if resolution.exists_in_head { "✅ Yes" } else { "❌ No" });
+            }
+            ResolutionType::Commit(commit) => {
+                println!("  Type: Commit-based");
+                println!("  Commit: {}", commit);
+                if let Some(msg) = resolution.commit_message {
+                    println!("  Message: {}", msg);
+                }
+                println!("  Reachable: {}", if resolution.is_reachable { "✅ Yes" } else { "❌ No" });
+            }
+            ResolutionType::Tree(sha) => {
+                println!("  Type: Tree-based");
+                println!("  Tree: {}", sha);
+                println!("  Reachable: {}", if resolution.is_reachable { "✅ Yes" } else { "❌ No" });
+            }
+            ResolutionType::NotFound => {
+                println!("  Type: Not found");
+                println!("  Status: Tree not found in repository");
+            }
+        }
+
+        if let Some(timestamp) = resolution.last_seen_at {
+            println!("  Last seen: {}", timestamp);
+        }
+
+        Ok(())
+    }
+
+    /// Audit all agreements for trust decay
+    pub fn audit(&self) -> Result<()> {
+        let resolved_agreements = self.manager.list_agreements_with_resolution()?;
+
+        if resolved_agreements.is_empty() {
+            println!("📝 No agreements to audit");
+            return Ok(());
+        }
+
+        println!("🔍 Agreement Trust Audit:");
+        println!("  Total agreements: {}", resolved_agreements.len());
+
+        let mut in_head = 0;
+        let mut in_history = 0;
+        let mut unreachable = 0;
+        let mut not_found = 0;
+
+        for (metadata, resolution) in &resolved_agreements {
+            match resolution.resolution_type {
+                ResolutionType::Path(_) => {
+                    in_head += 1;
+                    println!("  ✅ {} - Active in HEAD", metadata.agreement.scope[..7].to_string());
+                }
+                ResolutionType::Commit(_) => {
+                    in_history += 1;
+                    println!("  ⚠️  {} - In history", metadata.agreement.scope[..7].to_string());
+                }
+                ResolutionType::Tree(_) => {
+                    if resolution.is_reachable {
+                        in_history += 1;
+                        println!("  ⚠️  {} - Detached but reachable", metadata.agreement.scope[..7].to_string());
+                    } else {
+                        unreachable += 1;
+                        println!("  ❌ {} - Unreachable", metadata.agreement.scope[..7].to_string());
+                    }
+                }
+                ResolutionType::NotFound => {
+                    not_found += 1;
+                    println!("  💀 {} - Not found", metadata.agreement.scope[..7].to_string());
+                }
+            }
+        }
+
+        println!("\n📊 Audit Summary:");
+        println!("  Active in HEAD: {}", in_head);
+        println!("  In history: {}", in_history);
+        println!("  Unreachable: {}", unreachable);
+        println!("  Not found: {}", not_found);
+
+        if unreachable > 0 || not_found > 0 {
+            println!("\n⚠️  Consider running 'agreement prune' to clean up invalid agreements");
+        }
+
+        Ok(())
+    }
 }
 
 /// Agreement management commands
@@ -921,6 +1299,18 @@ pub enum AgreementCommands {
     },
     /// Show the current agreement based on the current branch
     Current,
+    /// List agreements with enhanced resolution details
+    ListWithResolution,
+    /// Verify agreement with detailed resolution
+    Verify {
+        /// Scope SHA of the agreement to verify
+        scope: String,
+        /// Show verbose output
+        #[arg(long)]
+        verbose: bool,
+    },
+    /// Audit all agreements for trust decay
+    Audit,
 }
 
 /// Run agreement management command
@@ -1005,6 +1395,18 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
         }
         AgreementCommands::Current => {
             cli.current()?;
+        }
+        AgreementCommands::ListWithResolution => {
+            cli.list_with_resolution()?;
+        }
+        AgreementCommands::Verify { scope, verbose } => {
+            cli.verify(&scope)?;
+            if verbose {
+                println!("✅ Agreement verification complete.");
+            }
+        }
+        AgreementCommands::Audit => {
+            cli.audit()?;
         }
     }
 
