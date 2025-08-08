@@ -1,0 +1,5 @@
+{
+  "comment_body": "Test comment",
+  "event_name": "issue_comment",
+  "issue_number": 456
+}

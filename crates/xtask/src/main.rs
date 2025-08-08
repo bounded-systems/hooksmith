@@ -6,7 +6,7 @@
 //! that replace shell scripts and raw echo statements.
 
 use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
+use clap::{arg, Parser, Subcommand};
 use heck::ToTitleCase;
 use json_comments::StripComments;
 use serde::{Deserialize, Serialize};
@@ -717,6 +717,7 @@ enum GitHooksCommands {
     },
 }
 
+#[derive(Debug, Clone, clap::Subcommand)]
 enum GitAttributesCommands {
     /// Convert .gitattributes to JSONC format
     Convert {
@@ -804,7 +805,9 @@ mod generated_file_validator;
 mod git_attributes;
 mod git_config;
 mod git_lefthook_integration;
+mod workflow_contracts;
 mod git_notes_manager;
+mod github_actions;
 mod hierarchical_validation;
 mod hook_runner;
 mod hook_state_machine;
@@ -1677,6 +1680,18 @@ enum Commands {
         #[arg(trailing_var_arg = true)]
         args: Vec<String>,
     },
+    /// Generate GitHub Actions workflow from JSONC configuration
+    GenGitHubActions {
+        /// Input JSONC configuration file
+        #[arg(long, default_value = "config/github-actions.jsonc")]
+        config: String,
+        /// Output workflow file
+        #[arg(long, default_value = ".github/workflows/hooksmith.yml")]
+        output: String,
+        /// Whether to validate the generated workflow
+        #[arg(long)]
+        validate: bool,
+    },
     /// Validate static hook definitions
     ValidateStaticHooks {
         /// Whether to exit with error on validation failures
@@ -1688,6 +1703,51 @@ enum Commands {
         /// Check binary existence in target/release/
         #[arg(long, default_value = "true")]
         check_binaries: bool,
+    },
+    /// Validate GitHub Actions workflow contracts
+    WorkflowContracts {
+        /// Workflow file or directory to validate
+        #[arg(long, default_value = ".github/workflows")]
+        path: String,
+        /// Whether to exit with error on validation failures
+        #[arg(long)]
+        strict: bool,
+        /// Show detailed validation output
+        #[arg(long)]
+        verbose: bool,
+        /// Generate a disabled workflow stub
+        #[arg(long)]
+        generate_stub: Option<String>,
+        /// Output format (text, json, summary)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    /// Test GitHub Actions workflow contracts with act
+    TestWorkflowContracts {
+        /// Workflow files to test
+        #[arg(long)]
+        paths: Vec<String>,
+        /// Use act for testing workflows
+        #[arg(long)]
+        use_act: bool,
+        /// Run act in dry-run mode
+        #[arg(long)]
+        act_dry_run: bool,
+        /// Generate mock input files
+        #[arg(long)]
+        generate_inputs: bool,
+        /// Test all triggers, not just workflow_dispatch
+        #[arg(long)]
+        test_all_triggers: bool,
+        /// Output directory for generated files
+        #[arg(long)]
+        output_dir: Option<String>,
+        /// Custom act inputs file
+        #[arg(long)]
+        act_inputs_file: Option<String>,
+        /// Output format (json, yaml, markdown)
+        #[arg(long, default_value = "markdown")]
+        format: String,
     },
 }
 
@@ -2483,12 +2543,49 @@ async fn main() -> Result<()> {
         Commands::Sbom { args } => {
             sbom::handle_sbom_command(&args).await?;
         }
+        Commands::GenGitHubActions {
+            config,
+            output,
+            validate,
+        } => {
+            github_actions::generate_workflow(&config, &output, validate).await?;
+        }
         Commands::ValidateStaticHooks {
             strict,
             verbose,
             check_binaries,
         } => {
             validate_static_hooks_command(strict, verbose, check_binaries).await?;
+        }
+        Commands::WorkflowContracts {
+            path,
+            strict,
+            verbose,
+            generate_stub,
+            format,
+        } => {
+            run_workflow_contracts_command(path, strict, verbose, generate_stub.as_deref(), format).await?;
+        }
+        Commands::TestWorkflowContracts {
+            paths,
+            use_act,
+            act_dry_run,
+            generate_inputs,
+            test_all_triggers,
+            output_dir,
+            act_inputs_file,
+            format,
+        } => {
+            run_test_workflow_contracts_command(
+                paths,
+                use_act,
+                act_dry_run,
+                generate_inputs,
+                test_all_triggers,
+                output_dir,
+                act_inputs_file,
+                format,
+            ).await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
@@ -2590,13 +2687,10 @@ async fn main() -> Result<()> {
                 if validate {
                     let schema = git_config::load_schema()?;
                     let validation_result = git_config::validate_jsonc(&output, &schema)?;
-                    if validation_result.is_valid {
+                    if validation_result {
                         println!("✅ JSONC configuration is valid");
                     } else {
-                        println!("❌ JSONC configuration is invalid:");
-                        for error in validation_result.errors {
-                            println!("  - {error}");
-                        }
+                        println!("❌ JSONC configuration is invalid");
                         anyhow::bail!("JSONC validation failed");
                     }
                 }
@@ -2606,9 +2700,9 @@ async fn main() -> Result<()> {
                 comprehensive,
             } => {
                 let template = if comprehensive {
-                    git_config::generate_comprehensive_template()
+                    git_config::generate_comprehensive_template()?
                 } else {
-                    git_config::generate_template()
+                    git_config::generate_template()?
                 };
                 fs::write(&output, template)?;
                 println!("✅ Generated Git config template: {output}");
@@ -2619,7 +2713,7 @@ async fn main() -> Result<()> {
                 detailed,
             } => {
                 let config = git_config::parse_git_config(&input)?;
-                let analysis = git_config::analyze_config(&config, detailed);
+                let analysis = git_config::analyze_config(&config, detailed)?;
                 match format.as_str() {
                     "text" => {
                         println!("{}", analysis);
@@ -2629,7 +2723,7 @@ async fn main() -> Result<()> {
                         println!("{}", json);
                     }
                     "summary" => {
-                        let summary = git_config::summarize_analysis(&analysis);
+                        let summary = git_config::summarize_analysis(&analysis)?;
                         println!("{}", summary);
                     }
                     _ => {
@@ -2668,13 +2762,10 @@ async fn main() -> Result<()> {
                 let config = git_config::parse_git_config(&input)?;
                 let schema = git_config::load_schema()?;
                 let validation_result = git_config::validate_config(&config, &schema)?;
-                if validation_result.is_valid {
+                if validation_result {
                     println!("✅ Git configuration is valid");
                 } else {
-                    println!("❌ Git configuration is invalid:");
-                    for error in validation_result.errors {
-                        println!("  - {error}");
-                    }
+                    println!("❌ Git configuration is invalid");
                     if strict {
                         anyhow::bail!("Git configuration validation failed");
                     }
@@ -2703,13 +2794,10 @@ async fn main() -> Result<()> {
                 if validate {
                     let schema = git_attributes::load_schema()?;
                     let validation_result = git_attributes::validate_jsonc(&output, &schema)?;
-                    if validation_result.is_valid {
+                    if validation_result {
                         println!("✅ JSONC attributes are valid");
                     } else {
-                        println!("❌ JSONC attributes are invalid:");
-                        for error in validation_result.errors {
-                            println!("  - {error}");
-                        }
+                        println!("❌ JSONC attributes are invalid");
                         anyhow::bail!("JSONC validation failed");
                     }
                 }
@@ -2719,9 +2807,9 @@ async fn main() -> Result<()> {
                 comprehensive,
             } => {
                 let template = if comprehensive {
-                    git_attributes::generate_comprehensive_template()
+                    git_attributes::generate_comprehensive_template()?
                 } else {
-                    git_attributes::generate_template()
+                    git_attributes::generate_template()?
                 };
                 fs::write(&output, template)?;
                 println!("✅ Generated Git attributes template: {output}");
@@ -2732,7 +2820,7 @@ async fn main() -> Result<()> {
                 detailed,
             } => {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
-                let analysis = git_attributes::analyze_attributes(&attributes, detailed);
+                let analysis = git_attributes::analyze_attributes(&attributes, detailed)?;
                 match format.as_str() {
                     "text" => {
                         println!("{}", analysis);
@@ -2742,7 +2830,7 @@ async fn main() -> Result<()> {
                         println!("{}", json);
                     }
                     "summary" => {
-                        let summary = git_attributes::summarize_analysis(&analysis);
+                        let summary = git_attributes::summarize_analysis(&analysis)?;
                         println!("{}", summary);
                     }
                     _ => {
@@ -2785,13 +2873,10 @@ async fn main() -> Result<()> {
                 let attributes = git_attributes::parse_git_attributes(&input)?;
                 let schema = git_attributes::load_schema()?;
                 let validation_result = git_attributes::validate_attributes(&attributes, &schema)?;
-                if validation_result.is_valid {
+                if validation_result {
                     println!("✅ Git attributes are valid");
                 } else {
-                    println!("❌ Git attributes are invalid:");
-                    for error in validation_result.errors {
-                        println!("  - {error}");
-                    }
+                    println!("❌ Git attributes are invalid");
                     if strict {
                         anyhow::bail!("Git attributes validation failed");
                     }
@@ -9973,6 +10058,175 @@ async fn run_validate_structure(strict: bool, verbose: bool, format: String) -> 
         anyhow::bail!(
             "Repository structure validation failed with {} errors",
             result.errors.len()
+        );
+    }
+
+    Ok(())
+}
+
+async fn run_workflow_contracts_command(
+    path: String,
+    strict: bool,
+    verbose: bool,
+    generate_stub: Option<&str>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: strict,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    if verbose {
+        println!("🔍 Validating workflow contracts at: {}", path);
+    }
+
+    // Run validation
+    let result = validator.validate_workflow(std::path::Path::new(&path))?;
+
+    // Generate stub if requested
+    if let Some(stub_type) = generate_stub {
+        let stub_content = workflow_contracts::generate_gated_workflow_stub(stub_type)?;
+        println!("📝 Generated {} workflow stub:", stub_type);
+        println!("{}", stub_content);
+    }
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&result)?;
+            println!("{}", json_output);
+        }
+        "summary" => {
+            println!("📊 Workflow Contracts Validation Summary");
+            println!("=====================================");
+            println!("✅ Valid: {}", result.is_valid);
+            println!("❌ Errors: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count());
+            println!("⚠️  Warnings: {}", result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).count());
+            println!("💰 Billing Impact: {:?}", result.trigger_analysis.billing_impact);
+        }
+        "text" | _ => {
+            if result.is_valid {
+                println!("✅ Workflow contracts validation passed!");
+            } else {
+                println!("❌ Workflow contracts validation failed!");
+            }
+
+            let errors: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).collect();
+            if !errors.is_empty() {
+                println!("\n❌ Errors:");
+                for error in errors {
+                    println!("  • {}: {}", error.location.as_deref().unwrap_or("unknown"), error.message);
+                }
+            }
+
+            let warnings: Vec<_> = result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Warning)).collect();
+            if !warnings.is_empty() {
+                println!("\n⚠️  Warnings:");
+                for warning in warnings {
+                    println!("  • {}: {}", warning.location.as_deref().unwrap_or("unknown"), warning.message);
+                }
+            }
+        }
+    }
+
+    // Exit with error if strict mode and validation failed
+    if strict && !result.is_valid {
+        anyhow::bail!(
+            "Workflow contracts validation failed with {} errors",
+            result.concerns.iter().filter(|c| matches!(c.level, workflow_contracts::ConcernLevel::Error | workflow_contracts::ConcernLevel::Critical)).count()
+        );
+    }
+
+    Ok(())
+}
+
+async fn run_test_workflow_contracts_command(
+    paths: Vec<String>,
+    use_act: bool,
+    act_dry_run: bool,
+    generate_inputs: bool,
+    test_all_triggers: bool,
+    output_dir: Option<String>,
+    act_inputs_file: Option<String>,
+    format: String,
+) -> Result<()> {
+    let config = workflow_contracts::WorkflowContractConfig {
+        strict_mode: false,
+        allow_disabled_workflows: true,
+        require_paths: true,
+        max_jobs_per_workflow: None,
+        allowed_runners: vec!["ubuntu-latest".to_string(), "macos-latest".to_string()],
+        forbidden_actions: vec![],
+        contract_validation: true,
+        trigger_mocking: true,
+    };
+    let validator = workflow_contracts::WorkflowContractValidator::new(config);
+    
+    let test_config = workflow_contracts::WorkflowContractTestConfig {
+        use_act,
+        act_dry_run,
+        generate_inputs,
+        test_all_triggers,
+        output_dir: output_dir.map(|p| std::path::PathBuf::from(p)),
+        act_inputs_file: act_inputs_file.map(|p| std::path::PathBuf::from(p)),
+    };
+    let test_runner = workflow_contracts::WorkflowContractTestRunner::new(test_config, validator);
+    
+    println!("🧪 Testing workflow contracts with act...");
+
+    // Convert paths to PathBuf
+    let workflow_paths: Vec<std::path::PathBuf> = paths.into_iter().map(std::path::PathBuf::from).collect();
+
+    // Run tests
+    let results = test_runner.run_tests(&workflow_paths)?;
+
+    // Print results based on format
+    match format.as_str() {
+        "json" => {
+            let json_output = serde_json::to_string_pretty(&results)?;
+            println!("{}", json_output);
+        }
+        "yaml" => {
+            let yaml_output = serde_yaml::to_string(&results)?;
+            println!("{}", yaml_output);
+        }
+        "markdown" | _ => {
+            println!("📊 Workflow Contract Test Results");
+            println!("================================");
+            
+            let total_workflows = results.len();
+            let valid_workflows = results.iter().filter(|r| r.validation_result.is_valid).count();
+            let total_act_tests = results.iter().map(|r| r.act_test_results.len()).sum::<usize>();
+            let passed_act_tests = results.iter().flat_map(|r| &r.act_test_results).filter(|r| r.success).count();
+            let failed_act_tests = total_act_tests - passed_act_tests;
+            
+            println!("✅ Valid Workflows: {}/{}", valid_workflows, total_workflows);
+            println!("🧪 Act Tests Passed: {}/{}", passed_act_tests, total_act_tests);
+
+            if !results.is_empty() {
+                println!("\n📋 Test Results:");
+                for test_result in &results {
+                    println!("  • {}: {}", test_result.workflow_path.display(), 
+                        if test_result.validation_result.is_valid { "✅ VALID" } else { "❌ INVALID" });
+                }
+            }
+        }
+    }
+
+    // Exit with error if tests failed
+    let failed_workflows = results.iter().filter(|r| !r.validation_result.is_valid).count();
+    if failed_workflows > 0 {
+        anyhow::bail!(
+            "Workflow contract tests failed: {} valid, {} invalid",
+            results.len() - failed_workflows,
+            failed_workflows
         );
     }
 
