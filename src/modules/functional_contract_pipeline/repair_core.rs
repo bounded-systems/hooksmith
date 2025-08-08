@@ -1,5 +1,5 @@
 //! Core Repair Planning Module
-//! 
+//!
 //! This module provides the foundational components for the repair planning system:
 //! - RepairPlan: Structured repair plans with constraint-safe semantics
 //! - Fixer trait: Composable fixer implementations
@@ -61,47 +61,47 @@ pub struct RepairAction {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ActionType {
     /// Edit a file at specific line/column
-    Edit { 
+    Edit {
         /// Line number to edit
-        line: u32, 
+        line: u32,
         /// Column number to edit
-        column: u32, 
+        column: u32,
         /// Content to insert
-        content: String 
+        content: String,
     },
     /// Replace entire file content
-    Replace { 
+    Replace {
         /// New file content
-        content: String 
+        content: String,
     },
     /// Delete a file
     Delete,
     /// Reorder lines in a file
-    ReorderLines { 
+    ReorderLines {
         /// Strategy for reordering (e.g., "alphabetical")
-        strategy: String 
+        strategy: String,
     },
     /// Run a command
-    RunCommand { 
+    RunCommand {
         /// Command to run
-        command: String, 
+        command: String,
         /// Command arguments
-        args: Vec<String> 
+        args: Vec<String>,
     },
     /// Apply a patch
-    ApplyPatch { 
+    ApplyPatch {
         /// Patch content to apply
-        patch: String 
+        patch: String,
     },
     /// Create a new file
-    Create { 
+    Create {
         /// File content to create
-        content: String 
+        content: String,
     },
     /// Move/rename a file
-    Move { 
+    Move {
         /// New path for the file
-        new_path: String 
+        new_path: String,
     },
 }
 
@@ -205,13 +205,17 @@ pub enum FixCategory {
 pub trait Fixer: Send + Sync {
     /// Unique identifier for this fixer
     fn id(&self) -> &'static str;
-    
+
     /// Plan a repair action for the given violation
-    fn plan(&self, violation: &Violation, root_cause: &RootCause) -> RepairResult<Option<RepairAction>>;
-    
+    fn plan(
+        &self,
+        violation: &Violation,
+        root_cause: &RootCause,
+    ) -> RepairResult<Option<RepairAction>>;
+
     /// Execute a repair action
     fn execute(&self, action: &RepairAction) -> RepairResult<ActionResult>;
-    
+
     /// Check if this fixer can handle the given violation
     fn can_handle(&self, violation: &Violation) -> bool {
         // Default implementation - override in specific fixers
@@ -227,27 +231,27 @@ impl PlanValidator {
     pub fn validate(plan: &RepairPlan) -> RepairResult<()> {
         // Check for circular dependencies
         Self::check_circular_dependencies(plan)?;
-        
+
         // Check for invalid action references
         Self::check_action_references(plan)?;
-        
+
         // Check for required actions
         Self::check_required_actions(plan)?;
-        
+
         Ok(())
     }
-    
+
     /// Checks for circular dependencies in the action graph
     fn check_circular_dependencies(plan: &RepairPlan) -> RepairResult<()> {
         let mut visited = HashSet::new();
         let mut rec_stack = HashSet::new();
         let mut action_map = HashMap::new();
-        
+
         // Build action map
         for action in &plan.actions {
             action_map.insert(action.id.as_str(), action);
         }
-        
+
         // DFS to detect cycles
         for action in &plan.actions {
             if !visited.contains(&action.id) {
@@ -256,10 +260,10 @@ impl PlanValidator {
                 }
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// DFS helper to detect cycles
     fn has_cycle(
         action_id: &str,
@@ -269,7 +273,7 @@ impl PlanValidator {
     ) -> RepairResult<bool> {
         visited.insert(action_id.to_string());
         rec_stack.insert(action_id.to_string());
-        
+
         if let Some(action) = action_map.get(action_id) {
             for dep_id in &action.dependencies {
                 if !visited.contains(dep_id) {
@@ -281,38 +285,40 @@ impl PlanValidator {
                 }
             }
         }
-        
+
         rec_stack.remove(action_id);
         Ok(false)
     }
-    
+
     /// Checks that all action references are valid
     fn check_action_references(plan: &RepairPlan) -> RepairResult<()> {
         let action_ids: HashSet<_> = plan.actions.iter().map(|a| &a.id).collect();
-        
+
         for action in &plan.actions {
             for dep_id in &action.dependencies {
                 if !action_ids.contains(dep_id) {
-                    return Err(RepairError::InvalidAction(
-                        format!("Action {} depends on non-existent action {}", action.id, dep_id)
-                    ));
+                    return Err(RepairError::InvalidAction(format!(
+                        "Action {} depends on non-existent action {}",
+                        action.id, dep_id
+                    )));
                 }
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Checks that required actions are present
     fn check_required_actions(plan: &RepairPlan) -> RepairResult<()> {
         for action in &plan.actions {
             if action.required && action.fixer_id.is_empty() {
-                return Err(RepairError::InvalidAction(
-                    format!("Required action {} has no fixer", action.id)
-                ));
+                return Err(RepairError::InvalidAction(format!(
+                    "Required action {} has no fixer",
+                    action.id
+                )));
             }
         }
-        
+
         Ok(())
     }
 }
@@ -325,40 +331,50 @@ impl MermaidExporter {
     pub fn export_plan(plan: &RepairPlan) -> String {
         let mut mermaid = String::new();
         mermaid.push_str("flowchart TD\n");
-        
+
         // Add violation node
-        mermaid.push_str(&format!("    Violation[\"Violation: {}\"]\n", 
-            plan.violation.message.replace("\"", "\\\"")));
-        
+        mermaid.push_str(&format!(
+            "    Violation[\"Violation: {}\"]\n",
+            plan.violation.message.replace("\"", "\\\"")
+        ));
+
         // Add root cause node
-        mermaid.push_str(&format!("    RootCause[\"Root Cause: {}\"]\n", 
-            plan.root_cause.primary_cause.replace("\"", "\\\"")));
-        
+        mermaid.push_str(&format!(
+            "    RootCause[\"Root Cause: {}\"]\n",
+            plan.root_cause.primary_cause.replace("\"", "\\\"")
+        ));
+
         // Add dispatcher node
-        mermaid.push_str(&format!("    Dispatcher[\"Dispatcher: {}\"]\n", plan.dispatcher));
-        
+        mermaid.push_str(&format!(
+            "    Dispatcher[\"Dispatcher: {}\"]\n",
+            plan.dispatcher
+        ));
+
         // Add action nodes
         for action in &plan.actions {
             let node_id = action.id.replace("-", "_");
-            mermaid.push_str(&format!("    {node_id}[\"{}: {}\"]\n", 
-                action.fixer_id, action.action_type.to_string()));
+            mermaid.push_str(&format!(
+                "    {node_id}[\"{}: {}\"]\n",
+                action.fixer_id,
+                action.action_type.to_string()
+            ));
         }
-        
+
         // Add edges
         mermaid.push_str("    Violation --> RootCause\n");
         mermaid.push_str("    RootCause --> Dispatcher\n");
-        
+
         for action in &plan.actions {
             let node_id = action.id.replace("-", "_");
             mermaid.push_str(&format!("    Dispatcher --> {node_id}\n"));
-            
+
             // Add dependency edges
             for dep_id in &action.dependencies {
                 let dep_node_id = dep_id.replace("-", "_");
                 mermaid.push_str(&format!("    {dep_node_id} --> {node_id}\n"));
             }
         }
-        
+
         mermaid
     }
 }
@@ -387,8 +403,12 @@ impl Fixer for ReplaceRootStarFixer {
     fn id(&self) -> &'static str {
         "fixer.replace-root-star"
     }
-    
-    fn plan(&self, violation: &Violation, _root_cause: &RootCause) -> RepairResult<Option<RepairAction>> {
+
+    fn plan(
+        &self,
+        violation: &Violation,
+        _root_cause: &RootCause,
+    ) -> RepairResult<Option<RepairAction>> {
         if violation.message.contains("wildcard") && violation.message.contains(".gitignore") {
             Ok(Some(RepairAction {
                 id: "replace-root-star".to_string(),
@@ -408,7 +428,7 @@ impl Fixer for ReplaceRootStarFixer {
             Ok(None)
         }
     }
-    
+
     fn execute(&self, action: &RepairAction) -> RepairResult<ActionResult> {
         // Implementation would read the file, make the edit, and return result
         Ok(ActionResult {
@@ -419,7 +439,7 @@ impl Fixer for ReplaceRootStarFixer {
             new_hash: Some("abc123".to_string()),
         })
     }
-    
+
     fn can_handle(&self, _violation: &Violation) -> bool {
         true
     }
@@ -432,8 +452,12 @@ impl Fixer for LintIgnoreOrderFixer {
     fn id(&self) -> &'static str {
         "fixer.lint-ignore-order"
     }
-    
-    fn plan(&self, violation: &Violation, _root_cause: &RootCause) -> RepairResult<Option<RepairAction>> {
+
+    fn plan(
+        &self,
+        violation: &Violation,
+        _root_cause: &RootCause,
+    ) -> RepairResult<Option<RepairAction>> {
         if violation.message.contains(".gitignore") && violation.message.contains("order") {
             Ok(Some(RepairAction {
                 id: "reorder-ignore-lines".to_string(),
@@ -451,7 +475,7 @@ impl Fixer for LintIgnoreOrderFixer {
             Ok(None)
         }
     }
-    
+
     fn execute(&self, action: &RepairAction) -> RepairResult<ActionResult> {
         Ok(ActionResult {
             action_id: action.id.clone(),
@@ -461,7 +485,7 @@ impl Fixer for LintIgnoreOrderFixer {
             new_hash: Some("def456".to_string()),
         })
     }
-    
+
     fn can_handle(&self, _violation: &Violation) -> bool {
         true
     }
@@ -470,7 +494,7 @@ impl Fixer for LintIgnoreOrderFixer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_repair_action_serialization() {
         let action = RepairAction {
@@ -487,13 +511,13 @@ mod tests {
             priority: 1,
             dependencies: Vec::new(),
         };
-        
+
         let json = serde_json::to_string(&action).unwrap();
         let deserialized: RepairAction = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(action, deserialized);
     }
-    
+
     #[test]
     fn test_plan_validation() {
         let plan = RepairPlan {
@@ -514,30 +538,28 @@ mod tests {
                 confidence: 0.8,
             },
             dispatcher: "test-dispatcher".to_string(),
-            actions: vec![
-                RepairAction {
-                    id: "action1".to_string(),
-                    fixer_id: "fixer1".to_string(),
-                    action_type: ActionType::Edit {
-                        line: 1,
-                        column: 1,
-                        content: "test".to_string(),
-                    },
-                    path: "test.txt".to_string(),
-                    params: HashMap::new(),
-                    required: true,
-                    priority: 1,
-                    dependencies: Vec::new(),
+            actions: vec![RepairAction {
+                id: "action1".to_string(),
+                fixer_id: "fixer1".to_string(),
+                action_type: ActionType::Edit {
+                    line: 1,
+                    column: 1,
+                    content: "test".to_string(),
                 },
-            ],
+                path: "test.txt".to_string(),
+                params: HashMap::new(),
+                required: true,
+                priority: 1,
+                dependencies: Vec::new(),
+            }],
             is_complete: true,
             metadata: HashMap::new(),
             timestamp: "2024-01-01T00:00:00Z".to_string(),
         };
-        
+
         assert!(PlanValidator::validate(&plan).is_ok());
     }
-    
+
     #[test]
     fn test_circular_dependency_detection() {
         let plan = RepairPlan {
@@ -592,10 +614,10 @@ mod tests {
             metadata: HashMap::new(),
             timestamp: "2024-01-01T00:00:00Z".to_string(),
         };
-        
+
         assert!(PlanValidator::validate(&plan).is_err());
     }
-    
+
     #[test]
     fn test_mermaid_export() {
         let plan = RepairPlan {
@@ -616,27 +638,25 @@ mod tests {
                 confidence: 0.8,
             },
             dispatcher: "test-dispatcher".to_string(),
-            actions: vec![
-                RepairAction {
-                    id: "test-action".to_string(),
-                    fixer_id: "test-fixer".to_string(),
-                    action_type: ActionType::Edit {
-                        line: 1,
-                        column: 1,
-                        content: "test".to_string(),
-                    },
-                    path: "test.txt".to_string(),
-                    params: HashMap::new(),
-                    required: true,
-                    priority: 1,
-                    dependencies: Vec::new(),
+            actions: vec![RepairAction {
+                id: "test-action".to_string(),
+                fixer_id: "test-fixer".to_string(),
+                action_type: ActionType::Edit {
+                    line: 1,
+                    column: 1,
+                    content: "test".to_string(),
                 },
-            ],
+                path: "test.txt".to_string(),
+                params: HashMap::new(),
+                required: true,
+                priority: 1,
+                dependencies: Vec::new(),
+            }],
             is_complete: true,
             metadata: HashMap::new(),
             timestamp: "2024-01-01T00:00:00Z".to_string(),
         };
-        
+
         let mermaid = MermaidExporter::export_plan(&plan);
         assert!(mermaid.contains("flowchart TD"));
         assert!(mermaid.contains("Violation"));

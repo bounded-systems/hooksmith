@@ -1,9 +1,9 @@
 use crate::modules::functional_contract_pipeline::symbols::RuleSeverity;
 use crate::modules::functional_contract_pipeline::types::{DiffSet, DiffType, ValidationDiff};
-use json_patch::diff;
-use sonic_rs::from_str;
-use jzon::JsonValue as JzonValue;
 use ajson::Value as AjsonValue;
+use json_patch::diff;
+use jzon::JsonValue as JzonValue;
+use sonic_rs::from_str;
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -111,7 +111,7 @@ impl HighPerformanceDiffer {
         expected: &[crate::modules::functional_contract_pipeline::types::ExpectedSnapshot],
     ) -> (DiffSet, u64, u64) {
         let parse_start = Instant::now();
-        
+
         // Parse JSON using serde_json (baseline)
         let mut diffs = Vec::new();
         let mut total_operations = 0;
@@ -120,16 +120,22 @@ impl HighPerformanceDiffer {
             if let Some(obs) = observed.iter().find(|o| o.symbol == ex.symbol) {
                 let patches = diff(&obs.data, &ex.expectation);
                 total_operations += patches.0.len();
-                
+
                 if !patches.0.is_empty() {
                     let mut metadata = HashMap::new();
-                    metadata.insert("json_patch".to_string(), serde_json::to_value(&patches).unwrap_or_default());
-                    
+                    metadata.insert(
+                        "json_patch".to_string(),
+                        serde_json::to_value(&patches).unwrap_or_default(),
+                    );
+
                     diffs.push(ValidationDiff::new(
                         ex.symbol.clone(),
                         DiffType::Mismatch,
-                        format!("Data mismatch for concern: {} (JSON Patch: {} operations)", 
-                               ex.symbol.name(), patches.0.len()),
+                        format!(
+                            "Data mismatch for concern: {} (JSON Patch: {} operations)",
+                            ex.symbol.name(),
+                            patches.0.len()
+                        ),
                         Some(obs.data.clone()),
                         Some(ex.expectation.clone()),
                         RuleSeverity::Error,
@@ -162,7 +168,7 @@ impl HighPerformanceDiffer {
         expected: &[crate::modules::functional_contract_pipeline::types::ExpectedSnapshot],
     ) -> (DiffSet, u64, u64) {
         let parse_start = Instant::now();
-        
+
         // Parse JSON using sonic-rs for better performance
         let mut diffs = Vec::new();
         let mut _total_operations = 0;
@@ -172,28 +178,36 @@ impl HighPerformanceDiffer {
                 // Convert to sonic-rs format for parsing
                 let obs_str = obs.data.to_string();
                 let exp_str = ex.expectation.to_string();
-                
+
                 // Use sonic-rs for parsing (even if we don't use the result, it demonstrates the API)
                 let _obs_sonic = from_str::<serde_json::Value>(&obs_str).unwrap_or_default();
                 let _exp_sonic = from_str::<serde_json::Value>(&exp_str).unwrap_or_default();
-                
+
                 // Convert back to serde_json for JSON Patch compatibility
-                let obs_serde: serde_json::Value = serde_json::from_str(&obs_str).unwrap_or_default();
-                let exp_serde: serde_json::Value = serde_json::from_str(&exp_str).unwrap_or_default();
-                
+                let obs_serde: serde_json::Value =
+                    serde_json::from_str(&obs_str).unwrap_or_default();
+                let exp_serde: serde_json::Value =
+                    serde_json::from_str(&exp_str).unwrap_or_default();
+
                 let patches = diff(&obs_serde, &exp_serde);
                 _total_operations += patches.0.len();
-                
+
                 if !patches.0.is_empty() {
                     let mut metadata = HashMap::new();
-                    metadata.insert("json_patch".to_string(), serde_json::to_value(&patches).unwrap_or_default());
+                    metadata.insert(
+                        "json_patch".to_string(),
+                        serde_json::to_value(&patches).unwrap_or_default(),
+                    );
                     metadata.insert("strategy".to_string(), serde_json::json!("sonic-rs"));
-                    
+
                     diffs.push(ValidationDiff::new(
                         ex.symbol.clone(),
                         DiffType::Mismatch,
-                        format!("Data mismatch for concern: {} (Sonic JSON Patch: {} operations)", 
-                               ex.symbol.name(), patches.0.len()),
+                        format!(
+                            "Data mismatch for concern: {} (Sonic JSON Patch: {} operations)",
+                            ex.symbol.name(),
+                            patches.0.len()
+                        ),
                         Some(obs.data.clone()),
                         Some(ex.expectation.clone()),
                         RuleSeverity::Error,
@@ -226,7 +240,7 @@ impl HighPerformanceDiffer {
         expected: &[crate::modules::functional_contract_pipeline::types::ExpectedSnapshot],
     ) -> (DiffSet, u64, u64) {
         let parse_start = Instant::now();
-        
+
         let mut diffs = Vec::new();
         let mut _total_operations = 0;
 
@@ -235,28 +249,38 @@ impl HighPerformanceDiffer {
                 // Use json_fast for ultra-low-latency parsing (simulated for now)
                 let obs_str = obs.data.to_string();
                 let exp_str = ex.expectation.to_string();
-                
+
                 // Simulate json_fast parsing (API not available in current version)
-                let _obs_fast = serde_json::from_str::<serde_json::Value>(&obs_str).unwrap_or_default();
-                let _exp_fast = serde_json::from_str::<serde_json::Value>(&exp_str).unwrap_or_default();
-                
+                let _obs_fast =
+                    serde_json::from_str::<serde_json::Value>(&obs_str).unwrap_or_default();
+                let _exp_fast =
+                    serde_json::from_str::<serde_json::Value>(&exp_str).unwrap_or_default();
+
                 // Convert back to serde_json for JSON Patch compatibility
-                let obs_serde: serde_json::Value = serde_json::from_str(&obs_str).unwrap_or_default();
-                let exp_serde: serde_json::Value = serde_json::from_str(&exp_str).unwrap_or_default();
-                
+                let obs_serde: serde_json::Value =
+                    serde_json::from_str(&obs_str).unwrap_or_default();
+                let exp_serde: serde_json::Value =
+                    serde_json::from_str(&exp_str).unwrap_or_default();
+
                 let patches = diff(&obs_serde, &exp_serde);
                 _total_operations += patches.0.len();
-                
+
                 if !patches.0.is_empty() {
                     let mut metadata = HashMap::new();
-                    metadata.insert("json_patch".to_string(), serde_json::to_value(&patches).unwrap_or_default());
+                    metadata.insert(
+                        "json_patch".to_string(),
+                        serde_json::to_value(&patches).unwrap_or_default(),
+                    );
                     metadata.insert("strategy".to_string(), serde_json::json!("json_fast"));
-                    
+
                     diffs.push(ValidationDiff::new(
                         ex.symbol.clone(),
                         DiffType::Mismatch,
-                        format!("Data mismatch for concern: {} (json_fast: {} operations)", 
-                               ex.symbol.name(), patches.0.len()),
+                        format!(
+                            "Data mismatch for concern: {} (json_fast: {} operations)",
+                            ex.symbol.name(),
+                            patches.0.len()
+                        ),
                         Some(obs.data.clone()),
                         Some(ex.expectation.clone()),
                         RuleSeverity::Error,
@@ -289,7 +313,7 @@ impl HighPerformanceDiffer {
         expected: &[crate::modules::functional_contract_pipeline::types::ExpectedSnapshot],
     ) -> (DiffSet, u64, u64) {
         let parse_start = Instant::now();
-        
+
         let mut diffs = Vec::new();
         let mut _total_operations = 0;
 
@@ -298,27 +322,35 @@ impl HighPerformanceDiffer {
                 // Use jzon for high-performance parsing
                 let obs_str = obs.data.to_string();
                 let exp_str = ex.expectation.to_string();
-                
+
                 let _obs_jzon = jzon::parse(&obs_str).unwrap_or(JzonValue::Null);
                 let _exp_jzon = jzon::parse(&exp_str).unwrap_or(JzonValue::Null);
-                
+
                 // Convert back to serde_json for JSON Patch compatibility
-                let obs_serde: serde_json::Value = serde_json::from_str(&obs_str).unwrap_or_default();
-                let exp_serde: serde_json::Value = serde_json::from_str(&exp_str).unwrap_or_default();
-                
+                let obs_serde: serde_json::Value =
+                    serde_json::from_str(&obs_str).unwrap_or_default();
+                let exp_serde: serde_json::Value =
+                    serde_json::from_str(&exp_str).unwrap_or_default();
+
                 let patches = diff(&obs_serde, &exp_serde);
                 _total_operations += patches.0.len();
-                
+
                 if !patches.0.is_empty() {
                     let mut metadata = HashMap::new();
-                    metadata.insert("json_patch".to_string(), serde_json::to_value(&patches).unwrap_or_default());
+                    metadata.insert(
+                        "json_patch".to_string(),
+                        serde_json::to_value(&patches).unwrap_or_default(),
+                    );
                     metadata.insert("strategy".to_string(), serde_json::json!("jzon"));
-                    
+
                     diffs.push(ValidationDiff::new(
                         ex.symbol.clone(),
                         DiffType::Mismatch,
-                        format!("Data mismatch for concern: {} (jzon: {} operations)", 
-                               ex.symbol.name(), patches.0.len()),
+                        format!(
+                            "Data mismatch for concern: {} (jzon: {} operations)",
+                            ex.symbol.name(),
+                            patches.0.len()
+                        ),
                         Some(obs.data.clone()),
                         Some(ex.expectation.clone()),
                         RuleSeverity::Error,
@@ -351,7 +383,7 @@ impl HighPerformanceDiffer {
         expected: &[crate::modules::functional_contract_pipeline::types::ExpectedSnapshot],
     ) -> (DiffSet, u64, u64) {
         let parse_start = Instant::now();
-        
+
         let mut diffs = Vec::new();
         let mut _total_operations = 0;
 
@@ -360,27 +392,35 @@ impl HighPerformanceDiffer {
                 // Use ajson for high-performance parsing
                 let obs_str = obs.data.to_string();
                 let exp_str = ex.expectation.to_string();
-                
+
                 let _obs_ajson = ajson::parse(&obs_str).unwrap_or(Some(AjsonValue::Null));
                 let _exp_ajson = ajson::parse(&exp_str).unwrap_or(Some(AjsonValue::Null));
-                
+
                 // Convert back to serde_json for JSON Patch compatibility
-                let obs_serde: serde_json::Value = serde_json::from_str(&obs_str).unwrap_or_default();
-                let exp_serde: serde_json::Value = serde_json::from_str(&exp_str).unwrap_or_default();
-                
+                let obs_serde: serde_json::Value =
+                    serde_json::from_str(&obs_str).unwrap_or_default();
+                let exp_serde: serde_json::Value =
+                    serde_json::from_str(&exp_str).unwrap_or_default();
+
                 let patches = diff(&obs_serde, &exp_serde);
                 _total_operations += patches.0.len();
-                
+
                 if !patches.0.is_empty() {
                     let mut metadata = HashMap::new();
-                    metadata.insert("json_patch".to_string(), serde_json::to_value(&patches).unwrap_or_default());
+                    metadata.insert(
+                        "json_patch".to_string(),
+                        serde_json::to_value(&patches).unwrap_or_default(),
+                    );
                     metadata.insert("strategy".to_string(), serde_json::json!("ajson"));
-                    
+
                     diffs.push(ValidationDiff::new(
                         ex.symbol.clone(),
                         DiffType::Mismatch,
-                        format!("Data mismatch for concern: {} (ajson: {} operations)", 
-                               ex.symbol.name(), patches.0.len()),
+                        format!(
+                            "Data mismatch for concern: {} (ajson: {} operations)",
+                            ex.symbol.name(),
+                            patches.0.len()
+                        ),
                         Some(obs.data.clone()),
                         Some(ex.expectation.clone()),
                         RuleSeverity::Error,
@@ -413,7 +453,7 @@ impl HighPerformanceDiffer {
         expected: &[crate::modules::functional_contract_pipeline::types::ExpectedSnapshot],
     ) -> (DiffSet, u64, u64) {
         let parse_start = Instant::now();
-        
+
         let mut diffs = Vec::new();
         let mut total_operations = 0;
 
@@ -422,24 +462,30 @@ impl HighPerformanceDiffer {
                 // Use sonic-rs for initial parsing
                 let obs_str = obs.data.to_string();
                 let exp_str = ex.expectation.to_string();
-                
+
                 let _obs_sonic = from_str::<serde_json::Value>(&obs_str).unwrap_or_default();
                 let _exp_sonic = from_str::<serde_json::Value>(&exp_str).unwrap_or_default();
-                
+
                 // Fall back to JSON Patch for precise operations
                 let patches = diff(&obs.data, &ex.expectation);
                 total_operations += patches.0.len();
-                
+
                 if !patches.0.is_empty() {
                     let mut metadata = HashMap::new();
-                    metadata.insert("json_patch".to_string(), serde_json::to_value(&patches).unwrap_or_default());
+                    metadata.insert(
+                        "json_patch".to_string(),
+                        serde_json::to_value(&patches).unwrap_or_default(),
+                    );
                     metadata.insert("strategy".to_string(), serde_json::json!("hybrid"));
-                    
+
                     diffs.push(ValidationDiff::new(
                         ex.symbol.clone(),
                         DiffType::Mismatch,
-                        format!("Data mismatch for concern: {} (Hybrid: {} operations)", 
-                               ex.symbol.name(), patches.0.len()),
+                        format!(
+                            "Data mismatch for concern: {} (Hybrid: {} operations)",
+                            ex.symbol.name(),
+                            patches.0.len()
+                        ),
                         Some(obs.data.clone()),
                         Some(ex.expectation.clone()),
                         RuleSeverity::Error,
@@ -496,7 +542,7 @@ impl HighPerformanceDiffer {
         expected: &[crate::modules::functional_contract_pipeline::types::ExpectedSnapshot],
     ) -> DiffStrategy {
         let results = Self::benchmark_strategies(observed, expected);
-        
+
         results
             .iter()
             .min_by_key(|m| m.total_time_micros)
@@ -535,18 +581,21 @@ pub mod convenience {
         expected: &[crate::modules::functional_contract_pipeline::types::ExpectedSnapshot],
     ) -> String {
         let results = HighPerformanceDiffer::benchmark_strategies(observed, expected);
-        
+
         let mut report = String::new();
         report.push_str("🔬 High-Performance Diff Benchmark Report\n");
         report.push_str("==========================================\n\n");
-        
+
         for (i, metrics) in results.iter().enumerate() {
             report.push_str(&format!("{}. {}\n", i + 1, metrics.summary()));
         }
-        
+
         let fastest = results.iter().min_by_key(|m| m.total_time_micros).unwrap();
-        report.push_str(&format!("\n🏆 Fastest: {:?} ({}μs)", fastest.strategy, fastest.total_time_micros));
-        
+        report.push_str(&format!(
+            "\n🏆 Fastest: {:?} ({}μs)",
+            fastest.strategy, fastest.total_time_micros
+        ));
+
         report
     }
 }
@@ -559,27 +608,23 @@ mod tests {
 
     #[test]
     fn test_high_performance_diff() {
-        let observed = vec![
-            ConcernSnapshot::new(
-                ConcernSymbol::Index,
-                serde_json::json!({"exists": false, "files": ["a.txt"]}),
-                HashMap::new(),
-            ),
-        ];
-        
-        let expected = vec![
-            ExpectedSnapshot::new(
-                ConcernSymbol::Index,
-                serde_json::json!({"exists": true, "files": ["a.txt", "b.txt"]}),
-                "test".to_string(),
-                "1.0".to_string(),
-                HashMap::new(),
-            ),
-        ];
+        let observed = vec![ConcernSnapshot::new(
+            ConcernSymbol::Index,
+            serde_json::json!({"exists": false, "files": ["a.txt"]}),
+            HashMap::new(),
+        )];
+
+        let expected = vec![ExpectedSnapshot::new(
+            ConcernSymbol::Index,
+            serde_json::json!({"exists": true, "files": ["a.txt", "b.txt"]}),
+            "test".to_string(),
+            "1.0".to_string(),
+            HashMap::new(),
+        )];
 
         let differ = HighPerformanceDiffer::new(DiffStrategy::JsonPatch);
         let (diff_set, metrics) = differ.diff_with_metrics(&observed, &expected);
-        
+
         assert!(!diff_set.is_valid());
         assert!(metrics.total_time_micros > 0);
         assert_eq!(metrics.strategy, DiffStrategy::JsonPatch);
@@ -587,27 +632,23 @@ mod tests {
 
     #[test]
     fn test_benchmark_strategies() {
-        let observed = vec![
-            ConcernSnapshot::new(
-                ConcernSymbol::Index,
-                serde_json::json!({"exists": false}),
-                HashMap::new(),
-            ),
-        ];
-        
-        let expected = vec![
-            ExpectedSnapshot::new(
-                ConcernSymbol::Index,
-                serde_json::json!({"exists": true}),
-                "test".to_string(),
-                "1.0".to_string(),
-                HashMap::new(),
-            ),
-        ];
+        let observed = vec![ConcernSnapshot::new(
+            ConcernSymbol::Index,
+            serde_json::json!({"exists": false}),
+            HashMap::new(),
+        )];
+
+        let expected = vec![ExpectedSnapshot::new(
+            ConcernSymbol::Index,
+            serde_json::json!({"exists": true}),
+            "test".to_string(),
+            "1.0".to_string(),
+            HashMap::new(),
+        )];
 
         let results = HighPerformanceDiffer::benchmark_strategies(&observed, &expected);
         assert_eq!(results.len(), 6); // All 6 strategies tested
-        
+
         // Verify all strategies completed
         for result in &results {
             assert!(result.total_time_micros > 0);
@@ -616,23 +657,19 @@ mod tests {
 
     #[test]
     fn test_auto_diff() {
-        let observed = vec![
-            ConcernSnapshot::new(
-                ConcernSymbol::Index,
-                serde_json::json!({"exists": false}),
-                HashMap::new(),
-            ),
-        ];
-        
-        let expected = vec![
-            ExpectedSnapshot::new(
-                ConcernSymbol::Index,
-                serde_json::json!({"exists": true}),
-                "test".to_string(),
-                "1.0".to_string(),
-                HashMap::new(),
-            ),
-        ];
+        let observed = vec![ConcernSnapshot::new(
+            ConcernSymbol::Index,
+            serde_json::json!({"exists": false}),
+            HashMap::new(),
+        )];
+
+        let expected = vec![ExpectedSnapshot::new(
+            ConcernSymbol::Index,
+            serde_json::json!({"exists": true}),
+            "test".to_string(),
+            "1.0".to_string(),
+            HashMap::new(),
+        )];
 
         let (diff_set, metrics) = convenience::auto_diff(&observed, &expected);
         assert!(!diff_set.is_valid());
@@ -641,23 +678,19 @@ mod tests {
 
     #[test]
     fn test_benchmark_report() {
-        let observed = vec![
-            ConcernSnapshot::new(
-                ConcernSymbol::Index,
-                serde_json::json!({"exists": false}),
-                HashMap::new(),
-            ),
-        ];
-        
-        let expected = vec![
-            ExpectedSnapshot::new(
-                ConcernSymbol::Index,
-                serde_json::json!({"exists": true}),
-                "test".to_string(),
-                "1.0".to_string(),
-                HashMap::new(),
-            ),
-        ];
+        let observed = vec![ConcernSnapshot::new(
+            ConcernSymbol::Index,
+            serde_json::json!({"exists": false}),
+            HashMap::new(),
+        )];
+
+        let expected = vec![ExpectedSnapshot::new(
+            ConcernSymbol::Index,
+            serde_json::json!({"exists": true}),
+            "test".to_string(),
+            "1.0".to_string(),
+            HashMap::new(),
+        )];
 
         let report = convenience::benchmark_report(&observed, &expected);
         assert!(report.contains("High-Performance Diff Benchmark Report"));

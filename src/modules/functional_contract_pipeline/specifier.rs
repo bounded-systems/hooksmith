@@ -225,10 +225,7 @@ pub fn build_expectation(contract: &ContractSymbol) -> ExpectedSnapshot {
 
 /// Build expectations for multiple contracts
 pub fn build_expectations(contracts: &[ContractSymbol]) -> Vec<ExpectedSnapshot> {
-    contracts
-        .iter()
-        .map(build_expectation)
-        .collect()
+    contracts.iter().map(build_expectation).collect()
 }
 
 /// Build expectations for contracts grouped by concern
@@ -236,7 +233,7 @@ pub fn build_expectations_by_concern(
     contracts: &[ContractSymbol],
 ) -> std::collections::HashMap<ConcernSymbol, Vec<ExpectedSnapshot>> {
     let mut grouped = std::collections::HashMap::new();
-    
+
     for contract in contracts {
         let expectation = build_expectation(contract);
         grouped
@@ -244,7 +241,7 @@ pub fn build_expectations_by_concern(
             .or_insert_with(Vec::new)
             .push(expectation);
     }
-    
+
     grouped
 }
 
@@ -256,9 +253,12 @@ mod tests {
     fn test_build_expectation_must_exist() {
         let contract = ContractSymbol::new("must-exist");
         let expectation = build_expectation(&contract);
-        
+
         assert_eq!(expectation.symbol, ConcernSymbol::Index);
-        assert_eq!(expectation.expectation.get("exists"), Some(&serde_json::json!(true)));
+        assert_eq!(
+            expectation.expectation.get("exists"),
+            Some(&serde_json::json!(true))
+        );
         assert_eq!(expectation.contract, "must-exist");
     }
 
@@ -266,17 +266,23 @@ mod tests {
     fn test_build_expectation_no_unstaged_changes() {
         let contract = ContractSymbol::new("no-unstaged-changes");
         let expectation = build_expectation(&contract);
-        
+
         assert_eq!(expectation.symbol, ConcernSymbol::Index);
-        assert_eq!(expectation.expectation.get("unstaged_files"), Some(&serde_json::json!([])));
+        assert_eq!(
+            expectation.expectation.get("unstaged_files"),
+            Some(&serde_json::json!([]))
+        );
     }
 
     #[test]
     fn test_build_expectation_text_files_normalized() {
         let contract = ContractSymbol::new("text-files-normalized");
         let expectation = build_expectation(&contract);
-        
-        assert_eq!(expectation.symbol, ConcernSymbol::AttrLineEndingNormalization);
+
+        assert_eq!(
+            expectation.symbol,
+            ConcernSymbol::AttrLineEndingNormalization
+        );
         assert!(expectation.expectation.get("text_files").is_some());
         assert!(expectation.expectation.get("line_ending_rules").is_some());
     }
@@ -285,9 +291,12 @@ mod tests {
     fn test_build_expectation_no_new_executables() {
         let contract = ContractSymbol::new("no-new-executables");
         let expectation = build_expectation(&contract);
-        
+
         assert_eq!(expectation.symbol, ConcernSymbol::TreeExecutable);
-        assert_eq!(expectation.expectation.get("executable_files"), Some(&serde_json::json!([])));
+        assert_eq!(
+            expectation.expectation.get("executable_files"),
+            Some(&serde_json::json!([]))
+        );
     }
 
     #[test]
@@ -297,7 +306,7 @@ mod tests {
             ContractSymbol::new("no-unstaged-changes"),
         ];
         let expectations = build_expectations(&contracts);
-        
+
         assert_eq!(expectations.len(), 2);
         assert_eq!(expectations[0].symbol, ConcernSymbol::Index);
         assert_eq!(expectations[1].symbol, ConcernSymbol::Index);
@@ -310,7 +319,7 @@ mod tests {
             ContractSymbol::new("no-new-executables"),
         ];
         let grouped = build_expectations_by_concern(&contracts);
-        
+
         assert_eq!(grouped.len(), 2);
         assert!(grouped.contains_key(&ConcernSymbol::Index));
         assert!(grouped.contains_key(&ConcernSymbol::TreeExecutable));
@@ -322,7 +331,7 @@ mod tests {
     fn test_unknown_contract() {
         let contract = ContractSymbol::new("unknown-contract");
         let expectation = build_expectation(&contract);
-        
+
         assert_eq!(expectation.symbol, ConcernSymbol::Index); // Default concern
         assert!(expectation.expectation.get("error").is_some());
         assert_eq!(

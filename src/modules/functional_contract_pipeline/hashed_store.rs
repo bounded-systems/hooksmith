@@ -38,43 +38,44 @@ impl HashComputer {
     /// Compute hash of concern snapshot
     pub fn hash_concern(concern: &ConcernSnapshot) -> String {
         let mut hasher = Sha256::new();
-        
+
         // Hash the concern symbol
         hasher.update(concern.symbol.name().as_bytes());
-        
+
         // Hash the data
         let data_string = serde_json::to_string(&concern.data).unwrap_or_default();
         hasher.update(data_string.as_bytes());
-        
+
         // Hash the timestamp
         hasher.update(concern.timestamp.as_bytes());
-        
+
         // Hash the metadata
         let metadata_string = serde_json::to_string(&concern.metadata).unwrap_or_default();
         hasher.update(metadata_string.as_bytes());
-        
+
         format!("{:x}", hasher.finalize())
     }
 
     /// Compute hash of expected snapshot
     pub fn hash_expectation(expectation: &ExpectedSnapshot) -> String {
         let mut hasher = Sha256::new();
-        
+
         // Hash the concern symbol
         hasher.update(expectation.symbol.name().as_bytes());
-        
+
         // Hash the expectation data
-        let expectation_string = serde_json::to_string(&expectation.expectation).unwrap_or_default();
+        let expectation_string =
+            serde_json::to_string(&expectation.expectation).unwrap_or_default();
         hasher.update(expectation_string.as_bytes());
-        
+
         // Hash the contract info
         hasher.update(expectation.contract.as_bytes());
         hasher.update(expectation.contract_version.as_bytes());
-        
+
         // Hash the metadata
         let metadata_string = serde_json::to_string(&expectation.metadata).unwrap_or_default();
         hasher.update(metadata_string.as_bytes());
-        
+
         format!("{:x}", hasher.finalize())
     }
 
@@ -109,51 +110,60 @@ impl HashedStore {
     /// Store a concern snapshot
     pub fn store_concern(&mut self, concern: ConcernSnapshot) -> String {
         let hash = HashComputer::hash_concern(&concern);
-        
+
         let metadata = StoreMetadata {
-            stored_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            stored_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             concern_symbol: Some(concern.symbol.clone()),
             contract_symbol: None,
             additional: HashMap::new(),
         };
-        
+
         self.concerns.insert(hash.clone(), concern);
         self.metadata.insert(hash.clone(), metadata);
-        
+
         hash
     }
 
     /// Store an expected snapshot
     pub fn store_expectation(&mut self, expectation: ExpectedSnapshot) -> String {
         let hash = HashComputer::hash_expectation(&expectation);
-        
+
         let metadata = StoreMetadata {
-            stored_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            stored_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             concern_symbol: Some(expectation.symbol.clone()),
             contract_symbol: Some(ContractSymbol::new(&expectation.contract)),
             additional: HashMap::new(),
         };
-        
+
         self.expectations.insert(hash.clone(), expectation);
         self.metadata.insert(hash.clone(), metadata);
-        
+
         hash
     }
 
     /// Store a contract symbol
     pub fn store_contract(&mut self, contract: ContractSymbol) -> String {
         let hash = HashComputer::hash_contract(&contract);
-        
+
         let metadata = StoreMetadata {
-            stored_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            stored_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             concern_symbol: None,
             contract_symbol: Some(contract.clone()),
             additional: HashMap::new(),
         };
-        
+
         self.contracts.insert(hash.clone(), contract);
         self.metadata.insert(hash.clone(), metadata);
-        
+
         hash
     }
 
@@ -267,21 +277,21 @@ impl HashedStore {
     /// Find changed concerns between two stores
     pub fn find_changed_concerns(&self, other: &HashedStore) -> Vec<ConcernChange> {
         let mut changes = Vec::new();
-        
+
         // Find added concerns
         for (hash, concern) in &other.concerns {
             if !self.concerns.contains_key(hash) {
                 changes.push(ConcernChange::Added(concern.clone()));
             }
         }
-        
+
         // Find removed concerns
         for (hash, concern) in &self.concerns {
             if !other.concerns.contains_key(hash) {
                 changes.push(ConcernChange::Removed(concern.clone()));
             }
         }
-        
+
         // Find modified concerns (same symbol, different hash)
         for (hash, concern) in &other.concerns {
             if let Some(existing) = self.concerns.values().find(|c| c.symbol == concern.symbol) {
@@ -293,31 +303,35 @@ impl HashedStore {
                 }
             }
         }
-        
+
         changes
     }
 
     /// Find changed expectations between two stores
     pub fn find_changed_expectations(&self, other: &HashedStore) -> Vec<ExpectationChange> {
         let mut changes = Vec::new();
-        
+
         // Find added expectations
         for (hash, expectation) in &other.expectations {
             if !self.expectations.contains_key(hash) {
                 changes.push(ExpectationChange::Added(expectation.clone()));
             }
         }
-        
+
         // Find removed expectations
         for (hash, expectation) in &self.expectations {
             if !other.expectations.contains_key(hash) {
                 changes.push(ExpectationChange::Removed(expectation.clone()));
             }
         }
-        
+
         // Find modified expectations (same symbol, different hash)
         for (hash, expectation) in &other.expectations {
-            if let Some(existing) = self.expectations.values().find(|e| e.symbol == expectation.symbol) {
+            if let Some(existing) = self
+                .expectations
+                .values()
+                .find(|e| e.symbol == expectation.symbol)
+            {
                 if HashComputer::hash_expectation(existing) != *hash {
                     changes.push(ExpectationChange::Modified {
                         old: existing.clone(),
@@ -326,7 +340,7 @@ impl HashedStore {
                 }
             }
         }
-        
+
         changes
     }
 }
@@ -384,18 +398,18 @@ mod tests {
     #[test]
     fn test_hashed_store() {
         let mut store = HashedStore::new();
-        
+
         // Create a test concern
         let concern = ConcernSnapshot::new(
             ConcernSymbol::Index,
             serde_json::json!({"exists": true}),
             HashMap::new(),
         );
-        
+
         // Store the concern
         let hash = store.store_concern(concern.clone());
         assert!(!hash.is_empty());
-        
+
         // Retrieve the concern
         let retrieved = store.get_concern(&hash);
         assert!(retrieved.is_some());
@@ -409,16 +423,16 @@ mod tests {
             serde_json::json!({"exists": true}),
             HashMap::new(),
         );
-        
+
         let concern2 = ConcernSnapshot::new(
             ConcernSymbol::Index,
             serde_json::json!({"exists": true}),
             HashMap::new(),
         );
-        
+
         let hash1 = HashComputer::hash_concern(&concern1);
         let hash2 = HashComputer::hash_concern(&concern2);
-        
+
         // Same data should produce same hash
         assert_eq!(hash1, hash2);
     }
@@ -426,7 +440,7 @@ mod tests {
     #[test]
     fn test_store_stats() {
         let mut store = HashedStore::new();
-        
+
         // Add some test data
         let concern = ConcernSnapshot::new(
             ConcernSymbol::Index,
@@ -434,7 +448,7 @@ mod tests {
             HashMap::new(),
         );
         store.store_concern(concern);
-        
+
         let stats = store.stats();
         assert_eq!(stats.concern_count, 1);
         assert_eq!(stats.expectation_count, 0);

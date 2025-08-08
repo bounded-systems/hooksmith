@@ -40,25 +40,17 @@ pub fn post_receive() -> Vec<ConcernSymbol> {
 
 /// Hook logic for update
 pub fn update() -> Vec<ConcernSymbol> {
-    vec![
-        ConcernSymbol::Ref,
-        ConcernSymbol::Branch,
-    ]
+    vec![ConcernSymbol::Ref, ConcernSymbol::Branch]
 }
 
 /// Hook logic for post-update
 pub fn post_update() -> Vec<ConcernSymbol> {
-    vec![
-        ConcernSymbol::Ref,
-        ConcernSymbol::Branch,
-    ]
+    vec![ConcernSymbol::Ref, ConcernSymbol::Branch]
 }
 
 /// Hook logic for pre-auto-gc
 pub fn pre_auto_gc() -> Vec<ConcernSymbol> {
-    vec![
-        ConcernSymbol::ConfigGc,
-    ]
+    vec![ConcernSymbol::ConfigGc]
 }
 
 /// Hook logic for post-merge
@@ -99,18 +91,12 @@ pub fn post_commit() -> Vec<ConcernSymbol> {
 
 /// Hook logic for pre-apply-patch
 pub fn pre_apply_patch() -> Vec<ConcernSymbol> {
-    vec![
-        ConcernSymbol::Index,
-        ConcernSymbol::AttrDiffStrategy,
-    ]
+    vec![ConcernSymbol::Index, ConcernSymbol::AttrDiffStrategy]
 }
 
 /// Hook logic for post-apply-patch
 pub fn post_apply_patch() -> Vec<ConcernSymbol> {
-    vec![
-        ConcernSymbol::Index,
-        ConcernSymbol::Commit,
-    ]
+    vec![ConcernSymbol::Index, ConcernSymbol::Commit]
 }
 
 /// Hook logic for post-rebase
@@ -124,26 +110,17 @@ pub fn post_rebase() -> Vec<ConcernSymbol> {
 
 /// Hook logic for pre-commit-msg
 pub fn pre_commit_msg() -> Vec<ConcernSymbol> {
-    vec![
-        ConcernSymbol::ConfigCommit,
-        ConcernSymbol::ConfigUser,
-    ]
+    vec![ConcernSymbol::ConfigCommit, ConcernSymbol::ConfigUser]
 }
 
 /// Hook logic for commit-msg
 pub fn commit_msg() -> Vec<ConcernSymbol> {
-    vec![
-        ConcernSymbol::ConfigCommit,
-        ConcernSymbol::ConfigUser,
-    ]
+    vec![ConcernSymbol::ConfigCommit, ConcernSymbol::ConfigUser]
 }
 
 /// Hook logic for post-commit-msg
 pub fn post_commit_msg() -> Vec<ConcernSymbol> {
-    vec![
-        ConcernSymbol::Commit,
-        ConcernSymbol::Ref,
-    ]
+    vec![ConcernSymbol::Commit, ConcernSymbol::Ref]
 }
 
 /// Get concerns for a hook event

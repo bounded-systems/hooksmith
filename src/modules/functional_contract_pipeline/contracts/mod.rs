@@ -66,10 +66,7 @@ pub fn get_contracts(concern: &ConcernSymbol) -> Vec<ContractSymbol> {
 
 /// Get all contracts for a list of concerns
 pub fn get_all_contracts(concerns: &[ConcernSymbol]) -> Vec<ContractSymbol> {
-    concerns
-        .iter()
-        .flat_map(get_contracts)
-        .collect()
+    concerns.iter().flat_map(get_contracts).collect()
 }
 
 /// Check if a contract exists for a concern
@@ -112,7 +109,9 @@ mod tests {
         let contracts = get_contracts(&ConcernSymbol::TreeExecutable);
         assert_eq!(contracts.len(), 2);
         assert!(contracts.iter().any(|c| c.name() == "no-new-executables"));
-        assert!(contracts.iter().any(|c| c.name() == "executable-safety-check"));
+        assert!(contracts
+            .iter()
+            .any(|c| c.name() == "executable-safety-check"));
     }
 
     #[test]
@@ -140,7 +139,11 @@ mod tests {
 
     #[test]
     fn test_get_concerns_with_contracts() {
-        let concerns = vec![ConcernSymbol::Index, ConcernSymbol::Blob, ConcernSymbol::TreeExecutable];
+        let concerns = vec![
+            ConcernSymbol::Index,
+            ConcernSymbol::Blob,
+            ConcernSymbol::TreeExecutable,
+        ];
         let with_contracts = get_concerns_with_contracts(&concerns);
         assert_eq!(with_contracts.len(), 2); // Index and TreeExecutable
         assert!(with_contracts.contains(&ConcernSymbol::Index));

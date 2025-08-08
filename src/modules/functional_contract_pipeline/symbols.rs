@@ -52,7 +52,7 @@ pub enum ConcernSymbol {
     Commit,
     /// Git tag objects (annotated tags)
     Tag,
-    
+
     // Tree Entries
     /// Tree entry: Regular file (100644)
     TreeFile,
@@ -64,7 +64,7 @@ pub enum ConcernSymbol {
     TreeDirectory,
     /// Tree entry: Submodule (160000)
     TreeSubmodule,
-    
+
     // Metadata
     /// Git references (heads, tags, etc.)
     Ref,
@@ -86,7 +86,7 @@ pub enum ConcernSymbol {
     Head,
     /// Git reflog (reference history)
     Reflog,
-    
+
     // Config Sections
     /// Git config user settings
     ConfigUser,
@@ -152,7 +152,7 @@ pub enum ConcernSymbol {
     ConfigPager,
     /// Git config worktree settings
     ConfigWorktree,
-    
+
     // Attributes
     /// Attribute: Line ending normalization (text, eol=lf, eol=crlf)
     AttrLineEndingNormalization,
@@ -168,7 +168,7 @@ pub enum ConcernSymbol {
     AttrExternalToolHint,
     /// Attribute: Locking hints (lockable for Git LFS)
     AttrLockingHint,
-    
+
     // Ignore Patterns
     /// Git tree ignore patterns
     IgnorePatternTree,
@@ -185,7 +185,7 @@ impl ContractSymbol {
     pub fn new(name: &str) -> Self {
         Self(name.to_string())
     }
-    
+
     /// Get the contract name
     pub fn name(&self) -> &str {
         &self.0
@@ -363,6 +363,9 @@ mod tests {
     fn test_concern_symbol_name() {
         assert_eq!(ConcernSymbol::TreeFile.name(), "TreeFile");
         assert_eq!(ConcernSymbol::Ref.name(), "Ref");
-        assert_eq!(ConcernSymbol::AttrLineEndingNormalization.name(), "AttrLineEndingNormalization");
+        assert_eq!(
+            ConcernSymbol::AttrLineEndingNormalization.name(),
+            "AttrLineEndingNormalization"
+        );
     }
 }

@@ -126,6 +126,14 @@ path = "src/bin/dircheck-files.rs"
 name = "dircheck"
 path = "src/bin/dircheck.rs"
 
+[[bin]]
+name = "hooksmith-validate-tree"
+path = "src/bin/hooksmith-validate-tree.rs"
+
+[[bin]]
+name = "hooksmith-validate-push"
+path = "src/bin/hooksmith-validate-push.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
