@@ -109,9 +109,30 @@ impl AgreementManager {
 
     /// List all agreements
     pub fn list_agreements(&self) -> Result<Vec<AgreementMetadata>> {
-        // For now, return an empty list since Git notes API is complex
-        // In a real implementation, you'd scan the notes ref and parse each note
-        Ok(Vec::new())
+        let mut agreements = Vec::new();
+
+        // Get the notes ref
+        if let Ok(notes_ref) = self.repo.find_reference(&self.notes_ref) {
+            // Get the commit that the notes ref points to
+            if let Ok(notes_commit) = self.repo.find_commit(notes_ref.target().unwrap()) {
+                // Get the tree of the notes commit
+                if let Ok(notes_tree) = self.repo.find_tree(notes_commit.tree_id()) {
+                    // Walk through all entries in the notes tree
+                    for entry in notes_tree.iter() {
+                        if let Ok(note_blob) = self.repo.find_blob(entry.id()) {
+                            // Try to parse the note content as agreement metadata
+                            if let Ok(note_content) = String::from_utf8(note_blob.content().to_vec()) {
+                                if let Ok(metadata) = serde_json::from_str::<AgreementMetadata>(&note_content) {
+                                    agreements.push(metadata);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(agreements)
     }
 
     /// Update agreement status
