@@ -960,7 +960,27 @@ fn get_contract_name(contract_sha: &str) -> Result<String> {
 
 /// Get the path for a tree SHA
 fn get_tree_path(tree_sha: &str) -> Result<String> {
-    // Try to find the commit that contains this tree
+    // First, try to find the current path of this tree in HEAD
+    let ls_tree_output = std::process::Command::new("git")
+        .args(["ls-tree", "-r", "-t", "HEAD"])
+        .output()
+        .context("Failed to get HEAD tree structure")?;
+
+    if ls_tree_output.status.success() {
+        let tree_content = String::from_utf8(ls_tree_output.stdout)?;
+        for line in tree_content.lines() {
+            if line.contains(tree_sha) {
+                // Parse the tree entry to get the path
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                if parts.len() >= 4 && parts[1] == "tree" && parts[2] == tree_sha {
+                    let path = parts[3];
+                    return Ok(format!("Path: {}", path));
+                }
+            }
+        }
+    }
+
+    // If not found in HEAD, try to find in any commit
     let output = std::process::Command::new("git")
         .args(["rev-list", "--all"])
         .output()
@@ -997,7 +1017,7 @@ fn get_tree_path(tree_sha: &str) -> Result<String> {
         }
     }
 
-    // If we can't find a commit, show the tree SHA as a path
+    // If we can't find a path or commit, show the tree SHA
     Ok(format!("Tree: {}", &tree_sha[..7]))
 }
 
