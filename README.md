@@ -31,6 +31,9 @@ cargo run --bin git_lfs_auto_tracker
 
 # Estimate modularization impact on Git packing
 cargo run --bin modularization_packing_estimator
+
+# Analyze contract stability based on Git object patterns
+cargo run --bin contract_stability_analyzer
 ```
 
 ## 📊 Analysis Tools
@@ -220,6 +223,36 @@ cargo run --bin modularization_packing_estimator
     • Delta chains: 19
     • Compression ratio: 33.6%
   Improvement: 0.0%
+```
+
+### 🔒 Contract Stability Analyzer (`contract_stability_analyzer`)
+**Purpose**: Analyze Git object stability for contract optimization, implementing the "Small, Stable, Shared = Efficient" principle.
+
+**Features**:
+- **SHA Churn Analysis**: Calculates SHA churn scores based on file change patterns
+- **Stability Issue Detection**: Identifies large blobs, frequent changes, and unstable contracts
+- **Modular Boundary Analysis**: Groups issues by module to identify boundary violations
+- **Contract Optimization**: Provides recommendations for contract memoization and caching
+
+**Example Output**:
+```
+🔒 Contract Stability Analysis
+=============================
+
+📊 Stability Metrics:
+  • Overall stability score: 32.8%
+  • Total issues: 61
+  • Average SHA churn: 37.1%
+  • High churn files:
+    - docs/COMPREHENSIVE_FILE_POLICY_REFACTOR.md (100.0% churn)
+
+📦 Modular Boundary Analysis:
+  • crates/xtask: 11 files with stability issues
+  • docs: 20 files with stability issues
+
+💡 Recommendations:
+  • Use git attributes for contract-aware filtering
+  • Implement contract.lock system for object identity tracking
 ```
 
 ## 🎯 Key Concepts
