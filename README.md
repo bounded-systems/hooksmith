@@ -37,6 +37,9 @@ cargo run --bin contract_stability_analyzer
 
 # Analyze Git tree object stability for contract optimization
 cargo run --bin tree_stability_analyzer
+
+# Analyze crate sizes for optimal contract modularity
+cargo run --bin crate_granularity_analyzer
 ```
 
 ## 📊 Analysis Tools
@@ -288,6 +291,36 @@ cargo run --bin tree_stability_analyzer
   • Use tree SHA as contract scope identifier
   • Implement tree-level fix plan caching
   • Critical tree: crates - implement aggressive isolation
+```
+
+### 📦 Crate Granularity Analyzer (`crate_granularity_analyzer`)
+**Purpose**: Analyze crate sizes for optimal contract modularity, SHA stability, and repair DAG efficiency in Hooksmith's context.
+
+**Features**:
+- **Granularity Scoring**: Evaluates crates based on size, contract count, and test coverage
+- **Contract Optimization**: Identifies crates with multiple contracts for separation
+- **Refactoring Plan**: Provides phased approach for splitting large crates and merging small ones
+- **SHA Stability Analysis**: Flags crates that cause high SHA churn risk
+
+**Example Output**:
+```
+📦 Crate Granularity Analysis
+=============================
+
+📊 Crate Analysis:
+  🟢 📚 event-types (715 LOC, 2 files, 0.8 score)
+  🔴 📚 hook-builder (3191 LOC, 6 files, 0.5 score)
+  🔴 🔀 unknown (272839 LOC, 484 files, 0.3 score)
+
+📈 Granularity Statistics:
+  • Overall score: 42.7%
+  • Total crates: 22
+  • Large crates (>1500 LOC): 10
+
+🔧 Refactoring Plan:
+  Phase 1 - Split Large Crates:
+    • Split validation-handler (1790 LOC) into focused modules
+    • Split git-proxy (4786 LOC) into focused modules
 ```
 
 ## 🎯 Key Concepts

@@ -78,8 +78,11 @@ fn analyze_crate_granularity() -> Result<CrateGranularityAnalysis, Box<dyn std::
 }
 
 fn analyze_single_crate(cargo_path: &str) -> Result<Option<CrateAnalysis>, Box<dyn std::error::Error>> {
-    let crate_dir = Path::new(cargo_path).parent().unwrap();
-    let crate_name = crate_dir.file_name().unwrap().to_string_lossy().to_string();
+    let crate_dir = Path::new(cargo_path).parent().ok_or("Invalid cargo path")?;
+    let crate_name = crate_dir.file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("unknown")
+        .to_string();
     
     // Skip certain crates
     if should_skip_crate(&crate_name) {
@@ -423,8 +426,8 @@ fn generate_refactoring_plan(crates: &[CrateAnalysis]) -> Vec<String> {
     let large_crates: Vec<_> = crates.iter().filter(|c| c.line_count > 1500).collect();
     if !large_crates.is_empty() {
         plan.push("Phase 1 - Split Large Crates:".to_string());
-        for crate in large_crates {
-            plan.push(format!("  • Split {} ({} LOC) into focused modules", crate.crate_name, crate.line_count));
+        for crate_analysis in large_crates {
+            plan.push(format!("  • Split {} ({} LOC) into focused modules", crate_analysis.crate_name, crate_analysis.line_count));
         }
     }
     
@@ -432,8 +435,8 @@ fn generate_refactoring_plan(crates: &[CrateAnalysis]) -> Vec<String> {
     let small_crates: Vec<_> = crates.iter().filter(|c| c.line_count < 50).collect();
     if !small_crates.is_empty() {
         plan.push("Phase 2 - Merge Small Crates:".to_string());
-        for crate in small_crates {
-            plan.push(format!("  • Merge {} ({} LOC) with related crates", crate.crate_name, crate.line_count));
+        for crate_analysis in small_crates {
+            plan.push(format!("  • Merge {} ({} LOC) with related crates", crate_analysis.crate_name, crate_analysis.line_count));
         }
     }
     
@@ -441,8 +444,8 @@ fn generate_refactoring_plan(crates: &[CrateAnalysis]) -> Vec<String> {
     let multi_contract_crates: Vec<_> = crates.iter().filter(|c| c.contract_count > 1).collect();
     if !multi_contract_crates.is_empty() {
         plan.push("Phase 3 - Contract Separation:".to_string());
-        for crate in multi_contract_crates {
-            plan.push(format!("  • Separate contracts in {} ({} contracts)", crate.crate_name, crate.contract_count));
+        for crate_analysis in multi_contract_crates {
+            plan.push(format!("  • Separate contracts in {} ({} contracts)", crate_analysis.crate_name, crate_analysis.contract_count));
         }
     }
     
@@ -468,8 +471,8 @@ fn generate_contract_optimization(crates: &[CrateAnalysis]) -> Vec<String> {
     let contract_crates: Vec<_> = crates.iter().filter(|c| c.contract_count > 0).collect();
     optimizations.push(format!("Crates with contracts: {}", contract_crates.len()));
     
-    for crate in contract_crates {
-        optimizations.push(format!("  • {}: {} contracts", crate.crate_name, crate.contract_count));
+    for crate_analysis in contract_crates {
+        optimizations.push(format!("  • {}: {} contracts", crate_analysis.crate_name, crate_analysis.contract_count));
     }
     
     optimizations.push("Use crate SHA for contract memoization".to_string());
@@ -494,35 +497,35 @@ fn generate_crate_granularity_report(analysis: &CrateGranularityAnalysis) {
     
     // Show crate analysis
     println!("\n📊 Crate Analysis:");
-    for crate in &analysis.crates {
-        let crate_type_icon = match crate.crate_type {
+    for crate_analysis in &analysis.crates {
+        let crate_type_icon = match crate_analysis.crate_type {
             CrateType::Binary => "🔧",
             CrateType::Library => "📚",
             CrateType::Mixed => "🔀",
         };
         
-        let granularity_icon = if crate.granularity_score > 0.7 {
+        let granularity_icon = if crate_analysis.granularity_score > 0.7 {
             "🟢"
-        } else if crate.granularity_score > 0.5 {
+        } else if crate_analysis.granularity_score > 0.5 {
             "🟡"
         } else {
             "🔴"
         };
         
         println!("  {} {} {} ({} LOC, {} files, {:.1} score)", 
-            granularity_icon, crate_type_icon, crate.crate_name, 
-            crate.line_count, crate.file_count, crate.granularity_score);
+            granularity_icon, crate_type_icon, crate_analysis.crate_name, 
+            crate_analysis.line_count, crate_analysis.file_count, crate_analysis.granularity_score);
         
-        if crate.contract_count > 0 {
-            println!("    Contracts: {} | Tests: {}", crate.contract_count, crate.test_count);
+        if crate_analysis.contract_count > 0 {
+            println!("    Contracts: {} | Tests: {}", crate_analysis.contract_count, crate_analysis.test_count);
         }
         
-        if !crate.recommendations.is_empty() {
-            println!("    Recommendations: {}", crate.recommendations.join(", "));
+        if !crate_analysis.recommendations.is_empty() {
+            println!("    Recommendations: {}", crate_analysis.recommendations.join(", "));
         }
         
-        if !crate.stability_issues.is_empty() {
-            println!("    Issues: {}", crate.stability_issues.join(", "));
+        if !crate_analysis.stability_issues.is_empty() {
+            println!("    Issues: {}", crate_analysis.stability_issues.join(", "));
         }
         println!();
     }
