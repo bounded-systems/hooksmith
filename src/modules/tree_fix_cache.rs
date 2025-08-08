@@ -1,10 +1,10 @@
+use crate::modules::contract_validation::FixPlan;
+use crate::modules::git_model::{GitPath, GitTree};
+use git2::{Oid, Repository, Tree};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
-use serde::{Deserialize, Serialize};
-use git2::{Repository, Tree, Oid};
-use crate::modules::git_model::{GitTree, GitPath};
-use crate::modules::contract_validation::FixPlan;
 
 /// Cache key combining tree SHA and fix plan hash for memoization
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
@@ -57,7 +57,12 @@ impl TreeFixCache {
     }
 
     /// Get a cached fix plan if available and valid
-    pub fn get_fix_plan(&self, tree_sha: &str, fix_hash: &str, contract_scope: &str) -> Option<FixPlan> {
+    pub fn get_fix_plan(
+        &self,
+        tree_sha: &str,
+        fix_hash: &str,
+        contract_scope: &str,
+    ) -> Option<FixPlan> {
         let key = TreeFixCacheKey {
             tree_sha: tree_sha.to_string(),
             fix_hash: fix_hash.to_string(),
@@ -84,10 +89,19 @@ impl TreeFixCache {
     }
 
     /// Cache a fix plan with tree SHA validation
-    pub fn cache_fix_plan(&self, tree_sha: &str, fix_hash: &str, contract_scope: &str, fix_plan: FixPlan) -> Result<(), String> {
+    pub fn cache_fix_plan(
+        &self,
+        tree_sha: &str,
+        fix_hash: &str,
+        contract_scope: &str,
+        fix_plan: FixPlan,
+    ) -> Result<(), String> {
         // Validate that the tree SHA exists in Git
         if !self.validate_tree_sha(tree_sha)? {
-            return Err(format!("Tree SHA {} does not exist in repository", tree_sha));
+            return Err(format!(
+                "Tree SHA {} does not exist in repository",
+                tree_sha
+            ));
         }
 
         let key = TreeFixCacheKey {
@@ -106,10 +120,10 @@ impl TreeFixCache {
 
         let mut cache = self.cache.write().unwrap();
         cache.insert(key, cached_plan);
-        
+
         let mut stats = self.stats.write().unwrap();
         stats.cache_size = cache.len();
-        
+
         Ok(())
     }
 
@@ -132,12 +146,10 @@ impl TreeFixCache {
     /// Validate that a tree SHA exists in the Git repository
     fn validate_tree_sha(&self, tree_sha: &str) -> Result<bool, String> {
         match Oid::from_str(tree_sha) {
-            Ok(oid) => {
-                match self.repo.find_tree(oid) {
-                    Ok(_) => Ok(true),
-                    Err(_) => Ok(false),
-                }
-            }
+            Ok(oid) => match self.repo.find_tree(oid) {
+                Ok(_) => Ok(true),
+                Err(_) => Ok(false),
+            },
             Err(_) => Err(format!("Invalid tree SHA format: {}", tree_sha)),
         }
     }
@@ -163,7 +175,7 @@ impl TreeFixCache {
     pub fn clear(&self) {
         let mut cache = self.cache.write().unwrap();
         cache.clear();
-        
+
         let mut stats = self.stats.write().unwrap();
         stats.cache_size = 0;
         stats.invalidations += 1;
@@ -197,26 +209,28 @@ impl TreeFixCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use git2::Repository;
+    use tempfile::TempDir;
 
     fn create_test_repo() -> (Repository, TempDir) {
         let temp_dir = tempfile::tempdir().unwrap();
         let repo = Repository::init(temp_dir.path()).unwrap();
-        
+
         // Create a test tree
         let signature = git2::Signature::now("test", "test@example.com").unwrap();
         let tree_id = repo.treebuilder(None).unwrap().write().unwrap();
         let tree = repo.find_tree(tree_id).unwrap();
-        
-        let commit_id = repo.commit(
-            Some("HEAD"),
-            &signature,
-            &signature,
-            "Initial commit",
-            &tree,
-            &[],
-        ).unwrap();
+
+        let commit_id = repo
+            .commit(
+                Some("HEAD"),
+                &signature,
+                &signature,
+                "Initial commit",
+                &tree,
+                &[],
+            )
+            .unwrap();
 
         (repo, temp_dir)
     }
@@ -231,12 +245,16 @@ mod tests {
         let contract_scope = "test_scope";
 
         // Test cache miss
-        assert!(cache.get_fix_plan(tree_sha, fix_hash, contract_scope).is_none());
+        assert!(cache
+            .get_fix_plan(tree_sha, fix_hash, contract_scope)
+            .is_none());
 
         // Test cache hit after insertion
         let fix_plan = FixPlan::new("test_plan".to_string());
-        cache.cache_fix_plan(tree_sha, fix_hash, contract_scope, fix_plan.clone()).unwrap();
-        
+        cache
+            .cache_fix_plan(tree_sha, fix_hash, contract_scope, fix_plan.clone())
+            .unwrap();
+
         let cached = cache.get_fix_plan(tree_sha, fix_hash, contract_scope);
         assert!(cached.is_some());
 

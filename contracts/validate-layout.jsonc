@@ -1,0 +1,131 @@
+{
+  "name": "validate-layout",
+  "version": "1.0.0",
+  "description": "Contract for validating repository layout and directory structure",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "layout_structure": {
+        "type": "object",
+        "properties": {
+          "required_directories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Directories that must exist"
+          },
+          "forbidden_directories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Directories that must not exist"
+          },
+          "file_organization": {
+            "type": "object",
+            "properties": {
+              "source_files": {
+                "type": "string",
+                "description": "Pattern for source files location"
+              },
+              "test_files": {
+                "type": "string",
+                "description": "Pattern for test files location"
+              },
+              "config_files": {
+                "type": "string",
+                "description": "Pattern for configuration files location"
+              }
+            }
+          }
+        },
+        "required": ["required_directories"]
+      },
+      "naming_conventions": {
+        "type": "object",
+        "properties": {
+          "directory_naming": {
+            "type": "string",
+            "enum": ["snake_case", "kebab-case", "camelCase", "PascalCase"],
+            "description": "Directory naming convention"
+          },
+          "file_naming": {
+            "type": "string",
+            "enum": ["snake_case", "kebab-case", "camelCase", "PascalCase"],
+            "description": "File naming convention"
+          },
+          "case_sensitive": {
+            "type": "boolean",
+            "description": "Whether naming is case sensitive"
+          }
+        }
+      }
+    },
+    "required": ["layout_structure"]
+  },
+  "rules": [
+    {
+      "name": "required_structure",
+      "description": "Enforce required directory structure",
+      "rule_type": "Custom",
+      "parameters": {
+        "required_dirs": [
+          "src/",
+          "tests/",
+          "docs/",
+          "examples/"
+        ]
+      },
+      "required": true,
+      "severity": "Error"
+    },
+    {
+      "name": "naming_consistency",
+      "description": "Enforce consistent naming conventions",
+      "rule_type": "Pattern",
+      "parameters": {
+        "directory_pattern": "^[a-z][a-z0-9_-]*$",
+        "file_pattern": "^[a-z][a-z0-9_-]*\\.[a-z]+$"
+      },
+      "required": true,
+      "severity": "Warning"
+    },
+    {
+      "name": "file_organization",
+      "description": "Ensure files are in appropriate directories",
+      "rule_type": "Custom",
+      "parameters": {
+        "source_pattern": "src/**/*.rs",
+        "test_pattern": "tests/**/*.rs",
+        "config_pattern": "*.toml,*.json,*.yaml,*.yml"
+      },
+      "required": false,
+      "severity": "Info"
+    },
+    {
+      "name": "no_orphaned_files",
+      "description": "Prevent files in root directory",
+      "rule_type": "Custom",
+      "parameters": {
+        "allowed_root_files": [
+          "README.md",
+          "Cargo.toml",
+          "rustfmt.toml",
+          "clippy.toml",
+          ".gitignore",
+          ".gitattributes",
+          "LICENSE"
+        ]
+      },
+      "required": false,
+      "severity": "Warning"
+    }
+  ],
+  "metadata": {
+    "contract_type": "layout_validation",
+    "scope": "repository",
+    "enforcement_level": "strict",
+    "auto_fix": false
+  }
+}

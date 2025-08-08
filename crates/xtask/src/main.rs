@@ -784,6 +784,7 @@ enum GitAttributesCommands {
     },
 }
 
+mod agreement;
 mod auto_push;
 mod checksum;
 mod checksum_registry;
@@ -1184,6 +1185,11 @@ enum Commands {
     Contract {
         #[command(subcommand)]
         command: contract::ContractCommands,
+    },
+    /// Agreement management using Git notes
+    Agreement {
+        #[command(subcommand)]
+        command: agreement::AgreementCommands,
     },
     /// Enhanced contract validation with Git notes
     ContractValidation {
@@ -2055,6 +2061,9 @@ async fn main() -> Result<()> {
         }
         Commands::Contract { command } => {
             contract::run_contract_command(command).await?;
+        }
+        Commands::Agreement { command } => {
+            agreement::run_agreement_command(command).await?;
         }
         Commands::ContractValidation { command } => {
             let validator = contract_validation::ContractValidator::new()?;

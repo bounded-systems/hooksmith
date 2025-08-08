@@ -1,32 +1,34 @@
 //! Core modules for the Hooksmith system
 
-/// Git bindings and operations
-pub mod git_bindings;
-/// Contract validation system
-pub mod contract_validation;
-/// Hierarchical validation system
-pub mod hierarchical_validation;
-/// Functional contract validation pipeline
-pub mod functional_contract_pipeline;
+/// Agreement management system
+pub mod agreement_manager;
 /// Contract state machine
 pub mod contract_state_machine;
-/// Git native operations
-pub mod git_native;
+/// Contract validation system
+pub mod contract_validation;
+/// Contract-to-crate boundary mapping
+pub mod crate_contract_mapper;
+/// Functional contract validation pipeline
+pub mod functional_contract_pipeline;
+/// Code generator
+pub mod generator;
+/// Git bindings and operations
+pub mod git_bindings;
 /// Git model and types
 pub mod git_model;
-/// Static hook management
-pub mod static_hook;
+/// Git native operations
+pub mod git_native;
+/// Hierarchical validation system
+pub mod hierarchical_validation;
 /// Hook builder system
 pub mod hook_builder;
 /// Lefthook integration
 pub mod lefthook;
-/// WebAssembly management
-pub mod wasm;
-/// Code generator
-pub mod generator;
+/// Static hook management
+pub mod static_hook;
 /// Tree-aware fix plan cache
 pub mod tree_fix_cache;
 /// Tree split planning and analysis
 pub mod tree_split_planner;
-/// Contract-to-crate boundary mapping
-pub mod crate_contract_mapper;
+/// WebAssembly management
+pub mod wasm;

@@ -1,9 +1,9 @@
+use crate::modules::contract_validation::{Contract, ContractScope};
+use crate::modules::git_model::{GitPath, GitTree};
+use git2::{Oid, Repository, Tree};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
-use git2::{Repository, Tree, Oid};
-use crate::modules::git_model::{GitTree, GitPath};
-use crate::modules::contract_validation::{Contract, ContractScope};
 
 /// Mapping of contract to crate boundaries
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,10 +20,10 @@ pub struct ContractCrateMapping {
 /// Isolation level for contract boundaries
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum IsolationLevel {
-    Private,      // Only accessible within the crate
-    Internal,     // Accessible within the workspace
-    Public,       // Accessible from external crates
-    Unstable,     // Marked for future changes
+    Private,  // Only accessible within the crate
+    Internal, // Accessible within the workspace
+    Public,   // Accessible from external crates
+    Unstable, // Marked for future changes
 }
 
 /// Analysis of contract distribution across crates
@@ -110,15 +110,22 @@ impl CrateContractMapper {
     }
 
     /// Map contracts to their crate boundaries
-    pub fn map_contracts_to_crates(&mut self, tree_sha: &str) -> Result<Vec<ContractCrateMapping>, String> {
-        let tree = self.repo.find_tree(git2::Oid::from_str(tree_sha).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    pub fn map_contracts_to_crates(
+        &mut self,
+        tree_sha: &str,
+    ) -> Result<Vec<ContractCrateMapping>, String> {
+        let tree = self
+            .repo
+            .find_tree(git2::Oid::from_str(tree_sha).map_err(|e| e.to_string())?)
+            .map_err(|e| e.to_string())?;
         let mut mappings = Vec::new();
 
         self.walk_tree_for_contracts(&tree, PathBuf::new(), &mut mappings)?;
 
         // Store mappings for analysis
         for mapping in &mappings {
-            self.mappings.insert(mapping.contract_id.clone(), mapping.clone());
+            self.mappings
+                .insert(mapping.contract_id.clone(), mapping.clone());
         }
 
         Ok(mappings)
@@ -133,7 +140,7 @@ impl CrateContractMapper {
     ) -> Result<(), String> {
         for entry in tree.iter() {
             let entry_path = current_path.join(entry.name().unwrap());
-            
+
             match entry.kind() {
                 Some(git2::ObjectType::Blob) => {
                     if self.is_contract_file(&entry_path) {
@@ -154,29 +161,33 @@ impl CrateContractMapper {
     /// Check if file contains contracts
     fn is_contract_file(&self, file_path: &Path) -> bool {
         // Check for contract-related file patterns
-        let contract_patterns = [
-            "contract", "validation", "hook", "rule", "policy"
-        ];
+        let contract_patterns = ["contract", "validation", "hook", "rule", "policy"];
 
-        let file_name = file_path.file_name()
+        let file_name = file_path
+            .file_name()
             .and_then(|name| name.to_str())
             .unwrap_or("")
             .to_lowercase();
 
-        contract_patterns.iter().any(|pattern| file_name.contains(pattern))
+        contract_patterns
+            .iter()
+            .any(|pattern| file_name.contains(pattern))
             || file_path.extension().map_or(false, |ext| ext == "rs")
     }
 
     /// Extract contracts from a file and map them to crates
-    fn extract_contracts_from_file(&self, file_path: &Path) -> Result<Vec<ContractCrateMapping>, String> {
+    fn extract_contracts_from_file(
+        &self,
+        file_path: &Path,
+    ) -> Result<Vec<ContractCrateMapping>, String> {
         let mut mappings = Vec::new();
-        
+
         // Determine crate name from file path
         let crate_name = self.determine_crate_name(file_path)?;
-        
+
         // Parse file content for contracts (simplified implementation)
         let contracts = self.parse_contracts_from_file(file_path)?;
-        
+
         for contract in contracts {
             let mapping = ContractCrateMapping {
                 contract_id: contract.id.clone(),
@@ -187,10 +198,10 @@ impl CrateContractMapper {
                 isolation_level: self.determine_isolation_level(&contract, &crate_name)?,
                 dependencies: self.extract_contract_dependencies(&contract)?,
             };
-            
+
             mappings.push(mapping);
         }
-        
+
         Ok(mappings)
     }
 
@@ -198,7 +209,7 @@ impl CrateContractMapper {
     fn determine_crate_name(&self, file_path: &Path) -> Result<String, String> {
         // Look for Cargo.toml in parent directories
         let mut current_path = file_path.parent();
-        
+
         while let Some(path) = current_path {
             let cargo_toml = path.join("Cargo.toml");
             if cargo_toml.exists() {
@@ -207,9 +218,10 @@ impl CrateContractMapper {
             }
             current_path = path.parent();
         }
-        
+
         // Fallback: use directory name
-        file_path.parent()
+        file_path
+            .parent()
             .and_then(|p| p.file_name())
             .and_then(|name| name.to_str())
             .map(|s| s.to_string())
@@ -220,7 +232,7 @@ impl CrateContractMapper {
     fn extract_crate_name_from_cargo_toml(&self, cargo_toml_path: &Path) -> Result<String, String> {
         let content = std::fs::read_to_string(cargo_toml_path)
             .map_err(|e| format!("Failed to read Cargo.toml: {}", e))?;
-        
+
         // Simple parsing for crate name
         for line in content.lines() {
             if line.trim().starts_with("name =") {
@@ -229,7 +241,7 @@ impl CrateContractMapper {
                 }
             }
         }
-        
+
         Err("Could not find crate name in Cargo.toml".to_string())
     }
 
@@ -241,7 +253,11 @@ impl CrateContractMapper {
     }
 
     /// Determine isolation level for a contract
-    fn determine_isolation_level(&self, contract: &Contract, crate_name: &str) -> Result<IsolationLevel, String> {
+    fn determine_isolation_level(
+        &self,
+        contract: &Contract,
+        crate_name: &str,
+    ) -> Result<IsolationLevel, String> {
         // Analyze contract visibility and scope
         match contract.scope {
             ContractScope::Private => Ok(IsolationLevel::Private),
@@ -274,10 +290,11 @@ impl CrateContractMapper {
     /// Analyze contract distribution across crates
     pub fn analyze_contract_distribution(&self) -> Vec<ContractDistributionAnalysis> {
         let mut crate_analyses: HashMap<String, ContractDistributionAnalysis> = HashMap::new();
-        
+
         for mapping in self.mappings.values() {
-            let analysis = crate_analyses.entry(mapping.crate_name.clone()).or_insert_with(|| {
-                ContractDistributionAnalysis {
+            let analysis = crate_analyses
+                .entry(mapping.crate_name.clone())
+                .or_insert_with(|| ContractDistributionAnalysis {
                     crate_name: mapping.crate_name.clone(),
                     contract_count: 0,
                     total_contracts: self.mappings.len() as u64,
@@ -285,13 +302,15 @@ impl CrateContractMapper {
                     dependency_count: 0,
                     cross_crate_dependencies: 0,
                     stability_score: 0.0,
-                }
-            });
-            
+                });
+
             analysis.contract_count += 1;
-            *analysis.isolation_breakdown.entry(mapping.isolation_level.clone()).or_insert(0) += 1;
+            *analysis
+                .isolation_breakdown
+                .entry(mapping.isolation_level.clone())
+                .or_insert(0) += 1;
             analysis.dependency_count += mapping.dependencies.len() as u64;
-            
+
             // Count cross-crate dependencies
             for dep in &mapping.dependencies {
                 if !self.config.allowed_cross_crate_deps.contains(dep) {
@@ -299,24 +318,24 @@ impl CrateContractMapper {
                 }
             }
         }
-        
+
         // Calculate stability scores
         for analysis in crate_analyses.values_mut() {
             analysis.stability_score = self.calculate_stability_score(analysis);
         }
-        
+
         crate_analyses.into_values().collect()
     }
 
     /// Calculate stability score for a crate
     fn calculate_stability_score(&self, analysis: &ContractDistributionAnalysis) -> f64 {
         let mut score = 1.0;
-        
+
         // Penalize high contract count
         if analysis.contract_count > self.config.max_contracts_per_crate {
             score -= 0.2;
         }
-        
+
         // Penalize cross-crate dependencies
         let dep_ratio = if analysis.dependency_count > 0 {
             analysis.cross_crate_dependencies as f64 / analysis.dependency_count as f64
@@ -324,24 +343,27 @@ impl CrateContractMapper {
             0.0
         };
         score -= dep_ratio * 0.3;
-        
+
         // Penalize unstable contracts
-        let unstable_count = analysis.isolation_breakdown.get(&IsolationLevel::Unstable).unwrap_or(&0);
+        let unstable_count = analysis
+            .isolation_breakdown
+            .get(&IsolationLevel::Unstable)
+            .unwrap_or(&0);
         let unstable_ratio = *unstable_count as f64 / analysis.contract_count as f64;
         score -= unstable_ratio * 0.4;
-        
+
         score.max(0.0)
     }
 
     /// Detect boundary violations
     pub fn detect_boundary_violations(&mut self) -> Vec<BoundaryViolation> {
         self.violations.clear();
-        
+
         let mappings: Vec<_> = self.mappings.values().cloned().collect();
         for mapping in mappings {
             self.check_contract_boundaries(&mapping);
         }
-        
+
         self.violations.clone()
     }
 
@@ -355,30 +377,38 @@ impl CrateContractMapper {
                     violation_type: ViolationType::CrossCrateDependency,
                     severity: ViolationSeverity::Warning,
                     description: format!("Contract depends on external crate '{}'", dep),
-                    suggested_fix: Some(format!("Move dependency to allowed list or refactor contract")),
+                    suggested_fix: Some(format!(
+                        "Move dependency to allowed list or refactor contract"
+                    )),
                 });
             }
         }
-        
+
         // Check for unstable API exposure
         if mapping.isolation_level == IsolationLevel::Unstable {
-            let public_deps = mapping.dependencies.iter()
+            let public_deps = mapping
+                .dependencies
+                .iter()
                 .filter(|dep| !self.config.allowed_cross_crate_deps.contains(*dep))
                 .count();
-            
+
             if public_deps > 0 {
                 self.violations.push(BoundaryViolation {
                     contract_id: mapping.contract_id.clone(),
                     violation_type: ViolationType::UnstableApiExposure,
                     severity: ViolationSeverity::Error,
                     description: "Unstable contract exposes public dependencies".to_string(),
-                    suggested_fix: Some("Mark dependencies as internal or refactor contract".to_string()),
+                    suggested_fix: Some(
+                        "Mark dependencies as internal or refactor contract".to_string(),
+                    ),
                 });
             }
         }
-        
+
         // Check for scope mismatches
-        if mapping.scope == ContractScope::Public && mapping.isolation_level == IsolationLevel::Private {
+        if mapping.scope == ContractScope::Public
+            && mapping.isolation_level == IsolationLevel::Private
+        {
             self.violations.push(BoundaryViolation {
                 contract_id: mapping.contract_id.clone(),
                 violation_type: ViolationType::ContractScopeMismatch,
@@ -393,7 +423,7 @@ impl CrateContractMapper {
     pub fn generate_isolation_report(&mut self) -> serde_json::Value {
         let distribution = self.analyze_contract_distribution();
         let violations = self.detect_boundary_violations();
-        
+
         let report = serde_json::json!({
             "contract_distribution": distribution,
             "boundary_violations": violations,
@@ -401,7 +431,7 @@ impl CrateContractMapper {
             "total_violations": violations.len(),
             "config": self.config,
         });
-        
+
         report
     }
 
@@ -418,7 +448,8 @@ impl CrateContractMapper {
 
     /// Get all contracts for a specific crate
     pub fn get_crate_contracts(&self, crate_name: &str) -> Vec<&ContractCrateMapping> {
-        self.mappings.values()
+        self.mappings
+            .values()
             .filter(|mapping| mapping.crate_name == crate_name)
             .collect()
     }
@@ -432,20 +463,22 @@ mod tests {
     fn create_test_repo() -> (Repository, TempDir) {
         let temp_dir = tempfile::tempdir().unwrap();
         let repo = Repository::init(temp_dir.path()).unwrap();
-        
+
         // Create test structure
         let signature = git2::Signature::now("test", "test@example.com").unwrap();
         let tree_id = repo.treebuilder(None).unwrap().write().unwrap();
         let tree = repo.find_tree(tree_id).unwrap();
-        
-        let commit_id = repo.commit(
-            Some("HEAD"),
-            &signature,
-            &signature,
-            "Initial commit",
-            &tree,
-            &[],
-        ).unwrap();
+
+        let commit_id = repo
+            .commit(
+                Some("HEAD"),
+                &signature,
+                &signature,
+                "Initial commit",
+                &tree,
+                &[],
+            )
+            .unwrap();
 
         (repo, temp_dir)
     }
@@ -455,7 +488,7 @@ mod tests {
         let (repo, _temp_dir) = create_test_repo();
         let config = ContractMapperConfig::default();
         let mapper = CrateContractMapper::new(repo, Some(config));
-        
+
         assert_eq!(mapper.config.max_contracts_per_crate, 10);
         assert_eq!(mapper.config.min_isolation_score, 0.7);
     }
@@ -464,7 +497,7 @@ mod tests {
     fn test_contract_file_detection() {
         let (repo, _temp_dir) = create_test_repo();
         let mapper = CrateContractMapper::new(repo, None);
-        
+
         assert!(mapper.is_contract_file(Path::new("src/contracts/mod.rs")));
         assert!(mapper.is_contract_file(Path::new("src/validation.rs")));
         assert!(mapper.is_contract_file(Path::new("hooks/validation.rs")));
