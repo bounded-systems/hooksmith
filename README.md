@@ -25,6 +25,12 @@ cargo run --bin lfs_hook_optimizer
 
 # Analyze actual packfile delta compression
 cargo run --bin packfile_delta_analyzer
+
+# Auto-detect files for Git LFS tracking
+cargo run --bin git_lfs_auto_tracker
+
+# Estimate modularization impact on Git packing
+cargo run --bin modularization_packing_estimator
 ```
 
 ## 📊 Analysis Tools
@@ -159,6 +165,61 @@ cargo run --bin packfile_delta_analyzer
   • commit: 1476 (10.0%)
   • tree: 1476 (10.0%)
   • blob: 11815 (80.0%)
+```
+
+### 🎯 Git LFS Auto-Tracker (`git_lfs_auto_tracker`)
+**Purpose**: Automatically detect files that should be tracked with Git LFS based on size, binary type, and frequency.
+
+**Features**:
+- **Smart Detection**: Identifies files ≥1MB, binary files, and duplicate files
+- **LFS Scoring**: Calculates LFS suitability score based on size, binary content, and occurrences
+- **Rule Generation**: Automatically generates `.gitattributes` rules for LFS tracking
+- **Savings Estimation**: Calculates potential storage savings from LFS migration
+
+**Example Output**:
+```
+📦 Git LFS Auto-Tracker Analysis
+==================================
+
+🎯 Top LFS Candidates:
+  1. large-binary.bin (15.2 MB)
+     Score: 0.9 | Type: application/octet-stream | Occurrences: 1
+     Recommendation: LFS recommended: very large file, binary content
+
+📋 Suggested .gitattributes rules:
+  *.bin filter=lfs diff=lfs merge=lfs -text
+  large-binary.bin filter=lfs diff=lfs merge=lfs -text
+```
+
+### 🔧 Modularization → Packing Impact Estimator (`modularization_packing_estimator`)
+**Purpose**: Analyze how code modularization affects Git delta compression potential.
+
+**Features**:
+- **Module Analysis**: Groups Rust files by module and analyzes patterns
+- **Delta Potential**: Calculates delta compression potential for each module
+- **Packing Impact**: Estimates before/after packing metrics from modularization
+- **Implementation Plan**: Provides phased implementation strategy
+
+**Example Output**:
+```
+🔧 Modularization → Packing Impact Analysis
+============================================
+
+📦 Top Modules for Modularization:
+  1. scripts (Score: 0.5)
+     Files: 51 | Avg Size: 9.4KB | Delta Potential: 0.3
+     Patterns: main, mod
+
+📊 Packing Impact Analysis:
+  Before Modularization:
+    • Total objects: 465
+    • Delta chains: 19
+    • Compression ratio: 33.6%
+  After Modularization:
+    • Total objects: 465
+    • Delta chains: 19
+    • Compression ratio: 33.6%
+  Improvement: 0.0%
 ```
 
 ## 🎯 Key Concepts

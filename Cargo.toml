@@ -170,6 +170,14 @@ path = "scripts/git_hygiene_reporter.rs"
 name = "packfile_delta_analyzer"
 path = "scripts/packfile_delta_analyzer.rs"
 
+[[bin]]
+name = "git_lfs_auto_tracker"
+path = "scripts/git_lfs_auto_tracker.rs"
+
+[[bin]]
+name = "modularization_packing_estimator"
+path = "scripts/modularization_packing_estimator.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
