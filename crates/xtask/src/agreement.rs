@@ -21,12 +21,6 @@ pub struct Agreement {
     pub scope: String,
     /// Blob SHA - the contract that defines expectations or validation
     pub contract: String,
-    /// Optional path that this agreement applies to (for path-based validation)
-    #[serde(default)]
-    pub path: Option<String>,
-    /// Whether this agreement is anchored to a specific path (immutable validation)
-    #[serde(default)]
-    pub anchored: bool,
 }
 
 /// Agreement status
@@ -161,6 +155,118 @@ impl AgreementManager {
         Ok(())
     }
 
+    /// Prune invalid agreements (remove agreements with invalid scopes or missing contracts)
+    pub fn prune_invalid_agreements(&self, dry_run: bool, force: bool) -> Result<()> {
+        let agreements = self.list_agreements()?;
+        let mut to_prune = Vec::new();
+        
+        println!("🔍 Checking {} agreements for validity...", agreements.len());
+        
+        for metadata in &agreements {
+            let scope = &metadata.agreement.scope;
+            let contract = &metadata.agreement.contract;
+            
+            // Check if scope path exists in current HEAD
+            let scope_path = self.get_tree_path(scope)?;
+            let scope_valid = if let Some(path) = scope_path {
+                self.validate_path_exists(&path)?
+            } else {
+                false
+            };
+            
+            // Check if contract blob exists in current HEAD
+            let contract_exists = self.validate_contract_exists(contract)?;
+            
+            if !scope_valid || !contract_exists {
+                to_prune.push((metadata.clone(), scope_valid, contract_exists));
+            }
+        }
+        
+        if to_prune.is_empty() {
+            println!("✅ All agreements are valid - nothing to prune");
+            return Ok(());
+        }
+        
+        println!("\n📋 Found {} invalid agreements to prune:", to_prune.len());
+        for (metadata, scope_valid, contract_exists) in &to_prune {
+            println!("   Scope: {}", metadata.agreement.scope);
+            println!("   Contract: {}", metadata.agreement.contract);
+            println!("   Created: {}", metadata.created_at);
+            if !scope_valid {
+                println!("   ❌ Scope path no longer exists in current HEAD");
+            }
+            if !contract_exists {
+                println!("   ⚠️  Contract blob no longer exists in current HEAD");
+            }
+            println!();
+        }
+        
+        if dry_run {
+            println!("🔍 Dry run - no agreements were actually removed");
+            return Ok(());
+        }
+        
+        if !force {
+            println!("⚠️  This will permanently remove {} agreements.", to_prune.len());
+            println!("   Use --force to proceed without confirmation");
+            return Ok(());
+        }
+        
+        // Remove the invalid agreements
+        for (metadata, _, _) in &to_prune {
+            self.remove_agreement(&metadata.agreement.scope)?;
+        }
+        
+        println!("✅ Successfully pruned {} invalid agreements", to_prune.len());
+        Ok(())
+    }
+
+    /// Remove an agreement by scope
+    fn remove_agreement(&self, scope: &str) -> Result<()> {
+        // Get all agreements
+        let agreements = self.list_agreements()?;
+        
+        // Filter out the agreement to remove
+        let remaining_agreements: Vec<_> = agreements
+            .into_iter()
+            .filter(|metadata| metadata.agreement.scope != scope)
+            .collect();
+        
+        // Create new notes tree with remaining agreements
+        let mut tree_builder = self.repo.treebuilder(None)?;
+        
+        for metadata in remaining_agreements {
+            let note_content = serde_json::to_string_pretty(&metadata)?;
+            let note_blob = self.repo.blob(&note_content.as_bytes())?;
+            tree_builder.insert(&format!("agreement_{}", metadata.agreement.scope), note_blob, 0o100644)?;
+        }
+        
+        let tree_id = tree_builder.write()?;
+        let tree = self.repo.find_tree(tree_id)?;
+        
+        // Create a new commit
+        let signature = self.repo.signature()?;
+        let parent_commit = if let Ok(notes_ref) = self.repo.find_reference(&self.notes_ref) {
+            self.repo.find_commit(notes_ref.target().unwrap())?
+        } else {
+            // No existing notes, create initial commit
+            let empty_tree = self.repo.treebuilder(None)?.write()?;
+            self.repo.find_tree(empty_tree)?
+        };
+        
+        let commit_id = self.repo.commit(
+            Some(&self.notes_ref),
+            &signature,
+            &signature,
+            &format!("Remove invalid agreement: {}", scope),
+            &tree,
+            &[&parent_commit],
+        )?;
+        
+        println!("   Removed agreement: {} (commit: {})", scope, commit_id);
+        Ok(())
+    }
+
     /// Validate an agreement (check if contract exists in scope)
     pub fn validate_agreement(&self, scope: &str) -> Result<bool> {
         if let Some(metadata) = self.get_agreement(scope)? {
@@ -232,6 +338,34 @@ impl AgreementManager {
             .output()?;
 
         Ok(output.status.success())
+    }
+
+    /// Get the path of a tree SHA in current HEAD
+    fn get_tree_path(&self, tree_sha: &str) -> Result<Option<String>> {
+        // Check if the scope tree matches current HEAD tree
+        let current_head_tree = std::process::Command::new("git")
+            .args(&["rev-parse", "HEAD^{tree}"])
+            .output()?;
+        let current_head_tree_sha = String::from_utf8_lossy(&current_head_tree.stdout).trim().to_string();
+
+        if tree_sha == current_head_tree_sha {
+            return Ok(Some("".to_string())); // Root tree
+        }
+
+        // Find the path of the tree SHA in current HEAD
+        let tree_paths = std::process::Command::new("git")
+            .args(&["ls-tree", "-r", "-t", "HEAD^{tree}"])
+            .output()?;
+        let tree_output = String::from_utf8_lossy(&tree_paths.stdout);
+
+        for line in tree_output.lines() {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 4 && parts[1] == "tree" && parts[2] == tree_sha {
+                return Ok(Some(parts[3].to_string()));
+            }
+        }
+
+        Ok(None) // Tree not found in current HEAD
     }
 
     /// Validate if a tree SHA exists in current HEAD
@@ -445,6 +579,15 @@ pub enum AgreementCommands {
         /// New status (active, fulfilled, revoked, pending)
         #[arg(long)]
         status: String,
+    },
+    /// Prune invalid agreements (remove agreements with invalid scopes or missing contracts)
+    Prune {
+        /// Dry run - show what would be pruned without actually removing
+        #[arg(long)]
+        dry_run: bool,
+        /// Force removal without confirmation
+        #[arg(long)]
+        force: bool,
     },
     /// Create agreement from current tree and contract file
     CreateFromFile {
