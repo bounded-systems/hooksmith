@@ -194,6 +194,10 @@ path = "scripts/crate_granularity_analyzer.rs"
 name = "crate_stability_analyzer"
 path = "scripts/crate_stability_analyzer.rs"
 
+[[bin]]
+name = "repository_size_auditor"
+path = "scripts/repository_size_auditor.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
