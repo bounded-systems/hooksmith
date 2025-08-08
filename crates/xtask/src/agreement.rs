@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 
-/// Canonical agreement schema as specified
+/// Canonical agreement schema - minimal structure stored in Git notes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Agreement {
     /// Tree SHA - the filesystem layout this agreement applies to
@@ -23,30 +23,17 @@ pub struct Agreement {
     pub contract: String,
 }
 
-/// Agreement status
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum AgreementStatus {
-    /// Agreement is active and being worked on
-    Active,
-    /// Agreement has been fulfilled
-    Fulfilled,
-    /// Agreement has been revoked
-    Revoked,
-    /// Agreement is pending review
-    Pending,
-}
-
-/// Agreement metadata for storage and retrieval
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Agreement metadata derived from Git notes commit history
+#[derive(Debug, Clone)]
 pub struct AgreementMetadata {
     /// The agreement itself
     pub agreement: Agreement,
-    /// When the agreement was created
+    /// When the agreement was created (from Git commit)
     pub created_at: String,
-    /// Who created the agreement
+    /// Who created the agreement (from Git commit)
     pub created_by: String,
-    /// Current status of the agreement
-    pub status: AgreementStatus,
+    /// Current status derived from latest commit message or note content
+    pub status: String,
 }
 
 /// Manager for creating and managing agreements using Git notes
@@ -77,15 +64,8 @@ impl AgreementManager {
             contract: contract.to_string(),
         };
 
-        let metadata = AgreementMetadata {
-            agreement,
-            created_at: chrono::Utc::now().to_rfc3339(),
-            created_by: "hooksmith".to_string(),
-            status: AgreementStatus::Active,
-        };
-
-        // Store in Git notes
-        let note_content = serde_json::to_string(&metadata)?;
+        // Store only the minimal agreement structure in Git notes
+        let note_content = serde_json::to_string(&agreement)?;
 
         // Create or update the note
         let signature = Signature::now("Hooksmith", "hooksmith@example.com")?;
