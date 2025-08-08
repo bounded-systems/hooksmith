@@ -103,16 +103,16 @@ impl AgreementManager {
     /// Get the current agreement based on the current branch name
     pub fn get_current_agreement(&self) -> Result<Option<AgreementMetadata>> {
         let current_branch = self.get_current_branch_name()?;
-        
+
         // Try to find an agreement with scope matching the current branch name
         let agreements = self.list_agreements()?;
-        
+
         for metadata in agreements {
             if metadata.agreement.scope == current_branch {
                 return Ok(Some(metadata));
             }
         }
-        
+
         Ok(None)
     }
 
@@ -784,6 +784,27 @@ impl AgreementCLI {
         }
 
         println!("🎉 Agreement honored successfully!");
+        Ok(())
+    }
+
+    pub fn current(&self) -> Result<()> {
+        if let Some(metadata) = self.manager.get_current_agreement()? {
+            println!("🎯 Current Agreement:");
+            println!("  Scope: {}", metadata.agreement.scope);
+            println!("  Contract: {}", metadata.agreement.contract);
+            println!("  Status: {}", metadata.status);
+            println!("  Created: {}", metadata.created_at);
+            println!("  By: {}", metadata.created_by);
+
+            // Show contract details
+            if let Some(contract_content) = self.manager.resolve_contract(&metadata.agreement)? {
+                println!("\n📄 Contract Content:");
+                println!("{}", contract_content);
+            }
+        } else {
+            println!("❌ No agreement found for current branch");
+            println!("💡 Tip: Create an agreement with 'cargo run -p xtask -- agreement create'");
+        }
         Ok(())
     }
 }
