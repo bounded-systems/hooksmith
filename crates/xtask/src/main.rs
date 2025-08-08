@@ -1722,6 +1722,33 @@ enum Commands {
         #[arg(long, default_value = "text")]
         format: String,
     },
+    /// Test GitHub Actions workflow contracts with act
+    TestWorkflowContracts {
+        /// Workflow files to test
+        #[arg(long)]
+        paths: Vec<String>,
+        /// Use act for testing workflows
+        #[arg(long)]
+        use_act: bool,
+        /// Run act in dry-run mode
+        #[arg(long)]
+        act_dry_run: bool,
+        /// Generate mock input files
+        #[arg(long)]
+        generate_inputs: bool,
+        /// Test all triggers, not just workflow_dispatch
+        #[arg(long)]
+        test_all_triggers: bool,
+        /// Output directory for generated files
+        #[arg(long)]
+        output_dir: Option<String>,
+        /// Custom act inputs file
+        #[arg(long)]
+        act_inputs_file: Option<String>,
+        /// Output format (json, yaml, markdown)
+        #[arg(long, default_value = "markdown")]
+        format: String,
+    },
 }
 
 /// WIT schema for function definition
@@ -2538,6 +2565,27 @@ async fn main() -> Result<()> {
             format,
         } => {
             run_workflow_contracts_command(path, strict, verbose, generate_stub.as_deref(), format).await?;
+        }
+        Commands::TestWorkflowContracts {
+            paths,
+            use_act,
+            act_dry_run,
+            generate_inputs,
+            test_all_triggers,
+            output_dir,
+            act_inputs_file,
+            format,
+        } => {
+            run_test_workflow_contracts_command(
+                paths,
+                use_act,
+                act_dry_run,
+                generate_inputs,
+                test_all_triggers,
+                output_dir,
+                act_inputs_file,
+                format,
+            ).await?;
         }
         Commands::Jsonc { command } => match command {
             JsoncCommands::Process {
