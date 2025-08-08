@@ -100,6 +100,40 @@ impl AgreementManager {
         }
     }
 
+    /// Get the current agreement based on the current branch name
+    pub fn get_current_agreement(&self) -> Result<Option<AgreementMetadata>> {
+        let current_branch = self.get_current_branch_name()?;
+        
+        // Try to find an agreement with scope matching the current branch name
+        let agreements = self.list_agreements()?;
+        
+        for metadata in agreements {
+            if metadata.agreement.scope == current_branch {
+                return Ok(Some(metadata));
+            }
+        }
+        
+        Ok(None)
+    }
+
+    /// Get the current branch name
+    fn get_current_branch_name(&self) -> Result<String> {
+        let output = std::process::Command::new("git")
+            .args(["rev-parse", "--abbrev-ref", "HEAD"])
+            .output()
+            .context("Failed to get current branch name")?;
+
+        if !output.status.success() {
+            anyhow::bail!(
+                "Failed to get current branch: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+
+        let branch_name = String::from_utf8(output.stdout)?.trim().to_string();
+        Ok(branch_name)
+    }
+
     /// List all agreements
     pub fn list_agreements(&self) -> Result<Vec<AgreementMetadata>> {
         let mut agreements = Vec::new();
@@ -864,6 +898,8 @@ pub enum AgreementCommands {
         #[arg(long, default_value = "true")]
         open_in_cursor: bool,
     },
+    /// Show the current agreement based on the current branch
+    Current,
 }
 
 /// Run agreement management command
@@ -945,6 +981,9 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
                 worktree_name.as_deref(),
                 open_in_cursor,
             )?;
+        }
+        AgreementCommands::Current => {
+            cli.current()?;
         }
     }
 
