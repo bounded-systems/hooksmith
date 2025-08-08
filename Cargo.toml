@@ -206,6 +206,22 @@ path = "scripts/git_history_rewriter.rs"
 name = "git_history_cleanliness_analyzer"
 path = "scripts/git_history_cleanliness_analyzer.rs"
 
+[[bin]]
+name = "tree_to_repo_extractor"
+path = "scripts/tree_to_repo_extractor.rs"
+
+[[bin]]
+name = "hooksmith_xtask_extractor"
+path = "scripts/hooksmith_xtask_extractor.rs"
+
+[[bin]]
+name = "file_churn_analyzer"
+path = "scripts/file_churn_analyzer.rs"
+
+[[bin]]
+name = "tree_object_stability_auditor"
+path = "scripts/tree_object_stability_auditor.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
