@@ -24,7 +24,7 @@ pub struct Agreement {
 }
 
 /// Agreement metadata derived from Git notes commit history
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct AgreementMetadata {
     /// The agreement itself
     pub agreement: Agreement,
@@ -90,7 +90,10 @@ impl AgreementManager {
         let scope_oid = git2::Oid::from_str(scope)?;
         if let Ok(note) = self.repo.find_note(Some(&self.notes_ref), scope_oid) {
             let note_content = note.message().unwrap_or("");
-            let metadata: AgreementMetadata = serde_json::from_str(note_content)?;
+            let agreement: Agreement = serde_json::from_str(note_content)?;
+
+            // Derive metadata from Git notes commit history
+            let metadata = self.derive_metadata_from_git_history(scope, &agreement)?;
             Ok(Some(metadata))
         } else {
             Ok(None)
@@ -110,14 +113,20 @@ impl AgreementManager {
                     // Walk through all entries in the notes tree
                     for entry in notes_tree.iter() {
                         if let Ok(note_blob) = self.repo.find_blob(entry.id()) {
-                            // Try to parse the note content as agreement metadata
+                            // Try to parse the note content as minimal agreement structure
                             if let Ok(note_content) =
                                 String::from_utf8(note_blob.content().to_vec())
                             {
-                                if let Ok(metadata) =
-                                    serde_json::from_str::<AgreementMetadata>(&note_content)
+                                if let Ok(agreement) =
+                                    serde_json::from_str::<Agreement>(&note_content)
                                 {
-                                    agreements.push(metadata);
+                                    // Derive metadata from Git history
+                                    if let Ok(metadata) = self.derive_metadata_from_git_history(
+                                        &agreement.scope,
+                                        &agreement,
+                                    ) {
+                                        agreements.push(metadata);
+                                    }
                                 }
                             }
                         }
@@ -130,22 +139,120 @@ impl AgreementManager {
     }
 
     /// Update agreement status
-    pub fn update_agreement_status(&self, scope: &str, status: AgreementStatus) -> Result<()> {
-        if let Some(mut metadata) = self.get_agreement(scope)? {
-            metadata.status = status;
-            let note_content = serde_json::to_string(&metadata)?;
-            let signature = Signature::now("Hooksmith", "hooksmith@example.com")?;
-            let scope_oid = git2::Oid::from_str(scope)?;
-            self.repo.note(
-                &signature,
-                &signature,
-                Some(&self.notes_ref),
-                scope_oid,
-                &note_content,
-                false,
-            )?;
+    pub fn update_agreement_status(&self, scope: &str, status: &str) -> Result<()> {
+        let scope_oid = git2::Oid::from_str(scope)?;
+
+        // Get the current agreement
+        if let Ok(note) = self.repo.find_note(Some(&self.notes_ref), scope_oid) {
+            let note_content = note.message().unwrap_or("");
+            if let Ok(agreement) = serde_json::from_str::<Agreement>(note_content) {
+                // Create a new note with the same agreement but updated status in commit message
+                let note_content = serde_json::to_string(&agreement)?;
+                let signature = Signature::now("Hooksmith", "hooksmith@example.com")?;
+                self.repo.note(
+                    &signature,
+                    &signature,
+                    Some(&self.notes_ref),
+                    scope_oid,
+                    &note_content,
+                    false,
+                )?;
+            }
         }
         Ok(())
+    }
+
+    /// Derive metadata from Git notes commit history
+    fn derive_metadata_from_git_history(
+        &self,
+        scope: &str,
+        agreement: &Agreement,
+    ) -> Result<AgreementMetadata> {
+        let scope_oid = git2::Oid::from_str(scope)?;
+
+        // Get the note to find its commit
+        if let Ok(note) = self.repo.find_note(Some(&self.notes_ref), scope_oid) {
+            // Get the commit that contains this note
+            if let Ok(commit) = self.repo.find_commit(note.id()) {
+                let created_at = commit.time().seconds().to_string();
+                let created_by = commit.author().name().unwrap_or("Unknown").to_string();
+
+                // Derive status based on Git workflow state
+                let status = self.derive_status_from_git_workflow(scope)?;
+
+                return Ok(AgreementMetadata {
+                    agreement: agreement.clone(),
+                    created_at,
+                    created_by,
+                    status,
+                });
+            }
+        }
+
+        // Fallback if we can't get commit info
+        Ok(AgreementMetadata {
+            agreement: agreement.clone(),
+            created_at: "Unknown".to_string(),
+            created_by: "Unknown".to_string(),
+            status: "active".to_string(),
+        })
+    }
+
+    /// Derive status based on Git workflow state
+    fn derive_status_from_git_workflow(&self, scope: &str) -> Result<String> {
+        // Check if there's a branch named after the scope SHA
+        let branch_exists = self.check_branch_exists(scope)?;
+
+        if !branch_exists {
+            return Ok("pending".to_string());
+        }
+
+        // Check if the branch has been merged into origin/main
+        let is_merged = self.check_branch_merged_into_main(scope)?;
+
+        if is_merged {
+            Ok("fulfilled".to_string())
+        } else {
+            Ok("active".to_string())
+        }
+    }
+
+    /// Check if a branch exists with the given name
+    fn check_branch_exists(&self, branch_name: &str) -> Result<bool> {
+        let output = std::process::Command::new("git")
+            .args(["branch", "-r"])
+            .output()
+            .context("Failed to list remote branches")?;
+
+        if !output.status.success() {
+            return Ok(false);
+        }
+
+        let branches = String::from_utf8(output.stdout)?;
+        Ok(branches.lines().any(|line| line.contains(branch_name)))
+    }
+
+    /// Check if a branch has been merged into origin/main
+    fn check_branch_merged_into_main(&self, branch_name: &str) -> Result<bool> {
+        // First check if the branch exists
+        if !self.check_branch_exists(branch_name)? {
+            return Ok(false);
+        }
+
+        // Check if the branch has been merged into origin/main
+        let output = std::process::Command::new("git")
+            .args(["branch", "-r", "--merged", "origin/main"])
+            .output()
+            .context("Failed to check merged branches")?;
+
+        if !output.status.success() {
+            return Ok(false);
+        }
+
+        let merged_branches = String::from_utf8(output.stdout)?;
+        Ok(merged_branches
+            .lines()
+            .any(|line| line.contains(branch_name)))
     }
 
     /// Prune invalid agreements (remove agreements with invalid scopes or missing contracts)
@@ -803,22 +910,17 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
             cli.log(scope.as_deref())?;
         }
         AgreementCommands::UpdateStatus { scope, status } => {
-            let status_enum = match status.as_str() {
-                "active" => AgreementStatus::Active,
-                "fulfilled" => AgreementStatus::Fulfilled,
-                "revoked" => AgreementStatus::Revoked,
-                "pending" => AgreementStatus::Pending,
-                _ => {
-                    anyhow::bail!(
-                        "Invalid status: {}. Valid values: active, fulfilled, revoked, pending",
-                        status
-                    );
-                }
-            };
+            let valid_statuses = ["active", "fulfilled", "revoked", "pending"];
+            if !valid_statuses.contains(&status.as_str()) {
+                anyhow::bail!(
+                    "Invalid status: {}. Valid values: active, fulfilled, revoked, pending",
+                    status
+                );
+            }
 
             let manager = AgreementManager::new(&current_dir)?;
-            manager.update_agreement_status(&scope, status_enum.clone())?;
-            println!("✅ Updated agreement status to {:?}", status_enum);
+            manager.update_agreement_status(&scope, &status)?;
+            println!("✅ Updated agreement status to {}", status);
         }
         AgreementCommands::CreateFromFile {
             contract_file,
