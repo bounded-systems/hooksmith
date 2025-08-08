@@ -618,6 +618,20 @@ pub enum AgreementCommands {
         #[arg(long)]
         description: Option<String>,
     },
+    /// Honor an agreement by creating a remote branch and worktree
+    Honor {
+        /// Scope SHA of the agreement to honor
+        scope: String,
+        /// Base branch to create the new branch from (default: origin/main)
+        #[arg(long, default_value = "origin/main")]
+        base_branch: String,
+        /// Whether to create a worktree after creating the branch
+        #[arg(long, default_value = "true")]
+        create_worktree: bool,
+        /// Worktree directory name (defaults to scope SHA)
+        #[arg(long)]
+        worktree_name: Option<String>,
+    },
 }
 
 /// Run agreement management command
