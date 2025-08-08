@@ -94,6 +94,30 @@ A comprehensive suite of Rust-based tools for analyzing Git repository storage e
   - Generates .gitignore recommendations
   - Prevents unnecessary recomputation
 
+#### `git_lfs_analyzer.rs`
+- **Purpose**: Detects large files and suggests Git LFS tracking
+- **Features**:
+  - Identifies files suitable for Git LFS
+  - Analyzes binary hook reuse opportunities
+  - Generates .gitattributes rules
+  - Provides migration commands
+
+#### `lfs_hook_optimizer.rs`
+- **Purpose**: Specialized optimization for binary hooks with Git LFS
+- **Features**:
+  - Detects large binary hooks for LFS tracking
+  - Identifies shared binary reuse opportunities
+  - Generates optimization plans
+  - Provides deduplication recommendations
+
+#### `modularization_analyzer.rs`
+- **Purpose**: Identifies code modularization opportunities using Git's delta compression insights
+- **Features**:
+  - Analyzes code similarity patterns
+  - Identifies modularization candidates
+  - Detects code patterns for consolidation
+  - Provides refactoring recommendations
+
 ## 🚀 Quick Start
 
 ### **Comprehensive Analysis (Recommended)**
@@ -116,6 +140,9 @@ cargo run --bin modular_analyzer -- all
 cargo run --bin analyze_blob_sizes
 cargo run --bin rust_git_analyzer
 cargo run --bin frequent_write_analyzer
+cargo run --bin git_lfs_analyzer
+cargo run --bin lfs_hook_optimizer
+cargo run --bin modularization_analyzer
 ```
 
 ## 📊 Key Concepts
@@ -160,6 +187,8 @@ cargo run --bin modular_analyzer -- blob-size file-types
 ```bash
 # Check for problematic files in CI
 cargo run --bin frequent_write_analyzer
+cargo run --bin git_lfs_analyzer
+cargo run --bin modularization_analyzer
 ```
 
 ## 📈 Analysis Results
@@ -187,6 +216,18 @@ cargo run --bin frequent_write_analyzer
 - **Cache Files**: cache/, tmp/, temp/ (should be ignored)
 - **Build Files**: build/, dist/, target/ (should be ignored)
 - **Config Files**: .env (contains sensitive data)
+
+### **Git LFS Optimization**
+- **Large Files**: > 10 MB (consider Git LFS)
+- **Binary Files**: .exe, .dll, .so, .bin (use Git LFS)
+- **Media Files**: .mp4, .mov, .wav, .mp3 (use Git LFS)
+- **Design Files**: .psd, .ai, .sketch (use Git LFS)
+
+### **Code Modularization**
+- **Similar Files**: Group by extension and size
+- **Code Patterns**: Test, Config, Utility, Model patterns
+- **Delta Compression**: Leverage Git's similarity detection
+- **Refactoring**: Extract common functionality into modules
 
 ## 💡 Best Practices
 
