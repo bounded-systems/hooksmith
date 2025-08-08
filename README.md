@@ -40,6 +40,9 @@ cargo run --bin tree_stability_analyzer
 
 # Analyze crate sizes for optimal contract modularity
 cargo run --bin crate_granularity_analyzer
+
+# Analyze crate stability for extraction readiness
+cargo run --bin crate_stability_analyzer
 ```
 
 ## 📊 Analysis Tools
