@@ -475,13 +475,17 @@ impl AgreementCLI {
             // Get contract name
             let contract_name = get_contract_name(&metadata.agreement.contract)
                 .unwrap_or_else(|_| "Unknown".to_string());
-            
-            // Get tree path
-            let tree_path = get_tree_path(&metadata.agreement.scope)
-                .unwrap_or_else(|_| "Unknown".to_string());
 
-            println!("  Scope: {} ({})", metadata.agreement.scope, tree_path);
-            println!("  Contract: {} ({})", metadata.agreement.contract, contract_name);
+            // Get tree path
+            let tree_path =
+                get_tree_path(&metadata.agreement.scope).unwrap_or_else(|_| "Unknown".to_string());
+
+            // Get short SHA hashes (7 characters)
+            let short_scope = &metadata.agreement.scope[..7];
+            let short_contract = &metadata.agreement.contract[..7];
+
+            println!("  Scope: {} ({})", tree_path, short_scope);
+            println!("  Contract: {} ({})", contract_name, short_contract);
             println!("  Status: {:?}", metadata.status);
             println!("  Created: {}", metadata.created_at);
             println!("  By: {}", metadata.created_by);
@@ -493,12 +497,30 @@ impl AgreementCLI {
     /// Show agreement details
     pub fn show(&self, scope: &str) -> Result<()> {
         if let Some(metadata) = self.manager.get_agreement(scope)? {
+            // Get contract name
+            let contract_name = get_contract_name(&metadata.agreement.contract)
+                .unwrap_or_else(|_| "Unknown".to_string());
+
+            // Get tree path
+            let tree_path =
+                get_tree_path(&metadata.agreement.scope).unwrap_or_else(|_| "Unknown".to_string());
+
+            // Get short SHA hashes
+            let short_scope = &metadata.agreement.scope[..7];
+            let short_contract = &metadata.agreement.contract[..7];
+
             println!("📋 Agreement Details:");
-            println!("  Scope: {}", metadata.agreement.scope);
-            println!("  Contract: {}", metadata.agreement.contract);
+            println!("  Scope: {} ({})", tree_path, short_scope);
+            println!("  Contract: {} ({})", contract_name, short_contract);
             println!("  Status: {:?}", metadata.status);
             println!("  Created: {}", metadata.created_at);
             println!("  By: {}", metadata.created_by);
+
+            // Show the actual agreement content
+            if let Some(agreement_content) = self.manager.resolve_contract(&metadata.agreement)? {
+                println!("\n📄 Contract Content:");
+                println!("{}", agreement_content);
+            }
         } else {
             println!("❌ No agreement found for scope: {}", scope);
         }
@@ -528,6 +550,67 @@ impl AgreementCLI {
         } else {
             println!("❌ No agreement found for scope: {}", scope);
         }
+        Ok(())
+    }
+
+    /// Show agreement history/log
+    pub fn log(&self, scope: Option<&str>) -> Result<()> {
+        if let Some(scope) = scope {
+            // Show log for specific agreement
+            self.show_agreement_log(scope)?;
+        } else {
+            // Show log for all agreements
+            self.show_all_agreements_log()?;
+        }
+        Ok(())
+    }
+
+    /// Show log for a specific agreement
+    fn show_agreement_log(&self, scope: &str) -> Result<()> {
+        // Find the note for this scope
+        let note_ref = format!("agreement_{}", scope);
+
+        let output = std::process::Command::new("git")
+            .args(["log", "--oneline", "--follow", "--", &note_ref])
+            .output()
+            .context("Failed to get agreement log")?;
+
+        if !output.status.success() {
+            println!("❌ No agreement found for scope: {}", scope);
+            return Ok(());
+        }
+
+        let log_content = String::from_utf8(output.stdout)?;
+        if log_content.trim().is_empty() {
+            println!("❌ No history found for agreement: {}", scope);
+            return Ok(());
+        }
+
+        println!("📜 Agreement History for {}:", scope);
+        println!("{}", log_content);
+        Ok(())
+    }
+
+    /// Show log for all agreements
+    fn show_all_agreements_log(&self) -> Result<()> {
+        let output = std::process::Command::new("git")
+            .args(["log", "--oneline", "refs/notes/commits"])
+            .output()
+            .context("Failed to get agreements log")?;
+
+        if !output.status.success() {
+            println!("❌ Failed to get agreements log");
+            return Ok(());
+        }
+
+        let log_content = String::from_utf8(output.stdout)?;
+        if log_content.trim().is_empty() {
+            println!("📝 No agreement history found");
+            return Ok(());
+        }
+
+        println!("📜 All Agreements History:");
+        println!("{}", log_content);
         Ok(())
     }
 
@@ -646,6 +729,11 @@ pub enum AgreementCommands {
         #[arg(long, default_value = "pretty")]
         format: String,
     },
+    /// Show agreement history/log
+    Log {
+        /// Scope SHA of the agreement to show history for (optional)
+        scope: Option<String>,
+    },
     /// Update agreement status
     UpdateStatus {
         /// Scope SHA of the agreement to update
@@ -730,6 +818,9 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
         AgreementCommands::Resolve { scope, format: _ } => {
             cli.resolve(&scope)?;
             // In a real implementation, you'd format the output based on the format parameter
+        }
+        AgreementCommands::Log { scope } => {
+            cli.log(scope.as_deref())?;
         }
         AgreementCommands::UpdateStatus { scope, status } => {
             let status_enum = match status.as_str() {
@@ -833,6 +924,81 @@ fn get_file_blob_sha(file_path: &str) -> Result<String> {
 
     let blob_sha = String::from_utf8(output.stdout)?.trim().to_string();
     Ok(blob_sha)
+}
+
+/// Get the name from a contract JSON blob
+fn get_contract_name(contract_sha: &str) -> Result<String> {
+    let output = std::process::Command::new("git")
+        .args(["cat-file", "blob", contract_sha])
+        .output()
+        .context(format!(
+            "Failed to get contract content for {}",
+            contract_sha
+        ))?;
+
+    if !output.status.success() {
+        anyhow::bail!(
+            "Failed to get contract content for {}: {}",
+            contract_sha,
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    let contract_content = String::from_utf8(output.stdout)?;
+
+    // Parse JSON and extract name field
+    let contract_json: serde_json::Value =
+        serde_json::from_str(&contract_content).context("Failed to parse contract JSON")?;
+
+    let name = contract_json
+        .get("name")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| anyhow::anyhow!("Contract does not have a 'name' field"))?;
+
+    Ok(name.to_string())
+}
+
+/// Get the path for a tree SHA
+fn get_tree_path(tree_sha: &str) -> Result<String> {
+    // Try to find the commit that contains this tree
+    let output = std::process::Command::new("git")
+        .args(["rev-list", "--all"])
+        .output()
+        .context("Failed to get all commits")?;
+
+    if !output.status.success() {
+        anyhow::bail!("Failed to get all commits");
+    }
+
+    let commits = String::from_utf8(output.stdout)?;
+
+    // Search for commits that contain this tree
+    for commit in commits.lines() {
+        let tree_output = std::process::Command::new("git")
+            .args(["rev-parse", &format!("{}:^{{tree}}", commit)])
+            .output();
+
+        if let Ok(tree_output) = tree_output {
+            if tree_output.status.success() {
+                let commit_tree = String::from_utf8(tree_output.stdout)?.trim().to_string();
+                if commit_tree == tree_sha {
+                    // Found the commit, now get the commit message
+                    let log_output = std::process::Command::new("git")
+                        .args(["log", "--oneline", "-1", commit])
+                        .output()
+                        .context("Failed to get commit message")?;
+
+                    if log_output.status.success() {
+                        let commit_msg = String::from_utf8(log_output.stdout)?.trim().to_string();
+                        return Ok(format!("Commit: {}", commit_msg));
+                    }
+                }
+            }
+        }
+    }
+
+    // If we can't find a commit, show the tree SHA as a path
+    Ok(format!("Tree: {}", &tree_sha[..7]))
 }
 
 /// Get the base commit SHA for a branch
