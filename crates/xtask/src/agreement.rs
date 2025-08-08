@@ -77,10 +77,14 @@ impl AgreementManager {
         scope: &str,
         contract: &str,
         description: Option<&str>,
+        path: Option<&str>,
+        anchored: bool,
     ) -> Result<String> {
         let agreement = Agreement {
             scope: scope.to_string(),
             contract: contract.to_string(),
+            path: path.map(|p| p.to_string()),
+            anchored,
         };
 
         let metadata = AgreementMetadata {
@@ -160,57 +164,90 @@ impl AgreementManager {
     /// Validate an agreement (check if contract exists in scope)
     pub fn validate_agreement(&self, scope: &str) -> Result<bool> {
         if let Some(metadata) = self.get_agreement(scope)? {
-            // Check if the scope tree exists
-            let scope_tree = self.repo.find_tree(git2::Oid::from_str(&metadata.agreement.scope)?)?;
             // Check if the contract blob exists
-            let contract_blob = self.repo.find_blob(git2::Oid::from_str(&metadata.agreement.contract)?)?;
+            let _contract_blob = self.repo.find_blob(git2::Oid::from_str(&metadata.agreement.contract)?)?;
             
-            // Check if the scope tree exists in current HEAD
+            // Get current HEAD tree SHA for comparison
             let current_head_tree = std::process::Command::new("git")
                 .args(&["rev-parse", "HEAD^{tree}"])
                 .output()?;
             let current_head_tree_sha = String::from_utf8_lossy(&current_head_tree.stdout).trim().to_string();
             
-            // Check if the scope tree matches current HEAD tree or exists as a subtree
-            let scope_exists = if scope == current_head_tree_sha {
-                true // Scope is the current HEAD tree
+            // Determine validation strategy based on agreement configuration
+            let is_valid = if metadata.agreement.anchored {
+                // Path-based validation: check if the path still exists in current HEAD
+                if let Some(path) = &metadata.agreement.path {
+                    self.validate_path_exists(path)?
+                } else {
+                    // Fallback to tree SHA validation if no path specified
+                    self.validate_tree_exists(&metadata.agreement.scope)?
+                }
             } else {
-                // Check if the scope tree exists anywhere in current HEAD
-                let tree_exists = std::process::Command::new("git")
-                    .args(&["ls-tree", "-r", "-t", "HEAD^{tree}"])
-                    .output()?;
-                let tree_output = String::from_utf8_lossy(&tree_exists.stdout);
-                
-                tree_output.lines()
-                    .any(|line| {
-                        let parts: Vec<&str> = line.split_whitespace().collect();
-                        parts.len() >= 3 && parts[1] == "tree" && parts[2] == scope
-                    })
+                // Tree SHA validation: check if the exact tree SHA exists in current HEAD
+                self.validate_tree_exists(&metadata.agreement.scope)?
             };
             
-            if scope_exists {
-                println!("✅ Agreement scope exists in current HEAD");
-            } else {
-                println!("❌ Agreement scope NOT found in current HEAD");
-                println!("   Old scope: {}", scope);
-                println!("   Current HEAD tree: {}", current_head_tree_sha);
-                
-                // Show what changed
-                let diff_output = std::process::Command::new("git")
-                    .args(&["diff-tree", "-r", scope, &current_head_tree_sha])
-                    .output()?;
-                
-                if !diff_output.stdout.is_empty() {
-                    println!("   Changes detected:");
-                    println!("{}", String::from_utf8_lossy(&diff_output.stdout));
+            if is_valid {
+                println!("✅ Agreement is valid");
+                if metadata.agreement.anchored {
+                    if let Some(path) = &metadata.agreement.path {
+                        println!("   Path '{}' exists in current HEAD", path);
+                    }
+                } else {
+                    println!("   Tree scope '{}' exists in current HEAD", metadata.agreement.scope);
                 }
+            } else {
+                println!("❌ Agreement is invalid");
+                if metadata.agreement.anchored {
+                    if let Some(path) = &metadata.agreement.path {
+                        println!("   Path '{}' no longer exists in current HEAD", path);
+                    }
+                } else {
+                    println!("   Tree scope '{}' no longer exists in current HEAD", metadata.agreement.scope);
+                }
+                println!("   Current HEAD tree: {}", current_head_tree_sha);
             }
             
-            // Basic validation - both objects exist and scope is current
-            Ok(scope_exists)
+            Ok(is_valid)
         } else {
+            println!("❌ Agreement not found for scope: {}", scope);
             Ok(false)
         }
+    }
+
+    /// Validate if a path exists in current HEAD
+    fn validate_path_exists(&self, path: &str) -> Result<bool> {
+        // Check if the path exists in current HEAD
+        let output = std::process::Command::new("git")
+            .args(&["ls-tree", "HEAD", path])
+            .output()?;
+
+        Ok(output.status.success())
+    }
+
+    /// Validate if a tree SHA exists in current HEAD
+    fn validate_tree_exists(&self, tree_sha: &str) -> Result<bool> {
+        // Check if the scope tree matches current HEAD tree
+        let current_head_tree = std::process::Command::new("git")
+            .args(&["rev-parse", "HEAD^{tree}"])
+            .output()?;
+        let current_head_tree_sha = String::from_utf8_lossy(&current_head_tree.stdout).trim().to_string();
+
+        if tree_sha == current_head_tree_sha {
+            return Ok(true);
+        }
+
+        // Check if the scope tree exists anywhere in current HEAD
+        let tree_exists = std::process::Command::new("git")
+            .args(&["ls-tree", "-r", "-t", "HEAD^{tree}"])
+            .output()?;
+        let tree_output = String::from_utf8_lossy(&tree_exists.stdout);
+
+        Ok(tree_output.lines()
+            .any(|line| {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                parts.len() >= 3 && parts[1] == "tree" && parts[2] == tree_sha
+            }))
     }
 
     /// Resolve contract from agreement
@@ -246,8 +283,8 @@ impl AgreementCLI {
     }
 
     /// Create a new agreement
-    pub fn create(&self, scope: &str, contract: &str, description: Option<&str>) -> Result<()> {
-        let result = self.manager.create_agreement(scope, contract, description)?;
+    pub fn create(&self, scope: &str, contract: &str, description: Option<&str>, path: Option<&str>, anchored: bool) -> Result<()> {
+        let result = self.manager.create_agreement(scope, contract, description, path, anchored)?;
         println!("✅ {}", result);
         Ok(())
     }
@@ -337,6 +374,12 @@ pub enum AgreementCommands {
         /// Optional description of the agreement
         #[arg(long)]
         description: Option<String>,
+        /// Optional path that this agreement applies to (for path-based validation)
+        #[arg(long)]
+        path: Option<String>,
+        /// Whether this agreement is anchored to a specific path (immutable validation)
+        #[arg(long, default_value = "false")]
+        anchored: bool,
     },
     /// List all agreements
     List {
@@ -400,8 +443,10 @@ pub async fn run_agreement_command(command: AgreementCommands) -> Result<()> {
             scope,
             contract,
             description,
+            path,
+            anchored,
         } => {
-            cli.create(&scope, &contract, description.as_deref())?;
+            cli.create(&scope, &contract, description.as_deref(), path.as_deref(), anchored)?;
         }
         AgreementCommands::List {
             active_only: _,
@@ -471,7 +516,7 @@ async fn create_agreement_from_file(contract_file: &str, description: Option<&st
     println!("📄 Contract file SHA: {}", contract_sha);
 
     // Create agreement
-    let result = manager.create_agreement(&tree_sha, &contract_sha, description)?;
+    let result = manager.create_agreement(&tree_sha, &contract_sha, description, None, false)?;
     println!("✅ {}", result);
 
     Ok(())
