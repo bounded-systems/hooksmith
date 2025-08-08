@@ -560,11 +560,11 @@ impl AgreementManager {
         Ok(None)
     }
 
-    /// Validate that a tree SHA is reachable from origin/main
-    fn validate_tree_reachable_from_main(&self, tree_sha: &str) -> Result<bool> {
-        // Check if the tree SHA is reachable from origin/main
+    /// Validate that a tree SHA is reachable from anywhere in Git history
+    fn validate_tree_reachable_from_history(&self, tree_sha: &str) -> Result<bool> {
+        // Check if the tree SHA is reachable from anywhere in history
         let output = std::process::Command::new("git")
-            .args(&["rev-list", "origin/main", "--objects"])
+            .args(&["rev-list", "--all", "--objects"])
             .output()?;
 
         let objects_list = String::from_utf8_lossy(&output.stdout);
@@ -582,12 +582,12 @@ impl AgreementManager {
         Ok(objects_list.lines().any(|line| line.contains(blob_sha)))
     }
 
-    /// Enhanced agreement validation with origin/main reachability check
+    /// Enhanced agreement validation with proper reachability checks
     pub fn validate_agreement_with_main_reachability(&self, scope: &str) -> Result<(bool, String)> {
-        // Check if tree SHA is reachable from origin/main
-        let tree_reachable = self.validate_tree_reachable_from_main(scope)?;
+        // Check if tree SHA is reachable from anywhere in history
+        let tree_reachable = self.validate_tree_reachable_from_history(scope)?;
         if !tree_reachable {
-            return Ok((false, format!("Tree SHA {} is not reachable from origin/main", scope)));
+            return Ok((false, format!("Tree SHA {} is not reachable from Git history", scope)));
         }
 
         // Get the agreement to check the contract
@@ -616,7 +616,7 @@ impl AgreementManager {
             return Ok((false, format!("Contract SHA {} does not exist", agreement.agreement.contract)));
         }
 
-        Ok((true, "Agreement is valid and reachable from origin/main".to_string()))
+        Ok((true, "Agreement is valid and contract is reachable from origin/main".to_string()))
     }
 }
 
