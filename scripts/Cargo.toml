@@ -44,3 +44,11 @@ path = "scope_ref_manager.rs"
 [[bin]]
 name = "scope_aware_contract_pipeline"
 path = "scope_aware_contract_pipeline.rs"
+
+[[bin]]
+name = "test_minimal_root_contract"
+path = "test_minimal_root_contract.rs"
+
+[[bin]]
+name = "migrate_to_minimal_root"
+path = "migrate_to_minimal_root.rs"

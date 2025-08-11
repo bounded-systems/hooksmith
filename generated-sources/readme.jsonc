@@ -1,6 +1,0 @@
-{
-  "path": "README.md",
-  "slug": "readme",
-  "description": "Main project README file",
-  "content": "# Hooksmith\n\nA powerful Rust-based tool for building and managing Git hooks with WASM components.\n\n## Features\n\n- **WASM Integration**: Build hooks as WebAssembly components\n- **Contract Validation**: Enforce file policies and validation rules\n- **Lefthook Integration**: Seamless integration with Lefthook\n- **Structured Logging**: Comprehensive event-driven logging\n- **Code Generation**: Automated file generation and validation\n\n## Quick Start\n\n```bash\n# Install\ncargo install hooksmith\n\n# Generate all files\ncargo xtask gen-all\n\n# Run pre-commit hooks\nlefthook run pre-commit\n```\n\n## Development\n\nThis project uses a unified generated file system where all generated files come from JSONC source files in `generated-sources/`. This ensures deterministic regeneration and consistent checksums.\n\n## License\n\nMIT License - see LICENSE file for details.\n"
-} 
