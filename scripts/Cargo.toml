@@ -52,3 +52,11 @@ path = "test_minimal_root_contract.rs"
 [[bin]]
 name = "migrate_to_minimal_root"
 path = "migrate_to_minimal_root.rs"
+
+[[bin]]
+name = "validate_contract_agreement"
+path = "validate_contract_agreement.rs"
+
+[[bin]]
+name = "four_actor_pipeline"
+path = "four_actor_pipeline.rs"

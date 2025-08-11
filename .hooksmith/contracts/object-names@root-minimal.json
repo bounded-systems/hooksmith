@@ -53,17 +53,6 @@
               "*.jsonl"
             ],
             "rejected": [
-              "*.rs",
-              "*.log",
-              "*.tmp",
-              "*.md",
-              "*.json",
-              "*.jsonc",
-              "*.yml",
-              "*.yaml",
-              "*.toml",
-              "*.hcl",
-              "*.txt",
               "Dockerfile",
               "docker-compose.yml",
               "docker-bake.hcl",
