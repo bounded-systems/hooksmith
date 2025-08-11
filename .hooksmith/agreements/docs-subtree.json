@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "mode": "tree",
+  "precedence": "allow-overrides-reject",
+  "default-action": "reject",
+  "allow_files": [
+    "*.md",
+    "*.json",
+    "*.jsonc",
+    "*.yml",
+    "*.yaml",
+    "*.txt",
+    "*.html",
+    "*.css",
+    "*.js",
+    "*.png",
+    "*.jpg",
+    "*.svg",
+    "*.pdf"
+  ],
+  "subject": {
+    "scope": "subtree",
+    "path": "docs"
+  },
+  "digest": {
+    "algo": "sha256",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+}

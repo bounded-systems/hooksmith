@@ -158,23 +158,22 @@ impl TreeCleaner {
             "README_20*.md",
         ];
         
-        for pattern in report_patterns {
-            if let Ok(entries) = fs::read_dir(".") {
-                for entry in entries {
-                    if let Ok(entry) = entry {
-                        let name = entry.file_name().to_string_lossy();
-                        if name.ends_with(".md") {
-                            let src = name.to_string();
-                            let dst = format!("reports/{}", src);
-                            
-                            // Check if it matches our patterns (excluding README.md)
-                            if src != "README.md" && (
-                                src.contains("_SUMMARY") ||
-                                src.contains("_COMPLETE") ||
-                                src.starts_with("README_20")
-                            ) {
-                                self.mv_if(&src, &dst)?;
-                            }
+        if let Ok(entries) = fs::read_dir(".") {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let file_name = entry.file_name();
+                    let name = file_name.to_string_lossy();
+                    if name.ends_with(".md") {
+                        let src = name.to_string();
+                        let dst = format!("reports/{}", src);
+                        
+                        // Check if it matches our patterns (excluding README.md)
+                        if src != "README.md" && (
+                            src.contains("_SUMMARY") ||
+                            src.contains("_COMPLETE") ||
+                            src.starts_with("README_20")
+                        ) {
+                            self.mv_if(&src, &dst)?;
                         }
                     }
                 }
@@ -230,20 +229,19 @@ impl TreeCleaner {
             "test-agreement.txt",
         ];
         
-        for pattern in test_files {
-            if let Ok(entries) = fs::read_dir(".") {
-                for entry in entries {
-                    if let Ok(entry) = entry {
-                        let name = entry.file_name().to_string_lossy();
-                        if name.ends_with(".txt") && (
-                            name.starts_with("test-") ||
-                            name == "test_files.txt" ||
-                            name == "test-agreement.txt"
-                        ) {
-                            let src = name.to_string();
-                            let dst = format!("tests/fixtures/{}", src);
-                            self.mv_if(&src, &dst)?;
-                        }
+        if let Ok(entries) = fs::read_dir(".") {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let file_name = entry.file_name();
+                    let name = file_name.to_string_lossy();
+                    if name.ends_with(".txt") && (
+                        name.starts_with("test-") ||
+                        name == "test_files.txt" ||
+                        name == "test-agreement.txt"
+                    ) {
+                        let src = name.to_string();
+                        let dst = format!("tests/fixtures/{}", src);
+                        self.mv_if(&src, &dst)?;
                     }
                 }
             }

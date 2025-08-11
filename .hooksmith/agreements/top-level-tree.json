@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "mode": "tree",
+  "precedence": "allow-overrides-reject",
+  "default-action": "reject",
+  "allow-dirs": [
+    ".cargo",
+    ".github",
+    ".hooksmith",
+    ".trunk",
+    "config",
+    "contracts",
+    "contract_snapshots",
+    "crates",
+    "docs",
+    "examples",
+    "generated",
+    "hooks",
+    "infra",
+    "schemas",
+    "scripts",
+    "tests",
+    "tools",
+    "wit",
+    "worktree",
+    "apps"
+  ],
+  "allow-files": [
+    "README.md",
+    "Cargo.toml",
+    "rust-toolchain.toml",
+    "rustfmt.toml",
+    "clippy.toml",
+    "deny.toml",
+    "languages.yml",
+    ".gitignore",
+    ".gitattributes",
+    ".gitmodules",
+    ".dockerignore",
+    "Dockerfile",
+    "docker-compose.yml",
+    "docker-bake.hcl",
+    "build.rs",
+    "*.md"
+  ],
+  "subject": {
+    "ref": "HEAD",
+    "scope": "top-level"
+  },
+  "digest": {
+    "algo": "sha256",
+    "value": "40bac063a665d5bcccdc9d137bcc64a5ab1ba0613675b4e4f1f6ee75d6a73b96"
+  }
+}
