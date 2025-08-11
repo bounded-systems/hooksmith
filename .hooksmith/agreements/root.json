@@ -1,0 +1,48 @@
+{
+  "version": "1",
+  "mode": "tree",
+  "policy": "allow-only",
+      "allow-dirs": [
+    ".cargo",
+    ".github",
+    ".hooksmith",
+    ".trunk",
+    "apps",
+    "config",
+    "contracts",
+    "crates",
+    "docs",
+    "examples",
+    "hooks",
+    "infra",
+    "schemas",
+    "scripts",
+    "tests",
+    "tools",
+    "wit"
+  ],
+  "allow-files": [
+    "README.md",
+    "Cargo.toml",
+    "rust-toolchain.toml",
+    "rustfmt.toml",
+    "clippy.toml",
+    "deny.toml",
+    "build.rs",
+    ".gitignore",
+    ".gitattributes",
+    ".gitmodules",
+    ".dockerignore",
+    "Dockerfile",
+    "docker-compose.yml",
+    "docker-bake.hcl",
+    "*.md"
+  ],
+  "subject": {
+    "scope": "top-level"
+  },
+  "digest": {
+    "algo": "sha256",
+    "value": "ef3896511b42a3d7a56e85bded5766ad55492950851a3afbd8f5cb9a6a8b116c"
+  }
+}

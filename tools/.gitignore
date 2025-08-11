@@ -1,0 +1,36 @@
+# Tool-specific artifacts (scoped to tools directory only)
+/target/
+*.exe
+*.bin
+*.out
+
+# Build artifacts (scoped to tools directory only)
+build/
+dist/
+out/
+
+# Temporary files (scoped to tools directory only)
+*.tmp
+*.temp
+*.bak
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files (scoped to tools directory only)
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tool configuration files (scoped to tools directory only)
+*.config.local
+*.env.local
+*.local
+
+# Generated files (scoped to tools directory only)
+*.generated
+*.output
+*.result

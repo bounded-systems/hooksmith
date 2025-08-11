@@ -1,0 +1,43 @@
+# Documentation build artifacts (scoped to docs directory only)
+_build/
+site/
+dist/
+build/
+
+# Generated documentation (scoped to docs directory only)
+*.html
+*.pdf
+*.epub
+*.mdx
+
+# Temporary files (scoped to docs directory only)
+*.tmp
+*.temp
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files (scoped to docs directory only)
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node.js (if using any JS-based docs tools in docs directory only)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (if using Sphinx or similar in docs directory only)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv

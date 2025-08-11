@@ -7,11 +7,18 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }
 globset = "0.4"
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+serde_yaml = "0.9"
 sha2 = "0.10"
+hex = "0.4"
 git2 = "0.18"
 chrono = { version = "0.4", features = ["serde"] }
+jsonschema = "0.18"
+regex = "1.10"
+walkdir = "2.5"
 
 [[bin]]
 name = "validate_object_names_contract"
@@ -44,3 +51,35 @@ path = "scope_ref_manager.rs"
 [[bin]]
 name = "scope_aware_contract_pipeline"
 path = "scope_aware_contract_pipeline.rs"
+
+[[bin]]
+name = "test_minimal_root_contract"
+path = "test_minimal_root_contract.rs"
+
+[[bin]]
+name = "migrate_to_minimal_root"
+path = "migrate_to_minimal_root.rs"
+
+[[bin]]
+name = "validate_contract_agreement"
+path = "validate_contract_agreement.rs"
+
+[[bin]]
+name = "four_actor_pipeline"
+path = "four_actor_pipeline.rs"
+
+[[bin]]
+name = "tree_dircheck"
+path = "tree_dircheck.rs"
+
+[[bin]]
+name = "dircheck"
+path = "dircheck.rs"
+
+[[bin]]
+name = "agreement_validator"
+path = "agreement_validator.rs"
+
+[[bin]]
+name = "test_wildcard"
+path = "test_wildcard.rs"

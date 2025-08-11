@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "required": ["version","mode","precedence","default_action","allow_dirs","allow_files","subject","digest"],
+  "properties": {
+    "version": {"type":"string"},
+    "mode": {"const":"tree"},
+    "precedence":{"const":"allow-overrides-reject"},
+    "default_action":{"const":"reject"},
+    "allow_dirs":{"type":"array","items":{"type":"string"}},
+    "allow_files":{"type":"array","items":{"type":"string"}},
+    "subject":{"type":"object","required":["ref","scope"],"properties":{
+      "ref":{"type":"string"},
+      "scope":{"const":"top-level"}
+    }},
+    "digest":{"type":"object","required":["algo","value"],"properties":{
+      "algo":{"const":"sha256"},
+      "value":{"type":"string","pattern":"^[a-f0-9]{64}$"}
+    }},
+    "signature":{"type":"object","required":["type","value"],"properties":{
+      "type":{"enum":["gpg","minisign"]},
+      "value":{"type":"string"}
+    }}
+  },
+  "additionalProperties": true
+}

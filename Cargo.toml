@@ -23,6 +23,10 @@ members = [
                 "crates/snapshot",
                 "crates/inspector",
                 "crates/hooks",
+    "crates/standalone-auditor",
+    "crates/hooksmith-validate",
+    "tools/migrate-to-monorepo",
+    "tools",
 ]
 
 [profile.dev]
@@ -223,6 +227,14 @@ path = "scripts/file_churn_analyzer.rs"
 name = "tree_object_stability_auditor"
 path = "scripts/tree_object_stability_auditor.rs"
 
+[[bin]]
+name = "hooksmith-audit"
+path = "src/bin/hooksmith-audit.rs"
+
+[[bin]]
+name = "object-names-auditor"
+path = "src/bin/object-names-auditor.rs"
+
 [lib]
 name = "hooksmith"
 path = "src/lib.rs"
@@ -268,6 +280,9 @@ hyperpolyglot.workspace = true
 itertools.workspace = true
 serde_yaml.workspace = true
 reqwest.workspace = true
+
+# Pattern matching for contract validation
+globset = "0.4"
 
 # WASM and WIT support
 wasmtime.workspace = true

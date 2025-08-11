@@ -1,0 +1,37 @@
+# Example-specific artifacts (scoped to examples directory only)
+/target/
+*.exe
+*.bin
+*.out
+
+# Generated files (scoped to examples directory only)
+*.generated
+*.output
+*.result
+
+# Temporary files (scoped to examples directory only)
+*.tmp
+*.temp
+*.bak
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files (scoped to examples directory only)
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Example data files (scoped to examples directory only)
+*.data
+*.cache
+*.db
+*.sqlite
+
+# Build artifacts (scoped to examples directory only)
+build/
+dist/
+out/

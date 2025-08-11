@@ -1,0 +1,38 @@
+name: validate-tree-agreement
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  validate-tree:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build dircheck tool
+        run: |
+          cd scripts
+          cargo build --release --bin dircheck
+
+      - name: Validate tree-only agreement
+        run: |
+          cd scripts
+          ./target/release/dircheck \
+            --agreement ../agreement.json \
+            --ref ${{ github.sha }} \
+            --ci
+
+      - name: Show current tree structure
+        if: always()
+        run: |
+          echo "Current top-level tree structure:"
+          git ls-tree --name-only HEAD | sort
