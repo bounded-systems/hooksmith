@@ -187,8 +187,8 @@ fn read_tree_from_git(ref_name: &str) -> Result<TreeReport> {
     for entry in entries_str.split('\0') {
         if entry.is_empty() {
             continue;
-        }
-
+    }
+    
         let parts: Vec<&str> = entry.split('\t').collect();
         if parts.len() != 2 {
             continue;

@@ -1,7 +1,7 @@
 {
   "name": "object-names@root-minimal",
   "version": "1.0.0",
-  "description": "Contract defining minimal root layout for break-off ready repository structure",
+  "description": "Monorepo root object policy - orchestrator for repo-wide policy, tooling, and docs",
   "$schema": "https://hooksmith.dev/schemas/contract.schema.json",
   "schema": {
     "$ref": "https://hooksmith.dev/schemas/object-names.schema.json"
@@ -13,28 +13,33 @@
           "names": {
             "required": [
               ".gitignore",
-              "crates"
+              ".hooksmith"
             ],
             "allowed": [
               ".gitignore",
               ".gitattributes",
               ".github",
+              ".hooksmith",
               "Cargo.toml",
+              "Cargo.lock",
               "README.md",
-              "LICENSE*",
-              "rust-toolchain.toml",
-              "deny.toml",
-              "clippy.toml",
-              "rustfmt.toml",
+              "CONTRIBUTING.md",
+              "LICENSE",
               "crates",
+              "apps",
+              "tools",
+              "infra",
               "docs",
-              "scripts",
-              "schemas"
+              "schemas",
+              "contracts",
+              "examples",
+              "tests"
             ],
             "rejected": [
-              "*.md",
-              "*.toml",
-              "*"
+              "*.rs",
+              "src",
+              "target",
+              "*.log"
             ],
             "ignored": [
               ".DS_Store",
@@ -42,15 +47,7 @@
               ".idea",
               ".vscode"
             ],
-            "exceptions": [
-              "README.md",
-              "Cargo.toml",
-              "rust-toolchain.toml",
-              "deny.toml",
-              "clippy.toml",
-              "rustfmt.toml",
-              "LICENSE*"
-            ]
+            "exceptions": []
           }
         }
       }

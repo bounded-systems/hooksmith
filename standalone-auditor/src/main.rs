@@ -255,12 +255,12 @@ fn read_contract(contract_path: &str) -> Result<Contract> {
 }
 
 fn main() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 3 {
-        eprintln!("Usage: {} <ref> <contract-path>", args[0]);
-        eprintln!("Example: {} origin/main contracts/object-names@v1.json", args[0]);
-        std::process::exit(1);
-    }
+                let args: Vec<String> = env::args().collect();
+        if args.len() != 3 {
+            eprintln!("Usage: {} <ref> <contract-path>", args[0]);
+            eprintln!("Example: {} origin/main .hooksmith/agreements/object-names@v1.json", args[0]);
+            std::process::exit(1);
+        }
 
     let ref_name = &args[1];
     let contract_path = &args[2];
