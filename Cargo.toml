@@ -24,6 +24,7 @@ members = [
                 "crates/inspector",
                 "crates/hooks",
     "standalone-auditor",
+    "tools/migrate-to-monorepo",
 ]
 
 [profile.dev]

@@ -1,0 +1,10 @@
+[package]
+name = "migrate-to-monorepo"
+version = "0.1.0"
+edition = "2021"
+authors = ["Pushd Team"]
+description = "Migration tool for converting repository to monorepo orchestrator layout"
+license = "MIT"
+
+[dependencies]
+anyhow = "1.0"
