@@ -1,383 +1,266 @@
+use std::collections::{HashMap, HashSet};
+use std::env;
 use std::io::{self, BufRead, Write};
-use std::collections::HashSet;
-use clap::Parser;
-use git2::Repository;
+use std::path::Path;
+use std::process::{Command, Stdio};
+use std::str::FromStr;
+
+use anyhow::{Context, Result};
+use globset::{Glob, GlobSet, GlobSetBuilder};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
-use sha2::{Sha256, Digest};
 
-#[derive(Parser)]
-#[command(name = "hooksmith-audit")]
-#[command(about = "Auditor for Hooksmith pipeline")]
-struct Cli {
-    /// Contract name
-    #[arg(long, default_value = "object-names")]
+#[derive(Debug, Serialize, Deserialize)]
+struct TreeEntry {
+    mode: String,
+    #[serde(rename = "type")]
+    entry_type: String,
+    sha: String,
+    name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TreeReport {
+    ref_name: String,
+    tree_sha: String,
+    entries: Vec<TreeEntry>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Contract {
+    name: String,
+    version: String,
+    spec: ContractSpec,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ContractSpec {
+    git: GitSpec,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct GitSpec {
+    tree: TreeSpec,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TreeSpec {
+    objects: ObjectsSpec,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ObjectsSpec {
+    names: NamesSpec,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct NamesSpec {
+    required: Vec<String>,
+    allowed: Vec<String>,
+    rejected: Vec<String>,
+    ignored: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ValidationResult {
+    ref_name: String,
+    tree_sha: String,
     contract_name: String,
-    
-    /// Contract version
-    #[arg(long, default_value = "1.0.0")]
-    version: String,
+    contract_version: String,
+    result: ValidationDiff,
 }
 
-/// Input report result from NDJSON
-#[derive(Debug, Deserialize)]
-struct ReportResult {
-    object_oid: String,
-    domain: String,
-    version: String,
-    report_blob_oid: String,
-    cache_key: String,
-    analysis_oids: Vec<String>,
-    metadata: serde_json::Value,
+#[derive(Debug, Serialize, Deserialize)]
+struct ValidationDiff {
+    missing_required: Vec<String>,
+    rejected: Vec<String>,
+    not_allowed: Vec<String>,
 }
 
-/// Input mandate result from NDJSON
-#[derive(Debug, Deserialize)]
-struct MandateResult {
-    object_oid: String,
-    contract_name: String,
-    contract_oid: String,
-    version: String,
-    mandate_blob_oid: String,
-    cache_key: String,
-    object_selector: String,
-    logical_path: Option<String>,
-    metadata: serde_json::Value,
+struct ContractValidator {
+    required_exact: HashSet<String>,
+    allowed_glob: GlobSet,
+    rejected_glob: GlobSet,
+    ignored_glob: GlobSet,
 }
 
-/// Audit result for NDJSON output
-#[derive(Debug, Serialize)]
-struct AuditResult {
-    object_oid: String,
-    contract_name: String,
-    version: String,
-    pass: bool,
-    summary_code: String,
-    verdict_blob_oid: String,
-    diff_blob_oid: Option<String>,
-    cache_key: String,
-    report_oid: String,
-    mandate_oid: String,
-    metadata: serde_json::Value,
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let cli = Cli::parse();
-    let repo = Repository::open(".")?;
-    
-    // Read report results from stdin
-    let mut reports: Vec<ReportResult> = Vec::new();
-    let stdin = io::stdin();
-    let mut lines = stdin.lock().lines();
-    
-    while let Some(line) = lines.next() {
-        let line = line?;
-        if line.trim().is_empty() {
-            continue;
-        }
+impl ContractValidator {
+    fn new(contract: &Contract) -> Result<Self> {
+        let names = &contract.spec.git.tree.objects.names;
         
-        let report: ReportResult = serde_json::from_str(&line)?;
-        reports.push(report);
+        // Build required set (exact matches only)
+        let required_exact: HashSet<String> = names.required.iter().cloned().collect();
+        
+        // Build glob sets
+        let allowed_glob = Self::build_glob_set(&names.allowed)?;
+        let rejected_glob = Self::build_glob_set(&names.rejected)?;
+        let ignored_glob = Self::build_glob_set(&names.ignored)?;
+        
+        Ok(Self {
+            required_exact,
+            allowed_glob,
+            rejected_glob,
+            ignored_glob,
+        })
     }
     
-    // For now, we'll create dummy mandates for each report
-    // In a real implementation, you'd read mandate results from another NDJSON stream
-    let mut mandates: Vec<MandateResult> = Vec::new();
-    for report in &reports {
-        let mandate = MandateResult {
-            object_oid: report.object_oid.clone(),
-            contract_name: cli.contract_name.clone(),
-            contract_oid: "contract-oid".to_string(),
-            version: cli.version.clone(),
-            mandate_blob_oid: "mandate-blob-oid".to_string(),
-            cache_key: "mandate-cache-key".to_string(),
-            object_selector: "object-selector".to_string(),
-            logical_path: None,
-            metadata: json!({}),
-        };
-        mandates.push(mandate);
+    fn build_glob_set(patterns: &[String]) -> Result<GlobSet> {
+        let mut builder = GlobSetBuilder::new();
+
+        for pattern in patterns {
+            let glob = Glob::new(pattern)
+                .with_context(|| format!("Invalid glob pattern: {}", pattern))?;
+            builder.add(glob);
+        }
+
+        builder.build().context("Failed to build glob set")
     }
     
-    // Output NDJSON to stdout
-    let stdout = io::stdout();
-    let mut handle = stdout.lock();
-    
-    for (report, mandate) in reports.iter().zip(mandates.iter()) {
-        // Check cache first
-        let cache_key = compute_cache_key(&cli.version, &report.cache_key, &mandate.cache_key);
-        
-        if let Some(cached_verdict) = get_cached_verdict(&repo, &report.cache_key, &mandate.cache_key)? {
-            let result = AuditResult {
-                object_oid: report.object_oid.clone(),
-                contract_name: cli.contract_name.clone(),
-                version: cli.version.clone(),
-                pass: cached_verdict.pass,
-                summary_code: cached_verdict.summary_code,
-                verdict_blob_oid: cached_verdict.verdict_blob_oid,
-                diff_blob_oid: cached_verdict.diff_blob_oid,
-                cache_key,
-                report_oid: report.report_blob_oid.clone(),
-                mandate_oid: mandate.mandate_blob_oid.clone(),
-                metadata: json!({"cached": true}),
-            };
-            let json = serde_json::to_string(&result)?;
-            writeln!(handle, "{}", json)?;
+    fn validate_tree(&self, tree_report: &TreeReport) -> ValidationDiff {
+        let mut seen_required = HashSet::new();
+        let mut rejected = Vec::new();
+        let mut not_allowed = Vec::new();
+
+        for entry in &tree_report.entries {
+            let name = &entry.name;
+
+            // Skip ignored entries
+            if self.ignored_glob.is_match(name) {
+                continue;
+            }
+
+            // Check if explicitly rejected
+            if self.rejected_glob.is_match(name) {
+                rejected.push(name.clone());
+                continue;
+            }
+
+            // Check if allowed
+            if !self.allowed_glob.is_match(name) {
+                not_allowed.push(name.clone());
+                continue;
+            }
+
+            // Track required files we've seen
+            if self.required_exact.contains(name) {
+                seen_required.insert(name.clone());
+            }
+        }
+
+        // Find missing required files
+        let missing_required: Vec<String> = self
+            .required_exact
+            .difference(&seen_required)
+            .cloned()
+            .collect();
+
+        ValidationDiff {
+            missing_required,
+            rejected,
+            not_allowed,
+        }
+    }
+}
+
+fn read_tree_from_git(ref_name: &str) -> Result<TreeReport> {
+    // Get the tree SHA for the reference
+    let tree_sha = Command::new("git")
+        .args(["rev-parse", &format!("{}^{{tree}}", ref_name)])
+        .output()
+        .context("Failed to get tree SHA")?;
+
+    let tree_sha = String::from_utf8(tree_sha.stdout)
+        .context("Invalid tree SHA output")?
+        .trim()
+        .to_string();
+
+    // Get tree entries using git ls-tree
+    let output = Command::new("git")
+        .args(["ls-tree", "-z", &tree_sha])
+        .output()
+        .context("Failed to get tree entries")?;
+
+    let entries_str = String::from_utf8(output.stdout)
+        .context("Invalid tree entries output")?;
+
+    // Parse entries (format: MODE TYPE SHA\tNAME\0)
+    let mut entries = Vec::new();
+    for entry in entries_str.split('\0') {
+        if entry.is_empty() {
             continue;
         }
-        
-        // Load report and mandate data
-        let report_data = load_report_data(&repo, &report.report_blob_oid)?;
-        let mandate_data = load_mandate_data(&repo, &mandate.mandate_blob_oid)?;
-        
-        // Perform audit
-        let (pass, summary_code, diff_data) = audit_object(&report_data, &mandate_data)?;
-        
-        // Store verdict blob
-        let verdict_data = json!({
-            "contract_name": cli.contract_name,
-            "version": cli.version,
-            "pass": pass,
-            "summary_code": summary_code,
-            "report_oid": report.report_blob_oid,
-            "mandate_oid": mandate.mandate_blob_oid,
+
+        let parts: Vec<&str> = entry.split('\t').collect();
+        if parts.len() != 2 {
+            continue;
+        }
+
+        let header = parts[0];
+        let name = parts[1];
+
+        let header_parts: Vec<&str> = header.split_whitespace().collect();
+        if header_parts.len() != 3 {
+            continue;
+        }
+
+        let mode = header_parts[0];
+        let entry_type = header_parts[1];
+        let sha = header_parts[2];
+
+        entries.push(TreeEntry {
+            mode: mode.to_string(),
+            entry_type: entry_type.to_string(),
+            sha: sha.to_string(),
+            name: name.to_string(),
         });
-        let verdict_blob_oid = store_verdict_blob(&repo, &verdict_data)?;
-        
-        // Store diff blob if needed
-        let diff_blob_oid = if !pass && diff_data.is_some() {
-            let diff_blob_oid = store_diff_blob(&repo, &diff_data.unwrap())?;
-            Some(diff_blob_oid)
-        } else {
-            None
-        };
-        
-        let result = AuditResult {
-            object_oid: report.object_oid.clone(),
-            contract_name: cli.contract_name.clone(),
-            version: cli.version.clone(),
-            pass,
-            summary_code,
-            verdict_blob_oid,
-            diff_blob_oid,
-            cache_key,
-            report_oid: report.report_blob_oid.clone(),
-            mandate_oid: mandate.mandate_blob_oid.clone(),
-            metadata: json!({"cached": false}),
-        };
-        
-        let json = serde_json::to_string(&result)?;
-        writeln!(handle, "{}", json)?;
     }
-    
+
+    Ok(TreeReport {
+        ref_name: ref_name.to_string(),
+        tree_sha,
+        entries,
+    })
+}
+
+fn read_contract(contract_path: &str) -> Result<Contract> {
+    let content = std::fs::read_to_string(contract_path)
+        .with_context(|| format!("Failed to read contract: {}", contract_path))?;
+
+    serde_json::from_str(&content)
+        .with_context(|| format!("Failed to parse contract JSON: {}", contract_path))
+}
+
+fn main() -> Result<()> {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 3 {
+        eprintln!("Usage: {} <ref> <contract-path>", args[0]);
+        eprintln!("Example: {} origin/main contracts/object-names@v1.json", args[0]);
+        std::process::exit(1);
+    }
+
+    let ref_name = &args[1];
+    let contract_path = &args[2];
+
+    // Read and validate the contract
+    let contract = read_contract(contract_path)?;
+    let validator = ContractValidator::new(&contract)?;
+
+    // Read the tree from Git
+    let tree_report = read_tree_from_git(ref_name)?;
+
+    // Validate the tree against the contract
+    let diff = validator.validate_tree(&tree_report);
+
+    // Output the result
+    let result = ValidationResult {
+        ref_name: tree_report.ref_name,
+        tree_sha: tree_report.tree_sha,
+        contract_name: contract.name,
+        contract_version: contract.version,
+        result: diff,
+    };
+
+    let output = serde_json::to_string_pretty(&result)?;
+    println!("{}", output);
+
     Ok(())
-}
-
-fn load_report_data(repo: &Repository, report_blob_oid: &str) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-    let report_blob = repo.find_blob(git2::Oid::from_str(report_blob_oid)?)?;
-    let report_content = String::from_utf8(report_blob.content().to_vec())?;
-    let report_data: serde_json::Value = serde_json::from_str(&report_content)?;
-    Ok(report_data)
-}
-
-fn load_mandate_data(repo: &Repository, mandate_blob_oid: &str) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-    let mandate_blob = repo.find_blob(git2::Oid::from_str(mandate_blob_oid)?)?;
-    let mandate_content = String::from_utf8(mandate_blob.content().to_vec())?;
-    let mandate_data: serde_json::Value = serde_json::from_str(&mandate_content)?;
-    Ok(mandate_data)
-}
-
-fn audit_object(report_data: &serde_json::Value, mandate_data: &serde_json::Value) -> Result<(bool, String, Option<serde_json::Value>), Box<dyn std::error::Error>> {
-    // Extract entry names from report
-    let entry_names = if let Some(names) = report_data.get("entry_names") {
-        names.as_array().unwrap_or(&Vec::new()).iter()
-            .filter_map(|v| v.as_str())
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>()
-    } else {
-        Vec::new()
-    };
-    
-    let is_root = report_data.get("is_root")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
-    
-    // Perform validation
-    let (pass, summary_code, diff_data) = if is_root {
-        validate_root_tree(&entry_names, mandate_data)?
-    } else {
-        validate_sub_tree(&entry_names, mandate_data)?
-    };
-    
-    Ok((pass, summary_code, diff_data))
-}
-
-fn validate_root_tree(entry_names: &[String], expectation: &serde_json::Value) -> Result<(bool, String, Option<serde_json::Value>), Box<dyn std::error::Error>> {
-    let required = expectation.get("required_entries")
-        .and_then(|v| v.as_array())
-        .unwrap_or(&Vec::new())
-        .iter()
-        .filter_map(|v| v.as_str())
-        .map(|s| s.to_string())
-        .collect::<HashSet<String>>();
-        
-    let allowed = expectation.get("allowed_entries")
-        .and_then(|v| v.as_array())
-        .unwrap_or(&Vec::new())
-        .iter()
-        .filter_map(|v| v.as_str())
-        .map(|s| s.to_string())
-        .collect::<HashSet<String>>();
-        
-    let rejected = expectation.get("rejected_entries")
-        .and_then(|v| v.as_array())
-        .unwrap_or(&Vec::new())
-        .iter()
-        .filter_map(|v| v.as_str())
-        .map(|s| s.to_string())
-        .collect::<HashSet<String>>();
-        
-    let ignored = expectation.get("ignored_entries")
-        .and_then(|v| v.as_array())
-        .unwrap_or(&Vec::new())
-        .iter()
-        .filter_map(|v| v.as_str())
-        .map(|s| s.to_string())
-        .collect::<HashSet<String>>();
-    
-    let entry_set: HashSet<String> = entry_names.iter().cloned().collect();
-    let mut errors = Vec::new();
-    
-    // Check required entries
-    for req in &required {
-        if !entry_set.contains(req) {
-            errors.push(format!("missing required: {}", req));
-        }
-    }
-    
-    // Check rejected entries (skip ignored)
-    for entry in entry_names {
-        if ignored.contains(entry) {
-            continue;
-        }
-        if rejected.contains(entry) {
-            errors.push(format!("rejected at root: {}", entry));
-        }
-    }
-    
-    // Check allow-list (skip ignored)
-    for entry in entry_names {
-        if ignored.contains(entry) {
-            continue;
-        }
-        if !allowed.contains(entry) {
-            errors.push(format!("not in allowed set: {}", entry));
-        }
-    }
-    
-    let pass = errors.is_empty();
-    let summary_code = if pass { "PASS".to_string() } else { "FAIL".to_string() };
-    
-    let diff_data = if !pass {
-        Some(json!({
-            "type": "validation_errors",
-            "errors": errors,
-            "entry_names": entry_names,
-            "required": required,
-            "allowed": allowed,
-            "rejected": rejected,
-            "ignored": ignored,
-        }))
-    } else {
-        None
-    };
-    
-    Ok((pass, summary_code, diff_data))
-}
-
-fn validate_sub_tree(entry_names: &[String], expectation: &serde_json::Value) -> Result<(bool, String, Option<serde_json::Value>), Box<dyn std::error::Error>> {
-    // For sub-trees, we're more permissive - just check against allowed/ignored
-    let allowed = expectation.get("allowed_entries")
-        .and_then(|v| v.as_array())
-        .unwrap_or(&Vec::new())
-        .iter()
-        .filter_map(|v| v.as_str())
-        .map(|s| s.to_string())
-        .collect::<HashSet<String>>();
-        
-    let ignored = expectation.get("ignored_entries")
-        .and_then(|v| v.as_array())
-        .unwrap_or(&Vec::new())
-        .iter()
-        .filter_map(|v| v.as_str())
-        .map(|s| s.to_string())
-        .collect::<HashSet<String>>();
-    
-    let mut errors = Vec::new();
-    
-    // Check allow-list (skip ignored)
-    for entry in entry_names {
-        if ignored.contains(entry) {
-            continue;
-        }
-        if !allowed.contains(entry) {
-            errors.push(format!("not in allowed set: {}", entry));
-        }
-    }
-    
-    let pass = errors.is_empty();
-    let summary_code = if pass { "PASS".to_string() } else { "FAIL".to_string() };
-    
-    let diff_data = if !pass {
-        Some(json!({
-            "type": "validation_errors",
-            "errors": errors,
-            "entry_names": entry_names,
-        }))
-    } else {
-        None
-    };
-    
-    Ok((pass, summary_code, diff_data))
-}
-
-fn compute_cache_key(version: &str, report_oid: &str, mandate_oid: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(format!("audit@{}", version).as_bytes());
-    hasher.update(report_oid.as_bytes());
-    hasher.update(mandate_oid.as_bytes());
-    format!("{:x}", hasher.finalize())
-}
-
-#[derive(Debug)]
-struct CachedVerdict {
-    pass: bool,
-    summary_code: String,
-    verdict_blob_oid: String,
-    diff_blob_oid: Option<String>,
-}
-
-fn get_cached_verdict(repo: &Repository, report_oid: &str, mandate_oid: &str) -> Result<Option<CachedVerdict>, Box<dyn std::error::Error>> {
-    // TODO: Implement cache lookup from refs/hooksmith/cache/verdict/
-    // For now, return None (no cache hit)
-    Ok(None)
-}
-
-fn store_verdict_blob(repo: &Repository, verdict_data: &serde_json::Value) -> Result<String, Box<dyn std::error::Error>> {
-    // Convert to canonical JSON (sorted keys, no whitespace)
-    let json_string = serde_json::to_string(verdict_data)?;
-    
-    // Store as blob
-    let blob_oid = repo.blob(json_string.as_bytes())?;
-    
-    Ok(blob_oid.to_string())
-}
-
-fn store_diff_blob(repo: &Repository, diff_data: &serde_json::Value) -> Result<String, Box<dyn std::error::Error>> {
-    // Convert to canonical JSON (sorted keys, no whitespace)
-    let json_string = serde_json::to_string(diff_data)?;
-    
-    // Store as blob
-    let blob_oid = repo.blob(json_string.as_bytes())?;
-    
-    Ok(blob_oid.to_string())
 }
