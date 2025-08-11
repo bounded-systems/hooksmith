@@ -1,0 +1,62 @@
+{
+  "worktree_base": ".wt",
+  "worktree_template": "{branch}",
+  "run_setup": true,
+  "setup_commands": [
+    "cargo build"
+  ],
+  "copy_env": true,
+  "env_files": [
+    ".env.example"
+  ],
+  "git_aliases": {
+    "wtr": "worktree remove",
+    "wtl": "worktree list",
+    "wtc": "worktree create",
+    "wt": "worktree"
+  },
+  "existing_worktrees": {
+    "feature/spin-integration": ".wt/spin-integration",
+    "feature/spin-integration-v2": ".wt/spin-integration-v2"
+  },
+  "branch_patterns": {
+    "feature/*": {
+      "template": ".wt/{branch}",
+      "setup": ["cargo build"],
+      "labels": ["feature", "development"]
+    },
+    "bugfix/*": {
+      "template": ".wt/{branch}",
+      "setup": ["cargo build"],
+      "labels": ["bugfix", "maintenance"]
+    },
+    "hotfix/*": {
+      "template": ".wt/{branch}",
+      "setup": ["cargo build"],
+      "labels": ["hotfix", "urgent"]
+    }
+  },
+  "integration": {
+    "lefthook": true,
+    "xtask": true,
+    "wasm_components": true
+  },
+  "cursor_integration": {
+    "auto_open_cursor": true,
+    "cursor_config_template": "worktree_integration",
+    "shell_aliases": {
+      "cbloom": "wb bloom $1 && cursor ./$1",
+      "cswitch": "wb switch $1 && cursor ."
+    },
+    "env_vars": {
+      "WORKTREE_MANAGER": "workbloom",
+      "CURSOR_INTEGRATION": "enabled"
+    }
+  },
+  "workbloom_metadata": {
+    "enabled": true,
+    "metadata_dir": ".wb",
+    "labels_config": "labels.toml",
+    "status_tracking": true
+  }
+}

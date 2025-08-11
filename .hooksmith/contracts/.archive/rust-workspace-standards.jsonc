@@ -1,0 +1,235 @@
+{
+  "name": "rust-workspace-standards",
+  "version": "1.0.0",
+  "description": "Contract for validating Rust workspace structure and enforcing development standards",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "workspace_structure": {
+        "type": "object",
+        "properties": {
+          "required_files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Files that must exist in the workspace root"
+          },
+          "required_directories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Directories that must exist"
+          },
+          "crate_structure": {
+            "type": "object",
+            "properties": {
+              "crates_dir": {
+                "type": "string",
+                "description": "Directory containing workspace crates"
+              },
+              "required_crate_files": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Files that must exist in each crate"
+              }
+            }
+          }
+        },
+        "required": ["required_files", "required_directories"]
+      },
+      "code_quality": {
+        "type": "object",
+        "properties": {
+          "rustfmt_enabled": {
+            "type": "boolean",
+            "description": "Whether rustfmt is configured"
+          },
+          "clippy_enabled": {
+            "type": "boolean",
+            "description": "Whether clippy is configured"
+          },
+          "deny_toml_present": {
+            "type": "boolean",
+            "description": "Whether deny.toml is present for dependency management"
+          }
+        }
+      },
+      "documentation": {
+        "type": "object",
+        "properties": {
+          "readme_required": {
+            "type": "boolean",
+            "description": "Whether README.md is required"
+          },
+          "docs_directory": {
+            "type": "string",
+            "description": "Directory for documentation files"
+          }
+        }
+      }
+    },
+    "required": ["workspace_structure", "code_quality"]
+  },
+  "rules": [
+    {
+      "name": "workspace_root_files",
+      "description": "Enforce required workspace root files",
+      "rule_type": "FileExistence",
+      "parameters": {
+        "required_files": [
+          "Cargo.toml",
+          "Cargo.lock",
+          "rustfmt.toml",
+          "clippy.toml",
+          "deny.toml",
+          "README.md",
+          ".gitignore",
+          ".gitattributes"
+        ]
+      },
+      "required": true,
+      "severity": "Error"
+    },
+    {
+      "name": "workspace_directories",
+      "description": "Enforce required workspace directories",
+      "rule_type": "DirectoryExistence",
+      "parameters": {
+        "required_directories": [
+          "src/",
+          "crates/",
+          "tests/",
+          "docs/",
+          "examples/",
+          "contracts/",
+          ".hooksmith/"
+        ]
+      },
+      "required": true,
+      "severity": "Error"
+    },
+    {
+      "name": "crate_structure",
+      "description": "Validate crate structure in crates/ directory",
+      "rule_type": "Custom",
+      "parameters": {
+        "crates_dir": "crates/",
+        "required_crate_files": [
+          "Cargo.toml",
+          "src/lib.rs"
+        ],
+        "optional_crate_files": [
+          "src/main.rs",
+          "src/bin/"
+        ]
+      },
+      "required": true,
+      "severity": "Error"
+    },
+    {
+      "name": "rustfmt_configuration",
+      "description": "Ensure rustfmt.toml is properly configured",
+      "rule_type": "FileContent",
+      "parameters": {
+        "file": "rustfmt.toml",
+        "required_sections": [
+          "edition",
+          "max_width"
+        ]
+      },
+      "required": true,
+      "severity": "Warning"
+    },
+    {
+      "name": "clippy_configuration",
+      "description": "Ensure clippy.toml is properly configured",
+      "rule_type": "FileContent",
+      "parameters": {
+        "file": "clippy.toml",
+        "required_sections": [
+          "warn"
+        ]
+      },
+      "required": true,
+      "severity": "Warning"
+    },
+    {
+      "name": "deny_configuration",
+      "description": "Ensure deny.toml is properly configured for dependency management",
+      "rule_type": "FileContent",
+      "parameters": {
+        "file": "deny.toml",
+        "required_sections": [
+          "bans",
+          "licenses"
+        ]
+      },
+      "required": true,
+      "severity": "Warning"
+    },
+    {
+      "name": "git_hooks",
+      "description": "Ensure .hooksmith directory contains git hooks",
+      "rule_type": "Custom",
+      "parameters": {
+        "hooks_dir": ".hooksmith/hooks/git/",
+        "required_hooks": [
+          "commit-msg",
+          "pre-commit",
+          "post-commit"
+        ]
+      },
+      "required": false,
+      "severity": "Info"
+    },
+    {
+      "name": "documentation_standards",
+      "description": "Ensure proper documentation structure",
+      "rule_type": "Custom",
+      "parameters": {
+        "docs_dir": "docs/",
+        "readme_min_length": 1000,
+        "required_sections": [
+          "## Description",
+          "## Usage",
+          "## Installation"
+        ]
+      },
+      "required": false,
+      "severity": "Warning"
+    },
+    {
+      "name": "contract_validation",
+      "description": "Ensure contracts directory contains valid contract files",
+      "rule_type": "Custom",
+      "parameters": {
+        "contracts_dir": "contracts/",
+        "required_contract_fields": [
+          "name",
+          "version",
+          "description",
+          "schema",
+          "rules"
+        ]
+      },
+      "required": true,
+      "severity": "Error"
+    }
+  ],
+  "metadata": {
+    "contract_type": "rust_workspace_validation",
+    "scope": "repository",
+    "enforcement_level": "strict",
+    "auto_fix": false,
+    "tags": [
+      "rust",
+      "workspace",
+      "code-quality",
+      "documentation"
+    ]
+  }
+}
