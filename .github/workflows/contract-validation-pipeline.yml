@@ -1,0 +1,182 @@
+name: Contract Validation Pipeline
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect-scopes:
+    runs-on: ubuntu-latest
+    outputs:
+      scopes: ${{ steps.scope-detection.outputs.scopes }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+
+      - name: Build contract validation tools
+        run: |
+          cd scripts
+          cargo build --release
+
+      - name: Detect validation scopes
+        id: scope-detection
+        run: |
+          cd scripts
+          # Run scope detection and output JSON array
+          ./target/release/contract_validation_pipeline --detect-scopes origin/main HEAD > scopes.json
+          echo "scopes=$(cat scopes.json)" >> $GITHUB_OUTPUT
+
+      - name: Upload scopes artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-scopes
+          path: scripts/scopes.json
+
+  validate-contracts:
+    needs: detect-scopes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scope: ${{ fromJson(needs.detect-scopes.outputs.scopes) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+
+      - name: Build contract validation tools
+        run: |
+          cd scripts
+          cargo build --release
+
+      - name: Validate contracts for scope
+        run: |
+          cd scripts
+          ./target/release/contract_validation_pipeline origin/main HEAD --scope "${{ matrix.scope }}" --sarif "${{ matrix.scope }}-results.sarif"
+
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: scripts/${{ matrix.scope }}-results.sarif
+
+      - name: Upload validation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-results-${{ matrix.scope }}
+          path: |
+            scripts/${{ matrix.scope }}-results.sarif
+            scripts/.contract_cache/
+
+  generate-report:
+    needs: [detect-scopes, validate-contracts]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download validation artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: validation-results-*
+
+      - name: Generate contract validation report
+        run: |
+          echo "## 📋 Contract Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Count total scopes
+          scopes_count=$(echo '${{ needs.detect-scopes.outputs.scopes }}' | jq length)
+          echo "### Scope Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total scopes validated**: $scopes_count" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for failures
+          if [ "${{ needs.validate-contracts.result }}" == "failure" ]; then
+            echo "### ❌ Validation Failures" >> $GITHUB_STEP_SUMMARY
+            echo "Some contract validations failed. Check the SARIF results for details." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Required Actions:**" >> $GITHUB_STEP_SUMMARY
+            echo "1. Review the validation failures in the SARIF reports" >> $GITHUB_STEP_SUMMARY
+            echo "2. Fix contract violations according to the suggested remediation" >> $GITHUB_STEP_SUMMARY
+            echo "3. Re-run validation to confirm compliance" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ All Validations Passed" >> $GITHUB_STEP_SUMMARY
+            echo "All contract validations completed successfully!" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Performance Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cache hit rate**: Available in individual scope logs" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total execution time**: See individual job logs" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Check if we already commented
+            const existingComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Contract Validation Report')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: `## 📋 Contract Validation Report
+            
+            **Status**: ${{ needs.validate-contracts.result == 'failure' && '❌ Failed' || '✅ Passed' }}
+            
+            **Scopes Validated**: ${{ fromJson(needs.detect-scopes.outputs.scopes).length }}
+            
+            ${{ needs.validate-contracts.result == 'failure' && 'Some contract validations failed. Check the SARIF results for details.' || 'All contract validations completed successfully!' }}
+            
+            [View full report](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `## 📋 Contract Validation Report
+            
+            **Status**: ${{ needs.validate-contracts.result == 'failure' && '❌ Failed' || '✅ Passed' }}
+            
+            **Scopes Validated**: ${{ fromJson(needs.detect-scopes.outputs.scopes).length }}
+            
+            ${{ needs.validate-contracts.result == 'failure' && 'Some contract validations failed. Check the SARIF results for details.' || 'All contract validations completed successfully!' }}
+            
+            [View full report](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+              });
+            }

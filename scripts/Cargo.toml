@@ -1,0 +1,28 @@
+[workspace]
+
+[package]
+name = "validate-object-names-contract"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+globset = "0.4"
+serde_json = "1.0"
+sha2 = "0.10"
+
+[[bin]]
+name = "validate_object_names_contract"
+path = "validate_object_names_contract.rs"
+
+[[bin]]
+name = "analyze_object_names_migration"
+path = "analyze_object_names_migration.rs"
+
+[[bin]]
+name = "switch_object_names_contract"
+path = "switch_object_names_contract.rs"
+
+[[bin]]
+name = "contract_validation_pipeline"
+path = "contract_validation_pipeline.rs"

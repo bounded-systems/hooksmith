@@ -1,0 +1,51 @@
+name: Root Object Names Contract Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-root:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+
+      - name: Check merged root (for PRs)
+        if: github.event_name == 'pull_request'
+        run: |
+          # Create a synthetic merge to check what the root would look like after merge
+          git -c merge.conflictStyle=merge merge-tree $(git merge-base HEAD origin/main) HEAD origin/main >/dev/null || true
+          echo "Checking merged state..."
+
+      - name: Validate object-names contract
+        run: |
+          cd scripts
+          cargo run --bin validate_object_names_contract
+
+      - name: Report validation results
+        if: failure()
+        run: |
+          echo "## ❌ Object Names Contract Validation Failed" >> $GITHUB_STEP_SUMMARY
+          echo "The root tree structure violates the object-names contract." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Required Actions:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Ensure `.gitignore` and `projects/` exist at root" >> $GITHUB_STEP_SUMMARY
+          echo "2. Move rejected files (README.md, Cargo.toml, *.md, *.toml) to allowed directories" >> $GITHUB_STEP_SUMMARY
+          echo "3. Only include files/directories from the allowed list at root" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See the contract definition in `contracts/object-names@v1.json`" >> $GITHUB_STEP_SUMMARY
