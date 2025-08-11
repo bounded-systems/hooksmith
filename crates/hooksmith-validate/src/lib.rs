@@ -3,16 +3,16 @@ use git2::{Repository, ObjectType, Tree, TreeWalkMode, TreeWalkResult};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use sha2::{Sha256, Digest};
+use std::cell::Cell;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Agreement {
     pub version: String,
     pub mode: String,               // "tree"
-    pub precedence: String,         // "allow-overrides-reject"
-    pub default_action: String,     // "reject"
-    pub allow_dirs: Option<Vec<String>>,
-    pub allow_files: Option<Vec<String>>,
+    pub policy: String,             // "allow-only"
+    pub allow_dirs: Vec<String>,
+    pub allow_files: Vec<String>,
     pub subject: Subject,
     pub digest: DigestField,
 }
@@ -40,24 +40,17 @@ pub struct Dispatcher;
 impl Dispatcher {
     pub fn discover(root: &std::path::Path) -> Result<Vec<std::path::PathBuf>> {
         let base = root.join(".hooksmith/agreements");
-        eprintln!("Looking for agreements in: {}", base.display());
         if !base.exists() { 
-            eprintln!("Directory does not exist");
             return Ok(vec![]); 
         }
         let mut out = vec![];
         for e in walkdir::WalkDir::new(base) {
             let e = e?;
-            eprintln!("Found: {} (is_file: {}, ext: {:?})", 
-                     e.path().display(), 
-                     e.file_type().is_file(),
-                     e.path().extension());
             if e.file_type().is_file() && e.path().extension().map(|x| x=="json").unwrap_or(false) {
                 out.push(e.into_path());
             }
         }
         out.sort();
-        eprintln!("Discovered {} agreement files", out.len());
         Ok(out)
     }
 
@@ -69,8 +62,8 @@ impl Dispatcher {
         if ag.mode != "tree" || ag.subject.scope != "top-level" {
             return Err(anyhow!("agreement not tree/top-level: {}", path.display()));
         }
-        if ag.precedence != "allow-overrides-reject" || ag.default_action != "reject" {
-            return Err(anyhow!("policy must be allow-overrides-reject + reject default"));
+        if ag.policy != "allow-only" {
+            return Err(anyhow!("policy must be allow-only"));
         }
         if ag.digest.algo != "sha256" { 
             return Err(anyhow!("unsupported digest algo")); 
@@ -131,33 +124,26 @@ impl Reporter {
     }
 }
 
-// ---------- Mandator (contract decision)
+// ---------- Mandator (streaming, no overrides, no recursion)
 pub struct Mandator;
 
 impl Mandator {
-    pub fn enforce(ag: &Agreement, sd: &SubjectData) -> Result<()> {
-        use regex::Regex;
-        let star = Regex::new(r"^\*[^/]*$")?;
-        
-        let empty_dirs: Vec<String> = vec![];
-        let empty_files: Vec<String> = vec![];
-        let allow_dirs = ag.allow_dirs.as_ref().unwrap_or(&empty_dirs);
-        let allow_files = ag.allow_files.as_ref().unwrap_or(&empty_files);
-        
-        for (name, kind) in &sd.names {
-            let allowed = match kind {
-                ObjectType::Tree => allow_dirs.iter().any(|d| d == name),
-                ObjectType::Blob => {
-                    allow_files.iter().any(|p| p == name)
-                    || allow_files.iter().any(|p| star.is_match(p) && star_match_root(p, name))
+    pub fn check_entry(allow_dirs: &[String], allow_files: &[String], name: &str, kind: ObjectType) -> bool {
+        match kind {
+            ObjectType::Tree => allow_dirs.iter().any(|d| d == name),
+            ObjectType::Blob => {
+                if allow_files.iter().any(|p| p == name) { 
+                    return true; 
                 }
-                _ => false
-            };
-            if !allowed { 
-                return Err(anyhow!("REJECT {}", name)); 
+                // root '*.ext' only
+                allow_files.iter().any(|p| {
+                    p.as_bytes().first() == Some(&b'*') && 
+                    !p.contains('/') && 
+                    star_match_root(p, name)
+                })
             }
+            _ => false
         }
-        Ok(())
     }
 }
 
@@ -202,12 +188,14 @@ pub struct Auditor;
 impl Auditor {
     pub fn digest(ag: &Agreement, sr: &SubjectReport) -> String {
         let subject = sr.names.join("\n");
+        let empty_dirs: Vec<String> = vec![];
+        let empty_files: Vec<String> = vec![];
         let rules   = serde_json::json!({
             "mode":"tree",
             "precedence":"allow-overrides-reject",
             "defaultAction":"reject",
-            "allow_dirs": ag.allow_dirs.as_ref().unwrap_or(&vec![]),
-            "allow_files": ag.allow_files.as_ref().unwrap_or(&vec![])
+            "allow_dirs": ag.allow_dirs.as_ref().unwrap_or(&empty_dirs),
+            "allow_files": ag.allow_files.as_ref().unwrap_or(&empty_files)
         }).to_string();
         
         let a = Sha256::digest(subject.as_bytes());
