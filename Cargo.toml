@@ -24,6 +24,7 @@ members = [
                 "crates/inspector",
                 "crates/hooks",
     "crates/standalone-auditor",
+    "crates/hooksmith-validate",
     "tools/migrate-to-monorepo",
     "tools",
 ]
