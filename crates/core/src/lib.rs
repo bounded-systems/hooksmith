@@ -3,6 +3,8 @@ use std::collections::HashMap;
 pub mod git_inspector;
 pub mod git_query;
 pub mod git_snapshot;
+pub mod git_pipeline;
+pub mod object_names_validator;
 
 #[derive(Debug, Clone)]
 pub struct TreeRuleSet {
