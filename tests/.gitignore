@@ -1,15 +1,15 @@
-# Test-specific artifacts
-target/
+# Test-specific artifacts (scoped to tests directory only)
+/target/
 *.exe
 *.bin
 *.out
 
-# Test output files
+# Test output files (scoped to tests directory only)
 *.test-output
 *.test-result
 *.test-log
 
-# Temporary files
+# Temporary files (scoped to tests directory only)
 *.tmp
 *.temp
 *.bak
@@ -19,26 +19,26 @@ target/
 .DS_Store
 Thumbs.db
 
-# IDE files
+# IDE files (scoped to tests directory only)
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Test data files
+# Test data files (scoped to tests directory only)
 test-data/
 fixtures/
 *.test-data
 *.fixture
 
-# Coverage reports
+# Coverage reports (scoped to tests directory only)
 coverage/
 *.lcov
 *.gcov
 *.gcda
 *.gcno
 
-# Test databases
+# Test databases (scoped to tests directory only)
 *.db
 *.sqlite
 *.test.db

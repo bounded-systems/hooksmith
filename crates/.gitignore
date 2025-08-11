@@ -1,5 +1,5 @@
-# Rust crate-specific artifacts
-target/
+# Rust crate-specific artifacts (scoped to crates directory only)
+/target/
 Cargo.lock
 *.rlib
 *.rmeta
@@ -8,7 +8,7 @@ Cargo.lock
 *.dll
 *.exe
 
-# IDE files
+# IDE files (scoped to crates directory only)
 .vscode/
 .idea/
 *.swp
@@ -18,15 +18,15 @@ Cargo.lock
 .DS_Store
 Thumbs.db
 
-# Build artifacts
+# Build artifacts (scoped to crates directory only)
 *.o
 *.a
 *.d
 
-# Generated files
+# Generated files (scoped to crates directory only)
 bindings.rs
 *.wit
 
-# Test artifacts
+# Test artifacts (scoped to crates directory only)
 test-*.rs
 *_test.rs

@@ -350,32 +350,74 @@ impl<'a> TriageOfficer<'a> {
             });
         }
         
-        // Validate all .gitignore files
-        match GitignoreValidator::validate_all_gitignores(self.root) {
-            Ok(validation_results) => {
-                for result in validation_results {
-                    if result.contains("OK") || result.contains("Found") {
-                        results.push(SarifResult {
-                            level: "note".into(),
-                            message: SarifMessage { 
-                                text: result.into() 
-                            },
-                            locations: vec![loc(&self.root.join(".gitignore"))]
-                        });
+        // ---------- Gitignore Validation (Five-Actor Integration)
+        
+        // Dispatcher: Schedule gitignore validation
+        let gitignore_path = self.root.join(".gitignore");
+        if gitignore_path.exists() {
+            // Researcher: Collect Git tree entries and gitignore content
+            let tree_entries = match Command::new("git")
+                .args(["ls-tree", "--name-only", "HEAD"])
+                .current_dir(self.root)
+                .output() {
+                Ok(output) => String::from_utf8_lossy(&output.stdout).lines().count(),
+                Err(_) => 0,
+            };
+
+            // Mandator: Validate gitignore content
+            match GitignoreValidator::validate_gitignore(self.root) {
+                Ok(_) => {
+                    // Auditor: Include gitignore digest in agreement digest
+                    if let Ok(digest) = GitignoreValidator::get_gitignore_digest(self.root) {
+                        // Validate minimality invariant
+                        match GitignoreValidator::validate_minimality_invariant(self.root) {
+                            Ok(violations) => {
+                                if violations.is_empty() {
+                                    results.push(SarifResult {
+                                        level: "note".into(),
+                                        message: SarifMessage { 
+                                            text: format!("gitignore validation: OK ({} tree entries, digest: {})", 
+                                                tree_entries, &digest[..8]).into() 
+                                        },
+                                        locations: vec![loc(&gitignore_path)],
+                                    });
+                                } else {
+                                    results.push(sarif_err(
+                                        format!("gitignore minimality violations: {}", 
+                                            violations.join(", ")), 
+                                        &gitignore_path
+                                    ));
+                                }
+                            }
+                            Err(e) => {
+                                results.push(sarif_err(
+                                    format!("gitignore minimality check failed: {}", e), 
+                                    &gitignore_path
+                                ));
+                            }
+                        }
                     } else {
-                        results.push(sarif_err(
-                            format!("gitignore validation: {}", result), 
-                            &self.root.join(".gitignore")
-                        ));
+                                            results.push(sarif_err(
+                        "gitignore digest computation failed".to_string(), 
+                        &gitignore_path
+                    ));
                     }
                 }
+                Err(e) => {
+                    results.push(sarif_err(
+                        format!("gitignore validation failed: {}", e), 
+                        &gitignore_path
+                    ));
+                }
             }
-            Err(e) => {
-                results.push(sarif_err(
-                    format!("gitignore validation error: {}", e), 
-                    &self.root.join(".gitignore")
-                ));
-            }
+        } else {
+            results.push(SarifResult {
+                level: "warning".into(),
+                message: SarifMessage { 
+                    text: "No .gitignore file found".into() 
+                },
+                locations: vec![loc(&gitignore_path)],
+            });
         }
 
         let sarif = Sarif {
@@ -399,7 +441,7 @@ impl<'a> TriageOfficer<'a> {
     }
 }
 
-// ---------- Gitignore Validator
+// ---------- Gitignore Validator (Five-Actor Integration)
 pub struct GitignoreValidator;
 
 impl GitignoreValidator {
@@ -409,9 +451,9 @@ impl GitignoreValidator {
             return Err(anyhow!("No .gitignore file found"));
         }
 
-        // Run xtask gen-gitignore --validate
+        // Run xtask gen-gitignore --validate --minimal
         let output = Command::new("cargo")
-            .args(["xtask", "gen-gitignore", "--validate"])
+            .args(["xtask", "gen-gitignore", "--validate", "--minimal"])
             .current_dir(root)
             .output()?;
 
@@ -448,6 +490,91 @@ impl GitignoreValidator {
         }
 
         Ok(results)
+    }
+
+    pub fn get_gitignore_digest(root: &std::path::Path) -> Result<String> {
+        let gitignore_path = root.join(".gitignore");
+        if !gitignore_path.exists() {
+            return Err(anyhow!("No .gitignore file found"));
+        }
+
+        let content = std::fs::read_to_string(gitignore_path)?;
+        let digest = Sha256::digest(content.as_bytes());
+        Ok(format!("{:x}", digest))
+    }
+
+    pub fn validate_minimality_invariant(root: &std::path::Path) -> Result<Vec<String>> {
+        let mut violations = Vec::new();
+        
+        // Get Git tree entries
+        let output = Command::new("git")
+            .args(["ls-tree", "--name-only", "HEAD"])
+            .current_dir(root)
+            .output()?;
+
+        if !output.status.success() {
+            return Err(anyhow!("Failed to get Git tree entries"));
+        }
+
+        let tree_entries = String::from_utf8_lossy(&output.stdout);
+        let entries: Vec<&str> = tree_entries.lines().collect();
+
+        // Read .gitignore content
+        let gitignore_path = root.join(".gitignore");
+        if !gitignore_path.exists() {
+            return Ok(violations);
+        }
+
+        let content = std::fs::read_to_string(gitignore_path)?;
+        
+        for line in content.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+
+            // Check for negation (not allowed)
+            if line.starts_with('!') {
+                violations.push(format!("Negation not allowed: {}", line));
+                continue;
+            }
+
+            // Check for complex globs beyond simple * suffix
+            if line.contains('*') && !line.starts_with('*') && !line.ends_with('*') && !line.contains("/*") {
+                violations.push(format!("Complex glob not allowed: {}", line));
+                continue;
+            }
+
+            // Check for non-root-anchored paths with /
+            if line.contains('/') && !line.starts_with('/') {
+                violations.push(format!("Non-root-anchored path: {}", line));
+                continue;
+            }
+
+            // Check if pattern matches any tree entry
+            let pattern_matches = entries.iter().any(|entry| {
+                if line.ends_with('/') {
+                    // Directory pattern
+                    *entry == &line[..line.len()-1]
+                } else if line.starts_with('/') {
+                    // Root-anchored pattern
+                    *entry == &line[1..]
+                } else if line.contains('*') {
+                    // Simple glob pattern
+                    let pattern = line.replace("*", "");
+                    entry.ends_with(&pattern)
+                } else {
+                    // Exact match
+                    *entry == line
+                }
+            });
+
+            if !pattern_matches {
+                violations.push(format!("Pattern doesn't match any tree entry: {}", line));
+            }
+        }
+
+        Ok(violations)
     }
 }
 

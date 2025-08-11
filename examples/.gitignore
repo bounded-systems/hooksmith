@@ -1,15 +1,15 @@
-# Example-specific artifacts
-target/
+# Example-specific artifacts (scoped to examples directory only)
+/target/
 *.exe
 *.bin
 *.out
 
-# Generated files
+# Generated files (scoped to examples directory only)
 *.generated
 *.output
 *.result
 
-# Temporary files
+# Temporary files (scoped to examples directory only)
 *.tmp
 *.temp
 *.bak
@@ -19,19 +19,19 @@ target/
 .DS_Store
 Thumbs.db
 
-# IDE files
+# IDE files (scoped to examples directory only)
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Example data files
+# Example data files (scoped to examples directory only)
 *.data
 *.cache
 *.db
 *.sqlite
 
-# Build artifacts
+# Build artifacts (scoped to examples directory only)
 build/
 dist/
 out/
