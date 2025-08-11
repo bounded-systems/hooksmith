@@ -8,7 +8,7 @@ fn main() -> Result<()> {
     println!("================================");
     
     // Load the minimal root contract
-    let contract_content = std::fs::read_to_string("../contracts/object-names@root-minimal.json")
+    let contract_content = std::fs::read_to_string("../.hooksmith/contracts/object-names@root-minimal.json")
         .context("Failed to read contract file")?;
     
     let contract: Value = serde_json::from_str(&contract_content)
