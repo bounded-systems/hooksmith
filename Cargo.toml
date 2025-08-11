@@ -23,7 +23,7 @@ members = [
                 "crates/snapshot",
                 "crates/inspector",
                 "crates/hooks",
-    "standalone-auditor",
+    "crates/standalone-auditor",
     "tools/migrate-to-monorepo",
 ]
 
