@@ -9,3 +9,7 @@ anyhow = "1.0"
 [[bin]]
 name = "prepare_root_cleanup"
 path = "prepare_root_cleanup.rs"
+
+[[bin]]
+name = "tree_cleanup"
+path = "tree_cleanup.rs"

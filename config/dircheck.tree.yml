@@ -1,0 +1,47 @@
+version: 1
+mode: tree               # implies: only top-level entries are considered
+default: reject
+precedence: allow-overrides-reject
+
+allow_dirs:
+  - .cargo
+  - .github
+  - .hooksmith
+  - .trunk
+  - config
+  - contracts
+  - contract_snapshots
+  - crates
+  - docs
+  - examples
+  - generated          # pick this one, drop gen/ + generated-sources/
+  - hooks
+  - schemas
+  - scripts
+  - tests
+  - wit
+  - worktree
+
+allow_files:
+  - README.md
+  - Cargo.toml
+  - rust-toolchain.toml
+  - rustfmt.toml
+  - clippy.toml
+  - deny.toml
+  - languages.yml
+  - .gitignore
+  - .gitattributes
+  - .dockerignore
+  - Dockerfile
+  - docker-compose.yml
+  - docker-bake.hcl
+  - build.rs
+  - "*.md"             # root-only markdown reports if you still want them
+
+assertions:
+  must_exist:
+    - README.md
+    - Cargo.toml
+  unique_files:
+    - README.md
