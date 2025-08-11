@@ -23,6 +23,7 @@ members = [
                 "crates/snapshot",
                 "crates/inspector",
                 "crates/hooks",
+    "standalone-auditor",
 ]
 
 [profile.dev]
@@ -226,6 +227,10 @@ path = "scripts/tree_object_stability_auditor.rs"
 [[bin]]
 name = "hooksmith-audit"
 path = "src/bin/hooksmith-audit.rs"
+
+[[bin]]
+name = "object-names-auditor"
+path = "src/bin/object-names-auditor.rs"
 
 [lib]
 name = "hooksmith"

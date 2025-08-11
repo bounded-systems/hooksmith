@@ -1,0 +1,59 @@
+{
+  "name": "object-names@root-minimal",
+  "version": "1.0.0",
+  "description": "Contract defining minimal root layout for break-off ready repository structure",
+  "$schema": "https://hooksmith.dev/schemas/contract.schema.json",
+  "schema": {
+    "$ref": "https://hooksmith.dev/schemas/object-names.schema.json"
+  },
+  "spec": {
+    "git": {
+      "tree": {
+        "objects": {
+          "names": {
+            "required": [
+              ".gitignore",
+              "crates"
+            ],
+            "allowed": [
+              ".gitignore",
+              ".gitattributes",
+              ".github",
+              "Cargo.toml",
+              "README.md",
+              "LICENSE*",
+              "rust-toolchain.toml",
+              "deny.toml",
+              "clippy.toml",
+              "rustfmt.toml",
+              "crates",
+              "docs",
+              "scripts",
+              "schemas"
+            ],
+            "rejected": [
+              "*.md",
+              "*.toml",
+              "*"
+            ],
+            "ignored": [
+              ".DS_Store",
+              "Thumbs.db",
+              ".idea",
+              ".vscode"
+            ],
+            "exceptions": [
+              "README.md",
+              "Cargo.toml",
+              "rust-toolchain.toml",
+              "deny.toml",
+              "clippy.toml",
+              "rustfmt.toml",
+              "LICENSE*"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
