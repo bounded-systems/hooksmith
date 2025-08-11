@@ -1,8 +1,7 @@
 {
   "version": "1.0.0",
   "mode": "tree",
-  "precedence": "allow-overrides-reject",
-  "default-action": "reject",
+  "policy": "allow-only",
   "allow-dirs": [
     ".cargo",
     ".github",
@@ -49,6 +48,6 @@
   },
   "digest": {
     "algo": "sha256",
-    "value": "40bac063a665d5bcccdc9d137bcc64a5ab1ba0613675b4e4f1f6ee75d6a73b96"
+    "value": "208433e5110dfc48c1ae82d67af3763ebd87d55bbff3a600d451b6412c807e67"
   }
 }

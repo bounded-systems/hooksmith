@@ -1,7 +1,6 @@
 use anyhow::{Result, anyhow};
-use git2::{Repository, ObjectType, Tree, TreeWalkMode, TreeWalkResult};
+use git2::{Repository, ObjectType, TreeWalkMode, TreeWalkResult};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 use sha2::{Sha256, Digest};
 use std::cell::Cell;
 
@@ -29,10 +28,7 @@ pub struct DigestField {
     pub value: String 
 }
 
-#[derive(Clone, Debug)]
-pub struct SubjectData { 
-    pub names: BTreeMap<String, ObjectType> 
-} // top-level only
+
 
 // ---------- Dispatcher (intake)
 pub struct Dispatcher;
@@ -72,7 +68,7 @@ impl Dispatcher {
     }
 }
 
-// ---------- Researcher
+// ---------- Researcher (single pass, streaming)
 pub struct Researcher { 
     repo: Repository 
 }
@@ -82,47 +78,74 @@ impl Researcher {
         Ok(Self { repo: Repository::discover(repo_root)? })
     }
 
-    pub fn materialize_top_level(&self, r#ref: &str) -> Result<SubjectData> {
+    pub fn validate_agreement(&self, ag: &Agreement, r#ref: &str) -> Result<ValidationResult> {
         let commit = self.repo.revparse_single(r#ref)?.peel_to_commit()?;
         let tree = commit.tree()?;
-        Ok(SubjectData { names: top_level(&tree)? })
+        
+        let mut auditor = Auditor::new();
+        let mut files = 0usize;
+        let mut dirs = 0usize;
+        let fail_reason = Cell::new(None::<String>);
+        
+        let result = tree.walk(TreeWalkMode::PreOrder, |root, e| {
+            if !root.is_empty() { 
+                return TreeWalkResult::Skip; 
+            }
+            
+            let (Some(name), Some(kind)) = (e.name(), e.kind()) else { 
+                return TreeWalkResult::Ok; 
+            };
+
+            // Mandator: fail fast
+            if !Mandator::check_entry(&ag.allow_dirs, &ag.allow_files, name, kind) {
+                fail_reason.set(Some(format!("REJECT {}", name)));
+                return TreeWalkResult::Abort;
+            }
+
+            // Reporter (counters only)
+            match kind { 
+                ObjectType::Tree => dirs += 1, 
+                ObjectType::Blob => files += 1, 
+                _ => {} 
+            }
+
+            // Auditor (streaming)
+            auditor.ingest_name(name);
+
+            TreeWalkResult::Ok
+        });
+        
+        if let Err(_) = result {
+            return Err(anyhow!("tree walk failed"));
+        }
+        
+        // Check for failure reason
+        if let Some(reason) = fail_reason.take() {
+            return Err(anyhow!(reason));
+        }
+        
+        // Finalize digest
+        let computed = auditor.finalize(&ag.allow_dirs, &ag.allow_files);
+        let digest_ok = computed == ag.digest.value;
+        
+        Ok(ValidationResult {
+            files,
+            dirs,
+            digest_ok,
+            computed_digest: computed,
+        })
     }
 }
 
-fn top_level(tree: &Tree) -> Result<BTreeMap<String, ObjectType>> {
-    let mut m = BTreeMap::new();
-    tree.walk(TreeWalkMode::PreOrder, |root, e| {
-        if !root.is_empty() { 
-            return TreeWalkResult::Skip; 
-        }
-        if let (Some(n), Some(k)) = (e.name(), e.kind()) { 
-            m.insert(n.to_string(), k); 
-        }
-        TreeWalkResult::Ok
-    }).map_err(|_| anyhow!("tree walk failed"))?;
-    Ok(m)
-}
-
-// ---------- Reporter (canonical subject summary for logs + digest)
-#[derive(Clone, Debug, Serialize)]
-pub struct SubjectReport {
-    pub total: usize,
+#[derive(Debug)]
+pub struct ValidationResult {
     pub files: usize,
     pub dirs: usize,
-    pub names: Vec<String>, // sorted
+    pub digest_ok: bool,
+    pub computed_digest: String,
 }
 
-pub struct Reporter;
 
-impl Reporter {
-    pub fn summarize(sd: &SubjectData) -> SubjectReport {
-        let mut names: Vec<_> = sd.names.keys().cloned().collect();
-        names.sort();
-        let files = sd.names.values().filter(|k| **k == ObjectType::Blob).count();
-        let dirs  = sd.names.values().filter(|k| **k == ObjectType::Tree).count();
-        SubjectReport { total: sd.names.len(), files, dirs, names }
-    }
-}
 
 // ---------- Mandator (streaming, no overrides, no recursion)
 pub struct Mandator;
@@ -182,36 +205,43 @@ fn star_match_root(pat: &str, name: &str) -> bool {
     pi == p.len()
 }
 
-// ---------- Auditor (digest over subject+rules)
-pub struct Auditor;
+// ---------- Auditor (order-independent digest; streaming)
+fn add256(acc: &mut [u8;32], h: [u8;32]) {
+    let mut carry = 0u16;
+    for i in (0..32).rev() {
+        let sum = acc[i] as u16 + h[i] as u16 + carry;
+        acc[i] = (sum & 0xff) as u8;
+        carry = sum >> 8;
+    }
+}
+
+pub struct Auditor { 
+    acc: [u8;32] 
+}
 
 impl Auditor {
-    pub fn digest(ag: &Agreement, sr: &SubjectReport) -> String {
-        let subject = sr.names.join("\n");
-        let empty_dirs: Vec<String> = vec![];
-        let empty_files: Vec<String> = vec![];
-        let rules   = serde_json::json!({
-            "mode":"tree",
-            "precedence":"allow-overrides-reject",
-            "defaultAction":"reject",
-            "allow_dirs": ag.allow_dirs.as_ref().unwrap_or(&empty_dirs),
-            "allow_files": ag.allow_files.as_ref().unwrap_or(&empty_files)
-        }).to_string();
-        
-        let a = Sha256::digest(subject.as_bytes());
-        let b = Sha256::digest(rules.as_bytes());
-        let mut h = Sha256::new();
-        h.update(format!("{:x}\n{:x}", a, b));
-        format!("{:x}", h.finalize())
+    pub fn new() -> Self { 
+        Self { acc: [0u8;32] } 
     }
-
-    pub fn verify(ag: &Agreement, sr: &SubjectReport) -> Result<()> {
-        let c = Self::digest(ag, sr);
-        if c == ag.digest.value { 
-            Ok(()) 
-        } else { 
-            Err(anyhow!("digest mismatch: computed={}, recorded={}", c, ag.digest.value)) 
-        }
+    
+    pub fn ingest_name(&mut self, name: &str) {
+        let h = Sha256::digest(name.as_bytes());
+        add256(&mut self.acc, h.into());
+    }
+    
+    pub fn finalize(self, allow_dirs: &[String], allow_files: &[String]) -> String {
+        let rules = serde_json::json!({
+            "mode":"tree",
+            "policy":"allow-only",
+            "allow_dirs": allow_dirs,
+            "allow_files": allow_files
+        }).to_string();
+        let h_rules = Sha256::digest(rules.as_bytes());
+        let mut outer = Sha256::new();
+        outer.update(hex::encode(self.acc));
+        outer.update(b"\n");
+        outer.update(format!("{:x}", h_rules));
+        format!("{:x}", outer.finalize())
     }
 }
 
@@ -293,29 +323,28 @@ impl<'a> TriageOfficer<'a> {
                 }
             };
             
-            let sd = match self.researcher.materialize_top_level(refspec) { 
-                Ok(s) => s, 
+            let validation = match self.researcher.validate_agreement(&ag, refspec) { 
+                Ok(v) => v, 
                 Err(e) => {
-                    results.push(sarif_err(format!("research: {}", e), &p)); 
+                    results.push(sarif_err(format!("validation: {}", e), &p)); 
                     continue; 
                 }
             };
             
-            let sr = Reporter::summarize(&sd);
-            
-            if let Err(e) = Mandator::enforce(&ag, &sd) {
-                results.push(sarif_err(format!("mandate: {}", e), &p)); 
-                continue;
-            }
-            
-            if let Err(e) = Auditor::verify(&ag, &sr) {
-                results.push(sarif_err(format!("audit: {}", e), &p)); 
+            if !validation.digest_ok {
+                results.push(sarif_err(
+                    format!("digest mismatch: computed={}, recorded={}", 
+                           validation.computed_digest, ag.digest.value), 
+                    &p
+                )); 
                 continue;
             }
             
             results.push(SarifResult {
                 level: "note".into(),
-                message: SarifMessage { text: "agreement ok".into() },
+                message: SarifMessage { 
+                    text: format!("agreement ok ({} files, {} dirs)", validation.files, validation.dirs).into() 
+                },
                 locations: vec![loc(&p)],
             });
         }

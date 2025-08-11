@@ -1,15 +1,16 @@
 # Agreements Validation System
 
-A production-ready, five-actor validation system that enforces repository structure through Git-only introspection and deterministic digest verification.
+A production-ready, streaming validation system that enforces repository structure through Git-only introspection with order-independent digest verification.
 
 ## Overview
 
 The Agreements Validation System provides:
 - **Top-level only validation**: No recursion, only root entries
 - **Git-only operations**: Pure Git object inspection via libgit2
-- **Deterministic digests**: SHA-256 over subject + canonicalized rules
+- **Order-independent digests**: Commutative SHA-256 sum over names + rules
 - **SARIF output**: Standardized results for CI integration
-- **Five-actor architecture**: Dispatcher → Researcher → Reporter → Mandator → Auditor → Triage Officer
+- **Streaming architecture**: Single-pass, constant-memory validation
+- **No overrides**: Allow-list only, default reject
 
 ## Architecture
 
