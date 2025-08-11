@@ -1,0 +1,922 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0-rtm.5.json",
+  "runs": [
+    {
+      "$schema": "https://json.schemastore.org/sarif-2.1.0-rtm.5.json",
+      "runs": [
+        {
+          "results": [
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: .cargo"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: .dockerignore"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: .github"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: .gitmodules"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: .hooksmith"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: .trunk"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: .wb"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: .workbloom"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: .worktree-config.json"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: .worktree-config.jsonc"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: ALL_PRS_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: BINARY_CLEANUP_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: BRANCH_MERGE_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: CODEOWNERS"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: DIRCHECK_IMPLEMENTATION_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: Dockerfile"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: FINAL_PR_APPROVAL_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: FINAL_PR_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: FINAL_UPSTREAM_MERGE_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: GITHUB_ACTIONS_WORKFLOW_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: GIT_SCOPE_IMPLEMENTATION_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: GIT_VIEW_SCOPES.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: HOOKSMITH_COMPLETE_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: MERGE_CONFLICTS_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: PR_MERGE_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: PR_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: PUSH_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: README_2025-08-08.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: README_DIRCHECK.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: SHELL_TO_RUST_CONVERSION_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: SHELL_TO_RUST_MIGRATION_COMPLETE.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: SHELL_TO_RUST_MIGRATION_PROGRESS.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: SHELL_TO_RUST_MIGRATION_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: WORKTREE_MIGRATION_COMPLETE.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: WORKTREE_MIGRATION_SUMMARY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: WORKTREE_SYNC_STRATEGY.md"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: agreement.json"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: config"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: contract_snapshots"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: contracts"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: crates"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: docker-bake.hcl"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: docker-compose.yml"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: examples"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: gen"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: generated-sources"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: hooks"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: languages.yml"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: lefthook.yml"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: schemas"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: scripts"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: sha_mapping.txt"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: test-agreement.txt"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: test-bad-commit.txt"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: test-enhanced-gen-files"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: test-file.txt"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: test-prepare-msg.txt"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: test.gitattributes"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: test_files.txt"
+              }
+            },
+            {
+              "level": "error",
+              "locations": [
+                {
+                  "physicalLocation": {
+                    "artifactLocation": {
+                      "uri": "root"
+                    }
+                  }
+                }
+              ],
+              "message": {
+                "text": "not in allowed set: worktree-lifecycle"
+              }
+            }
+          ],
+          "tool": {
+            "driver": {
+              "name": "enhanced-object-names-contract-validator",
+              "version": "1.0.0"
+            }
+          }
+        }
+      ],
+      "version": "2.1.0"
+    }
+  ],
+  "version": "2.1.0"
+}

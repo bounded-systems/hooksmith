@@ -7,4 +7,4 @@ description = "Validate directory structure using git ls-tree"
 license = "MIT"
 
 [dependencies]
-dircheck-core = { path = "../core" }
+hooksmith-core = { path = "../core" }
