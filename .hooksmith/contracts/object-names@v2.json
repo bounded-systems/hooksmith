@@ -1,0 +1,30 @@
+{
+  "name": "object-names",
+  "version": "2.0.0",
+  "description": "Monorepo root policy (minimal root)",
+  "$schema": "https://hooksmith.dev/schemas/contract.schema.json",
+  "schema": { "$ref": "https://hooksmith.dev/schemas/object-names.schema.json" },
+  "spec": {
+    "git": {
+      "tree": {
+        "objects": {
+          "names": {
+            "required": [ ".gitignore", ".hooksmith", "Cargo.toml" ],
+            "allowed": [
+              ".gitignore", ".gitattributes",
+              ".github", ".hooksmith", ".cargo", ".trunk",
+              "Cargo.toml", "Cargo.lock",
+              "README.md", "LICENSE",
+              "rust-toolchain.toml", "rustfmt.toml", "clippy.toml", "deny.toml",
+              "lefthook.yml",
+              "crates", "apps", "tools", "infra", "docs", "schemas",
+              "examples", "tests", "hooks", "scripts", "config"
+            ],
+            "rejected": [ "*.rs", "*.log", "*.tmp", "gen", "generated-sources", "languages.yml", "build.rs", "src" ],
+            "ignored": [ ".DS_Store", "Thumbs.db", ".idea", ".vscode" ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,63 @@
+name: contract-root
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  validate-root:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # to upload SARIF
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Resolve tree SHA for tip
+        id: tree
+        run: echo "tree=$(git rev-parse ${{ github.sha }}^{tree})" >> "$GITHUB_OUTPUT"
+
+      - name: Build four-actor pipeline
+        run: |
+          cd scripts
+          cargo build --release --bin four_actor_pipeline
+
+      - name: Create output directory
+        run: mkdir -p .hooksmith/out
+
+      - name: Run researcher → reporter → mandator → auditor
+        run: |
+          T="${{ steps.tree.outputs.tree }}"
+          cd scripts
+          
+          # Run the four-actor pipeline
+          ./target/release/four_actor_pipeline \
+            ../.hooksmith/contracts/object-names@v2.json \
+            "$T" \
+          > ../.hooksmith/out/pipeline.ndjson 2> ../.hooksmith/out/sarif.json
+          
+          # Extract SARIF from stderr
+          tail -n +3 ../.hooksmith/out/sarif.json > ../.hooksmith/out/results.sarif
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: .hooksmith/out/results.sarif
+
+      - name: Fail on violations
+        run: |
+          if [ -s .hooksmith/out/pipeline.ndjson ]; then
+            echo "Root policy violations detected"
+            echo "First 25 violations:"
+            tail -n +$(($(grep -c '"kind"' .hooksmith/out/pipeline.ndjson) + 1)) .hooksmith/out/pipeline.ndjson | head -25 || true
+            exit 1
+          else
+            echo "✅ No root policy violations found"
+          fi
