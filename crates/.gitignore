@@ -1,0 +1,32 @@
+# Rust crate-specific artifacts
+target/
+Cargo.lock
+*.rlib
+*.rmeta
+*.so
+*.dylib
+*.dll
+*.exe
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.o
+*.a
+*.d
+
+# Generated files
+bindings.rs
+*.wit
+
+# Test artifacts
+test-*.rs
+*_test.rs

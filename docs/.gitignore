@@ -1,0 +1,43 @@
+# Documentation build artifacts
+_build/
+site/
+dist/
+build/
+
+# Generated documentation
+*.html
+*.pdf
+*.epub
+*.mdx
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node.js (if using any JS-based docs tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (if using Sphinx or similar)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv

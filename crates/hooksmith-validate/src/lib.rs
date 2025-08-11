@@ -3,6 +3,7 @@ use git2::{Repository, ObjectType, TreeWalkMode, TreeWalkResult};
 use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
 use std::cell::Cell;
+use std::process::Command;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -349,6 +350,34 @@ impl<'a> TriageOfficer<'a> {
             });
         }
         
+        // Validate all .gitignore files
+        match GitignoreValidator::validate_all_gitignores(self.root) {
+            Ok(validation_results) => {
+                for result in validation_results {
+                    if result.contains("OK") || result.contains("Found") {
+                        results.push(SarifResult {
+                            level: "note".into(),
+                            message: SarifMessage { 
+                                text: result.into() 
+                            },
+                            locations: vec![loc(&self.root.join(".gitignore"))]
+                        });
+                    } else {
+                        results.push(sarif_err(
+                            format!("gitignore validation: {}", result), 
+                            &self.root.join(".gitignore")
+                        ));
+                    }
+                }
+            }
+            Err(e) => {
+                results.push(sarif_err(
+                    format!("gitignore validation error: {}", e), 
+                    &self.root.join(".gitignore")
+                ));
+            }
+        }
+
         let sarif = Sarif {
             version: "2.1.0".into(),
             runs: vec![SarifRun {
@@ -367,6 +396,58 @@ impl<'a> TriageOfficer<'a> {
         // nonzero exit on any error-level results
         let fail = sarif.runs[0].results.iter().any(|r| r.level != "note");
         Ok(if fail { 1 } else { 0 })
+    }
+}
+
+// ---------- Gitignore Validator
+pub struct GitignoreValidator;
+
+impl GitignoreValidator {
+    pub fn validate_gitignore(root: &std::path::Path) -> Result<bool> {
+        let gitignore_path = root.join(".gitignore");
+        if !gitignore_path.exists() {
+            return Err(anyhow!("No .gitignore file found"));
+        }
+
+        // Run xtask gen-gitignore --validate
+        let output = Command::new("cargo")
+            .args(["xtask", "gen-gitignore", "--validate"])
+            .current_dir(root)
+            .output()?;
+
+        if output.status.success() {
+            Ok(true)
+        } else {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            Err(anyhow!("Gitignore validation failed: {}", stderr))
+        }
+    }
+
+    pub fn validate_all_gitignores(root: &std::path::Path) -> Result<Vec<String>> {
+        let mut results = Vec::new();
+        
+        // Check root .gitignore
+        if let Err(e) = Self::validate_gitignore(root) {
+            results.push(format!("Root .gitignore: {}", e));
+        } else {
+            results.push("Root .gitignore: OK".to_string());
+        }
+
+        // Check subdirectory .gitignore files
+        let subdirs = ["crates", "docs", "scripts", "examples", "tests", "tools"];
+        for subdir in &subdirs {
+            let subdir_path = root.join(subdir);
+            if subdir_path.exists() {
+                let gitignore_path = subdir_path.join(".gitignore");
+                if gitignore_path.exists() {
+                    results.push(format!("{}/.gitignore: Found", subdir));
+                } else {
+                    results.push(format!("{}/.gitignore: Missing", subdir));
+                }
+            }
+        }
+
+        Ok(results)
     }
 }
 

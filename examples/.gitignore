@@ -1,0 +1,37 @@
+# Example-specific artifacts
+target/
+*.exe
+*.bin
+*.out
+
+# Generated files
+*.generated
+*.output
+*.result
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Example data files
+*.data
+*.cache
+*.db
+*.sqlite
+
+# Build artifacts
+build/
+dist/
+out/

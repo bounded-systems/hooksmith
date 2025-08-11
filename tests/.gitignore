@@ -1,0 +1,44 @@
+# Test-specific artifacts
+target/
+*.exe
+*.bin
+*.out
+
+# Test output files
+*.test-output
+*.test-result
+*.test-log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test data files
+test-data/
+fixtures/
+*.test-data
+*.fixture
+
+# Coverage reports
+coverage/
+*.lcov
+*.gcov
+*.gcda
+*.gcno
+
+# Test databases
+*.db
+*.sqlite
+*.test.db

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Hooksmith Generated Files",
+  "description": "Registry of generated files with stable slugs and checksums for validation and regeneration.",
+  
+  // All files listed here are assumed to be generated
+  // No redundant generated: true flags needed
+  "files": [
+    {
+      "slug": "readme",
+      "path": "README.md",
+      "type": "md",
+      "checksum": "🔧 Generating test-enhanced-gen-files/README.md...
+✅ Generated test-enhanced-gen-files/README.md with checksum: ee863f12
+ee863f12"
+    },
+    {
+      "slug": "gitignore",
+      "path": ".gitignore",
+      "type": "gitignore",
+      "checksum": "🔧 Generating test-enhanced-gen-files/.gitignore...
+✅ Generated test-enhanced-gen-files/.gitignore with checksum: 092de5be
+092de5be"
+    },
+    {
+      "slug": "cargo-toml",
+      "path": "Cargo.toml",
+      "type": "toml",
+      "checksum": "🔧 Generating test-enhanced-gen-files/Cargo.toml...
+✅ Generated test-enhanced-gen-files/Cargo.toml with checksum: 5fef4679
+5fef4679"
+    },
+    {
+      "slug": "config-json",
+      "path": "config.json",
+      "type": "json",
+      "checksum": "🔧 Generating test-enhanced-gen-files/config.json...
+✅ Generated test-enhanced-gen-files/config.json with checksum: 9743724d
+9743724d"
+    },
+    {
+      "slug": "hooksmith-wit",
+      "path": "hooksmith.wit",
+      "type": "wit",
+      "checksum": "🔧 Generating test-enhanced-gen-files/hooksmith.wit...
+✅ Generated test-enhanced-gen-files/hooksmith.wit with checksum: e70c04d6
+e70c04d6"
+    }
+  ],
+  "ignore": {
+    "dirs": [
+      "target/",
+      "dist/",
+      "node_modules/",
+      "logs/",
+      "status-trends/",
+      "generated_file_demo/",
+      ".cargo/",
+      ".trunk/",
+      ".hooks/",
+      ".git/"
+    ],
+    "patterns": [
+      "*.lock",
+      "*.jsonl"
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+# NOTE: This file is DEPRECATED and will be removed
+# We are migrating to custom Rust-based Git hooks that call our validation workflow
+# The new hooks are located in .git/hooks/ and call binaries in target/debug/
+# 
+# TODO: Remove this file and lefthook dependency once migration is complete
+
+# Lefthook configuration for Hooksmith
+# This file configures Git hooks using Lefthook
+# 
+# NOTE: All hooks are currently set to no-op mode for development
+# To re-enable hooks, replace the "echo" commands with actual implementations
+
+# Pre-commit hooks - run before each commit
+pre-commit:
+  parallel: true
+  commands:
+    # Format Rust code (no-op)
+    rustfmt:
+      glob: "*.rs"
+      run: echo "✅ rustfmt hook (no-op mode) - would format Rust code"
+    
+    # Lint Rust code (no-op)
+    clippy:
+      glob: "*.rs"
+      run: echo "✅ clippy hook (no-op mode) - would lint Rust code"
+    
+    # Check .gitattributes validation (no-op)
+    gitattributes:
+      run: echo "✅ gitattributes hook (no-op mode) - would validate .gitattributes entries"
+    
+    # Validate file type policy (no-op)
+    file-type-policy:
+      run: echo "✅ file-type-policy hook (no-op mode) - would validate file types"
+
+# Pre-push hooks - run before pushing
+pre-push:
+  parallel: true
+  commands:
+    # Validate .gitattributes is up to date (no-op)
+    gitattributes-sync:
+      run: echo "✅ gitattributes-sync hook (no-op mode) - would check .gitattributes sync"
+    
+    # Run tests (no-op)
+    test:
+      run: echo "✅ test hook (no-op mode) - would run cargo test"
+    
+    # Check for any remaining issues (no-op)
+    final-check:
+      run: echo "✅ final-check hook (no-op mode) - would perform final validation"
+
+# Post-commit hooks - run after commit
+post-commit:
+  commands:
+    # Show language statistics (no-op)
+    language-stats:
+      run: echo "✅ language-stats hook (no-op mode) - would show language statistics"

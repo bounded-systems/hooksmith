@@ -1,0 +1,42 @@
+# Script-specific artifacts
+target/
+*.exe
+*.bin
+*.out
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Shell script artifacts
+*.sh.bak
+*.bash.bak
+
+# Python artifacts (if any Python scripts)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv
+
+# Node.js artifacts (if any JS scripts)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

@@ -1,0 +1,36 @@
+# Tool-specific artifacts
+target/
+*.exe
+*.bin
+*.out
+
+# Build artifacts
+build/
+dist/
+out/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tool configuration files
+*.config.local
+*.env.local
+*.local
+
+# Generated files
+*.generated
+*.output
+*.result
