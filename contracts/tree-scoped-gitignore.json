@@ -1,0 +1,53 @@
+{
+  "name": "tree-scoped-gitignore",
+  "version": "1.0.0",
+  "description": "Tree-scoped .gitignore files with local-only rules and no recursion",
+  "$schema": "https://hooksmith.dev/schemas/contract.schema.json",
+  "schema": {
+    "$ref": "https://hooksmith.dev/schemas/tree-scoped-gitignore.schema.json"
+  },
+  "spec": {
+    "gitignore": {
+      "rules": {
+        "scope": "local",
+        "no_recursive": true,
+        "must_match": true,
+        "generated": true
+      },
+      "patterns": {
+        "allowed": [
+          "/target/",
+          "/node_modules/",
+          "/dist/",
+          "/build/",
+          "/.cargo/",
+          "/.rustc_info.json",
+          "/Cargo.lock",
+          "/*.log",
+          "/*.tmp",
+          "/*.cache",
+          "/.DS_Store",
+          "/Thumbs.db"
+        ],
+        "required": [
+          "/target/"
+        ],
+        "rejected": [
+          "**/*",
+          "*.rs",
+          "*.md",
+          "*.toml",
+          "*.json",
+          "*.yml",
+          "*.yaml"
+        ]
+      },
+      "validation": {
+        "local_only": true,
+        "no_wildcards": false,
+        "must_exist": true,
+        "max_patterns": 20
+      }
+    }
+  }
+}

@@ -1716,6 +1716,30 @@ enum Commands {
         #[arg(long)]
         write: bool,
     },
+    /// Generate tree-scoped .gitignore files (local-only, no recursion)
+    GenTreeGitignore {
+        /// Root directory to start from
+        #[arg(long, default_value = ".")]
+        root: String,
+        /// Whether to validate against existing .gitignore files
+        #[arg(long)]
+        validate: bool,
+        /// Show what would be generated without writing
+        #[arg(long)]
+        dry_run: bool,
+        /// Generate .gitignore files for all directories
+        #[arg(long)]
+        all: bool,
+        /// Specific directory to generate .gitignore for
+        #[arg(long)]
+        dir: Option<String>,
+        /// Whether to enforce local-only patterns (no recursion)
+        #[arg(long, default_value = "true")]
+        local_only: bool,
+        /// Maximum number of patterns per .gitignore file
+        #[arg(long, default_value = "20")]
+        max_patterns: usize,
+    },
     /// Validate static hook definitions
     ValidateStaticHooks {
         /// Whether to exit with error on validation failures
@@ -2579,6 +2603,9 @@ async fn main() -> Result<()> {
         }
         Commands::GenGitignore { output, validate, dry_run, minimal, write } => {
             generate_gitignore(&output, validate, dry_run, minimal, write)?;
+        }
+        Commands::GenTreeGitignore { root, validate, dry_run, all, dir, local_only, max_patterns } => {
+            generate_tree_gitignore(&root, validate, dry_run, all, dir.as_deref(), local_only, max_patterns)?;
         }
         Commands::ValidateStaticHooks {
             strict,
@@ -10755,4 +10782,281 @@ fn generate_diff(existing: &str, expected: &str) -> String {
 fn generate_minimal_gitignore() -> Result<String> {
     // This is now a wrapper around the new canonical function
     generate_canonical_gitignore()
+}
+
+fn generate_tree_gitignore(
+    root: &str,
+    validate: bool,
+    dry_run: bool,
+    all: bool,
+    dir: Option<&str>,
+    local_only: bool,
+    max_patterns: usize,
+) -> Result<()> {
+    let root_path = Path::new(root);
+    if !root_path.exists() {
+        return Err(anyhow::anyhow!("Root directory '{}' does not exist", root));
+    }
+
+    if !root_path.is_dir() {
+        return Err(anyhow::anyhow!("Root path '{}' is not a directory", root));
+    }
+
+    let mut generated_count = 0;
+    let mut skipped_count = 0;
+
+    if let Some(specific_dir) = dir {
+        // Generate for specific directory
+        let dir_path = root_path.join(specific_dir);
+        if !dir_path.exists() || !dir_path.is_dir() {
+            return Err(anyhow::anyhow!("Directory '{}' does not exist", specific_dir));
+        }
+        
+        match generate_gitignore_for_directory(&dir_path, local_only, max_patterns, dry_run) {
+            Ok(true) => {
+                generated_count += 1;
+                println!("✅ Generated .gitignore for {}", specific_dir);
+            }
+            Ok(false) => {
+                skipped_count += 1;
+                println!("⏭️  Skipped .gitignore for {} (no untracked files)", specific_dir);
+            }
+            Err(e) => {
+                println!("❌ Failed to generate .gitignore for {}: {}", specific_dir, e);
+                if !dry_run {
+                    return Err(e);
+                }
+            }
+        }
+    } else if all {
+        // Generate for all directories recursively
+        for entry in walkdir::WalkDir::new(root_path)
+            .min_depth(1)
+            .max_depth(10)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            if entry.file_type().is_dir() {
+                let dir_path = entry.path();
+                match generate_gitignore_for_directory(dir_path, local_only, max_patterns, dry_run) {
+                    Ok(true) => {
+                        generated_count += 1;
+                        let relative_path = dir_path.strip_prefix(root_path).unwrap_or(dir_path);
+                        println!("✅ Generated .gitignore for {}", relative_path.display());
+                    }
+                    Ok(false) => {
+                        skipped_count += 1;
+                    }
+                    Err(e) => {
+                        let relative_path = dir_path.strip_prefix(root_path).unwrap_or(dir_path);
+                        println!("❌ Failed to generate .gitignore for {}: {}", relative_path.display(), e);
+                        if !dry_run {
+                            return Err(e);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        // Generate for root directory only
+        match generate_gitignore_for_directory(root_path, local_only, max_patterns, dry_run) {
+            Ok(true) => {
+                generated_count += 1;
+                println!("✅ Generated .gitignore for root directory");
+            }
+            Ok(false) => {
+                skipped_count += 1;
+                println!("⏭️  Skipped .gitignore for root directory (no untracked files)");
+            }
+            Err(e) => {
+                println!("❌ Failed to generate .gitignore for root directory: {}", e);
+                if !dry_run {
+                    return Err(e);
+                }
+            }
+        }
+    }
+
+    println!("\n📊 Summary:");
+    println!("   Generated: {}", generated_count);
+    println!("   Skipped: {}", skipped_count);
+
+    if validate && !dry_run {
+        println!("\n🔍 Validating generated .gitignore files...");
+        validate_tree_gitignore_files(root_path, all, dir)?;
+    }
+
+    Ok(())
+}
+
+fn generate_gitignore_for_directory(
+    dir_path: &Path,
+    local_only: bool,
+    max_patterns: usize,
+    dry_run: bool,
+) -> Result<bool> {
+    // Get untracked files in this directory only (no recursion)
+    let untracked_files = get_untracked_files_in_directory(dir_path)?;
+    
+    if untracked_files.is_empty() {
+        return Ok(false); // No .gitignore needed
+    }
+
+    // Filter and generate patterns
+    let mut patterns = Vec::new();
+    for file in untracked_files.iter().take(max_patterns) {
+        if let Some(file_name) = file.file_name() {
+            let pattern = if file.is_dir() {
+                format!("/{}/", file_name.to_string_lossy())
+            } else {
+                format!("/{}", file_name.to_string_lossy())
+            };
+            patterns.push(pattern);
+        }
+    }
+
+    if patterns.is_empty() {
+        return Ok(false);
+    }
+
+    // Sort patterns for consistent output
+    patterns.sort();
+
+    // Generate .gitignore content
+    let mut content = String::new();
+    content.push_str("# Tree-scoped .gitignore (local-only, no recursion)\n");
+    content.push_str("# Generated by: cargo xtask gen-tree-gitignore\n");
+    content.push_str("# Scope: local directory only\n\n");
+    
+    for pattern in patterns {
+        content.push_str(&pattern);
+        content.push('\n');
+    }
+
+    let gitignore_path = dir_path.join(".gitignore");
+    
+    if dry_run {
+        println!("Would generate .gitignore for {}: {}", dir_path.display(), gitignore_path.display());
+        println!("Content preview:");
+        println!("{}", content);
+        return Ok(true);
+    }
+
+    // Write .gitignore file
+    std::fs::write(&gitignore_path, content)?;
+    Ok(true)
+}
+
+fn get_untracked_files_in_directory(dir_path: &Path) -> Result<Vec<PathBuf>> {
+    let mut untracked_files = Vec::new();
+    
+    // Change to the directory to run git commands
+    let original_dir = std::env::current_dir()?;
+    std::env::set_current_dir(dir_path)?;
+    
+    // Get untracked files in this directory only
+    let output = Command::new("git")
+        .args(&["ls-files", "--others", "--exclude-standard"])
+        .output()?;
+    
+    if output.status.success() {
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        for line in output_str.lines() {
+            if !line.is_empty() {
+                let file_path = Path::new(line);
+                // Only include files in the current directory (not subdirectories)
+                if file_path.parent().is_none() || file_path.parent().unwrap() == Path::new(".") || !file_path.to_string_lossy().contains('/') {
+                    untracked_files.push(file_path.to_path_buf());
+                }
+            }
+        }
+    }
+    
+    // Restore original directory
+    std::env::set_current_dir(original_dir)?;
+    
+    Ok(untracked_files)
+}
+
+fn validate_tree_gitignore_files(
+    root_path: &Path,
+    all: bool,
+    dir: Option<&str>,
+) -> Result<()> {
+    let mut validation_errors = Vec::new();
+    
+    if let Some(specific_dir) = dir {
+        let dir_path = root_path.join(specific_dir);
+        if let Err(e) = validate_single_gitignore_file(&dir_path.join(".gitignore")) {
+            validation_errors.push(format!("{}: {}", specific_dir, e));
+        }
+    } else if all {
+        for entry in walkdir::WalkDir::new(root_path)
+            .min_depth(1)
+            .max_depth(10)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            if entry.file_type().is_dir() {
+                let gitignore_path = entry.path().join(".gitignore");
+                if gitignore_path.exists() {
+                    if let Err(e) = validate_single_gitignore_file(&gitignore_path) {
+                        let relative_path = entry.path().strip_prefix(root_path).unwrap_or(entry.path());
+                        validation_errors.push(format!("{}: {}", relative_path.display(), e));
+                    }
+                }
+            }
+        }
+    } else {
+        let gitignore_path = root_path.join(".gitignore");
+        if gitignore_path.exists() {
+            if let Err(e) = validate_single_gitignore_file(&gitignore_path) {
+                validation_errors.push(format!("root: {}", e));
+            }
+        }
+    }
+    
+    if validation_errors.is_empty() {
+        println!("✅ All .gitignore files validated successfully");
+    } else {
+        println!("❌ Validation errors found:");
+        for error in validation_errors {
+            println!("   {}", error);
+        }
+        return Err(anyhow::anyhow!("Gitignore validation failed"));
+    }
+    
+    Ok(())
+}
+
+fn validate_single_gitignore_file(gitignore_path: &Path) -> Result<()> {
+    let content = std::fs::read_to_string(gitignore_path)?;
+    let lines: Vec<&str> = content.lines().collect();
+    
+    // Basic validation rules
+    for (line_num, line) in lines.iter().enumerate() {
+        let line_num = line_num + 1;
+        
+        // Skip comments and empty lines
+        if line.trim().is_empty() || line.trim().starts_with('#') {
+            continue;
+        }
+        
+        // Check for recursive patterns (not allowed in tree-scoped)
+        if line.contains("**") {
+            return Err(anyhow::anyhow!("Line {}: Recursive pattern '{}' not allowed in tree-scoped .gitignore", line_num, line));
+        }
+        
+        // Check for patterns that don't start with /
+        if !line.starts_with('/') {
+            return Err(anyhow::anyhow!("Line {}: Pattern '{}' must start with '/' for local scope", line_num, line));
+        }
+        
+        // Check for patterns that are too generic
+        if *line == "/*" || *line == "/.*" {
+            return Err(anyhow::anyhow!("Line {}: Too generic pattern '{}' not allowed", line_num, line));
+        }
+    }
+    
+    Ok(())
 }
