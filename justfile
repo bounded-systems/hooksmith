@@ -2,6 +2,9 @@
 # Uses bash with strict flags
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
+# Main package name (defined by default-members in Cargo.toml)
+MAIN_PKG := "hooksmith"
+
 # If not in a dev shell, re-enter via `nix develop` and re-run the target
 _enter_dev := '''
 if [[ -z "${IN_NIX_SHELL:-}" ]]; then
@@ -20,9 +23,12 @@ default:
     @echo "  just info              - Show environment information"
     @echo ""
     @echo "🦀 Rust Development:"
-    @echo "  just build             - Build workspace (cargo)"
-    @echo "  just test              - Run tests"
-    @echo "  just check             - Quick check without building"
+    @echo "  just build             - Build main package ({{MAIN_PKG}})"
+    @echo "  just run [ARGS]        - Run main package with args"
+    @echo "  just test              - Test main package"
+    @echo "  just check             - Quick check main package"
+    @echo "  just build-all         - Build entire workspace"
+    @echo "  just test-all          - Test entire workspace"
     @echo "  just clippy            - Run clippy lints"
     @echo "  just fmt               - Format all code"
     @echo "  just lint              - Lint all code"
@@ -62,19 +68,35 @@ default:
 
 # -------- Inner loop (Cargo) --------
 # Build the workspace with cargo - routes through nix dev shell
+# Build main package
 build +ARGS="":
     {{_enter_dev}}
-    cargo build {{ARGS}}
+    cargo build -p {{MAIN_PKG}} {{ARGS}}
 
-# Run tests
+# Run main package with arguments  
+run *ARGS:
+    {{_enter_dev}}
+    cargo run -p {{MAIN_PKG}} -- {{ARGS}}
+
+# Test main package
 test +ARGS="":
     {{_enter_dev}}
-    cargo test {{ARGS}}
+    cargo test -p {{MAIN_PKG}} {{ARGS}}
 
-# Quick check without building binaries
+# Quick check main package
 check:
     {{_enter_dev}}
-    cargo check
+    cargo check -p {{MAIN_PKG}}
+
+# Build entire workspace
+build-all +ARGS="":
+    {{_enter_dev}}
+    cargo build --workspace {{ARGS}}
+
+# Test entire workspace
+test-all +ARGS="":
+    {{_enter_dev}}
+    cargo test --workspace {{ARGS}}
 
 # Run clippy lints
 clippy:
@@ -86,15 +108,10 @@ fmt:
     {{_enter_dev}}
     cargo fmt --all
 
-# Watch for changes and rebuild
+# Watch for changes and rebuild main package
 watch:
     {{_enter_dev}}
-    cargo watch -x build
-
-# Run binary with args
-run *ARGS:
-    {{_enter_dev}}
-    cargo run -- {{ARGS}}
+    cargo watch -x "build -p {{MAIN_PKG}}"
 
 # -------- Reproducible artifacts (Nix) --------
 # Build main hooksmith package with Nix

@@ -21,6 +21,7 @@ members = [
     "crates/tools",
     "crates/scripts",
 ]
+default-members = ["crates/hooksmith-app"]
 
 [profile.dev]
 opt-level = 1
@@ -57,7 +58,7 @@ unused = "deny"           # deny unused imports, variables, etc.
 rust_2018_idioms = "deny" # enforce modern Rust idioms
 
 [workspace.lints.clippy]
-all = "warn"              # warn on all clippy lints (could be "deny" for stricter CI)
+all = "deny"              # deny all clippy lints for strict CI
 
 [workspace.dependencies]
 # CLI framework
