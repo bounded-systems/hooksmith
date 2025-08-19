@@ -1,9 +1,15 @@
-use crate::modules::contract_validation::Contract;
-use crate::modules::git_model::{GitPath, GitTree};
-use git2::{Commit, Repository, Tree};
+use git2::{Repository, Tree};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+
+/// Contract structure for backwards compatibility
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Contract {
+    pub id: String,
+    pub name: String,
+    pub scope: String,
+}
 
 /// Analysis of file churn patterns for split planning
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,7 +86,8 @@ impl TreeSplitPlanner {
 
     /// Analyze churn patterns for files in a tree
     pub fn analyze_churn(&mut self, tree_sha: &str) -> Result<Vec<ChurnAnalysis>, String> {
-        let tree = self.repo.find_tree(git2::Oid::from_str(tree_sha)?)?;
+        let oid = git2::Oid::from_str(tree_sha).map_err(|e| e.to_string())?;
+        let tree = self.repo.find_tree(oid).map_err(|e| e.to_string())?;
         let mut analyses = Vec::new();
 
         self.walk_tree_recursive(&tree, PathBuf::new(), &mut analyses)?;
@@ -106,7 +113,7 @@ impl TreeSplitPlanner {
                     }
                 }
                 Some(git2::ObjectType::Tree) => {
-                    let subtree = self.repo.find_tree(entry.id())?;
+                    let subtree = self.repo.find_tree(entry.id()).map_err(|e| e.to_string())?;
                     self.walk_tree_recursive(&subtree, entry_path, analyses)?;
                 }
                 _ => {}
