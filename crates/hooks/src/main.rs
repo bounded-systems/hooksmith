@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use dircheck_core::{validate_files_index, validate_tree_commit, FileRuleSet, TreeRuleSet};
+use hooksmith_core::{validate_files_index, validate_tree_commit, FileRuleSet, TreeRuleSet};
 use std::process::{exit, Command};
 
 #[derive(Parser)]

@@ -107,8 +107,8 @@ impl ContractValidator {
         let mut builder = GlobSetBuilder::new();
 
         for pattern in patterns {
-            let glob = Glob::new(pattern)
-                .with_context(|| format!("Invalid glob pattern: {}", pattern))?;
+            let glob =
+                Glob::new(pattern).with_context(|| format!("Invalid glob pattern: {}", pattern))?;
             builder.add(glob);
         }
 
@@ -179,8 +179,7 @@ fn read_tree_from_git(ref_name: &str) -> Result<TreeReport> {
         .output()
         .context("Failed to get tree entries")?;
 
-    let entries_str = String::from_utf8(output.stdout)
-        .context("Invalid tree entries output")?;
+    let entries_str = String::from_utf8(output.stdout).context("Invalid tree entries output")?;
 
     // Parse entries (format: MODE TYPE SHA\tNAME\0)
     let mut entries = Vec::new();
@@ -233,7 +232,10 @@ fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() != 3 {
         eprintln!("Usage: {} <ref> <contract-path>", args[0]);
-        eprintln!("Example: {} origin/main contracts/object-names@v1.json", args[0]);
+        eprintln!(
+            "Example: {} origin/main contracts/object-names@v1.json",
+            args[0]
+        );
         std::process::exit(1);
     }
 

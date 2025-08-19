@@ -72,13 +72,12 @@ async fn main() -> Result<()> {
                             println!("\n🔗 {}", hook_name);
                             println!("  Phase: {:?}", metadata.phase);
                             println!("  Scope: {:?}", metadata.scope);
-                            println!("  Git Objects: {:?}", metadata.git_objects);
+                            println!("  Git Objects: {:?}", metadata.objects);
                             println!(
                                 "  Validation Capabilities: {:?}",
                                 metadata.validation_capabilities
                             );
-                            println!("  Expects stdin: {}", metadata.expects_stdin);
-                            println!("  Produces stdout: {}", metadata.produces_stdout);
+                            // Note: expects_stdin and produces_stdout are hook-specific, not in metadata
                         }
                         Err(e) => {
                             println!("❌ {}: Error getting metadata - {}", hook_name, e);
@@ -96,14 +95,12 @@ async fn main() -> Result<()> {
                 println!("========================");
                 println!("Phase: {:?}", metadata.phase);
                 println!("Scope: {:?}", metadata.scope);
-                println!("Git Objects: {:?}", metadata.git_objects);
+                println!("Git Objects: {:?}", metadata.objects);
                 println!(
                     "Validation Capabilities: {:?}",
                     metadata.validation_capabilities
                 );
-                println!("Expects stdin: {}", metadata.expects_stdin);
-                println!("Produces stdout: {}", metadata.produces_stdout);
-                println!("Working Directory: {:?}", metadata.working_directory);
+                // Note: expects_stdin, produces_stdout, and working_directory are hook-specific
             }
             Err(e) => {
                 eprintln!("❌ Error getting metadata for {}: {}", hook_name, e);

@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 use tokio::time::sleep;
 
 /// Test result for a hook execution
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct HookTestResult {
     pub hook_name: String,
     pub success: bool,
@@ -315,14 +315,11 @@ impl HookTestFramework {
                 name: "commit-operation".to_string(),
                 phase: crate::schema::HookPhase::PreValidation,
                 scope: crate::schema::HookScope::Client,
-                git_objects: vec![
+                objects: vec![
                     crate::schema::GitObject::Commit,
                     crate::schema::GitObject::Index,
                 ],
                 validation_capabilities: vec![crate::schema::ValidationCapability::BasicValidation],
-                expects_stdin: false,
-                produces_stdout: false,
-                working_directory: crate::schema::WorkingDirectory::RepositoryRoot,
             },
         };
 
@@ -353,14 +350,11 @@ impl HookTestFramework {
                 name: "push-operation".to_string(),
                 phase: crate::schema::HookPhase::PreValidation,
                 scope: crate::schema::HookScope::Client,
-                git_objects: vec![
+                objects: vec![
                     crate::schema::GitObject::Ref,
                     crate::schema::GitObject::Remote,
                 ],
                 validation_capabilities: vec![crate::schema::ValidationCapability::RefValidation],
-                expects_stdin: true,
-                produces_stdout: false,
-                working_directory: crate::schema::WorkingDirectory::RepositoryRoot,
             },
         };
 
@@ -404,14 +398,11 @@ impl HookTestFramework {
                 name: "checkout-operation".to_string(),
                 phase: crate::schema::HookPhase::PostAction,
                 scope: crate::schema::HookScope::Client,
-                git_objects: vec![
+                objects: vec![
                     crate::schema::GitObject::Head,
                     crate::schema::GitObject::Tree,
                 ],
                 validation_capabilities: vec![crate::schema::ValidationCapability::BasicValidation],
-                expects_stdin: false,
-                produces_stdout: false,
-                working_directory: crate::schema::WorkingDirectory::RepositoryRoot,
             },
         };
 
@@ -453,14 +444,11 @@ impl HookTestFramework {
                 name: "merge-operation".to_string(),
                 phase: crate::schema::HookPhase::PostAction,
                 scope: crate::schema::HookScope::Client,
-                git_objects: vec![
+                objects: vec![
                     crate::schema::GitObject::Commit,
                     crate::schema::GitObject::Tree,
                 ],
                 validation_capabilities: vec![crate::schema::ValidationCapability::BasicValidation],
-                expects_stdin: false,
-                produces_stdout: false,
-                working_directory: crate::schema::WorkingDirectory::RepositoryRoot,
             },
         };
 

@@ -70,32 +70,52 @@ impl GitHook {
         }
     }
 
-    /// Get expected number of arguments
-    pub fn expected_args(&self) -> usize {
+    /// Get expected number of arguments (returns None for variable args)
+    pub fn expected_args(&self) -> Option<usize> {
         match self {
-            GitHook::ApplyPatchMsg => 1,
-            GitHook::PreApplyPatch => 0,
-            GitHook::PostApplyPatch => 0,
-            GitHook::PreCommit => 0,
-            GitHook::PrepareCommitMsg => 1..=3, // 1-3 args
-            GitHook::CommitMsg => 1,
-            GitHook::PostCommit => 0,
-            GitHook::PreMergeCommit => 0,
-            GitHook::PreRebase => 1..=2, // 1-2 args
-            GitHook::PostRebase => 1,
-            GitHook::PostRewrite => 1,
-            GitHook::PostCheckout => 3,
-            GitHook::PostMerge => 1,
-            GitHook::PrePush => 2,
-            GitHook::PreReceive => 0,
-            GitHook::Update => 3,
-            GitHook::PostReceive => 0,
-            GitHook::PostUpdate => 0.., // variable args
-            GitHook::PushToCheckout => 1,
-            GitHook::SendEmailValidate => 2,
-            GitHook::FSMonitorWatchman => 2,
-            GitHook::ReferenceTransaction => 1,
-            GitHook::PostIndexChange => 2,
+            GitHook::ApplyPatchMsg => Some(1),
+            GitHook::PreApplyPatch => Some(0),
+            GitHook::PostApplyPatch => Some(0),
+            GitHook::PreCommit => Some(0),
+            GitHook::PrepareCommitMsg => None, // 1-3 args (variable)
+            GitHook::CommitMsg => Some(1),
+            GitHook::PostCommit => Some(0),
+            GitHook::PreMergeCommit => Some(0),
+            GitHook::PreRebase => None, // 1-2 args (variable)
+            GitHook::PostRebase => Some(1),
+            GitHook::PostRewrite => Some(1),
+            GitHook::PostCheckout => Some(3),
+            GitHook::PostMerge => Some(1),
+            GitHook::PrePush => Some(2),
+            GitHook::PreReceive => Some(0),
+            GitHook::Update => Some(3),
+            GitHook::PostReceive => Some(0),
+            GitHook::PostUpdate => None, // variable args
+            GitHook::PushToCheckout => Some(1),
+            GitHook::SendEmailValidate => Some(2),
+            GitHook::FSMonitorWatchman => Some(2),
+            GitHook::ReferenceTransaction => Some(1),
+            GitHook::PostIndexChange => Some(2),
+        }
+    }
+
+    /// Get minimum expected arguments
+    pub fn min_args(&self) -> usize {
+        match self {
+            GitHook::PrepareCommitMsg => 1,
+            GitHook::PreRebase => 1,
+            GitHook::PostUpdate => 0,
+            _ => self.expected_args().unwrap_or(0),
+        }
+    }
+
+    /// Get maximum expected arguments
+    pub fn max_args(&self) -> Option<usize> {
+        match self {
+            GitHook::PrepareCommitMsg => Some(3),
+            GitHook::PreRebase => Some(2),
+            GitHook::PostUpdate => None, // unlimited
+            _ => self.expected_args(),
         }
     }
 
@@ -179,18 +199,25 @@ impl HookContext {
         let hook = GitHook::from_name(hook_name)?;
 
         // Validate argument count
-        let expected = hook.expected_args();
+        let min_args = hook.min_args();
+        let max_args = hook.max_args();
         let actual = hook_args.len();
 
-        match expected {
-            usize::MIN..=usize::MAX => {
-                if actual != expected {
-                    return Err(HookError::InvalidArgCount {
-                        hook: hook_name.clone(),
-                        expected,
-                        actual,
-                    });
-                }
+        if actual < min_args {
+            return Err(HookError::InvalidArgCount {
+                hook: hook_name.clone(),
+                expected: min_args,
+                actual,
+            });
+        }
+
+        if let Some(max) = max_args {
+            if actual > max {
+                return Err(HookError::InvalidArgCount {
+                    hook: hook_name.clone(),
+                    expected: max,
+                    actual,
+                });
             }
         }
 
@@ -320,6 +347,99 @@ pub enum HookError {
 }
 
 /// Hook manifest for configuration
+/// Hook metadata for testing and validation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HookMetadata {
+    pub name: String,
+    pub phase: HookPhase,
+    pub scope: HookScope,
+    pub objects: Vec<GitObject>,
+    pub validation_capabilities: Vec<ValidationCapability>,
+}
+
+/// Hook execution phase
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum HookPhase {
+    PreValidation,
+    PostAction,
+}
+
+/// Hook execution scope
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum HookScope {
+    Client,
+    Server,
+}
+
+/// Git objects that hooks can operate on
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum GitObject {
+    Commit,
+    Tree,
+    Blob,
+    Tag,
+    Index,
+    Ref,
+    Remote,
+    Head,
+}
+
+/// Hook validation capabilities
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ValidationCapability {
+    BasicValidation,
+    RefValidation,
+    ContentValidation,
+    PerformanceValidation,
+}
+
+impl HookContext {
+    /// Get metadata for this hook context
+    pub fn metadata(&self) -> HookMetadata {
+        let phase = match self.hook {
+            GitHook::PreCommit | GitHook::PrePush | GitHook::PreReceive | GitHook::Update => {
+                HookPhase::PreValidation
+            }
+            _ => HookPhase::PostAction,
+        };
+
+        let scope = match self.hook {
+            GitHook::PreReceive
+            | GitHook::Update
+            | GitHook::PostReceive
+            | GitHook::PostUpdate
+            | GitHook::PushToCheckout => HookScope::Server,
+            _ => HookScope::Client,
+        };
+
+        let objects = match self.hook {
+            GitHook::PreCommit | GitHook::CommitMsg | GitHook::PostCommit => {
+                vec![GitObject::Commit, GitObject::Index]
+            }
+            GitHook::PrePush | GitHook::PostRewrite => vec![GitObject::Ref, GitObject::Remote],
+            GitHook::PostCheckout | GitHook::PostMerge => vec![GitObject::Head, GitObject::Tree],
+            _ => vec![GitObject::Commit, GitObject::Tree],
+        };
+
+        let validation_capabilities = match self.hook {
+            GitHook::PreCommit | GitHook::CommitMsg | GitHook::PostCommit => {
+                vec![ValidationCapability::BasicValidation]
+            }
+            GitHook::PrePush | GitHook::PreReceive => vec![ValidationCapability::RefValidation],
+            _ => vec![ValidationCapability::BasicValidation],
+        };
+
+        HookMetadata {
+            name: self.hook.name().to_string(),
+            phase,
+            scope,
+            objects,
+            validation_capabilities,
+        }
+    }
+}
+
+/// Hook manifest for configuration
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HookManifest {
     pub hooks: Vec<HookDefinition>,
@@ -432,9 +552,10 @@ mod tests {
 
     #[test]
     fn test_expected_args() {
-        assert_eq!(GitHook::PreCommit.expected_args(), 0);
-        assert_eq!(GitHook::CommitMsg.expected_args(), 1);
-        assert_eq!(GitHook::PrePush.expected_args(), 2);
+        assert_eq!(GitHook::PreCommit.expected_args(), Some(0));
+        assert_eq!(GitHook::CommitMsg.expected_args(), Some(1));
+        assert_eq!(GitHook::PrePush.expected_args(), Some(2));
+        assert_eq!(GitHook::PrepareCommitMsg.expected_args(), None); // variable args
     }
 
     #[test]
