@@ -6,6 +6,10 @@ authors = ["Pushd Team"]
 description = "Standalone auditor for object-names contract validation"
 license = "MIT"
 
+[lib]
+name = "object_names_auditor"
+path = "src/lib.rs"
+
 [dependencies]
 anyhow = "1.0"
 globset = "0.4"
