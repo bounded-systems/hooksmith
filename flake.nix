@@ -36,12 +36,13 @@
         buildInputs = with pkgs; [
           openssl
           git # For git2 dependency - essential for Hooksmith
-        ] ++ lib.optionals stdenv.isDarwin (with pkgs.darwin.apple_sdk.frameworks; [
-          Security
-          SystemConfiguration
-          CoreFoundation
-          CoreServices
-        ]);
+        ] ++ lib.optionals stdenv.isDarwin [
+          pkgs.libiconv
+          pkgs.darwin.apple_sdk.frameworks.Security
+          pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
+          pkgs.darwin.apple_sdk.frameworks.CoreFoundation
+          pkgs.darwin.apple_sdk.frameworks.CoreServices
+        ];
 
         # Filter source to only include relevant files for better caching
         src = craneLib.cleanCargoSource (craneLib.path ./.);
