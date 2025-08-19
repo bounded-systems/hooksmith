@@ -1,0 +1,218 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nix-checks:
+    name: Nix Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: hooksmith
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          
+      - name: Check flake
+        run: nix flake check --show-trace
+        
+      - name: Build all packages
+        run: |
+          nix build .#hooksmith-suite --show-trace
+          nix build .#analysis-tools --show-trace
+          nix build .#core-tools --show-trace
+          nix build .#xtask --show-trace
+          
+      - name: Run pre-commit checks
+        run: nix develop -c pre-commit run --all-files
+        
+      - name: Verify development environment
+        run: |
+          nix develop -c just --version
+          nix develop -c cargo --version
+          nix develop -c rustc --version
+
+  devcontainer-test:
+    name: DevContainer Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Test DevContainer build
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: hooksmith-devcontainer
+          runCmd: |
+            nix --version
+            just --version || echo "just not available yet"
+            
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: hooksmith
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          
+      - name: Check Nix formatting
+        run: |
+          nix develop -c alejandra --check .
+          
+      - name: Check for Nix issues
+        run: |
+          nix develop -c statix check .
+          nix develop -c deadnix --check .
+          
+      - name: Check Rust formatting
+        run: |
+          nix develop -c cargo fmt --all -- --check
+          
+      - name: Run Clippy
+        run: |
+          nix develop -c cargo clippy --all-targets --all-features -- -D warnings
+
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: hooksmith
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          
+      - name: Build documentation
+        run: |
+          nix develop -c cargo doc --all --no-deps
+          
+      - name: Test documentation examples
+        run: |
+          nix develop -c cargo test --doc
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: hooksmith
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          
+      - name: Run unit tests
+        run: |
+          nix develop -c cargo test --all
+          
+      - name: Run integration tests
+        run: |
+          nix develop -c cargo test --all --test '*'
+          
+      - name: Test analysis tools
+        run: |
+          nix run .#repository_size_auditor -- --help
+          nix run .#rust_blob_analyzer -- --help || true
+          nix run .#git_delta_analyzer -- --help || true
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: hooksmith
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          
+      - name: Cargo audit
+        run: |
+          nix develop -c cargo audit
+          
+      - name: Cargo deny check
+        run: |
+          nix develop -c cargo deny check || true  # Allow to fail for now
+
+  macos-test:
+    name: macOS Test
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: hooksmith
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          
+      - name: Build on macOS
+        run: |
+          nix build .#hooksmith-suite --show-trace
+          
+      - name: Test development environment on macOS
+        run: |
+          nix develop -c just --version
+          nix develop -c cargo --version

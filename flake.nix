@@ -14,10 +14,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     
+    pre-commit-hooks = {
+      url = "github:cachix/pre-commit-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, crane, flake-utils, fenix }:
+  outputs = { self, nixpkgs, crane, flake-utils, fenix, pre-commit-hooks }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -176,6 +181,59 @@ EOF
           '';
         };
 
+        # Pre-commit hooks configuration
+        pre-commit-check = pre-commit-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            # Nix formatting and linting
+            alejandra.enable = true;          # Nix formatter
+            statix.enable = true;             # Nix linter
+            deadnix.enable = true;            # Dead Nix code detector
+            
+            # Rust formatting and linting
+            rustfmt.enable = true;            # Rust formatter
+            clippy = {
+              enable = true;
+              description = "Lint Rust code.";
+              entry = "${rustToolchain}/bin/cargo-clippy clippy --all-targets --all-features -- -D warnings";
+              language = "system";
+              files = "\\.(rs)$";
+              pass_filenames = false;
+            };
+            
+            # Shell script linting
+            shellcheck.enable = true;         # Shell script linter
+            shfmt.enable = true;              # Shell script formatter
+            
+            # General formatting
+            prettier = {
+              enable = true;
+              description = "Format with prettier";
+              entry = "${pkgs.nodePackages.prettier}/bin/prettier --write";
+              language = "system";
+              files = "\\.(js|ts|jsx|tsx|json|yaml|yml|md)$";
+            };
+            
+            # Trailing whitespace
+            trailing-whitespace = {
+              enable = true;
+              description = "Remove trailing whitespace";
+              entry = "${pkgs.python3Packages.pre-commit-hooks}/bin/trailing-whitespace-fixer";
+              language = "system";
+              types = [ "text" ];
+            };
+            
+            # End of file fixer
+            end-of-file-fixer = {
+              enable = true;
+              description = "Ensure files end with newline";
+              entry = "${pkgs.python3Packages.pre-commit-hooks}/bin/end-of-file-fixer";
+              language = "system";
+              types = [ "text" ];
+            };
+          };
+        };
+
       in {
         packages = {
           default = hooksmithSuite;
@@ -243,6 +301,9 @@ EOF
         };
 
         devShells.default = craneLib.devShell {
+          # Import pre-commit hooks into the shell
+          inputsFrom = [ pre-commit-check ];
+          
           # Additional dev tools beyond what's needed for building
           packages = with pkgs; [
             # Rust development tools
@@ -266,6 +327,16 @@ EOF
             just
             gnumake
             
+            # Pre-commit and formatting tools
+            pre-commit
+            alejandra      # Nix formatter
+            statix         # Nix linter
+            deadnix        # Dead Nix code detector
+            nil            # Nix language server
+            shellcheck     # Shell script linter
+            shfmt          # Shell formatter
+            nodePackages.prettier  # JS/JSON/YAML/MD formatter
+            
             # WASM development (since Hooksmith has WASM components)
             wasmtime
             
@@ -280,8 +351,12 @@ EOF
           RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
           HOOKSMITH_DEV_MODE = "1";
           
-          # Welcome message with Hooksmith-specific guidance
+          # Combined shell hook: pre-commit setup + welcome message
           shellHook = ''
+            # Pre-commit hooks setup
+            ${pre-commit-check.shellHook}
+            
+            # Hooksmith welcome message
             echo "🔨 Hooksmith Development Environment"
             echo "===================================="
             echo ""
@@ -305,6 +380,12 @@ EOF
             echo "  file_churn_analyzer         - Change pattern analysis"
             echo "  tree_object_stability_auditor - Git tree stability"
             echo ""
+            echo "🧹 Code quality:"
+            echo "  pre-commit run --all-files  - Run all formatting/linting"
+            echo "  just bootstrap              - Setup development environment"
+            echo "  just fmt                    - Format all code"
+            echo "  just lint                   - Lint all code"
+            echo ""
             echo "📚 Documentation:"
             echo "  See WARP.md for comprehensive development guide"
             echo "  See README.md for tool descriptions and examples"
@@ -315,9 +396,15 @@ EOF
             echo "  wasmtime: $(wasmtime --version 2>/dev/null || echo 'not available')"
             echo ""
             echo "💡 Quick start:"
+            echo "  just bootstrap  # Initial setup"
             echo "  cargo run --bin repository_size_auditor"
             echo "  cargo run -p xtask -- gen-docs"
           '';
+        };
+
+        # Pre-commit checks (for CI and nix flake check)
+        checks = {
+          pre-commit-check = pre-commit-check;
         };
 
         # Formatting

@@ -6,12 +6,22 @@ default:
     @echo "🔨 Hooksmith Development Commands"
     @echo "================================"
     @echo ""
+    @echo "🚀 Getting Started:"
+    @echo "  just bootstrap         - Setup development environment"
+    @echo "  just info              - Show environment information"
+    @echo ""
     @echo "🦀 Rust Development:"
     @echo "  just build             - Build workspace (cargo)"
     @echo "  just test              - Run tests"
     @echo "  just check             - Quick check without building"
     @echo "  just clippy            - Run clippy lints"
-    @echo "  just fmt               - Format code"
+    @echo "  just fmt               - Format all code"
+    @echo "  just lint              - Lint all code"
+    @echo ""
+    @echo "🧹 Code Quality:"
+    @echo "  just pre-commit        - Run all pre-commit checks"
+    @echo "  just fmt-all           - Format Rust, Nix, and other files"
+    @echo "  just lint-all          - Lint Rust, Nix, and shell files"
     @echo ""
     @echo "🔧 Xtask Commands:"
     @echo "  just xtask-build       - Build via xtask"
@@ -31,8 +41,8 @@ default:
     @echo "  just analyze-churn     - File churn analysis"
     @echo "  just analyze-all       - Run all analysis tools"
     @echo ""
-    @echo "🚀 Quick Start:"
-    @echo "  just build && just analyze-size"
+    @echo "💡 Quick Start:"
+    @echo "  just bootstrap && just analyze-size"
 
 # Build the workspace with cargo
 build:
@@ -188,6 +198,73 @@ audit:
 update:
     @echo "⬆️  Updating dependencies..."
     cargo update
+
+# Bootstrap development environment
+bootstrap:
+    @echo "🚀 Bootstrapping Hooksmith development environment..."
+    @echo "1. Verifying toolchain..."
+    @rustc --version
+    @cargo --version
+    @git --version
+    @echo "2. Setting up git hooks..."
+    @# Clear any existing hooks path that might conflict
+    @git config --unset-all core.hooksPath || true
+    @# Pre-commit hooks are managed by Nix in this environment
+    @echo "✅ Git hooks managed by Nix (via flake.nix pre-commit configuration)"
+    @echo "3. Verifying workspace can build..."
+    @cargo check --workspace || echo "⚠️  Some workspace members may need attention"
+    @echo "4. Running initial analysis to verify tools..."
+    @cargo run --bin repository_size_auditor > /dev/null 2>&1 || echo "⚠️  Some analysis tools may need building first"
+    @echo "✅ Bootstrap complete! Environment ready for development."
+    @echo "💡 Next steps: just info, just analyze-size, or just build"
+
+# Run all pre-commit checks
+pre-commit:
+    @echo "🧹 Running pre-commit checks..."
+    @if command -v pre-commit >/dev/null 2>&1; then \
+        pre-commit run --all-files; \
+    else \
+        echo "⚠️  pre-commit not available, running individual checks..."; \
+        just fmt && just clippy && just nix-fmt; \
+    fi
+
+# Format all code (Rust + Nix + others)
+fmt-all:
+    @echo "🎨 Formatting all code..."
+    @cargo fmt --all
+    @if command -v alejandra >/dev/null 2>&1; then \
+        alejandra .; \
+    else \
+        echo "⚠️  alejandra not available, skipping Nix formatting"; \
+    fi
+    @if command -v prettier >/dev/null 2>&1; then \
+        prettier --write "**/*.{json,yaml,yml,md}" || true; \
+    else \
+        echo "⚠️  prettier not available, skipping JS/JSON/YAML/MD formatting"; \
+    fi
+
+# Lint all code (Rust + Nix + Shell)
+lint-all:
+    @echo "🔍 Linting all code..."
+    @cargo clippy --all-targets --all-features -- -D warnings
+    @if command -v statix >/dev/null 2>&1; then \
+        statix check .; \
+    else \
+        echo "⚠️  statix not available, skipping Nix linting"; \
+    fi
+    @if command -v deadnix >/dev/null 2>&1; then \
+        deadnix --check .; \
+    else \
+        echo "⚠️  deadnix not available, skipping Nix dead code check"; \
+    fi
+    @if command -v shellcheck >/dev/null 2>&1; then \
+        find . -name "*.sh" -exec shellcheck {} \; || true; \
+    else \
+        echo "⚠️  shellcheck not available, skipping shell script linting"; \
+    fi
+
+# Enhanced lint command (alias for lint-all)
+lint: lint-all
 
 # Show workspace information
 info:
