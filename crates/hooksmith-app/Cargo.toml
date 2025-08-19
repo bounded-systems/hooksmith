@@ -42,13 +42,37 @@ rustdoc-stripper.workspace = true
 
 # Internal workspace dependencies
 hooksmith-core = { path = "../core" }
-hooksmith-hooks = { path = "../hooks" }
-hooksmith-xtask = { path = "../xtask" }
-hooksmith-git-agreement = { path = "../git-agreement" }
-hooksmith-tree = { path = "../tree" }
-hooksmith-files = { path = "../files" }
-hooksmith-snapshot = { path = "../snapshot" }
-hooksmith-inspector = { path = "../inspector" }
-hooksmith-standalone-auditor = { path = "../standalone-auditor" }
-hooksmith-hooksmith-validate = { path = "../hooksmith-validate" }
+git-hooks = { path = "../hooks" }
+xtask = { path = "../xtask" }
+git-agreement = { path = "../git-agreement" }
+dircheck-tree = { path = "../tree" }
+dircheck-files = { path = "../files" }
+git-snapshot = { path = "../snapshot" }
+git-inspector = { path = "../inspector" }
+object-names-auditor = { path = "../standalone-auditor" }
+hooksmith-validate = { path = "../hooksmith-validate" }
 hooksmith-tools = { path = "../tools" }
+
+[[bin]]
+name = "hooksmith"
+path = "src/main.rs"
+
+[[bin]]
+name = "dircheck-tree"
+path = "src/bin/dircheck-tree.rs"
+
+[[bin]]
+name = "dircheck-files"
+path = "src/bin/dircheck-files.rs"
+
+[[bin]]
+name = "dircheck"
+path = "src/bin/dircheck.rs"
+
+[[bin]]
+name = "hooksmith-validate-tree"
+path = "src/bin/hooksmith-validate-tree.rs"
+
+[[bin]]
+name = "hooksmith-validate-push"
+path = "src/bin/hooksmith-validate-push.rs"

@@ -6,5 +6,9 @@ authors = ["Pushd Team"]
 description = "Validate file structure using git ls-files"
 license = "MIT"
 
+[lib]
+name = "dircheck_files"
+path = "src/lib.rs"
+
 [dependencies]
 hooksmith-core = { path = "../core" }

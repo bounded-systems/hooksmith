@@ -3,6 +3,10 @@ name = "git-agreement"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "git_agreement"
+path = "src/lib.rs"
+
 [dependencies]
 anyhow = "1.0"
 clap = { version = "4.0", features = ["derive"] }

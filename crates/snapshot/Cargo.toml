@@ -6,6 +6,10 @@ authors = ["Pushd Team"]
 description = "Create comprehensive line-based snapshots of Git repository state"
 license = "MIT"
 
+[lib]
+name = "git_snapshot"
+path = "src/lib.rs"
+
 [dependencies]
 hooksmith-core = { path = "../core" }
 clap = { version = "4.0", features = ["derive"] }

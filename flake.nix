@@ -5,7 +5,6 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     crane.url = "github:ipetkov/crane";
-    crane.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
@@ -43,13 +42,12 @@
           ]
           ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
             libiconv
-            darwin.apple_sdk.frameworks.Security
-            darwin.apple_sdk.frameworks.SystemConfiguration
           ];
 
         # Environment variables for builds
-        # Temporarily disable RUST_SRC_PATH to avoid path mismatch issues
-        # RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+        # Temporarily disable RUST_SRC_PATH to avoid path issues
+        # RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+        RUSTFLAGS = "-Dwarnings";
         LIBGIT2_SYS_USE_PKG_CONFIG = "1";
         OPENSSL_NO_VENDOR = "1";
 
@@ -199,8 +197,6 @@
             if system == "aarch64-darwin" || system == "x86_64-darwin"
             then [
               libiconv
-              darwin.apple_sdk.frameworks.Security
-              darwin.apple_sdk.frameworks.SystemConfiguration
             ]
             else [
               openssl
@@ -209,10 +205,10 @@
 
         # Environment setup
         CARGO_PROFILE_DEV_DEBUG = "0"; # Faster builds
-        RUSTFLAGS = "-C debuginfo=1"; # Minimal debug info
+        RUSTFLAGS = "-C debuginfo=1 -Dwarnings"; # Minimal debug info + enforce warnings
         HOOKSMITH_DEV_MODE = "1";
-        # Use the same rust source as the toolchain
-        RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+        # Temporarily disable RUST_SRC_PATH to avoid path issues
+        # RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
         LIBGIT2_SYS_USE_PKG_CONFIG = "1";
         OPENSSL_NO_VENDOR = "1";
 

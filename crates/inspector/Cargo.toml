@@ -6,6 +6,10 @@ authors = ["Pushd Team"]
 description = "Comprehensive Git repository inspection and analysis tool"
 license = "MIT"
 
+[lib]
+name = "git_inspector"
+path = "src/lib.rs"
+
 [dependencies]
 hooksmith-core = { path = "../core" }
 clap = { version = "4.0", features = ["derive"] }

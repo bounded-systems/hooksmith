@@ -5,6 +5,10 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[lib]
+name = "hooksmith_tools"
+path = "src/lib.rs"
+
 [dependencies]
 anyhow.workspace = true
 
