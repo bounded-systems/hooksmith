@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/apps.schema.json",
+  "title": "Hooksmith Applications Schema",
+  "description": "Schema for defining the structure and requirements of applications in the Hooksmith ecosystem",
+  "type": "object",
+  "properties": {
+    "applications": {
+      "type": "object",
+      "description": "Configuration for applications in the apps directory",
+      "properties": {
+        "required_structure": {
+          "type": "object",
+          "description": "Required directory structure for applications",
+          "properties": {
+            "src": {
+              "type": "object",
+              "description": "Source code directory requirements",
+              "properties": {
+                "required": {
+                  "type": "boolean",
+                  "description": "Whether src directory is required",
+                  "default": true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["applications"],
+  "additionalProperties": false
+}

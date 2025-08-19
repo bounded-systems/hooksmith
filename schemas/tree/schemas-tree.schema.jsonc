@@ -1,0 +1,322 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/schemas-tree.schema.json",
+  "title": "Schemas Directory Tree Schema",
+  "description": "Schema for defining the structure and requirements of the schemas directory in the Hooksmith ecosystem",
+  "type": "object",
+  "properties": {
+    "schemas_tree": {
+      "type": "object",
+      "description": "Configuration for the schemas directory tree structure",
+      "properties": {
+        "required_directories": {
+          "type": "array",
+          "description": "Required subdirectories in schemas",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Directory name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Directory purpose"
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this directory is required",
+                "default": true
+              },
+              "schema_types": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["tree", "blob", "refs"]
+                },
+                "description": "Types of schemas this directory contains"
+              }
+            },
+            "required": ["name", "description"]
+          },
+          "default": [
+            {
+              "name": "tree",
+              "description": "Tree schemas for directory structures and organizational patterns",
+              "required": true,
+              "schema_types": ["tree"]
+            },
+            {
+              "name": "blob",
+              "description": "Blob schemas for file content and data structures",
+              "required": true,
+              "schema_types": ["blob"]
+            },
+            {
+              "name": "refs",
+              "description": "Reference schemas for component interfaces and system references",
+              "required": true,
+              "schema_types": ["refs"]
+            }
+          ]
+        },
+        "tree_schemas": {
+          "type": "object",
+          "description": "Requirements for tree schemas",
+          "properties": {
+            "purpose": {
+              "type": "string",
+              "description": "Purpose of tree schemas",
+              "default": "Define directory structures, organizational patterns, and hierarchical relationships"
+            },
+            "required_files": {
+              "type": "array",
+              "description": "Required tree schema files",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "apps.schema.jsonc",
+                "config.schema.jsonc",
+                "docs.schema.jsonc",
+                "hooksmith-dir.schema.jsonc",
+                "repo-structure.schema.jsonc",
+                "wit.schema.jsonc",
+                "git-tree-rules.schema.jsonc",
+                "object-names.schema.jsonc",
+                "dir-agreement.schema.json",
+                "schemas-tree.schema.jsonc"
+              ]
+            },
+            "naming_pattern": {
+              "type": "string",
+              "description": "Naming pattern for tree schema files",
+              "default": "^[a-z][a-z0-9_-]*\\.schema\\.jsonc?$"
+            }
+          }
+        },
+        "blob_schemas": {
+          "type": "object",
+          "description": "Requirements for blob schemas",
+          "properties": {
+            "purpose": {
+              "type": "string",
+              "description": "Purpose of blob schemas",
+              "default": "Define file content structures, data formats, and validation rules"
+            },
+            "required_files": {
+              "type": "array",
+              "description": "Required blob schema files",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "contract.schema.jsonc",
+                "contract-state.schema.jsonc",
+                "contract-transition.schema.jsonc",
+                "merkle-proof.schema.jsonc",
+                "static-hook.schema.jsonc",
+                "validation.schema.jsonc",
+                "validation-handler.schema.jsonc",
+                "worktree-crd.schema.jsonc",
+                "worktree-config-schema.jsonc",
+                "workbloom-schema.jsonc"
+              ]
+            },
+            "naming_pattern": {
+              "type": "string",
+              "description": "Naming pattern for blob schema files",
+              "default": "^[a-z][a-z0-9_-]*\\.schema\\.jsonc?$"
+            }
+          }
+        },
+        "refs_schemas": {
+          "type": "object",
+          "description": "Requirements for refs schemas",
+          "properties": {
+            "purpose": {
+              "type": "string",
+              "description": "Purpose of refs schemas",
+              "default": "Define component interfaces, system references, and event structures"
+            },
+            "required_files": {
+              "type": "array",
+              "description": "Required refs schema files",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "event-bus.schema.jsonc",
+                "git-filter.schema.jsonc",
+                "hook-builder.schema.jsonc",
+                "hook-concerns.schema.jsonc",
+                "hooksmith.schema.jsonc",
+                "lefthook-generator.schema.jsonc",
+                "worktree-runner.schema.jsonc"
+              ]
+            },
+            "events_subdirectory": {
+              "type": "object",
+              "description": "Requirements for events subdirectory",
+              "properties": {
+                "required": {
+                  "type": "boolean",
+                  "description": "Whether events subdirectory is required",
+                  "default": true
+                },
+                "purpose": {
+                  "type": "string",
+                  "description": "Purpose of events schemas",
+                  "default": "Define event structures for system communication"
+                },
+                "required_files": {
+                  "type": "array",
+                  "description": "Required event schema files",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [
+                    "computation-events.schema.jsonc",
+                    "contract-validation.schema.jsonc",
+                    "file-operations.schema.jsonc",
+                    "git-operations.schema.jsonc",
+                    "system-events.schema.jsonc"
+                  ]
+                }
+              }
+            },
+            "naming_pattern": {
+              "type": "string",
+              "description": "Naming pattern for refs schema files",
+              "default": "^[a-z][a-z0-9_-]*\\.schema\\.jsonc?$"
+            }
+          }
+        },
+        "file_requirements": {
+          "type": "object",
+          "description": "File requirements for schemas directory",
+          "properties": {
+            "allowed_formats": {
+              "type": "array",
+              "description": "Allowed schema file formats",
+              "items": {
+                "type": "string",
+                "enum": ["json", "jsonc"]
+              },
+              "default": ["json", "jsonc"]
+            },
+            "naming_conventions": {
+              "type": "object",
+              "description": "Naming conventions for schema files",
+              "properties": {
+                "pattern": {
+                  "type": "string",
+                  "description": "File naming pattern",
+                  "default": "^[a-z][a-z0-9_-]*\\.schema\\.jsonc?$"
+                },
+                "examples": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Example valid filenames",
+                  "default": [
+                    "apps.schema.jsonc",
+                    "contract.schema.jsonc",
+                    "event-bus.schema.jsonc",
+                    "git-tree-rules.schema.jsonc"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "schema_metadata": {
+          "type": "object",
+          "description": "Required metadata for schema files",
+          "properties": {
+            "required_fields": {
+              "type": "array",
+              "description": "Required fields in schema files",
+              "items": {
+                "type": "string"
+              },
+              "default": ["$schema", "$id", "title", "description", "type"]
+            },
+            "schema_version": {
+              "type": "string",
+              "description": "Required JSON Schema version",
+              "default": "http://json-schema.org/draft-07/schema#"
+            },
+            "id_pattern": {
+              "type": "string",
+              "description": "Pattern for schema IDs",
+              "default": "^https://hooksmith\\.dev/schemas/[a-z][a-z0-9_-]*\\.schema\\.json$"
+            }
+          }
+        },
+        "validation_rules": {
+          "type": "array",
+          "description": "Validation rules for schemas directory",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Rule name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Rule description"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["error", "warning", "info"],
+                "description": "Rule severity"
+              },
+              "check": {
+                "type": "string",
+                "description": "What to check"
+              }
+            },
+            "required": ["name", "description", "severity", "check"]
+          },
+          "default": [
+            {
+              "name": "required_directories_exist",
+              "description": "All required directories must exist",
+              "severity": "error",
+              "check": "directory_structure"
+            },
+            {
+              "name": "schema_file_naming",
+              "description": "Schema files must follow naming pattern",
+              "severity": "error",
+              "check": "file_naming"
+            },
+            {
+              "name": "schema_metadata_completeness",
+              "description": "Schema files must have required metadata",
+              "severity": "error",
+              "check": "schema_metadata"
+            },
+            {
+              "name": "schema_id_uniqueness",
+              "description": "Schema IDs must be unique across all schemas",
+              "severity": "error",
+              "check": "schema_id_uniqueness"
+            },
+            {
+              "name": "schema_validity",
+              "description": "Schema files must be valid JSON Schema",
+              "severity": "error",
+              "check": "schema_validity"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": ["schemas_tree"],
+  "additionalProperties": false
+}

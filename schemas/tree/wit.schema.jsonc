@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/wit.schema.json",
+  "title": "Hooksmith WIT Interface Schema",
+  "description": "Schema for defining the structure and requirements of WIT (WebAssembly Interface Types) files in the Hooksmith ecosystem",
+  "type": "object",
+  "properties": {
+    "wit_interfaces": {
+      "type": "object",
+      "description": "Configuration for WIT interface files",
+      "properties": {
+        "file_requirements": {
+          "type": "object",
+          "description": "Requirements for WIT files",
+          "properties": {
+            "extension": {
+              "type": "string",
+              "description": "Required file extension",
+              "default": ".wit"
+            },
+            "naming_pattern": {
+              "type": "string",
+              "description": "Naming pattern for WIT files",
+              "default": "^[a-z][a-z0-9_-]*\\.wit$"
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["wit_interfaces"],
+  "additionalProperties": false
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/docs.schema.json",
+  "title": "Hooksmith Documentation Schema",
+  "description": "Schema for defining the structure and requirements of documentation in the Hooksmith ecosystem",
+  "type": "object",
+  "properties": {
+    "documentation": {
+      "type": "object",
+      "description": "Configuration for the docs directory",
+      "properties": {
+        "file_formats": {
+          "type": "array",
+          "description": "Allowed documentation file formats",
+          "items": {
+            "type": "string",
+            "enum": ["md", "markdown", "rst", "txt", "html"]
+          },
+          "default": ["md", "markdown"]
+        },
+        "naming_conventions": {
+          "type": "object",
+          "description": "Naming conventions for documentation files",
+          "properties": {
+            "pattern": {
+              "type": "string",
+              "description": "File naming pattern",
+              "default": "^[A-Z][A-Z0-9_]*\\.(md|markdown)$"
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["documentation"],
+  "additionalProperties": false
+}
