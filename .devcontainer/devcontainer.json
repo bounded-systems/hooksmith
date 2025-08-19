@@ -1,8 +1,13 @@
 {
   "name": "hooksmith",
-  "image": "ghcr.io/cachix/devenv:latest",
+  "dockerFile": "Dockerfile",
   "features": {
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true
+    }
   },
   "remoteUser": "devenv",
   "mounts": [

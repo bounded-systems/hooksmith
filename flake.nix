@@ -52,14 +52,34 @@
         # Filter source to only include relevant files for better caching
         src = craneLib.cleanCargoSource (craneLib.path ./.);
 
-        # Common arguments for all crane builds
+        # Common arguments for all crane builds - hermetic and deterministic
         commonArgs = {
           inherit src nativeBuildInputs buildInputs;
+          
+          # Deterministic build settings
           CARGO_PROFILE_RELEASE_LTO = "true";
           CARGO_PROFILE_RELEASE_CODEGEN_UNITS = "1";
           CARGO_PROFILE_RELEASE_OPT_LEVEL = "s";
+          CARGO_PROFILE_RELEASE_RPATH = "false";
+          CARGO_PROFILE_RELEASE_INCREMENTAL = "false";
+          
+          # Reproducible builds - fixed timestamps and sources
+          SOURCE_DATE_EPOCH = "1";
+          
+          # Hermetic build environment
+          CARGO_NET_OFFLINE = "true";
+          CARGO_HOME = "$TMPDIR/cargo-home";
+          
+          # Security and determinism
+          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+          NIX_SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+          
           # Disable tests for Nix builds since they may require git context
           doCheck = false;
+          
+          # Ensure clean environment
+          HOME = "/homeless-shelter";
+          TMPDIR = "/tmp";
         };
 
         # Build dependencies separately for better caching

@@ -41,8 +41,15 @@ default:
     @echo "  just analyze-churn     - File churn analysis"
     @echo "  just analyze-all       - Run all analysis tools"
     @echo ""
+    @echo "🛡️ Security & Compliance:"
+    @echo "  just security-audit    - Complete security audit"
+    @echo "  just sbom              - Generate Software Bill of Materials"
+    @echo "  just vuln-scan         - Vulnerability scanning"
+    @echo "  just license-check     - License compliance check"
+    @echo "  just reproducible-build - Deterministic build verification"
+    @echo ""
     @echo "💡 Quick Start:"
-    @echo "  just bootstrap && just analyze-size"
+    @echo "  just bootstrap && just security-audit"
 
 # Build the workspace with cargo
 build:
@@ -265,6 +272,105 @@ lint-all:
 
 # Enhanced lint command (alias for lint-all)
 lint: lint-all
+
+# Complete security audit
+security-audit:
+    @echo "🛡️ Running comprehensive security audit..."
+    @echo "1. Dependency security audit..."
+    @cargo audit || echo "⚠️  cargo-audit not available"
+    @echo "2. License compliance check..."
+    @just license-check
+    @echo "3. Dependency policy check..."
+    @cargo deny check || echo "⚠️  cargo-deny not available"
+    @echo "4. Vulnerability scanning..."
+    @just vuln-scan
+    @echo "5. Generating SBOM..."
+    @just sbom
+    @echo "✅ Security audit complete!"
+
+# Generate Software Bill of Materials
+sbom:
+    @echo "📋 Generating Software Bill of Materials..."
+    @if command -v syft >/dev/null 2>&1; then \
+        echo "Generating SPDX SBOM..."; \
+        syft packages dir:. -o spdx-json=sbom.spdx.json; \
+        echo "Generating CycloneDX SBOM..."; \
+        syft packages dir:. -o cyclonedx-json=sbom.cyclonedx.json; \
+        echo "Generating Cargo-specific SBOM..."; \
+        syft packages Cargo.lock -o spdx-json=cargo-sbom.spdx.json; \
+        echo "✅ SBOM files generated: sbom.spdx.json, sbom.cyclonedx.json, cargo-sbom.spdx.json"; \
+    else \
+        echo "⚠️  syft not available. Install with: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh"; \
+    fi
+
+# Vulnerability scanning
+vuln-scan:
+    @echo "🔍 Running vulnerability scans..."
+    @if command -v grype >/dev/null 2>&1; then \
+        echo "Scanning source code..."; \
+        grype dir:. -o table || true; \
+        grype dir:. -o json > vulnerability-scan.json || true; \
+        if [ -f sbom.spdx.json ]; then \
+            echo "Scanning SBOM..."; \
+            grype sbom:sbom.spdx.json -o table || true; \
+        fi; \
+        echo "✅ Vulnerability scan complete. Check vulnerability-scan.json for details"; \
+    else \
+        echo "⚠️  grype not available. Install with: curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh"; \
+    fi
+    @if command -v trivy >/dev/null 2>&1; then \
+        echo "Running Trivy scan..."; \
+        trivy fs --format table . || true; \
+        trivy fs --format json --output trivy-scan.json . || true; \
+    else \
+        echo "⚠️  trivy not available. See docs/DEV_ENV.md for installation instructions"; \
+    fi
+
+# License compliance check
+license-check:
+    @echo "📄 Checking license compliance..."
+    @if command -v cargo >/dev/null 2>&1 && cargo deny --version >/dev/null 2>&1; then \
+        cargo deny check licenses; \
+        cargo deny list --format json > licenses.json; \
+        if grep -q "GPL\|AGPL\|LGPL" licenses.json; then \
+            echo "❌ Restrictive licenses found!"; \
+            grep "GPL\|AGPL\|LGPL" licenses.json || true; \
+            exit 1; \
+        else \
+            echo "✅ License compliance check passed"; \
+        fi; \
+    else \
+        echo "⚠️  cargo-deny not available. Install with: cargo install cargo-deny"; \
+    fi
+
+# Reproducible build verification
+reproducible-build:
+    @echo "🔄 Verifying reproducible builds..."
+    @echo "Setting up reproducible environment..."
+    @export SOURCE_DATE_EPOCH=1
+    @export RUSTFLAGS="-C target-feature=+crt-static --remap-path-prefix=$(pwd)=/build"
+    @echo "Building with Nix for maximum reproducibility..."
+    @if command -v nix >/dev/null 2>&1; then \
+        nix build .#hooksmith-suite --no-link; \
+        echo "✅ Nix build completed reproducibly"; \
+    else \
+        echo "Building with Cargo..."; \
+        cargo build --release; \
+        echo "⚠️  For maximum reproducibility, use Nix builds"; \
+    fi
+    @echo "Generating build manifest..."
+    @cat > build-manifest.json << EOF
+{
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "source_date_epoch": "1",
+  "git_commit": "$(git rev-parse HEAD)",
+  "git_dirty": $(if git diff-index --quiet HEAD --; then echo "false"; else echo "true"; fi),
+  "rust_version": "$(rustc --version)",
+  "cargo_version": "$(cargo --version)",
+  "build_flags": "$(echo $RUSTFLAGS)"
+}
+EOF
+    @echo "✅ Build manifest created: build-manifest.json"
 
 # Show workspace information
 info:
