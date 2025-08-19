@@ -40,6 +40,19 @@ strip = "debuginfo"
 lto = true
 codegen-units = 1
 panic = "abort"
+# Deterministic build settings
+rpath = false
+incremental = false
+
+[profile.release-with-debug]
+inherits = "release"
+strip = "none"
+debug = true
+
+# Ensure reproducible builds
+[build]
+# Use git2 from system when available for deterministic builds
+target-dir = "target"
 
 [workspace.package]
 version = "0.1.0"

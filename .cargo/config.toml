@@ -83,9 +83,20 @@ strip = true
 [workspace]
 resolver = "2"
 
-# Enable faster dependency resolution
+# Enable faster dependency resolution and security
 [net]
 git-fetch-with-cli = true
+retry = 10
+offline = false
+
+# Security and deterministic builds
+[registries.crates-io]
+protocol = "sparse"
+
+# Reproducible builds environment
+[env]
+SOURCE_DATE_EPOCH = { value = "1", force = false }
+RUSTFLAGS_REPRODUCIBLE = { value = "-C target-feature=+crt-static --remap-path-prefix=$PWD=/build", force = false }
 
 # Optimized build aliases for Hooksmith
 [alias]

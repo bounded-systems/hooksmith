@@ -1,0 +1,52 @@
+{
+  "name": "hooksmith",
+  "dockerFile": "Dockerfile",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true
+    }
+  },
+  "remoteUser": "devenv",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspaces/hooksmith,type=bind,consistency=cached"
+  ],
+  "workspaceFolder": "/workspaces/hooksmith",
+  "postCreateCommand": "nix --version && nix develop -c just bootstrap",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "jnoortheen.nix-ide",
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "ms-azuretools.vscode-docker",
+        "github.vscode-github-actions",
+        "streetsidesoftware.code-spell-checker",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "rust-analyzer.cargo.buildScripts.enable": true,
+        "rust-analyzer.checkOnSave.command": "clippy",
+        "nix.enableLanguageServer": true,
+        "nix.serverPath": "nil",
+        "files.watcherExclude": {
+          "**/target/**": true,
+          "**/.direnv/**": true
+        }
+      }
+    }
+  },
+  "forwardPorts": [3000, 8080],
+  "portsAttributes": {
+    "3000": {
+      "label": "Development Server",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "HTTP Server",
+      "onAutoForward": "notify"
+    }
+  }
+}
