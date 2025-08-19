@@ -384,9 +384,12 @@ impl<'a> TriageOfficer<'a> {
                                 if violations.is_empty() {
                                     results.push(SarifResult {
                                         level: "note".into(),
-                                        message: SarifMessage { 
-                                            text: format!("gitignore validation: OK ({} tree entries, digest: {})", 
-                                                tree_entries, &digest[..8]).into() 
+                                        message: SarifMessage {
+                                            text: format!(
+                                                "gitignore validation: OK ({} tree entries, digest: {})",
+                                                tree_entries,
+                                                &digest[..8]
+                                            ).into()
                                         },
                                         locations: vec![loc(&gitignore_path)],
                                     });

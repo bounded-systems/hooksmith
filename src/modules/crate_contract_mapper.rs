@@ -1,9 +1,24 @@
-use crate::modules::contract_validation::{Contract, ContractScope};
-use crate::modules::git_model::{GitPath, GitTree};
-use git2::{Oid, Repository, Tree};
+use crate::modules::contract_validation::{ContractDefinition, ContractValidator};
+use git2::{Repository, Tree};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+
+/// Contract scope enum for backwards compatibility
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ContractScope {
+    Private,
+    Internal, 
+    Public,
+}
+
+/// Simplified contract structure for parsing
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Contract {
+    pub id: String,
+    pub scope: ContractScope,
+    pub line_range: Option<(u32, u32)>,
+}
 
 /// Mapping of contract to crate boundaries
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,13 +129,19 @@ impl CrateContractMapper {
         &mut self,
         tree_sha: &str,
     ) -> Result<Vec<ContractCrateMapping>, String> {
-        let tree = self
-            .repo
-            .find_tree(git2::Oid::from_str(tree_sha).map_err(|e| e.to_string())?)
-            .map_err(|e| e.to_string())?;
+        let oid = git2::Oid::from_str(tree_sha).map_err(|e| e.to_string())?;
         let mut mappings = Vec::new();
 
-        self.walk_tree_for_contracts(&tree, PathBuf::new(), &mut mappings)?;
+        // Walk tree to collect file paths first
+        let file_paths = self.collect_contract_files(oid)?;
+        
+        // Process files
+        for file_path in file_paths {
+            if self.is_contract_file(&file_path) {
+                let contract_mappings = self.extract_contracts_from_file(&file_path)?;
+                mappings.extend(contract_mappings);
+            }
+        }
 
         // Store mappings for analysis
         for mapping in &mappings {
@@ -138,7 +159,10 @@ impl CrateContractMapper {
         current_path: PathBuf,
         mappings: &mut Vec<ContractCrateMapping>,
     ) -> Result<(), String> {
-        for entry in tree.iter() {
+        // Collect entries first to avoid borrowing conflicts
+        let entries: Vec<_> = tree.iter().collect();
+        
+        for entry in entries {
             let entry_path = current_path.join(entry.name().unwrap());
 
             match entry.kind() {
@@ -151,6 +175,40 @@ impl CrateContractMapper {
                 Some(git2::ObjectType::Tree) => {
                     let subtree = self.repo.find_tree(entry.id()).map_err(|e| e.to_string())?;
                     self.walk_tree_for_contracts(&subtree, entry_path, mappings)?;
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+
+    /// Collect all contract files from a tree
+    fn collect_contract_files(&self, oid: git2::Oid) -> Result<Vec<PathBuf>, String> {
+        let mut files = Vec::new();
+        let tree = self.repo.find_tree(oid).map_err(|e| e.to_string())?;
+        self.collect_files_recursive(&tree, PathBuf::new(), &mut files)?;
+        Ok(files)
+    }
+
+    /// Recursively collect files from a tree
+    fn collect_files_recursive(
+        &self,
+        tree: &Tree,
+        current_path: PathBuf,
+        files: &mut Vec<PathBuf>,
+    ) -> Result<(), String> {
+        let entries: Vec<_> = tree.iter().collect();
+        
+        for entry in entries {
+            let entry_path = current_path.join(entry.name().unwrap());
+
+            match entry.kind() {
+                Some(git2::ObjectType::Blob) => {
+                    files.push(entry_path);
+                }
+                Some(git2::ObjectType::Tree) => {
+                    let subtree = self.repo.find_tree(entry.id()).map_err(|e| e.to_string())?;
+                    self.collect_files_recursive(&subtree, entry_path, files)?;
                 }
                 _ => {}
             }

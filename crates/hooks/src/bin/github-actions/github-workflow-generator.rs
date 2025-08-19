@@ -220,7 +220,7 @@ fn main() -> Result<()> {
                 "Available events: {}",
                 mappings
                     .iter()
-                    .map(|m| &m.github_event)
+                    .map(|m| m.github_event.as_str())
                     .collect::<Vec<_>>()
                     .join(", ")
             );

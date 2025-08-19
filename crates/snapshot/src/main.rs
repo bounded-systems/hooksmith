@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use dircheck_core::git_snapshot::{format_snapshot_line_based, GitSnapshotCollector};
+use hooksmith_core::git_snapshot::{format_snapshot_line_based, GitSnapshotCollector};
 use std::fs;
 use std::path::Path;
 

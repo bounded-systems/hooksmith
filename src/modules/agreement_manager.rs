@@ -108,13 +108,15 @@ impl AgreementManager {
         let mut agreements = Vec::new();
 
         // Get all notes from the agreements ref
-        let notes = self.repo.notes(&self.notes_ref)?;
+        let notes = self.repo.notes(Some(&self.notes_ref))?;
 
-        for (oid, _) in notes {
-            if let Ok(note) = self.repo.find_note(oid, &self.notes_ref) {
-                if let Ok(content) = std::str::from_utf8(note.message()) {
-                    if let Ok(metadata) = serde_json::from_str::<AgreementMetadata>(content) {
-                        agreements.push(metadata);
+        for note_result in notes {
+            if let Ok((oid, _note_oid)) = note_result {
+                if let Ok(note) = self.repo.find_note(Some(&self.notes_ref), oid) {
+                    if let Some(content) = note.message() {
+                        if let Ok(metadata) = serde_json::from_str::<AgreementMetadata>(content) {
+                            agreements.push(metadata);
+                        }
                     }
                 }
             }

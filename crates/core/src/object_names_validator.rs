@@ -1,4 +1,6 @@
-use crate::git_pipeline::{Analysis, GitObject, Mandate, Report, SerializableObjectType, ToolFingerprint, Verdict};
+use crate::git_pipeline::{
+    Analysis, GitObject, Mandate, Report, SerializableObjectType, ToolFingerprint, Verdict,
+};
 use git2::{ObjectType, Repository, Tree, TreeEntry};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};

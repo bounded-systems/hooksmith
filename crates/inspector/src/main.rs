@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use dircheck_core::git_inspector::{
+use hooksmith_core::git_inspector::{
     format_inspection_report_markdown, GitInspectionReport, GitInspector,
 };
 use std::fs;
@@ -51,7 +51,7 @@ enum Commands {
     Notes,
 }
 
-fn main() -> Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let cli = Cli::parse();
 
     match cli.command {
@@ -62,7 +62,7 @@ fn main() -> Result<()> {
             let content = match format.as_str() {
                 "markdown" => format_inspection_report_markdown(&report),
                 "json" => serde_json::to_string_pretty(&report)?,
-                _ => return Err(anyhow::anyhow!("Unsupported format: {}", format)),
+                _ => return Err(format!("Unsupported format: {}", format).into()),
             };
 
             if let Some(output_path) = output {
@@ -80,7 +80,7 @@ fn main() -> Result<()> {
             } else {
                 println!("⚠️  Repository has unreachable objects");
                 let unreachable =
-                    dircheck_core::git_inspector::GitInspector::analyze_unreachable()?;
+                    hooksmith_core::git_inspector::GitInspector::analyze_unreachable()?;
                 println!(
                     "Found {} unreachable objects",
                     unreachable.total_unreachable
@@ -98,14 +98,14 @@ fn main() -> Result<()> {
 
             for (branch, status) in comparison {
                 match status {
-                    dircheck_core::git_inspector::BranchStatus::Synced => synced.push(branch),
-                    dircheck_core::git_inspector::BranchStatus::LocalOnly => {
+                    hooksmith_core::git_inspector::BranchStatus::Synced => synced.push(branch),
+                    hooksmith_core::git_inspector::BranchStatus::LocalOnly => {
                         local_only.push(branch)
                     }
-                    dircheck_core::git_inspector::BranchStatus::RemoteOnly => {
+                    hooksmith_core::git_inspector::BranchStatus::RemoteOnly => {
                         remote_only.push(branch)
                     }
-                    dircheck_core::git_inspector::BranchStatus::OutOfSync => {
+                    hooksmith_core::git_inspector::BranchStatus::OutOfSync => {
                         println!("⚠️  {} (out of sync)", branch)
                     }
                 }
@@ -134,7 +134,7 @@ fn main() -> Result<()> {
 
         Commands::Unreachable { show_content } => {
             println!("🔍 Analyzing unreachable objects...");
-            let unreachable = dircheck_core::git_inspector::GitInspector::analyze_unreachable()?;
+            let unreachable = hooksmith_core::git_inspector::GitInspector::analyze_unreachable()?;
 
             println!(
                 "Found {} unreachable objects:",
@@ -161,7 +161,7 @@ fn main() -> Result<()> {
 
         Commands::Recovery => {
             println!("🔧 Generating recovery suggestions...");
-            let unreachable = dircheck_core::git_inspector::GitInspector::analyze_unreachable()?;
+            let unreachable = hooksmith_core::git_inspector::GitInspector::analyze_unreachable()?;
             let suggestions = GitInspector::generate_recovery_suggestions(&unreachable);
 
             for suggestion in suggestions {

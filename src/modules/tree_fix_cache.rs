@@ -1,10 +1,34 @@
-use crate::modules::contract_validation::FixPlan;
-use crate::modules::git_model::{GitPath, GitTree};
-use git2::{Oid, Repository, Tree};
+use git2::{Oid, Repository};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
+
+/// Fix plan structure for backwards compatibility
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FixPlan {
+    pub id: String,
+    pub description: String,
+    pub steps: Vec<FixStep>,
+}
+
+impl FixPlan {
+    pub fn new(id: String) -> Self {
+        Self {
+            id,
+            description: String::new(),
+            steps: Vec::new(),
+        }
+    }
+}
+
+/// Individual fix step
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FixStep {
+    pub action: String,
+    pub target: String,
+    pub parameters: HashMap<String, serde_json::Value>,
+}
 
 /// Cache key combining tree SHA and fix plan hash for memoization
 #[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
@@ -72,11 +96,14 @@ impl TreeFixCache {
         let mut stats = self.stats.write().unwrap();
         stats.total_requests += 1;
 
-        if let Some(cached) = self.cache.read().unwrap().get(&key) {
-            if self.validate_cached_plan(cached) {
+        if let Some(cached) = self.cache.read().unwrap().get(&key).cloned() {
+            if self.validate_cached_plan(&cached) {
                 stats.hits += 1;
-                cached.cache_hit_count += 1;
-                return Some(cached.fix_plan.clone());
+                // Update cache hit count
+                if let Some(mut_cached) = self.cache.write().unwrap().get_mut(&key) {
+                    mut_cached.cache_hit_count += 1;
+                }
+                return Some(cached.fix_plan);
             } else {
                 stats.invalidations += 1;
                 // Remove invalid cache entry

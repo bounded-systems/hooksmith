@@ -31,6 +31,12 @@ pub fn execute_hook(hook_name: &str, args: Vec<String>) -> Result<()> {
         GitHook::SendEmailValidate => execute_sendemail_validate(&context)?,
         GitHook::FSMonitorWatchman => execute_fsmonitor_watchman(&context)?,
         GitHook::PostIndexChange => execute_post_index_change(&context)?,
+        // Server-side hooks
+        GitHook::PreReceive => execute_pre_receive(&context)?,
+        GitHook::Update => execute_update(&context)?,
+        GitHook::PostReceive => execute_post_receive(&context)?,
+        GitHook::PostUpdate => execute_post_update(&context)?,
+        GitHook::PushToCheckout => execute_push_to_checkout(&context)?,
     }
 
     Ok(())
@@ -124,6 +130,32 @@ fn execute_fsmonitor_watchman(_context: &HookContext) -> Result<()> {
 
 fn execute_post_index_change(_context: &HookContext) -> Result<()> {
     println!("✅ Post-index-change hook (no-op mode) - would handle index changes");
+    Ok(())
+}
+
+// Server-side hook functions
+fn execute_pre_receive(_context: &HookContext) -> Result<()> {
+    println!("✅ Pre-receive hook (no-op mode) - would validate incoming references");
+    Ok(())
+}
+
+fn execute_update(_context: &HookContext) -> Result<()> {
+    println!("✅ Update hook (no-op mode) - would validate single reference update");
+    Ok(())
+}
+
+fn execute_post_receive(_context: &HookContext) -> Result<()> {
+    println!("✅ Post-receive hook (no-op mode) - would perform post-receive actions");
+    Ok(())
+}
+
+fn execute_post_update(_context: &HookContext) -> Result<()> {
+    println!("✅ Post-update hook (no-op mode) - would perform post-update actions");
+    Ok(())
+}
+
+fn execute_push_to_checkout(_context: &HookContext) -> Result<()> {
+    println!("✅ Push-to-checkout hook (no-op mode) - would handle push to working directory");
     Ok(())
 }
 

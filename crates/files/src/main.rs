@@ -1,4 +1,4 @@
-use dircheck_core::{git_query::GitQueryCommands, validate_files_index, FileRuleSet};
+use hooksmith_core::{git_query::GitQueryCommands, validate_files_index, FileRuleSet};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rules = FileRuleSet::default();

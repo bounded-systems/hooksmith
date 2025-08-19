@@ -86,15 +86,15 @@ struct ContractValidator {
 impl ContractValidator {
     fn new(contract: &Contract) -> Result<Self> {
         let names = &contract.spec.git.tree.objects.names;
-        
+
         // Build required set (exact matches only)
         let required_exact: HashSet<String> = names.required.iter().cloned().collect();
-        
+
         // Build glob sets
         let allowed_glob = Self::build_glob_set(&names.allowed)?;
         let rejected_glob = Self::build_glob_set(&names.rejected)?;
         let ignored_glob = Self::build_glob_set(&names.ignored)?;
-        
+
         Ok(Self {
             required_exact,
             allowed_glob,
@@ -102,19 +102,19 @@ impl ContractValidator {
             ignored_glob,
         })
     }
-    
+
     fn build_glob_set(patterns: &[String]) -> Result<GlobSet> {
         let mut builder = GlobSetBuilder::new();
 
         for pattern in patterns {
-            let glob = Glob::new(pattern)
-                .with_context(|| format!("Invalid glob pattern: {}", pattern))?;
+            let glob =
+                Glob::new(pattern).with_context(|| format!("Invalid glob pattern: {}", pattern))?;
             builder.add(glob);
         }
 
         builder.build().context("Failed to build glob set")
     }
-    
+
     fn validate_tree(&self, tree_report: &TreeReport) -> ValidationDiff {
         let mut seen_required = HashSet::new();
         let mut rejected = Vec::new();
@@ -179,16 +179,15 @@ fn read_tree_from_git(ref_name: &str) -> Result<TreeReport> {
         .output()
         .context("Failed to get tree entries")?;
 
-    let entries_str = String::from_utf8(output.stdout)
-        .context("Invalid tree entries output")?;
+    let entries_str = String::from_utf8(output.stdout).context("Invalid tree entries output")?;
 
     // Parse entries (format: MODE TYPE SHA\tNAME\0)
     let mut entries = Vec::new();
     for entry in entries_str.split('\0') {
         if entry.is_empty() {
             continue;
-    }
-    
+        }
+
         let parts: Vec<&str> = entry.split('\t').collect();
         if parts.len() != 2 {
             continue;
@@ -233,7 +232,10 @@ fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() != 3 {
         eprintln!("Usage: {} <ref> <contract-path>", args[0]);
-        eprintln!("Example: {} origin/main contracts/object-names@v1.json", args[0]);
+        eprintln!(
+            "Example: {} origin/main contracts/object-names@v1.json",
+            args[0]
+        );
         std::process::exit(1);
     }
 
