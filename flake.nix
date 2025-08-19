@@ -45,8 +45,8 @@
         # Dev shell for fast local work; cargo is incremental here
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
-            # Rust toolchain
-            cargo rustc rustfmt clippy
+            # Rust toolchain with source for standard library
+            cargo rustc rustfmt clippy rust-src
             
             # Development tools
             pkg-config
