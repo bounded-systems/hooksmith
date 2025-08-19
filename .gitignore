@@ -39,3 +39,6 @@ hooksmith-events.jsonl
 .trunk/out
 .trunk/plugins/
 .trunk/tools
+
+# Environment-specific files
+.direnv/
