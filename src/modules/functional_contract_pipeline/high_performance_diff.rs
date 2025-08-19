@@ -114,12 +114,12 @@ impl HighPerformanceDiffer {
 
         // Parse JSON using serde_json (baseline)
         let mut diffs = Vec::new();
-        let mut total_operations = 0;
+        let mut _total_operations = 0;
 
         for ex in expected {
             if let Some(obs) = observed.iter().find(|o| o.symbol == ex.symbol) {
                 let patches = diff(&obs.data, &ex.expectation);
-                total_operations += patches.0.len();
+                _total_operations += patches.0.len();
 
                 if !patches.0.is_empty() {
                     let mut metadata = HashMap::new();
@@ -455,7 +455,7 @@ impl HighPerformanceDiffer {
         let parse_start = Instant::now();
 
         let mut diffs = Vec::new();
-        let mut total_operations = 0;
+        let mut _total_operations = 0;
 
         for ex in expected {
             if let Some(obs) = observed.iter().find(|o| o.symbol == ex.symbol) {
@@ -468,7 +468,7 @@ impl HighPerformanceDiffer {
 
                 // Fall back to JSON Patch for precise operations
                 let patches = diff(&obs.data, &ex.expectation);
-                total_operations += patches.0.len();
+                _total_operations += patches.0.len();
 
                 if !patches.0.is_empty() {
                     let mut metadata = HashMap::new();

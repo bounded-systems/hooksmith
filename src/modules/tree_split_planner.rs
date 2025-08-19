@@ -1,4 +1,7 @@
-use git2::{Repository, Tree};
+//! Tree split planner module for analyzing and suggesting crate boundaries
+#![allow(missing_docs)]
+
+use git2::Repository;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -87,40 +90,14 @@ impl TreeSplitPlanner {
     /// Analyze churn patterns for files in a tree
     pub fn analyze_churn(&mut self, tree_sha: &str) -> Result<Vec<ChurnAnalysis>, String> {
         let oid = git2::Oid::from_str(tree_sha).map_err(|e| e.to_string())?;
-        let tree = self.repo.find_tree(oid).map_err(|e| e.to_string())?;
         let mut analyses = Vec::new();
 
-        self.walk_tree_recursive(&tree, PathBuf::new(), &mut analyses)?;
+        // Use helper method to avoid borrowing conflicts
+        self.process_tree_analysis(oid, PathBuf::new(), &mut analyses)?;
 
         Ok(analyses)
     }
 
-    /// Walk tree recursively to analyze all files
-    fn walk_tree_recursive(
-        &mut self,
-        tree: &Tree,
-        current_path: PathBuf,
-        analyses: &mut Vec<ChurnAnalysis>,
-    ) -> Result<(), String> {
-        for entry in tree.iter() {
-            let entry_path = current_path.join(entry.name().unwrap());
-
-            match entry.kind() {
-                Some(git2::ObjectType::Blob) => {
-                    if self.is_rust_file(&entry_path) {
-                        let analysis = self.analyze_file_churn(&entry_path)?;
-                        analyses.push(analysis);
-                    }
-                }
-                Some(git2::ObjectType::Tree) => {
-                    let subtree = self.repo.find_tree(entry.id()).map_err(|e| e.to_string())?;
-                    self.walk_tree_recursive(&subtree, entry_path, analyses)?;
-                }
-                _ => {}
-            }
-        }
-        Ok(())
-    }
 
     /// Analyze churn for a specific file
     fn analyze_file_churn(&mut self, file_path: &Path) -> Result<ChurnAnalysis, String> {
@@ -487,6 +464,46 @@ impl TreeSplitPlanner {
         });
 
         Ok(result)
+    }
+
+    /// Helper method to process tree analysis without borrowing conflicts
+    fn process_tree_analysis(
+        &mut self,
+        entry_id: git2::Oid,
+        entry_path: PathBuf,
+        analyses: &mut Vec<ChurnAnalysis>,
+    ) -> Result<(), String> {
+        // Collect all entries from the subtree first to avoid borrowing conflicts
+        let entries_info = {
+            let subtree = self.repo.find_tree(entry_id).map_err(|e| e.to_string())?;
+            subtree.iter().map(|entry| {
+                (
+                    entry.name().unwrap().to_string(),
+                    entry.id(),
+                    entry.kind(),
+                    entry_path.join(entry.name().unwrap()),
+                )
+            }).collect::<Vec<_>>()
+        };
+
+        // Process entries without holding any tree references
+        for (_name, entry_id, kind, full_entry_path) in entries_info {
+            match kind {
+                Some(git2::ObjectType::Blob) => {
+                    if self.is_rust_file(&full_entry_path) {
+                        let analysis = self.analyze_file_churn(&full_entry_path)?;
+                        analyses.push(analysis);
+                    }
+                }
+                Some(git2::ObjectType::Tree) => {
+                    // Recursive call
+                    self.process_tree_analysis(entry_id, full_entry_path, analyses)?;
+                }
+                _ => {}
+            }
+        }
+        
+        Ok(())
     }
 }
 

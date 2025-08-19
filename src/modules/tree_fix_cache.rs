@@ -1,3 +1,6 @@
+//! Tree fix cache module for caching fix plans
+#![allow(missing_docs)]
+
 use git2::{Oid, Repository};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

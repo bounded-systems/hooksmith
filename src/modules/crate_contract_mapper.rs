@@ -1,4 +1,7 @@
-use crate::modules::contract_validation::{ContractDefinition, ContractValidator};
+//! Crate contract mapping module for isolation auditing
+#![allow(missing_docs)]
+
+// Removed unused imports: ContractDefinition, ContractValidator
 use git2::{Repository, Tree};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -152,35 +155,6 @@ impl CrateContractMapper {
         Ok(mappings)
     }
 
-    /// Walk tree to find and map contracts
-    fn walk_tree_for_contracts(
-        &mut self,
-        tree: &Tree,
-        current_path: PathBuf,
-        mappings: &mut Vec<ContractCrateMapping>,
-    ) -> Result<(), String> {
-        // Collect entries first to avoid borrowing conflicts
-        let entries: Vec<_> = tree.iter().collect();
-
-        for entry in entries {
-            let entry_path = current_path.join(entry.name().unwrap());
-
-            match entry.kind() {
-                Some(git2::ObjectType::Blob) => {
-                    if self.is_contract_file(&entry_path) {
-                        let contract_mappings = self.extract_contracts_from_file(&entry_path)?;
-                        mappings.extend(contract_mappings);
-                    }
-                }
-                Some(git2::ObjectType::Tree) => {
-                    let subtree = self.repo.find_tree(entry.id()).map_err(|e| e.to_string())?;
-                    self.walk_tree_for_contracts(&subtree, entry_path, mappings)?;
-                }
-                _ => {}
-            }
-        }
-        Ok(())
-    }
 
     /// Collect all contract files from a tree
     fn collect_contract_files(&self, oid: git2::Oid) -> Result<Vec<PathBuf>, String> {
@@ -193,7 +167,7 @@ impl CrateContractMapper {
     /// Recursively collect files from a tree
     fn collect_files_recursive(
         &self,
-        tree: &Tree,
+        tree: &Tree<'_>,
         current_path: PathBuf,
         files: &mut Vec<PathBuf>,
     ) -> Result<(), String> {
@@ -314,7 +288,7 @@ impl CrateContractMapper {
     fn determine_isolation_level(
         &self,
         contract: &Contract,
-        crate_name: &str,
+        _crate_name: &str,
     ) -> Result<IsolationLevel, String> {
         // Analyze contract visibility and scope
         match contract.scope {
@@ -510,6 +484,47 @@ impl CrateContractMapper {
             .values()
             .filter(|mapping| mapping.crate_name == crate_name)
             .collect()
+    }
+
+    /// Helper method to process tree entries without borrowing conflicts
+    #[allow(dead_code)]
+    fn process_tree_entry(
+        &mut self,
+        entry_id: git2::Oid,
+        entry_path: PathBuf,
+        mappings: &mut Vec<ContractCrateMapping>,
+    ) -> Result<(), String> {
+        // Collect all entries from the subtree first to avoid borrowing conflicts
+        let entries_info = {
+            let subtree = self.repo.find_tree(entry_id).map_err(|e| e.to_string())?;
+            subtree.iter().map(|entry| {
+                (
+                    entry.name().unwrap().to_string(),
+                    entry.id(),
+                    entry.kind(),
+                    entry_path.join(entry.name().unwrap()),
+                )
+            }).collect::<Vec<_>>()
+        };
+
+        // Process entries without holding any tree references
+        for (_name, entry_id, kind, full_entry_path) in entries_info {
+            match kind {
+                Some(git2::ObjectType::Blob) => {
+                    if self.is_contract_file(&full_entry_path) {
+                        let contract_mappings = self.extract_contracts_from_file(&full_entry_path)?;
+                        mappings.extend(contract_mappings);
+                    }
+                }
+                Some(git2::ObjectType::Tree) => {
+                    // Recursive call
+                    self.process_tree_entry(entry_id, full_entry_path, mappings)?;
+                }
+                _ => {}
+            }
+        }
+        
+        Ok(())
     }
 }
 

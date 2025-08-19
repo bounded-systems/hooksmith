@@ -268,7 +268,9 @@ pub enum GitStateType {
 
 /// Git-native validation context
 pub struct GitNativeValidator {
+    #[allow(dead_code)]
     object_counts: HashMap<GitObjectType, u32>,
+    #[allow(dead_code)]
     metadata_counts: HashMap<GitMetadataType, u32>,
 }
 

@@ -14,7 +14,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use wasmtime::{component::Component, Engine, Linker, Store};
+use wasmtime::{component::Component, Linker};
 
 use self::components::ComponentHandle;
 use self::config::OrchestratorConfig;
@@ -233,7 +233,7 @@ impl HooksmithOrchestrator {
     pub async fn validate_contract_via_events(
         &self,
         contract_name: &str,
-        file_path: &str,
+        _file_path: &str,
         content: &str,
         strict: bool,
         store_proof: bool,
@@ -241,7 +241,7 @@ impl HooksmithOrchestrator {
         use event_types::{ComputationEvent, Event, ValidationConfig as EventValidationConfig};
         use uuid::Uuid;
 
-        let request_id = Uuid::new_v4().to_string();
+        let _request_id = Uuid::new_v4().to_string();
         let session_id = Some(Uuid::new_v4().to_string());
 
         // Create validation request event
@@ -281,7 +281,7 @@ impl HooksmithOrchestrator {
         use event_types::{Event, SystemEvent};
         use uuid::Uuid;
 
-        let request_id = Uuid::new_v4().to_string();
+        let _request_id = Uuid::new_v4().to_string();
         let session_id = Some(Uuid::new_v4().to_string());
 
         // Create file read request event
@@ -308,7 +308,7 @@ impl HooksmithOrchestrator {
     /// Store validation proof using event-driven approach
     pub async fn store_proof_via_events(
         &self,
-        file_path: &str,
+        _file_path: &str,
         validation_result: &ValidationResult,
     ) -> Result<()> {
         use event_types::{Event, SystemEvent};
@@ -350,10 +350,10 @@ impl HooksmithOrchestrator {
         }
 
         let engine = &self.runtime.engine();
-        let mut linker = self.linker.as_mut().unwrap();
+        let _linker = self.linker.as_mut().unwrap();
 
         // Load validation-handler component (exports validation functions)
-        if let Ok(validation_component) =
+        if let Ok(_validation_component) =
             Component::from_file(engine, "validation-handler.component.wasm")
         {
             // TODO: Fix component instantiation

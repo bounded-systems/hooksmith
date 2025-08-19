@@ -13,7 +13,7 @@ use tokio::time::timeout;
 use uuid::Uuid;
 
 // Import the event bus and handlers
-use crate::xtask::event_bus::{emit_event, HooksmithEvent, EventBusConfig};
+use crate::xtask::event_bus::{emit_event, EventBusConfig, HooksmithEvent};
 use crate::xtask::wasm_event_bus;
 
 /// Demo of hybrid architecture workflow
@@ -29,17 +29,17 @@ pub async fn run_hybrid_architecture_demo() -> Result<()> {
     // Demo 1: Contract Validation Workflow
     println!("\n📋 Demo 1: Contract Validation Workflow");
     println!("----------------------------------------");
-    await contract_validation_workflow_demo().await?;
+    contract_validation_workflow_demo().await?;
 
     // Demo 2: File Operations Workflow
     println!("\n📁 Demo 2: File Operations Workflow");
     println!("------------------------------------");
-    await file_operations_workflow_demo().await?;
+    file_operations_workflow_demo().await?;
 
     // Demo 3: Git Operations Workflow
     println!("\n🔧 Demo 3: Git Operations Workflow");
     println!("-----------------------------------");
-    await git_operations_workflow_demo().await?;
+    git_operations_workflow_demo().await?;
 
     println!("\n✅ Hybrid Architecture Demo Completed Successfully!");
     Ok(())
@@ -49,7 +49,7 @@ pub async fn run_hybrid_architecture_demo() -> Result<()> {
 async fn contract_validation_workflow_demo() -> Result<()> {
     let session_id = Uuid::new_v4().to_string();
     let request_id = Uuid::new_v4().to_string();
-    
+
     println!("Session ID: {}", session_id);
     println!("Request ID: {}", request_id);
 
@@ -74,7 +74,8 @@ async fn contract_validation_workflow_demo() -> Result<()> {
     emit_event(file_read_event)?;
 
     // Wait for file read result
-    let file_content = await_event_response("file_read_result", &request_id, Duration::from_secs(5)).await?;
+    let file_content =
+        await_event_response("file_read_result", &request_id, Duration::from_secs(5)).await?;
     println!("✅ File content read successfully");
 
     // Step 2: Validate contract (WIT Component)
@@ -104,11 +105,17 @@ async fn contract_validation_workflow_demo() -> Result<()> {
     emit_event(validation_event)?;
 
     // Wait for validation result
-    let validation_result = await_event_response("validation_result", &request_id, Duration::from_secs(10)).await?;
+    let validation_result =
+        await_event_response("validation_result", &request_id, Duration::from_secs(10)).await?;
     println!("✅ Contract validation completed");
 
     // Step 3: Store validation proof (Native Handler)
-    if validation_result.get("result").and_then(|r| r.get("valid")).and_then(|v| v.as_bool()).unwrap_or(false) {
+    if validation_result
+        .get("result")
+        .and_then(|r| r.get("valid"))
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+    {
         println!("\n3️⃣ Storing validation proof...");
         let proof_event = HooksmithEvent::new(
             "cli-contract-validation".to_string(),
@@ -132,7 +139,9 @@ async fn contract_validation_workflow_demo() -> Result<()> {
         emit_event(proof_event)?;
 
         // Wait for note add result
-        let _note_result = await_event_response("git_note_add_result", &request_id, Duration::from_secs(5)).await?;
+        let _note_result =
+            await_event_response("git_note_add_result", &request_id, Duration::from_secs(5))
+                .await?;
         println!("✅ Validation proof stored");
     }
 
@@ -144,7 +153,7 @@ async fn contract_validation_workflow_demo() -> Result<()> {
 async fn file_operations_workflow_demo() -> Result<()> {
     let session_id = Uuid::new_v4().to_string();
     let request_id = Uuid::new_v4().to_string();
-    
+
     println!("Session ID: {}", session_id);
     println!("Request ID: {}", request_id);
 
@@ -172,7 +181,8 @@ async fn file_operations_workflow_demo() -> Result<()> {
     emit_event(write_event)?;
 
     // Wait for write result
-    let _write_result = await_event_response("file_write_result", &request_id, Duration::from_secs(5)).await?;
+    let _write_result =
+        await_event_response("file_write_result", &request_id, Duration::from_secs(5)).await?;
     println!("✅ Test file created successfully");
 
     // Step 2: Calculate file checksum
@@ -196,9 +206,15 @@ async fn file_operations_workflow_demo() -> Result<()> {
     emit_event(checksum_event)?;
 
     // Wait for checksum result
-    let checksum_result = await_event_response("file_checksum_result", &request_id, Duration::from_secs(5)).await?;
-    println!("✅ File checksum calculated: {}", 
-        checksum_result.get("checksum").and_then(|c| c.as_str()).unwrap_or("unknown"));
+    let checksum_result =
+        await_event_response("file_checksum_result", &request_id, Duration::from_secs(5)).await?;
+    println!(
+        "✅ File checksum calculated: {}",
+        checksum_result
+            .get("checksum")
+            .and_then(|c| c.as_str())
+            .unwrap_or("unknown")
+    );
 
     // Step 3: Read file back
     println!("\n3️⃣ Reading file back...");
@@ -221,9 +237,15 @@ async fn file_operations_workflow_demo() -> Result<()> {
     emit_event(read_event)?;
 
     // Wait for read result
-    let read_result = await_event_response("file_read_result", &request_id, Duration::from_secs(5)).await?;
-    println!("✅ File content: {}", 
-        read_result.get("content").and_then(|c| c.as_str()).unwrap_or("unknown"));
+    let read_result =
+        await_event_response("file_read_result", &request_id, Duration::from_secs(5)).await?;
+    println!(
+        "✅ File content: {}",
+        read_result
+            .get("content")
+            .and_then(|c| c.as_str())
+            .unwrap_or("unknown")
+    );
 
     // Step 4: Clean up
     println!("\n4️⃣ Cleaning up...");
@@ -246,7 +268,8 @@ async fn file_operations_workflow_demo() -> Result<()> {
     emit_event(delete_event)?;
 
     // Wait for delete result
-    let _delete_result = await_event_response("file_delete_result", &request_id, Duration::from_secs(5)).await?;
+    let _delete_result =
+        await_event_response("file_delete_result", &request_id, Duration::from_secs(5)).await?;
     println!("✅ Test file cleaned up");
 
     println!("🎉 File operations workflow completed successfully!");
@@ -257,7 +280,7 @@ async fn file_operations_workflow_demo() -> Result<()> {
 async fn git_operations_workflow_demo() -> Result<()> {
     let session_id = Uuid::new_v4().to_string();
     let request_id = Uuid::new_v4().to_string();
-    
+
     println!("Session ID: {}", session_id);
     println!("Request ID: {}", request_id);
 
@@ -280,14 +303,21 @@ async fn git_operations_workflow_demo() -> Result<()> {
     emit_event(status_event)?;
 
     // Wait for status result
-    let status_result = await_event_response("git_status_result", &request_id, Duration::from_secs(5)).await?;
+    let status_result =
+        await_event_response("git_status_result", &request_id, Duration::from_secs(5)).await?;
     println!("✅ Git status retrieved");
 
     // Step 2: Add files if there are changes
     if let Some(status) = status_result.get("status") {
-        let staged = status.get("staged").and_then(|s| s.as_array()).unwrap_or(&Vec::new());
-        let unstaged = status.get("unstaged").and_then(|s| s.as_array()).unwrap_or(&Vec::new());
-        
+        let staged = status
+            .get("staged")
+            .and_then(|s| s.as_array())
+            .unwrap_or(&Vec::new());
+        let unstaged = status
+            .get("unstaged")
+            .and_then(|s| s.as_array())
+            .unwrap_or(&Vec::new());
+
         if !staged.is_empty() || !unstaged.is_empty() {
             println!("\n2️⃣ Adding files to staging...");
             let add_event = HooksmithEvent::new(
@@ -308,7 +338,8 @@ async fn git_operations_workflow_demo() -> Result<()> {
             emit_event(add_event)?;
 
             // Wait for add result
-            let _add_result = await_event_response("git_add_result", &request_id, Duration::from_secs(5)).await?;
+            let _add_result =
+                await_event_response("git_add_result", &request_id, Duration::from_secs(5)).await?;
             println!("✅ Files added to staging");
         }
     }
@@ -337,25 +368,35 @@ async fn git_operations_workflow_demo() -> Result<()> {
     emit_event(commit_event)?;
 
     // Wait for commit result
-    let commit_result = await_event_response("git_commit_result", &request_id, Duration::from_secs(10)).await?;
-    println!("✅ Commit created: {}", 
-        commit_result.get("commit_hash").and_then(|h| h.as_str()).unwrap_or("unknown"));
+    let commit_result =
+        await_event_response("git_commit_result", &request_id, Duration::from_secs(10)).await?;
+    println!(
+        "✅ Commit created: {}",
+        commit_result
+            .get("commit_hash")
+            .and_then(|h| h.as_str())
+            .unwrap_or("unknown")
+    );
 
     println!("🎉 Git operations workflow completed successfully!");
     Ok(())
 }
 
 /// Wait for an event response with timeout
-async fn await_event_response(event_type: &str, request_id: &str, timeout_duration: Duration) -> Result<serde_json::Value> {
+async fn await_event_response(
+    event_type: &str,
+    request_id: &str,
+    timeout_duration: Duration,
+) -> Result<serde_json::Value> {
     // In a real implementation, this would subscribe to the event bus
     // and wait for the specific event response. For this demo, we'll
     // simulate the response.
-    
+
     println!("⏳ Waiting for {} response...", event_type);
-    
+
     // Simulate processing time
     tokio::time::sleep(Duration::from_millis(100)).await;
-    
+
     // Return a mock response based on event type
     match event_type {
         "file_read_result" => Ok(json!({
@@ -431,7 +472,7 @@ async fn await_event_response(event_type: &str, request_id: &str, timeout_durati
         _ => Ok(json!({
             "request_id": request_id,
             "success": true
-        }))
+        })),
     }
 }
 
@@ -444,12 +485,15 @@ pub async fn refactored_contract_validation_command(
 ) -> Result<()> {
     let session_id = Uuid::new_v4().to_string();
     let request_id = Uuid::new_v4().to_string();
-    
-    println!("🔍 Validating contract '{}' against file '{}'", contract_name, file_path);
+
+    println!(
+        "🔍 Validating contract '{}' against file '{}'",
+        contract_name, file_path
+    );
 
     // Step 1: Read the file content using native file operations
     let file_content = read_file_content(&file_path, &session_id, &request_id).await?;
-    
+
     // Step 2: Validate the contract using WIT component
     let validation_result = validate_contract(
         contract_name,
@@ -459,12 +503,13 @@ pub async fn refactored_contract_validation_command(
         store_proof,
         &session_id,
         &request_id,
-    ).await?;
-    
+    )
+    .await?;
+
     // Step 3: Handle the validation result
     if validation_result.valid {
         println!("✅ Contract validation passed");
-        
+
         if store_proof {
             store_validation_proof(file_path, &validation_result, &session_id, &request_id).await?;
         }
@@ -475,7 +520,7 @@ pub async fn refactored_contract_validation_command(
         }
         return Err(anyhow::anyhow!("Contract validation failed"));
     }
-    
+
     Ok(())
 }
 
@@ -498,11 +543,20 @@ async fn read_file_content(file_path: &str, session_id: &str, request_id: &str) 
     .with_session_id(session_id.to_string());
 
     emit_event(read_event)?;
-    
-    let response = await_event_response("file_read_result", request_id, Duration::from_secs(5)).await?;
-    
-    if response.get("success").and_then(|s| s.as_bool()).unwrap_or(false) {
-        Ok(response.get("content").and_then(|c| c.as_str()).unwrap_or("").to_string())
+
+    let response =
+        await_event_response("file_read_result", request_id, Duration::from_secs(5)).await?;
+
+    if response
+        .get("success")
+        .and_then(|s| s.as_bool())
+        .unwrap_or(false)
+    {
+        Ok(response
+            .get("content")
+            .and_then(|c| c.as_str())
+            .unwrap_or("")
+            .to_string())
     } else {
         Err(anyhow::anyhow!("Failed to read file: {}", file_path))
     }
@@ -541,17 +595,30 @@ async fn validate_contract(
     .with_session_id(session_id.to_string());
 
     emit_event(validation_event)?;
-    
-    let response = await_event_response("validation_result", request_id, Duration::from_secs(10)).await?;
-    
-    if response.get("success").and_then(|s| s.as_bool()).unwrap_or(false) {
-        let result = response.get("result").ok_or_else(|| anyhow::anyhow!("No result in validation response"))?;
-        
+
+    let response =
+        await_event_response("validation_result", request_id, Duration::from_secs(10)).await?;
+
+    if response
+        .get("success")
+        .and_then(|s| s.as_bool())
+        .unwrap_or(false)
+    {
+        let result = response
+            .get("result")
+            .ok_or_else(|| anyhow::anyhow!("No result in validation response"))?;
+
         Ok(ValidationResult {
-            valid: result.get("valid").and_then(|v| v.as_bool()).unwrap_or(false),
-            errors: Vec::new(), // Parse errors from result
+            valid: result
+                .get("valid")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false),
+            errors: Vec::new(),   // Parse errors from result
             warnings: Vec::new(), // Parse warnings from result
-            proof_hash: result.get("proof_hash").and_then(|p| p.as_str()).map(|s| s.to_string()),
+            proof_hash: result
+                .get("proof_hash")
+                .and_then(|p| p.as_str())
+                .map(|s| s.to_string()),
         })
     } else {
         Err(anyhow::anyhow!("Validation request failed"))
@@ -592,9 +659,10 @@ async fn store_validation_proof(
     .with_session_id(session_id.to_string());
 
     emit_event(write_event)?;
-    
-    let _write_response = await_event_response("file_write_result", request_id, Duration::from_secs(5)).await?;
-    
+
+    let _write_response =
+        await_event_response("file_write_result", request_id, Duration::from_secs(5)).await?;
+
     // Add Git note
     let note_event = HooksmithEvent::new(
         "contract-validation".to_string(),
@@ -616,9 +684,10 @@ async fn store_validation_proof(
     .with_session_id(session_id.to_string());
 
     emit_event(note_event)?;
-    
-    let _note_response = await_event_response("git_note_add_result", request_id, Duration::from_secs(5)).await?;
-    
+
+    let _note_response =
+        await_event_response("git_note_add_result", request_id, Duration::from_secs(5)).await?;
+
     println!("💾 Validation proof stored");
     Ok(())
 }
@@ -658,4 +727,4 @@ mod tests {
         // For now, we'll just test that the demo function compiles
         assert!(true);
     }
-} 
+}

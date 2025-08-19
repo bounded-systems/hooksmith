@@ -22,9 +22,8 @@
 //! 4. **CRD-Only Output**: Repair output is not an applied patch—it's a regenerated CRD from the fixer tree
 //! 5. **Note-Driven**: Everything hangs off Git Notes; they're versionable, mergeable, and scoped
 
-use crate::modules::functional_contract_pipeline::sarif_roles::{AuditResult, SarifResult};
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, RuleSeverity};
-use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot, ValidationDiff};
+use crate::modules::functional_contract_pipeline::types::{ConcernSnapshot};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

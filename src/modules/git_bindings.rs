@@ -1,5 +1,4 @@
 use anyhow::{bail, Result};
-use std::collections::HashMap;
 
 /// Git object types
 #[derive(Debug, Clone, PartialEq)]

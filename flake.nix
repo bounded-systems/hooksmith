@@ -48,7 +48,8 @@
           ];
 
         # Environment variables for builds
-        RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+        # Temporarily disable RUST_SRC_PATH to avoid path mismatch issues
+        # RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
         LIBGIT2_SYS_USE_PKG_CONFIG = "1";
         OPENSSL_NO_VENDOR = "1";
 
@@ -149,17 +150,21 @@
         '';
       };
 
+      # Consistent rust toolchain for dev shell and builds
+      rustToolchain = with pkgs; [
+        cargo
+        rustc
+        rustfmt
+        clippy
+        rust-analyzer
+        # Add rust source for RUST_SRC_PATH
+        (pkgs.rust.packages.stable.rustPlatform.rustcSrc or pkgs.rustPlatform.rustcSrc)
+      ];
+
       # All development tools in one shell
       devToolsShell = pkgs.mkShell {
-        packages = with pkgs;
+        packages = rustToolchain ++ (with pkgs;
           [
-            # Rust toolchain with all components
-            cargo
-            rustc
-            rustfmt
-            clippy
-            rust-analyzer
-
             # Build tools
             pkg-config
             just
@@ -200,12 +205,13 @@
             else [
               openssl
             ]
-          );
+          ));
 
         # Environment setup
         CARGO_PROFILE_DEV_DEBUG = "0"; # Faster builds
         RUSTFLAGS = "-C debuginfo=1"; # Minimal debug info
         HOOKSMITH_DEV_MODE = "1";
+        # Use the same rust source as the toolchain
         RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
         LIBGIT2_SYS_USE_PKG_CONFIG = "1";
         OPENSSL_NO_VENDOR = "1";

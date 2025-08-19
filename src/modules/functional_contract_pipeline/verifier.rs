@@ -1,6 +1,6 @@
 use crate::modules::functional_contract_pipeline::symbols::{ConcernSymbol, RuleSeverity};
 use crate::modules::functional_contract_pipeline::types::{DiffSet, DiffType, ValidationDiff};
-use json_patch::{diff, AddOperation, Patch};
+use json_patch::{diff, Patch};
 use std::collections::HashMap;
 
 /// Verify observed snapshots against expected snapshots

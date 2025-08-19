@@ -1,5 +1,5 @@
 use crate::modules::functional_contract_pipeline::symbols::{
-    ConcernSymbol, ContractSymbol, RuleSeverity, RuleType,
+    ContractSymbol, RuleSeverity, RuleType,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
