@@ -1,4 +1,4 @@
-use crate::git_pipeline::{Analysis, GitObject, Mandate, Report, ToolFingerprint, Verdict};
+use crate::git_pipeline::{Analysis, GitObject, Mandate, Report, SerializableObjectType, ToolFingerprint, Verdict};
 use git2::{ObjectType, Repository, Tree, TreeEntry};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -513,7 +513,7 @@ impl ObjectNamesValidator {
 
         let object = GitObject {
             oid: tree.id().to_string(),
-            kind: ObjectType::Tree,
+            kind: SerializableObjectType::from(ObjectType::Tree),
             logical_path: Some(PathBuf::new()), // Root path
             parent_tree_oid: None,
             size: tree.id().as_bytes().len(),

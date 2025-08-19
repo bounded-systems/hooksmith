@@ -4,11 +4,43 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+/// Git object type that can be serialized
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SerializableObjectType {
+    Commit,
+    Tree,
+    Blob,
+    Tag,
+}
+
+impl From<ObjectType> for SerializableObjectType {
+    fn from(obj_type: ObjectType) -> Self {
+        match obj_type {
+            ObjectType::Commit => SerializableObjectType::Commit,
+            ObjectType::Tree => SerializableObjectType::Tree,
+            ObjectType::Blob => SerializableObjectType::Blob,
+            ObjectType::Tag => SerializableObjectType::Tag,
+            ObjectType::Any => SerializableObjectType::Blob, // Default to Blob for "Any" type
+        }
+    }
+}
+
+impl From<SerializableObjectType> for ObjectType {
+    fn from(obj_type: SerializableObjectType) -> Self {
+        match obj_type {
+            SerializableObjectType::Commit => ObjectType::Commit,
+            SerializableObjectType::Tree => ObjectType::Tree,
+            SerializableObjectType::Blob => ObjectType::Blob,
+            SerializableObjectType::Tag => ObjectType::Tag,
+        }
+    }
+}
+
 /// Git object metadata for pipeline processing
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GitObject {
     pub oid: String,
-    pub kind: ObjectType,
+    pub kind: SerializableObjectType,
     pub logical_path: Option<PathBuf>,
     pub parent_tree_oid: Option<String>,
     pub size: usize,
@@ -171,8 +203,8 @@ impl GitPipeline {
 
         // Perform analysis
         let analysis_data = match object.kind {
-            ObjectType::Tree => self.analyze_tree(object)?,
-            ObjectType::Blob => self.analyze_blob(object)?,
+            SerializableObjectType::Tree => self.analyze_tree(object)?,
+            SerializableObjectType::Blob => self.analyze_blob(object)?,
             _ => return Err("Unsupported object type".into()),
         };
 
@@ -311,14 +343,16 @@ impl GitPipeline {
         let mut objects = Vec::new();
 
         for entry in tree.iter() {
-            let object = GitObject {
-                oid: entry.id().to_string(),
-                kind: entry.kind(),
-                logical_path: Some(PathBuf::from(entry.name().unwrap_or(""))),
-                parent_tree_oid: Some(tree.id().to_string()),
-                size: entry.id().as_bytes().len(),
-            };
-            objects.push(object);
+            if let Some(kind) = entry.kind() {
+                let object = GitObject {
+                    oid: entry.id().to_string(),
+                    kind: SerializableObjectType::from(kind),
+                    logical_path: Some(PathBuf::from(entry.name().unwrap_or(""))),
+                    parent_tree_oid: Some(tree.id().to_string()),
+                    size: entry.id().as_bytes().len(),
+                };
+                objects.push(object);
+            }
         }
 
         Ok(objects)
