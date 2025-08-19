@@ -1,6 +1,7 @@
 # Workspace configuration only - no package configuration
 
 [workspace]
+resolver = "2"
 members = [
     "crates/hooksmith-app",
     "crates/components/cli-core",
