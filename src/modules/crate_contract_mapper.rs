@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ContractScope {
     Private,
-    Internal, 
+    Internal,
     Public,
 }
 
@@ -134,7 +134,7 @@ impl CrateContractMapper {
 
         // Walk tree to collect file paths first
         let file_paths = self.collect_contract_files(oid)?;
-        
+
         // Process files
         for file_path in file_paths {
             if self.is_contract_file(&file_path) {
@@ -161,7 +161,7 @@ impl CrateContractMapper {
     ) -> Result<(), String> {
         // Collect entries first to avoid borrowing conflicts
         let entries: Vec<_> = tree.iter().collect();
-        
+
         for entry in entries {
             let entry_path = current_path.join(entry.name().unwrap());
 
@@ -198,7 +198,7 @@ impl CrateContractMapper {
         files: &mut Vec<PathBuf>,
     ) -> Result<(), String> {
         let entries: Vec<_> = tree.iter().collect();
-        
+
         for entry in entries {
             let entry_path = current_path.join(entry.name().unwrap());
 

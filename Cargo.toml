@@ -5,6 +5,11 @@ edition = "2021"
 authors = ["Pushd Team"]
 description = "CLI tools for Git worktree management and safety"
 license = "MIT"
+build = "build.rs"
+
+# Inherit workspace lints (fail on warnings)
+[lints]
+workspace = true
 
 [features]
 
@@ -49,16 +54,22 @@ inherits = "release"
 strip = "none"
 debug = true
 
-# Ensure reproducible builds
-[build]
-# Use git2 from system when available for deterministic builds
-target-dir = "target"
+# Target directory is configured in .cargo/config.toml
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
 authors = ["Pushd Team"]
 license = "MIT"
+
+# Workspace-wide lints: fail on warnings in our code, but not dependencies
+[workspace.lints.rust]
+warnings = "deny"         # fail on warnings in workspace members
+unused = "deny"           # deny unused imports, variables, etc.
+rust_2018_idioms = "deny" # enforce modern Rust idioms
+
+[workspace.lints.clippy]
+all = "warn"              # warn on all clippy lints (could be "deny" for stricter CI)
 
 [workspace.dependencies]
 # CLI framework
