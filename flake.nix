@@ -28,6 +28,7 @@
         pkgs = import nixpkgs {
           inherit system;
         };
+        lib = pkgs.lib;
         
         # Use fenix for consistent Rust toolchain
         rustToolchain = fenix.packages.${system}.stable.toolchain;
@@ -49,8 +50,9 @@
           pkgs.darwin.apple_sdk.frameworks.CoreServices
         ];
 
-        # Filter source to only include relevant files for better caching
-        src = craneLib.cleanCargoSource (craneLib.path ./.);
+        # Use the full source for now to ensure Cargo.lock is included
+        # This might be less cache-efficient but ensures reproducible builds
+        src = craneLib.path ./.;
 
         # Common arguments for all crane builds - hermetic and deterministic
         commonArgs = {
@@ -85,6 +87,8 @@
         # Build dependencies separately for better caching
         cargoArtifacts = craneLib.buildDepsOnly (commonArgs // {
           pname = "hooksmith-deps";
+          # Explicitly provide the Cargo.lock file
+          cargoLock = ./Cargo.lock;
         });
 
         # Main xtask package - the primary build orchestrator
