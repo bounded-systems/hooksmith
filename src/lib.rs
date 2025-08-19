@@ -4,9 +4,7 @@
 //!
 //! This library provides core functionality for building Rust binaries into Lefthook hooks with WASM components.
 
-use std::io::{self, Write};
-use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 /// ANSI color codes for terminal output
 pub const RED: &str = "\x1b[0;31m";
