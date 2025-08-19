@@ -74,7 +74,6 @@ codegen-units = 256
 [profile.bench]
 lto = "thin"
 codegen-units = 1
-panic = "abort"
 strip = true
 
 # Workspace optimization with cargo-hakari
@@ -105,9 +104,9 @@ dev-watch = "watch -x run"
 dev-watch-fast = "watch -x 'run --release'"
 
 # Fast checking and testing
-check = "check --all-targets --all-features"
-check-fast = "check --all-targets --all-features --quiet"
-check-watch = "watch -x 'check --all-targets --all-features'"
+verify = "check --all-targets --all-features"
+verify-fast = "check --all-targets --all-features --quiet"
+verify-watch = "watch -x 'check --all-targets --all-features'"
 
 # Optimized testing with cargo-nextest
 test = "nextest run --all-targets --all-features"
