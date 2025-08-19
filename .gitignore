@@ -45,3 +45,4 @@ hooksmith-events.jsonl
 
 # Configuration files
 .config/
+.cargo/config.local.toml

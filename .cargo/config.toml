@@ -1,153 +1,66 @@
-# Global Cargo configuration for Hooksmith
+# Hooksmith Cargo Configuration
 # This config applies to all builds unless overridden
 
+# Include local config for machine-specific tweaks (gitignored)
+include = ["config.local.toml"]
+
 [build]
-# Default to host-native builds
-# For WASM builds, use: cargo build --config .cargo/config.wasm.toml
+# Let Nix/CI set CARGO_TARGET_DIR; don't hardcode here
+# rustflags here are okay for local dev; prefer env in CI for easy overrides
+rustflags = ["-Dwarnings"]  # fail on warnings by default
 
-# Use stable toolchain by default
-# rustc = "rustup run stable rustc"  # Uncomment if needed
+# Use sparse protocol for faster dependency resolution
+[registries.crates-io]
+protocol = "sparse"
 
-# Enable component build by default
-[unstable]
-build-std = ["std", "panic_abort"]
+# Enable faster dependency resolution
+[net]
+git-fetch-with-cli = true
+retry = 10
 
-# Build settings for different targets
-[target.'cfg(target_os = "macos")']
-# macOS-specific optimizations
-rustflags = ["-C", "target-cpu=native"]
+# Development environment
+[env]
+RUST_BACKTRACE = "1"
 
-[target.'cfg(target_os = "linux")']
-# Linux-specific optimizations
-rustflags = ["-C", "target-cpu=native"]
-
-# WASM target settings (only used when explicitly targeting wasm32-wasip2)
-[target.wasm32-wasip2]
-# Optimize for size in WASM builds
-rustflags = ["-C", "opt-level=s"]
-
-# Use LLD linker for faster linking (Linux)
-[target.x86_64-unknown-linux-gnu]
-linker = "clang"
-rustflags = [
-    "-C", "link-arg=-fuse-ld=lld",
-    "-C", "link-arg=-Wl,--no-rosegment",
-]
-
-# Use LLD linker for faster linking (macOS) - Best practice for Apple Silicon
-# Note: LLD is not available by default on macOS, so we use the system linker
-[target.aarch64-apple-darwin]
-# Use system linker for macOS - LLD requires manual installation
-# rustflags = [
-#     "-C", "link-arg=-fuse-ld=lld",
-# ]
-
-# Legacy x86_64 support (if needed)
-[target.x86_64-apple-darwin]
-# Use system linker for macOS - LLD requires manual installation
-# rustflags = [
-#     "-C", "link-arg=-fuse-ld=lld",
-# ]
-
-# Enable parallel compilation frontend (nightly only)
-
-# Profile-guided optimizations
+# Optimized profiles
 [profile.release]
 lto = "thin"
 codegen-units = 16
 panic = "abort"
 strip = true
 
-# Development profile optimizations
 [profile.dev]
 debug = 1
 incremental = true
 codegen-units = 256
 
-# Test profile optimizations
 [profile.test]
 debug = 1
 incremental = true
 codegen-units = 256
 
-# Benchmark profile
-[profile.bench]
-lto = "thin"
-codegen-units = 1
-strip = true
-
-# Workspace optimization with cargo-hakari
+# Workspace resolver
 [workspace]
 resolver = "2"
 
-# Enable faster dependency resolution and security
-[net]
-git-fetch-with-cli = true
-retry = 10
-offline = false
-
-# Security and deterministic builds
-[registries.crates-io]
-protocol = "sparse"
-
-# Reproducible builds environment
-[env]
-SOURCE_DATE_EPOCH = { value = "1", force = false }
-RUSTFLAGS_REPRODUCIBLE = { value = "-C target-feature=+crt-static --remap-path-prefix=$PWD=/build", force = false }
-
-# Optimized build aliases for Hooksmith
+# Build aliases for common tasks
 [alias]
-# Fast development builds
-dev = "run"
-dev-fast = "run --release"
-dev-watch = "watch -x run"
-dev-watch-fast = "watch -x 'run --release'"
+# CI and quality checks
+ci = "clippy --workspace --all-targets --all-features -- -D warnings"
+check-all = "check --workspace --all-targets --all-features"
+test-all = "test --workspace --all-targets --all-features"
 
-# Fast checking and testing
-verify = "check --all-targets --all-features"
-verify-fast = "check --all-targets --all-features --quiet"
-verify-watch = "watch -x 'check --all-targets --all-features'"
-
-# Optimized testing with cargo-nextest
-test = "nextest run --all-targets --all-features"
-test-fast = "nextest run --all-targets --all-features --no-capture"
-test-watch = "watch -x 'nextest run --all-targets --all-features'"
-test-parallel = "nextest run --all-targets --all-features --test-threads=12"
-
-# Nightly optimizations
-nightly-check = "+nightly check --all-targets --all-features"
-nightly-build = "+nightly build --release"
-nightly-test = "+nightly nextest run --all-targets --all-features"
-
-# Parallel compilation (nightly only)
-parallel-check = "+nightly check --all-targets --all-features"
-parallel-build = "+nightly build --release"
-parallel-test = "+nightly nextest run --all-targets --all-features"
-
-# Workspace optimization
-hakari-sync = "hakari manage-deps"
-hakari-update = "hakari update"
-
-# Build timing and analysis
-timings = "build --timings"
-tree = "tree --all-features"
-outdated = "outdated"
-
-# Quality checks
-quality = "run -p xtask -- code-stats"
-quality-strict = "run -p xtask -- code-stats --strict"
-validate = "run -p xtask -- contract-validate --validate-generated"
-validate-strict = "run -p xtask -- contract-validate --validate-generated --comprehensive"
-check-all = "run -p xtask -- check-all"
-check-all-strict = "run -p xtask -- check-all --strict"
+# Development shortcuts
+dev = "run -p gba"
+build-all = "build --workspace"
+test-watch = "watch -x 'test --workspace'"
 
 # Documentation
-docs = "doc --all-features --no-deps --open"
-docs-serve = "doc --all-features --no-deps --open"
+docs = "doc --workspace --no-deps --open"
 
-# Clean and maintenance
-clean-all = "clean && rm -rf target/ && rm -rf .cargo/hakari/"
-update-all = "update && hakari update"
+# Maintenance
+clean-all = "clean && rm -rf target/"
+update-all = "update"
 
 # Xtask convenience
 xtask = "run -p xtask --"

@@ -1,0 +1,30 @@
+# Local Cargo Configuration Template
+# Copy this to .cargo/config.local.toml and customize for your machine
+# This file is gitignored and won't be committed
+
+# Machine-specific build settings
+[build]
+# Uncomment and set if you want a specific target directory
+# target-dir = "/path/to/your/target"
+
+# Machine-specific rustflags
+# rustflags = ["-C", "target-cpu=native"]
+
+# Development environment overrides
+[env]
+# Uncomment to enable additional debugging
+# RUST_LOG = "debug"
+# RUST_BACKTRACE = "full"
+
+# Machine-specific aliases
+[alias]
+# Add your personal shortcuts here
+# my-dev = "run -p gba -- --help"
+# my-test = "test --workspace -- --nocapture"
+
+# Target-specific settings (if needed)
+# [target.x86_64-unknown-linux-gnu]
+# linker = "clang"
+
+# [target.aarch64-apple-darwin]
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]
