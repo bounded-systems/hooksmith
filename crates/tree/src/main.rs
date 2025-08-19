@@ -1,4 +1,4 @@
-use dircheck_core::{git_query::GitQueryCommands, validate_tree_commit, TreeRuleSet};
+use hooksmith_core::{git_query::GitQueryCommands, validate_tree_commit, TreeRuleSet};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rules = TreeRuleSet::default();
