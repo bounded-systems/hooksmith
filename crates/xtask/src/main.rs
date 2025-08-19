@@ -1689,7 +1689,7 @@ enum Commands {
     /// Generate GitHub Actions workflow from JSONC configuration
     GenGitHubActions {
         /// Input JSONC configuration file
-        #[arg(long, default_value = "config/github-actions.jsonc")]
+        #[arg(long, default_value = "crates/xtask/src/config/github-actions.jsonc")]
         config: String,
         /// Output workflow file
         #[arg(long, default_value = ".github/workflows/hooksmith.yml")]
@@ -5694,7 +5694,7 @@ async fn build_xtask_binary() -> Result<()> {
 
 /// Enhanced clean generated files with JSONC parsing
 async fn clean_generated_files_enhanced(verbose: bool) -> Result<()> {
-    let registry_path = Path::new("config/generated-files.jsonc");
+            let registry_path = Path::new("crates/xtask/src/config/generated-files.jsonc");
 
     if !registry_path.exists() {
         if verbose {

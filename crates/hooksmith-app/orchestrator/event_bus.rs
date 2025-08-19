@@ -342,7 +342,7 @@ impl EventBusManagerBuilder {
     pub fn build(self) -> Result<EventBusManager> {
         let registry_path = self
             .registry_path
-            .unwrap_or_else(|| "config/event-registry.jsonc".to_string());
+            .unwrap_or_else(|| "crates/xtask/src/config/event-registry.jsonc".to_string());
 
         EventBusManager::new(&registry_path)
     }
@@ -405,7 +405,7 @@ mod tests {
     #[test]
     fn test_event_bus_manager_builder() {
         let manager = EventBusManagerBuilder::new()
-            .registry_path("config/event-registry.jsonc".to_string())
+            .registry_path("crates/xtask/src/config/event-registry.jsonc".to_string())
             .auto_load_handlers(true)
             .build();
 

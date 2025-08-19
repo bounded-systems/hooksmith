@@ -114,7 +114,7 @@ impl FilePolicy {
 
 impl GeneratedFilesConfig {
     pub fn load() -> Result<Self> {
-        let config_path = Path::new("config/generated-files.jsonc");
+        let config_path = Path::new("crates/xtask/src/config/generated-files.jsonc");
         let content =
             fs::read_to_string(config_path).context("Failed to read generated-files.jsonc")?;
 
@@ -175,7 +175,7 @@ impl StrictFileValidationResult {
                 "src/".to_string(),
                 "components/".to_string(),
                 "xtask/".to_string(),
-                "config/".to_string(),
+                "crates/xtask/src/config/".to_string(),
                 "schemas/".to_string(),
                 "docs/".to_string(),
                 "examples/".to_string(),

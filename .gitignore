@@ -42,3 +42,6 @@ hooksmith-events.jsonl
 
 # Environment-specific files
 .direnv/
+
+# Configuration files
+.config/

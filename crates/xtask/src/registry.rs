@@ -4,7 +4,7 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-const REGISTRY_FILE: &str = "config/generated-files.jsonc";
+const REGISTRY_FILE: &str = "crates/xtask/src/config/generated-files.jsonc";
 
 #[derive(Debug)]
 pub struct RegistryManager {

@@ -43,6 +43,32 @@ nix develop
 cargo build
 ```
 
+## Project Structure
+
+```
+hooksmith/
+├── .config/                    # Real configuration files
+│   ├── .editorconfig          # Editor configuration
+│   ├── lefthook.yml           # Git hooks configuration
+│   └── lefthook-example.yml   # Example hooks configuration
+├── crates/                    # Rust crates
+│   ├── gba/                   # Git Blob Analysis meta CLI
+│   ├── xtask/                 # Build system and tools
+│   │   └── src/config/        # Xtask configuration files
+│   │       ├── component-registry.jsonc
+│   │       ├── event-registry.jsonc
+│   │       ├── github-actions.jsonc
+│   │       └── ...
+│   └── ...                    # Other crates
+├── data/                      # Large data files
+│   └── languages.yml          # Language definitions
+├── docs/                      # Documentation
+│   └── examples/              # Example outputs
+│       └── enhanced-contract-validation-results.sarif
+└── .github/                   # GitHub-specific files
+    └── inputs/                # Test input files for workflows
+```
+
 ## Workspace layout & defaults
 
 Make one crate your default target (meta CLI `gba`):
