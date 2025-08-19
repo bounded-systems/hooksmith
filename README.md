@@ -4,6 +4,8 @@ A comprehensive suite of Rust-based tools for analyzing Git repository storage, 
 
 ## 🚀 Quick Start
 
+> 📖 **For developers and AI operators**: See [WARP.md](./WARP.md) for comprehensive development workflows, xtask commands, and operational guidance.
+
 ```bash
 # Analyze Rust files by blob sizes
 cargo run --bin rust_blob_analyzer
