@@ -3,6 +3,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/gba",
     "crates/hooksmith-app",
     "crates/components/cli-core",
     "crates/components/worktree-runner",
@@ -21,7 +22,7 @@ members = [
     "crates/tools",
     "crates/scripts",
 ]
-default-members = ["crates/hooksmith-app"]
+default-members = ["crates/gba"]
 
 [profile.dev]
 opt-level = 1
@@ -127,5 +128,3 @@ num_cpus = "1.0"
 uuid = { version = "1.0", features = ["v4"] }
 hyperpolyglot = "0.1.0"
 itertools = "0.12"
-
-

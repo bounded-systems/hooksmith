@@ -3,7 +3,7 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 # Main package name (defined by default-members in Cargo.toml)
-MAIN_PKG := "hooksmith"
+MAIN_PKG := "gba"
 
 # If not in a dev shell, re-enter via `nix develop` and re-run the target
 _enter_dev := '''
