@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/hooksmith-dir.schema.json",
+  "title": "Hooksmith Directory Schema",
+  "description": "Schema for defining the structure and requirements of the .hooksmith directory in the Hooksmith ecosystem",
+  "type": "object",
+  "properties": {
+    "hooksmith_directory": {
+      "type": "object",
+      "description": "Configuration for the .hooksmith directory",
+      "properties": {
+        "required_directories": {
+          "type": "array",
+          "description": "Required subdirectories in .hooksmith",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Directory name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Directory purpose"
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this directory is required",
+                "default": true
+              }
+            },
+            "required": ["name", "description"]
+          },
+          "default": [
+            {
+              "name": "agreements",
+              "description": "Git agreements and policies",
+              "required": true
+            },
+            {
+              "name": "contracts",
+              "description": "Contract definitions and validation rules",
+              "required": true
+            },
+            {
+              "name": "hooks",
+              "description": "Git hooks and GitHub Actions",
+              "required": true
+            }
+          ]
+        },
+        "file_requirements": {
+          "type": "object",
+          "description": "File requirements for .hooksmith directory",
+          "properties": {
+            "allowed_formats": {
+              "type": "array",
+              "description": "Allowed file formats in .hooksmith",
+              "items": {
+                "type": "string",
+                "enum": ["json", "jsonc", "jsonl", "md", "txt"]
+              },
+              "default": ["json", "jsonc", "jsonl"]
+            },
+            "naming_patterns": {
+              "type": "object",
+              "description": "Naming patterns for different file types",
+              "properties": {
+                "agreements": {
+                  "type": "string",
+                  "description": "Pattern for agreement files",
+                  "default": "^[a-z][a-z0-9_-]*\\.json$"
+                },
+                "contracts": {
+                  "type": "string",
+                  "description": "Pattern for contract files",
+                  "default": "^[a-z][a-z0-9_-]*@[a-z0-9_-]*\\.json$"
+                },
+                "hooks": {
+                  "type": "string",
+                  "description": "Pattern for hook files",
+                  "default": "^[a-z][a-z0-9_-]*(\\.jsonc)?$"
+                }
+              }
+            }
+          }
+        },
+        "validation_rules": {
+          "type": "array",
+          "description": "Validation rules for .hooksmith directory",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Rule name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Rule description"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["error", "warning", "info"],
+                "description": "Rule severity"
+              },
+              "check": {
+                "type": "string",
+                "description": "What to check"
+              }
+            },
+            "required": ["name", "description", "severity", "check"]
+          },
+          "default": [
+            {
+              "name": "required_directories_exist",
+              "description": "All required directories must exist",
+              "severity": "error",
+              "check": "directory_structure"
+            },
+            {
+              "name": "contract_versioning",
+              "description": "Contract files must follow versioning pattern",
+              "severity": "warning",
+              "check": "file_naming"
+            },
+            {
+              "name": "hook_executability",
+              "description": "Git hook files must be executable",
+              "severity": "error",
+              "check": "file_permissions"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": ["hooksmith_directory"],
+  "additionalProperties": false
+}
