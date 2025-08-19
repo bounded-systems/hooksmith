@@ -140,10 +140,10 @@ impl AgreementManager {
     pub fn validate_agreement(&self, scope: &str) -> Result<bool> {
         if let Some(metadata) = self.get_agreement(scope)? {
             // Check if the contract blob exists in the scope tree
-            let scope_tree = self
+            let _scope_tree = self
                 .repo
                 .find_tree(git2::Oid::from_str(&metadata.agreement.scope)?)?;
-            let contract_blob = self
+            let _contract_blob = self
                 .repo
                 .find_blob(git2::Oid::from_str(&metadata.agreement.contract)?)?;
 
@@ -167,10 +167,10 @@ impl AgreementManager {
 
     /// Store a Git note
     fn store_note(&self, key: &str, content: &str) -> Result<()> {
-        let signature = self.get_signature()?;
+        let _signature = self.get_signature()?;
 
         // Create blob with note content
-        let blob_oid = self.repo.blob(content.as_bytes())?;
+        let _blob_oid = self.repo.blob(content.as_bytes())?;
 
         // Create or update note
         let note_ref = format!("{}/{}", self.notes_ref, key.replace('/', "_"));
@@ -194,7 +194,7 @@ impl AgreementManager {
     }
 
     /// Get current user signature
-    fn get_signature(&self) -> Result<Signature> {
+    fn get_signature(&self) -> Result<Signature<'_>> {
         let config = self.repo.config()?;
         let name = config
             .get_string("user.name")

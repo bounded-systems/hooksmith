@@ -66,7 +66,7 @@ pub mod types;
 pub mod verifier;
 
 use crate::modules::functional_contract_pipeline::repair_core::{
-    ActionResult, Fixer, LintIgnoreOrderFixer, MermaidExporter, PlanValidator, RepairAction,
+    Fixer, LintIgnoreOrderFixer, MermaidExporter, PlanValidator,
     RepairPlan as CoreRepairPlan, RepairResult, ReplaceRootStarFixer, RootCause as CoreRootCause,
     Violation as CoreViolation,
 };
@@ -82,8 +82,10 @@ use std::path::Path;
 /// Main functional contract validation pipeline
 pub struct FunctionalContractPipeline {
     /// Repository path
+    #[allow(dead_code)]
     repo_path: String,
     /// Hook event to concern mapping
+    #[allow(dead_code)]
     hook_concerns: HashMap<HookEvent, Vec<ConcernSymbol>>,
     /// Triage Officer for repair planning
     triage_officer: TriageOfficer,

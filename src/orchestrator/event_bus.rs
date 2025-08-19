@@ -122,6 +122,7 @@ impl EventBusManager {
     }
 
     /// Route event to WIT component
+    #[allow(dead_code)]
     async fn route_to_wit_component(
         &self,
         event: HooksmithEvent,
@@ -147,6 +148,7 @@ impl EventBusManager {
     }
 
     /// Route event to native handler
+    #[allow(dead_code)]
     async fn route_to_native_handler(
         &self,
         event: HooksmithEvent,
@@ -158,7 +160,7 @@ impl EventBusManager {
             .ok_or_else(|| anyhow::anyhow!("Native handler missing crate name"))?;
 
         let handlers = self.native_handlers.read().await;
-        let handler = handlers
+        let _handler = handlers
             .get(handler_name)
             .ok_or_else(|| anyhow::anyhow!("Native handler not found: {}", handler_name))?;
 
@@ -244,10 +246,11 @@ impl EventBusManager {
     }
 
     /// Create a result event from a component response
+    #[allow(dead_code)]
     fn create_result_event(
         &self,
-        original_event: &HooksmithEvent,
-        result: &WasmCallResult,
+        _original_event: &HooksmithEvent,
+        _result: &WasmCallResult,
     ) -> Option<HooksmithEvent> {
         // For now, return None since we don't have proper result event creation
         // TODO: Implement proper result event creation based on original event type

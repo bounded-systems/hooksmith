@@ -217,7 +217,7 @@ pub trait Fixer: Send + Sync {
     fn execute(&self, action: &RepairAction) -> RepairResult<ActionResult>;
 
     /// Check if this fixer can handle the given violation
-    fn can_handle(&self, violation: &Violation) -> bool {
+    fn can_handle(&self, _violation: &Violation) -> bool {
         // Default implementation - override in specific fixers
         true
     }
