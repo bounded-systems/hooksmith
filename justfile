@@ -359,17 +359,15 @@ reproducible-build:
         echo "⚠️  For maximum reproducibility, use Nix builds"; \
     fi
     @echo "Generating build manifest..."
-    @cat > build-manifest.json << EOF
-{
-  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "source_date_epoch": "1",
-  "git_commit": "$(git rev-parse HEAD)",
-  "git_dirty": $(if git diff-index --quiet HEAD --; then echo "false"; else echo "true"; fi),
-  "rust_version": "$(rustc --version)",
-  "cargo_version": "$(cargo --version)",
-  "build_flags": "$(echo $RUSTFLAGS)"
-}
-EOF
+    @echo "{" > build-manifest.json
+    @echo "  \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"," >> build-manifest.json
+    @echo "  \"source_date_epoch\": \"1\"," >> build-manifest.json
+    @echo "  \"git_commit\": \"$(git rev-parse HEAD)\"," >> build-manifest.json
+    @if git diff-index --quiet HEAD --; then echo "  \"git_dirty\": false,"; else echo "  \"git_dirty\": true,"; fi >> build-manifest.json
+    @echo "  \"rust_version\": \"$(rustc --version)\"," >> build-manifest.json
+    @echo "  \"cargo_version\": \"$(cargo --version)\"," >> build-manifest.json
+    @echo "  \"build_flags\": \"$(echo $$RUSTFLAGS)\"" >> build-manifest.json
+    @echo "}" >> build-manifest.json
     @echo "✅ Build manifest created: build-manifest.json"
 
 # Show workspace information

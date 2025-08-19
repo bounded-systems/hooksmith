@@ -50,8 +50,6 @@ rustflags = [
 # ]
 
 # Enable parallel compilation frontend (nightly only)
-[env]
-RUSTFLAGS_NIGHTLY = "-Z threads=8"
 
 # Profile-guided optimizations
 [profile.release]

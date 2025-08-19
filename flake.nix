@@ -68,8 +68,7 @@
           # Reproducible builds - fixed timestamps and sources
           SOURCE_DATE_EPOCH = "1";
           
-          # Hermetic build environment
-          CARGO_NET_OFFLINE = "true";
+          # Hermetic build environment 
           CARGO_HOME = "$TMPDIR/cargo-home";
           
           # Security and determinism
@@ -87,8 +86,6 @@
         # Build dependencies separately for better caching
         cargoArtifacts = craneLib.buildDepsOnly (commonArgs // {
           pname = "hooksmith-deps";
-          # Explicitly provide the Cargo.lock file
-          cargoLock = ./Cargo.lock;
         });
 
         # Main xtask package - the primary build orchestrator

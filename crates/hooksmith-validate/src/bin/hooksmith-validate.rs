@@ -3,9 +3,9 @@ use clap::Parser;
 
 #[derive(Parser)]
 struct Args {
-    #[arg(long, default_value = ".")] 
+    #[arg(long, default_value = ".")]
     root: std::path::PathBuf,
-    #[arg(long, default_value = "HEAD")] 
+    #[arg(long, default_value = "HEAD")]
     r#ref: String,
 }
 

@@ -37,7 +37,8 @@ impl MigrationPlan {
 
     /// Add a file creation with content
     fn add_create_file(&mut self, path: &str, content: &str) {
-        self.create_files.push((path.to_string(), content.to_string()));
+        self.create_files
+            .push((path.to_string(), content.to_string()));
     }
 
     /// Build the complete migration plan
@@ -99,10 +100,7 @@ impl MigrationPlan {
         plan.add_move("Dockerfile", "infra/");
 
         // Create .hooksmith/.gitignore
-        plan.add_create_file(
-            ".hooksmith/.gitignore",
-            "cache/\nlogs/\n*.tmp\n",
-        );
+        plan.add_create_file(".hooksmith/.gitignore", "cache/\nlogs/\n*.tmp\n");
 
         plan
     }
@@ -111,7 +109,7 @@ impl MigrationPlan {
 /// Execute a git mv command
 fn git_mv(from: &str, to: &str) -> Result<()> {
     println!("📁 Moving {} → {}", from, to);
-    
+
     let output = Command::new("git")
         .args(["mv", from, to])
         .output()
@@ -134,10 +132,9 @@ fn git_mv(from: &str, to: &str) -> Result<()> {
 /// Create a directory
 fn create_dir(dir: &str) -> Result<()> {
     println!("📁 Creating directory: {}", dir);
-    
-    fs::create_dir_all(dir)
-        .with_context(|| format!("Failed to create directory: {}", dir))?;
-    
+
+    fs::create_dir_all(dir).with_context(|| format!("Failed to create directory: {}", dir))?;
+
     println!("  ✅ Created {}", dir);
     Ok(())
 }
@@ -145,16 +142,15 @@ fn create_dir(dir: &str) -> Result<()> {
 /// Create a file with content
 fn create_file(path: &str, content: &str) -> Result<()> {
     println!("📁 Creating file: {}", path);
-    
+
     // Ensure parent directory exists
     if let Some(parent) = Path::new(path).parent() {
         fs::create_dir_all(parent)
             .with_context(|| format!("Failed to create parent directory for: {}", path))?;
     }
-    
-    fs::write(path, content)
-        .with_context(|| format!("Failed to create file: {}", path))?;
-    
+
+    fs::write(path, content).with_context(|| format!("Failed to create file: {}", path))?;
+
     println!("  ✅ Created {}", path);
     Ok(())
 }
@@ -186,9 +182,9 @@ fn execute_migration(plan: &MigrationPlan) -> Result<()> {
     println!();
     println!("📋 Next steps:");
     println!("1. Review the changes: git status");
-            println!("2. Test the monorepo root contract:");
-        println!("   cd apps/standalone-auditor && cargo run -- HEAD ../../.hooksmith/agreements/object-names@root-minimal.json");
-        println!("   cd apps/standalone-auditor && cargo run -- HEAD ../../.hooksmith/agreements/object-names@v1.json");
+    println!("2. Test the monorepo root contract:");
+    println!("   cd apps/standalone-auditor && cargo run -- HEAD ../../.hooksmith/agreements/object-names@root-minimal.json");
+    println!("   cd apps/standalone-auditor && cargo run -- HEAD ../../.hooksmith/agreements/object-names@v1.json");
     println!("3. Commit the changes: git commit -m 'chore: migrate to monorepo orchestrator root layout'");
     println!();
     println!("🎯 Target root layout (Monorepo Orchestrator):");

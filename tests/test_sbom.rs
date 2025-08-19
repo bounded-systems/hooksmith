@@ -10,4 +10,4 @@ fn main() {
     println!("Status: {}", output.status);
     println!("Stdout: {}", String::from_utf8_lossy(&output.stdout));
     println!("Stderr: {}", String::from_utf8_lossy(&output.stderr));
-} 
+}

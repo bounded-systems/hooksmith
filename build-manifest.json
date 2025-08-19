@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-08-19T18:22:26Z",
+  "source_date_epoch": "1",
+  "git_commit": "7d4fb677c5cacc013b6570f7486f7ff951f6c6d8",
+  "git_dirty": true,
+  "rust_version": "rustc 1.86.0 (05f9846f8 2025-03-31)",
+  "cargo_version": "cargo 1.86.0 (adf9b6ad1 2025-02-28)",
+  "build_flags": "14253RUSTFLAGS"
+}

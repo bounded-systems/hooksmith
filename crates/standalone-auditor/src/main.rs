@@ -94,7 +94,7 @@ impl ContractValidator {
         let allowed_glob = Self::build_glob_set(&names.allowed)?;
         let rejected_glob = Self::build_glob_set(&names.rejected)?;
         let ignored_glob = Self::build_glob_set(&names.ignored)?;
-        
+
         // Build exceptions glob set if present
         let exceptions_glob = if let Some(exceptions) = &names.exceptions {
             Some(Self::build_glob_set(exceptions)?)
@@ -115,8 +115,8 @@ impl ContractValidator {
         let mut builder = GlobSetBuilder::new();
 
         for pattern in patterns {
-            let glob = Glob::new(pattern)
-                .with_context(|| format!("Invalid glob pattern: {}", pattern))?;
+            let glob =
+                Glob::new(pattern).with_context(|| format!("Invalid glob pattern: {}", pattern))?;
             builder.add(glob);
         }
 
@@ -186,7 +186,7 @@ impl ContractValidator {
 fn read_tree_from_git(ref_name: &str) -> Result<TreeReport> {
     // Get the tree SHA for the reference
     let tree_sha = Command::new("git")
-        .current_dir("..")  // Run from parent directory
+        .current_dir("..") // Run from parent directory
         .args(["rev-parse", &format!("{}^{{tree}}", ref_name)])
         .output()
         .context("Failed to get tree SHA")?;
@@ -198,17 +198,16 @@ fn read_tree_from_git(ref_name: &str) -> Result<TreeReport> {
 
     // Get tree entries using git ls-tree
     let output = Command::new("git")
-        .current_dir("..")  // Run from parent directory
+        .current_dir("..") // Run from parent directory
         .args(["ls-tree", &tree_sha])
         .output()
         .context("Failed to get tree entries")?;
 
-    let entries_str = String::from_utf8(output.stdout)
-        .context("Invalid tree entries output")?;
+    let entries_str = String::from_utf8(output.stdout).context("Invalid tree entries output")?;
 
     // Parse entries (format: MODE TYPE SHA\tNAME)
     let mut entries = Vec::new();
-    
+
     for line in entries_str.lines() {
         if line.trim().is_empty() {
             continue;
@@ -255,12 +254,15 @@ fn read_contract(contract_path: &str) -> Result<Contract> {
 }
 
 fn main() -> Result<()> {
-                let args: Vec<String> = env::args().collect();
-        if args.len() != 3 {
-            eprintln!("Usage: {} <ref> <contract-path>", args[0]);
-            eprintln!("Example: {} origin/main .hooksmith/agreements/object-names@v1.json", args[0]);
-            std::process::exit(1);
-        }
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 3 {
+        eprintln!("Usage: {} <ref> <contract-path>", args[0]);
+        eprintln!(
+            "Example: {} origin/main .hooksmith/agreements/object-names@v1.json",
+            args[0]
+        );
+        std::process::exit(1);
+    }
 
     let ref_name = &args[1];
     let contract_path = &args[2];
@@ -288,16 +290,23 @@ fn main() -> Result<()> {
     println!("{}", output);
 
     // Also output a summary to stderr for CI/CD integration
-    let total_violations = diff.missing_required.len() + diff.rejected.len() + diff.not_allowed.len();
+    let total_violations =
+        diff.missing_required.len() + diff.rejected.len() + diff.not_allowed.len();
     if total_violations == 0 {
         eprintln!("✅ Contract validation PASSED - No violations found");
         if !diff.exceptions.is_empty() {
             eprintln!("  - Exceptions allowed: {} files", diff.exceptions.len());
         }
     } else {
-        eprintln!("❌ Contract validation FAILED - {} violations found:", total_violations);
+        eprintln!(
+            "❌ Contract validation FAILED - {} violations found:",
+            total_violations
+        );
         if !diff.missing_required.is_empty() {
-            eprintln!("  - Missing required: {} files", diff.missing_required.len());
+            eprintln!(
+                "  - Missing required: {} files",
+                diff.missing_required.len()
+            );
         }
         if !diff.rejected.is_empty() {
             eprintln!("  - Rejected: {} files", diff.rejected.len());
