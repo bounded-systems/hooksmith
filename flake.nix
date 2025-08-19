@@ -2,7 +2,7 @@
   description = "Rust project with Nix + crane for fast development";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     crane.url = "github:ipetkov/crane";
     crane.inputs.nixpkgs.follows = "nixpkgs";
@@ -12,7 +12,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        craneLib = crane.lib.${system};
+        craneLib = crane.mkLib pkgs;
 
         # Clean, hash-stable source for reproducible builds
         src = craneLib.cleanCargoSource (craneLib.path ./.);
