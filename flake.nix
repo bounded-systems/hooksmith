@@ -1,5 +1,5 @@
 {
-  description = "Rust project with Nix + crane for fast development";
+  description = "Hooksmith - Comprehensive Git Hook Management Suite";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -8,98 +8,277 @@
     crane.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, flake-utils, crane }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs { inherit system; };
-        craneLib = crane.mkLib pkgs;
+  outputs = {
+    nixpkgs,
+    flake-utils,
+    crane,
+    ...
+  }:
+    flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = import nixpkgs {inherit system;};
+      craneLib = crane.mkLib pkgs;
 
-        # Clean, hash-stable source for reproducible builds
-        src = craneLib.cleanCargoSource (craneLib.path ./.);
+      # Clean, hash-stable source for reproducible builds
+      src = craneLib.cleanCargoSource (craneLib.path ./.);
 
-        common = {
-          inherit src;
-          # These help crane skip rebuilds:
-          cargoToml = ./Cargo.toml;
-          cargoLock = ./Cargo.lock;
-          
-          # Native build inputs
-          nativeBuildInputs = with pkgs; [ pkg-config ];
-          
-          # Build inputs
-          buildInputs = with pkgs; [
+      # Common build configuration
+      commonArgs = {
+        inherit src;
+        # These help crane skip rebuilds:
+        cargoToml = ./Cargo.toml;
+        cargoLock = ./Cargo.lock;
+
+        # Build tools
+        nativeBuildInputs = with pkgs; [
+          pkg-config
+          installShellFiles
+        ];
+
+        # Runtime dependencies
+        buildInputs = with pkgs;
+          [
             openssl
             git # Essential for git2 dependency
-          ] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
-            pkgs.libiconv
-            pkgs.darwin.apple_sdk.frameworks.Security
-            pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
+            libgit2
+          ]
+          ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
+            libiconv
+            darwin.apple_sdk.frameworks.Security
+            darwin.apple_sdk.frameworks.SystemConfiguration
           ];
-        };
 
-        # Reproducible package (what `nix build` makes)
-        myPackage = craneLib.buildPackage common;
-      in {
-        packages.default = myPackage;
+        # Environment variables for builds
+        RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+        LIBGIT2_SYS_USE_PKG_CONFIG = "1";
+        OPENSSL_NO_VENDOR = "1";
 
-        # Dev shell for fast local work; cargo is incremental here
-        devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            # Rust toolchain with source for standard library
-            cargo rustc rustfmt clippy rust-src
-            
-            # Development tools
+        # Don't check tests during build to avoid issues
+        doCheck = false;
+      };
+
+      # Build dependencies only (for faster rebuilds)
+      cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+
+      # Main hooksmith package
+      hooksmith = craneLib.buildPackage (commonArgs
+        // {
+          inherit cargoArtifacts;
+          cargoExtraArgs = "--bin hooksmith";
+
+          postInstall = ''
+            installShellCompletion --cmd hooksmith \
+              --bash <($out/bin/hooksmith completions bash) \
+              --fish <($out/bin/hooksmith completions fish) \
+              --zsh <($out/bin/hooksmith completions zsh)
+          '';
+        });
+
+      # Analysis tools package
+      analysis-tools = craneLib.buildPackage (commonArgs
+        // {
+          inherit cargoArtifacts;
+          pname = "hooksmith-analysis-tools";
+          cargoExtraArgs = "--bin repository_size_auditor --bin rust_blob_analyzer --bin git_delta_analyzer --bin file_churn_analyzer";
+        });
+
+      # Git hooks package
+      git-hooks = craneLib.buildPackage (commonArgs
+        // {
+          inherit cargoArtifacts;
+          pname = "hooksmith-git-hooks";
+          cargoExtraArgs = "-p git-hooks";
+        });
+
+      # Development tools package
+      dev-tools = craneLib.buildPackage (commonArgs
+        // {
+          inherit cargoArtifacts;
+          pname = "hooksmith-dev-tools";
+          cargoExtraArgs = "-p xtask";
+        });
+
+      # Comprehensive test suite
+      test-suite = craneLib.cargoTest (commonArgs
+        // {
+          inherit cargoArtifacts;
+          cargoTestExtraArgs = "--workspace --all-features";
+        });
+
+      # Linting and formatting checks
+      lint-checks = craneLib.cargoClippy (commonArgs
+        // {
+          inherit cargoArtifacts;
+          cargoClippyExtraArgs = "--all-targets --all-features -- --deny warnings";
+        });
+
+      # Documentation build
+      docs = craneLib.cargoDoc (commonArgs
+        // {
+          inherit cargoArtifacts;
+          cargoDocExtraArgs = "--workspace --all-features";
+        });
+
+      # Security audit as a derivation
+      security-audit = pkgs.stdenv.mkDerivation {
+        name = "hooksmith-security-audit";
+        inherit src;
+        nativeBuildInputs = with pkgs; [cargo-audit cargo-deny];
+        buildPhase = ''
+          export CARGO_HOME=$(mktemp -d)
+          cargo audit
+          cargo deny check
+        '';
+        installPhase = ''
+          mkdir -p $out
+          echo "Security audit completed successfully" > $out/audit-report.txt
+        '';
+      };
+
+      # License compliance check
+      license-check = pkgs.stdenv.mkDerivation {
+        name = "hooksmith-license-check";
+        inherit src;
+        nativeBuildInputs = with pkgs; [cargo-deny];
+        buildPhase = ''
+          export CARGO_HOME=$(mktemp -d)
+          cargo deny check licenses
+        '';
+        installPhase = ''
+          mkdir -p $out
+          echo "License check completed successfully" > $out/license-report.txt
+        '';
+      };
+
+      # All development tools in one shell
+      devToolsShell = pkgs.mkShell {
+        packages = with pkgs;
+          [
+            # Rust toolchain with all components
+            cargo
+            rustc
+            rustfmt
+            clippy
+            rust-analyzer
+
+            # Build tools
             pkg-config
             just
+
+            # Development and testing
             cargo-watch
             cargo-nextest
             bacon
-            
-            # Git and analysis tools
+            cargo-audit
+            cargo-deny
+
+            # Analysis and benchmarking
+            hyperfine
+            tokei
+
+            # Git and VCS tools
             git
             git-lfs
+
+            # System utilities
             jq
             tree
             ripgrep
             fd
-            
-            # For the git2 dependency
-            openssl
-          ] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
-            pkgs.libiconv
-            pkgs.darwin.apple_sdk.frameworks.Security
-            pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
-          ];
-          
-          # Useful defaults for fast development
-          CARGO_PROFILE_DEV_DEBUG = "0";  # Faster builds
-          RUSTFLAGS = "-C debuginfo=1";   # Minimal debug info
-          HOOKSMITH_DEV_MODE = "1";
-          
-          shellHook = ''
-            echo "🔨 Hooksmith Development Environment"
-            echo "===================================="
-            echo ""
-            echo "🦀 Fast inner loop (Cargo):"
-            echo "  just build       - Build with Cargo"
-            echo "  just test        - Run tests"  
-            echo "  just check       - Quick check"
-            echo "  just watch       - Watch and rebuild"
-            echo ""
-            echo "📦 Reproducible builds (Nix):"
-            echo "  just nix-build   - Build with Nix"
-            echo "  just nix-run     - Run with Nix"
-            echo ""  
-            echo "🎯 Analysis tools:"
-            echo "  just analyze-size   - Repository analysis"
-            echo "  just analyze-all    - All analysis tools"
-            echo ""
-            echo "Rust: $(rustc --version)"
-            echo "Ready for development! 🚀"
-          '';
-        };
 
-        # Optional: Nix "checks" to mirror CI
-        checks.default = myPackage;
-      });
+            # Documentation
+            mdbook
+
+            # Security scanning (optional)
+          ]
+          ++ (
+            if system == "aarch64-darwin" || system == "x86_64-darwin"
+            then [
+              libiconv
+              darwin.apple_sdk.frameworks.Security
+              darwin.apple_sdk.frameworks.SystemConfiguration
+            ]
+            else [
+              openssl
+            ]
+          );
+
+        # Environment setup
+        CARGO_PROFILE_DEV_DEBUG = "0"; # Faster builds
+        RUSTFLAGS = "-C debuginfo=1"; # Minimal debug info
+        HOOKSMITH_DEV_MODE = "1";
+        RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+        LIBGIT2_SYS_USE_PKG_CONFIG = "1";
+        OPENSSL_NO_VENDOR = "1";
+
+        shellHook = ''
+          # Disable sccache in Nix environment to avoid read-only fs issues
+          unset RUSTC_WRAPPER
+
+          echo "🔨 Hooksmith Development Environment"
+          echo "===================================="
+          echo ""
+          echo "🦀 Fast inner loop (Cargo in Nix shell):"
+          echo "  just build          - Build with Cargo"
+          echo "  just test           - Run tests"
+          echo "  just check          - Quick check"
+          echo "  just watch          - Watch and rebuild"
+          echo ""
+          echo "📦 Reproducible builds & tasks (Pure Nix):"
+          echo "  nix build           - Build main package"
+          echo "  nix build .#analysis-tools  - Build analysis tools"
+          echo "  nix build .#git-hooks       - Build git hooks"
+          echo "  nix build .#dev-tools       - Build dev tools"
+          echo ""
+          echo "🧪 Testing & Quality (Nix derivations):"
+          echo "  nix build .#test-suite      - Run complete test suite"
+          echo "  nix build .#lint-checks     - Run clippy lints"
+          echo "  nix build .#docs            - Build documentation"
+          echo ""
+          echo "🛡️ Security & Compliance (Nix derivations):"
+          echo "  nix build .#security-audit  - Security audit"
+          echo "  nix build .#license-check   - License compliance"
+          echo ""
+          echo "🎯 Just commands (hybrid Cargo+Nix):"
+          echo "  just analyze-all    - All analysis tools"
+          echo "  just security-audit - Complete security audit"
+          echo "  just nix-build      - Build with Nix"
+          echo ""
+          echo "🔧 Toolchain:"
+          echo "  Rust: $(rustc --version)"
+          echo "  Nix:  $(nix --version)"
+          echo "  Just: $(just --version)"
+          echo ""
+          echo "Ready for development! 🚀"
+        '';
+      };
+    in {
+      # Multiple packages for different use cases
+      packages = {
+        default = hooksmith;
+        inherit hooksmith analysis-tools git-hooks dev-tools;
+      };
+
+      # Development environment
+      devShells.default = devToolsShell;
+
+      # CI/CD checks as Nix derivations
+      checks = {
+        default = hooksmith;
+        hooksmith-build = hooksmith;
+        inherit test-suite lint-checks security-audit license-check;
+        docs-build = docs;
+      };
+
+      # Apps for easy nix run usage
+      apps = {
+        default = flake-utils.lib.mkApp {
+          drv = hooksmith;
+          name = "hooksmith";
+        };
+        hooksmith = flake-utils.lib.mkApp {
+          drv = hooksmith;
+          name = "hooksmith";
+        };
+      };
+    });
 }
