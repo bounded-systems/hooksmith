@@ -1,5 +1,14 @@
 # Justfile for Hooksmith development
-# Run with: just <recipe-name>
+# Uses bash with strict flags
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+# If not in a dev shell, re-enter via `nix develop` and re-run the target
+_enter_dev := '''
+if [[ -z "${IN_NIX_SHELL:-}" ]]; then
+  echo "↪ entering nix develop for {{invocation_directory}}..." >&2
+  exec nix develop -c just "$@"
+fi
+'''
 
 # Default recipe - show available commands
 default:
@@ -51,70 +60,70 @@ default:
     @echo "💡 Quick Start:"
     @echo "  just bootstrap && just security-audit"
 
-# Build the workspace with cargo
-build:
-    @echo "🦀 Building Hooksmith workspace..."
-    cargo build --release
+# -------- Inner loop (Cargo) --------
+# Build the workspace with cargo - routes through nix dev shell
+build +ARGS="":
+    {{_enter_dev}}
+    cargo build {{ARGS}}
 
 # Run tests
-test:
-    @echo "🧪 Running tests..."
-    cargo test --all-targets --all-features
-
+test +ARGS="":
+    {{_enter_dev}}
+    cargo test {{ARGS}}
+    
 # Quick check without building binaries
 check:
-    @echo "✅ Running cargo check..."
-    cargo check --all-targets --all-features
+    {{_enter_dev}}
+    cargo check
 
 # Run clippy lints
 clippy:
-    @echo "📎 Running clippy..."
+    {{_enter_dev}}
     cargo clippy --all-targets --all-features -- -D warnings
 
 # Format code
 fmt:
-    @echo "🎨 Formatting code..."
+    {{_enter_dev}}
     cargo fmt --all
 
+# Watch for changes and rebuild
+watch:
+    {{_enter_dev}}
+    cargo watch -x build
+
+# Run binary with args
+run *ARGS:
+    {{_enter_dev}}
+    cargo run -- {{ARGS}}
+
+# -------- Reproducible artifacts (Nix) --------
+# Build reproducible packages with Nix
+nix-build:
+    nix build .#default
+
+# Run the default package with Nix
+nix-run *ARGS:
+    nix run .#default -- {{ARGS}}
+
+# CI-preflight: do what CI will do
+ci:
+    nix flake check
+
+# -------- Build system integration --------
 # Build via xtask
 xtask-build:
-    @echo "🔧 Building via xtask..."
+    {{_enter_dev}}
     cargo run -p xtask -- build --target all --release
 
 # Generate documentation via xtask
 xtask-docs:
-    @echo "📚 Generating documentation..."
+    {{_enter_dev}}
     cargo run -p xtask -- gen-docs-comprehensive --all --validate
 
 # Full xtask validation
 xtask-check:
-    @echo "✅ Running xtask validation..."
+    {{_enter_dev}}
     cargo run -p xtask -- check-all --strict
-
-# Build all packages with Nix
-nix-build:
-    @echo "📦 Building Hooksmith with Nix..."
-    nix build .#hooksmith-suite
-
-# Build analysis tools specifically
-nix-build-analysis:
-    @echo "🔍 Building analysis tools with Nix..."
-    nix build .#analysis-tools
-
-# Run quick analysis suite with Nix
-nix-analyze:
-    @echo "🔍 Running Nix-based analysis..."
-    nix run .#analyze
-
-# Enter Nix development shell
-nix-dev:
-    @echo "🚀 Entering Nix development shell..."
-    nix develop
-
-# Format Nix files
-nix-fmt:
-    @echo "🎨 Formatting Nix files..."
-    nix fmt
 
 # Repository size analysis
 analyze-size:
@@ -174,11 +183,6 @@ setup:
     @echo "3. Running a quick test..."
     just analyze-size
     @echo "✅ Setup complete! See WARP.md for detailed workflows."
-
-# Watch for changes and rebuild
-watch:
-    @echo "👀 Watching for changes..."
-    cargo watch -x build
 
 # Release build with all optimizations
 release:
