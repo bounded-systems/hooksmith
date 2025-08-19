@@ -20,20 +20,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test 2: Test file size validation
     println!("\n2️⃣ Testing File Size Validation...");
-    
+
     // Create a test repository with a large file
     let test_repo = "/tmp/validation-test-repo";
     Command::new("rm").args(["-rf", test_repo]).output()?;
     Command::new("git").args(["init", test_repo]).output()?;
-    
+
     // Create a large file (2MB - should be blocked)
     let large_content = "x".repeat(2 * 1024 * 1024); // 2MB
     std::fs::write(format!("{}/large-file.txt", test_repo), large_content)?;
-    
+
     Command::new("git")
         .args(["-C", test_repo, "add", "large-file.txt"])
         .output()?;
-    
+
     Command::new("git")
         .args(["-C", test_repo, "commit", "-m", "Add large file"])
         .output()?;
@@ -43,13 +43,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test 3: Test blocked file patterns
     println!("\n3️⃣ Testing Blocked File Patterns...");
-    
+
     // Create an executable file (should be blocked)
     std::fs::write(format!("{}/test.exe", test_repo), "fake executable")?;
     Command::new("git")
         .args(["-C", test_repo, "add", "test.exe"])
         .output()?;
-    
+
     Command::new("git")
         .args(["-C", test_repo, "commit", "-m", "Add executable file"])
         .output()?;
@@ -59,15 +59,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test 4: Test protected branch validation
     println!("\n4️⃣ Testing Protected Branch Validation...");
-    
+
     // Try to push to main branch (should be protected)
     let push_output = Command::new("git")
         .args([
-            "-C", test_repo, 
-            "push", "http://127.0.0.1:8080/test-repo.git", "main"
+            "-C",
+            test_repo,
+            "push",
+            "http://127.0.0.1:8080/test-repo.git",
+            "main",
         ])
         .output();
-    
+
     match push_output {
         Ok(output) => {
             if output.status.success() {
@@ -86,7 +89,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test 5: Test hooks system
     println!("\n5️⃣ Testing Hooks System...");
-    
+
     // Check what hooks are available
     println!("   Available hooks:");
     println!("   - PreReceive: Validates before refs are updated");
@@ -99,17 +102,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test 6: Test validation engine integration
     println!("\n6️⃣ Testing Validation Engine Integration...");
-    
+
     // Send a validation request to the proxy
     let validation_test = Command::new("curl")
         .args([
-            "-s", "-X", "POST", 
+            "-s",
+            "-X",
+            "POST",
             "http://127.0.0.1:8080/git-receive-pack",
-            "-H", "Content-Type: application/x-git-receive-pack-request",
-            "-d", "want 1234567890abcdef\nhave 0987654321fedcba\n"
+            "-H",
+            "Content-Type: application/x-git-receive-pack-request",
+            "-d",
+            "want 1234567890abcdef\nhave 0987654321fedcba\n",
         ])
         .output()?;
-    
+
     if validation_test.status.success() {
         println!("✅ Validation request processed");
         let response = String::from_utf8_lossy(&validation_test.stdout);
@@ -120,7 +127,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test 7: Test server-side hooks
     println!("\n7️⃣ Testing Server-Side Hooks...");
-    
+
     // The hooks system is integrated into the server
     // When Git operations come through the proxy, they trigger hooks
     println!("   Hook execution flow:");
@@ -132,7 +139,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test 8: Test forwarding capability
     println!("\n8️⃣ Testing Forwarding Capability...");
-    
+
     println!("   Forwarding structure is in place:");
     println!("   - HTTP protocol forwarding");
     println!("   - SSH protocol forwarding");

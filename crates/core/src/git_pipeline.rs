@@ -1,8 +1,8 @@
+use git2::{Blob, Commit, ObjectType, Repository, Tree};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
-use git2::{Repository, ObjectType, Tree, Blob, Commit};
 
 /// Git object metadata for pipeline processing
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -128,9 +128,9 @@ impl GitPipeline {
     pub fn resolve_scope(&self, ref_name: &str) -> Result<Scope, git2::Error> {
         let commit = self.repo.find_reference(ref_name)?.peel_to_commit()?;
         let tree = commit.tree()?;
-        
+
         let selector_hash = self.compute_selector_hash(&tree);
-        
+
         Ok(Scope {
             commit_oid: commit.id().to_string(),
             root_tree_oid: tree.id().to_string(),
@@ -139,9 +139,15 @@ impl GitPipeline {
     }
 
     /// Select objects based on concern selector
-    pub fn select_objects(&self, scope: &Scope, selector: &ConcernSelector) -> Result<Vec<GitObject>, git2::Error> {
-        let tree = self.repo.find_tree(git2::Oid::from_str(&scope.root_tree_oid)?)?;
-        
+    pub fn select_objects(
+        &self,
+        scope: &Scope,
+        selector: &ConcernSelector,
+    ) -> Result<Vec<GitObject>, git2::Error> {
+        let tree = self
+            .repo
+            .find_tree(git2::Oid::from_str(&scope.root_tree_oid)?)?;
+
         match selector {
             ConcernSelector::RootNamesOnly => self.select_root_names(&tree),
             ConcernSelector::PathPattern(pattern) => self.select_by_pattern(&tree, pattern),
@@ -151,9 +157,13 @@ impl GitPipeline {
     }
 
     /// Researcher: analyze a single Git object
-    pub fn research_object(&self, object: &GitObject, tool: &ToolFingerprint) -> Result<Analysis, Box<dyn std::error::Error>> {
+    pub fn research_object(
+        &self,
+        object: &GitObject,
+        tool: &ToolFingerprint,
+    ) -> Result<Analysis, Box<dyn std::error::Error>> {
         let cache_key = self.compute_analysis_cache_key(tool, &object.oid);
-        
+
         // Check cache first
         if let Some(cached_oid) = self.get_cached_analysis(&object.oid, tool) {
             return self.load_analysis_from_cache(cached_oid);
@@ -175,15 +185,21 @@ impl GitPipeline {
 
         // Cache the result
         self.cache_analysis(&analysis)?;
-        
+
         Ok(analysis)
     }
 
     /// Reporter: normalize multiple analyses into a single report
-    pub fn create_report(&self, object: &GitObject, analyses: &[Analysis], domain: &str, version: &str) -> Result<Report, Box<dyn std::error::Error>> {
+    pub fn create_report(
+        &self,
+        object: &GitObject,
+        analyses: &[Analysis],
+        domain: &str,
+        version: &str,
+    ) -> Result<Report, Box<dyn std::error::Error>> {
         let analysis_oids: Vec<String> = analyses.iter().map(|a| a.cache_key.clone()).collect();
         let cache_key = self.compute_report_cache_key(domain, version, &analysis_oids);
-        
+
         // Check cache first
         if let Some(cached_oid) = self.get_cached_report(&object.oid, domain, version) {
             return self.load_report_from_cache(cached_oid);
@@ -203,15 +219,26 @@ impl GitPipeline {
 
         // Cache the result
         self.cache_report(&report)?;
-        
+
         Ok(report)
     }
 
     /// Mandator: create expectation based on contract
-    pub fn create_mandate(&self, object: &GitObject, contract_oid: &str, contract_name: &str, version: &str) -> Result<Mandate, Box<dyn std::error::Error>> {
+    pub fn create_mandate(
+        &self,
+        object: &GitObject,
+        contract_oid: &str,
+        contract_name: &str,
+        version: &str,
+    ) -> Result<Mandate, Box<dyn std::error::Error>> {
         let object_selector = self.compute_object_selector(object);
-        let cache_key = self.compute_mandate_cache_key(version, contract_oid, &object_selector, &object.logical_path);
-        
+        let cache_key = self.compute_mandate_cache_key(
+            version,
+            contract_oid,
+            &object_selector,
+            &object.logical_path,
+        );
+
         // Check cache first
         if let Some(cached_oid) = self.get_cached_mandate(contract_oid, &object_selector) {
             return self.load_mandate_from_cache(cached_oid);
@@ -233,14 +260,21 @@ impl GitPipeline {
 
         // Cache the result
         self.cache_mandate(&mandate)?;
-        
+
         Ok(mandate)
     }
 
     /// Auditor: compare report vs mandate
-    pub fn audit_object(&self, report: &Report, mandate: &Mandate, contract_name: &str, version: &str) -> Result<Verdict, Box<dyn std::error::Error>> {
-        let cache_key = self.compute_audit_cache_key(version, &report.cache_key, &mandate.cache_key);
-        
+    pub fn audit_object(
+        &self,
+        report: &Report,
+        mandate: &Mandate,
+        contract_name: &str,
+        version: &str,
+    ) -> Result<Verdict, Box<dyn std::error::Error>> {
+        let cache_key =
+            self.compute_audit_cache_key(version, &report.cache_key, &mandate.cache_key);
+
         // Check cache first
         if let Some(cached_oid) = self.get_cached_verdict(&report.cache_key, &mandate.cache_key) {
             return self.load_verdict_from_cache(cached_oid);
@@ -248,7 +282,7 @@ impl GitPipeline {
 
         // Perform domain-aware diff
         let (pass, diff_oid) = self.compare_report_mandate(report, mandate)?;
-        
+
         let summary_code = if pass {
             "PASS".to_string()
         } else {
@@ -268,14 +302,14 @@ impl GitPipeline {
 
         // Cache the result
         self.cache_verdict(&verdict)?;
-        
+
         Ok(verdict)
     }
 
     // Helper methods for object selection
     fn select_root_names(&self, tree: &Tree) -> Result<Vec<GitObject>, git2::Error> {
         let mut objects = Vec::new();
-        
+
         for entry in tree.iter() {
             let object = GitObject {
                 oid: entry.id().to_string(),
@@ -286,7 +320,7 @@ impl GitPipeline {
             };
             objects.push(object);
         }
-        
+
         Ok(objects)
     }
 
@@ -301,10 +335,13 @@ impl GitPipeline {
     }
 
     // Helper methods for analysis
-    fn analyze_tree(&self, object: &GitObject) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    fn analyze_tree(
+        &self,
+        object: &GitObject,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let tree = self.repo.find_tree(git2::Oid::from_str(&object.oid)?)?;
         let mut entries = Vec::new();
-        
+
         for entry in tree.iter() {
             entries.push(serde_json::json!({
                 "name": entry.name(),
@@ -313,7 +350,7 @@ impl GitPipeline {
                 "mode": entry.filemode(),
             }));
         }
-        
+
         Ok(serde_json::json!({
             "type": "tree",
             "entries": entries,
@@ -321,10 +358,13 @@ impl GitPipeline {
         }))
     }
 
-    fn analyze_blob(&self, object: &GitObject) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    fn analyze_blob(
+        &self,
+        object: &GitObject,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let blob = self.repo.find_blob(git2::Oid::from_str(&object.oid)?)?;
         let content = blob.content();
-        
+
         // Basic blob analysis
         let analysis = serde_json::json!({
             "type": "blob",
@@ -332,30 +372,43 @@ impl GitPipeline {
             "is_binary": content.iter().any(|&b| b < 32 && b != 9 && b != 10 && b != 13),
             "has_null_bytes": content.iter().any(|&b| b == 0),
         });
-        
+
         Ok(analysis)
     }
 
     // Helper methods for normalization
-    fn normalize_analyses(&self, analyses: &[Analysis]) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    fn normalize_analyses(
+        &self,
+        analyses: &[Analysis],
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let mut normalized = serde_json::Map::new();
-        
+
         for analysis in analyses {
-            let tool_key = format!("{}@{}", analysis.tool_fingerprint.name, analysis.tool_fingerprint.version);
+            let tool_key = format!(
+                "{}@{}",
+                analysis.tool_fingerprint.name, analysis.tool_fingerprint.version
+            );
             normalized.insert(tool_key, analysis.analysis_data.clone());
         }
-        
+
         Ok(serde_json::Value::Object(normalized))
     }
 
     // Helper methods for contract compilation
-    fn load_contract(&self, contract_oid: &str) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    fn load_contract(
+        &self,
+        contract_oid: &str,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let blob = self.repo.find_blob(git2::Oid::from_str(contract_oid)?)?;
         let content = String::from_utf8(blob.content().to_vec())?;
         Ok(serde_json::from_str(&content)?)
     }
 
-    fn compile_contract_expectation(&self, contract: &serde_json::Value, object: &GitObject) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    fn compile_contract_expectation(
+        &self,
+        contract: &serde_json::Value,
+        object: &GitObject,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         // TODO: Implement contract compilation logic
         // This should extract the relevant rules from the contract based on object type and path
         Ok(serde_json::json!({
@@ -365,11 +418,15 @@ impl GitPipeline {
     }
 
     // Helper methods for auditing
-    fn compare_report_mandate(&self, report: &Report, mandate: &Mandate) -> Result<(bool, Option<String>), Box<dyn std::error::Error>> {
+    fn compare_report_mandate(
+        &self,
+        report: &Report,
+        mandate: &Mandate,
+    ) -> Result<(bool, Option<String>), Box<dyn std::error::Error>> {
         // TODO: Implement domain-aware diff engine
         // For now, simple JSON comparison
         let pass = report.normalized_data == mandate.expectation;
-        
+
         let diff_oid = if !pass {
             // Create diff blob
             let diff = Diff {
@@ -383,13 +440,13 @@ impl GitPipeline {
                 }],
                 cache_key: self.compute_diff_cache_key(&mandate.contract_name, &mandate.version),
             };
-            
+
             let diff_oid = self.store_diff(&diff)?;
             Some(diff_oid)
         } else {
             None
         };
-        
+
         Ok((pass, diff_oid))
     }
 
@@ -407,7 +464,12 @@ impl GitPipeline {
         format!("{:x}", hasher.finalize())
     }
 
-    fn compute_report_cache_key(&self, domain: &str, version: &str, analysis_oids: &[String]) -> String {
+    fn compute_report_cache_key(
+        &self,
+        domain: &str,
+        version: &str,
+        analysis_oids: &[String],
+    ) -> String {
         let mut hasher = Sha256::new();
         hasher.update(format!("report@{}", version).as_bytes());
         for oid in analysis_oids {
@@ -416,7 +478,13 @@ impl GitPipeline {
         format!("{:x}", hasher.finalize())
     }
 
-    fn compute_mandate_cache_key(&self, version: &str, contract_oid: &str, selector: &str, logical_path: &Option<PathBuf>) -> String {
+    fn compute_mandate_cache_key(
+        &self,
+        version: &str,
+        contract_oid: &str,
+        selector: &str,
+        logical_path: &Option<PathBuf>,
+    ) -> String {
         let mut hasher = Sha256::new();
         hasher.update(format!("mandate@{}", version).as_bytes());
         hasher.update(contract_oid.as_bytes());
@@ -427,7 +495,12 @@ impl GitPipeline {
         format!("{:x}", hasher.finalize())
     }
 
-    fn compute_audit_cache_key(&self, version: &str, report_oid: &str, mandate_oid: &str) -> String {
+    fn compute_audit_cache_key(
+        &self,
+        version: &str,
+        report_oid: &str,
+        mandate_oid: &str,
+    ) -> String {
         let mut hasher = Sha256::new();
         hasher.update(format!("audit@{}", version).as_bytes());
         hasher.update(report_oid.as_bytes());
@@ -456,7 +529,10 @@ impl GitPipeline {
         None // TODO: Implement cache lookup
     }
 
-    fn load_analysis_from_cache(&self, _cache_oid: String) -> Result<Analysis, Box<dyn std::error::Error>> {
+    fn load_analysis_from_cache(
+        &self,
+        _cache_oid: String,
+    ) -> Result<Analysis, Box<dyn std::error::Error>> {
         todo!("Implement cache loading")
     }
 
@@ -464,11 +540,19 @@ impl GitPipeline {
         Ok(()) // TODO: Implement cache storage
     }
 
-    fn get_cached_report(&self, _object_oid: &str, _domain: &str, _version: &str) -> Option<String> {
+    fn get_cached_report(
+        &self,
+        _object_oid: &str,
+        _domain: &str,
+        _version: &str,
+    ) -> Option<String> {
         None // TODO: Implement cache lookup
     }
 
-    fn load_report_from_cache(&self, _cache_oid: String) -> Result<Report, Box<dyn std::error::Error>> {
+    fn load_report_from_cache(
+        &self,
+        _cache_oid: String,
+    ) -> Result<Report, Box<dyn std::error::Error>> {
         todo!("Implement cache loading")
     }
 
@@ -480,7 +564,10 @@ impl GitPipeline {
         None // TODO: Implement cache lookup
     }
 
-    fn load_mandate_from_cache(&self, _cache_oid: String) -> Result<Mandate, Box<dyn std::error::Error>> {
+    fn load_mandate_from_cache(
+        &self,
+        _cache_oid: String,
+    ) -> Result<Mandate, Box<dyn std::error::Error>> {
         todo!("Implement cache loading")
     }
 
@@ -492,7 +579,10 @@ impl GitPipeline {
         None // TODO: Implement cache lookup
     }
 
-    fn load_verdict_from_cache(&self, _cache_oid: String) -> Result<Verdict, Box<dyn std::error::Error>> {
+    fn load_verdict_from_cache(
+        &self,
+        _cache_oid: String,
+    ) -> Result<Verdict, Box<dyn std::error::Error>> {
         todo!("Implement cache loading")
     }
 

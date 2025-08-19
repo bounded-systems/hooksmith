@@ -19,20 +19,34 @@ fn main() {
 
     // Test mapping functions
     println!("\nTesting attribute type mapping:");
-    println!("attr-line-ending-normalization: {:?}", 
-        GitNativeValidator::map_attribute_type("attr-line-ending-normalization"));
-    println!("attr-diff-strategy: {:?}", 
-        GitNativeValidator::map_attribute_type("attr-diff-strategy"));
-    println!("attr-merge-strategy: {:?}", 
-        GitNativeValidator::map_attribute_type("attr-merge-strategy"));
-    println!("attr-export-control: {:?}", 
-        GitNativeValidator::map_attribute_type("attr-export-control"));
-    println!("attr-filter-driver: {:?}", 
-        GitNativeValidator::map_attribute_type("attr-filter-driver"));
-    println!("attr-external-tool-hint: {:?}", 
-        GitNativeValidator::map_attribute_type("attr-external-tool-hint"));
-    println!("attr-locking-hint: {:?}", 
-        GitNativeValidator::map_attribute_type("attr-locking-hint"));
+    println!(
+        "attr-line-ending-normalization: {:?}",
+        GitNativeValidator::map_attribute_type("attr-line-ending-normalization")
+    );
+    println!(
+        "attr-diff-strategy: {:?}",
+        GitNativeValidator::map_attribute_type("attr-diff-strategy")
+    );
+    println!(
+        "attr-merge-strategy: {:?}",
+        GitNativeValidator::map_attribute_type("attr-merge-strategy")
+    );
+    println!(
+        "attr-export-control: {:?}",
+        GitNativeValidator::map_attribute_type("attr-export-control")
+    );
+    println!(
+        "attr-filter-driver: {:?}",
+        GitNativeValidator::map_attribute_type("attr-filter-driver")
+    );
+    println!(
+        "attr-external-tool-hint: {:?}",
+        GitNativeValidator::map_attribute_type("attr-external-tool-hint")
+    );
+    println!(
+        "attr-locking-hint: {:?}",
+        GitNativeValidator::map_attribute_type("attr-locking-hint")
+    );
 
     println!("\nCanonical attribute types:");
     for attr_type in GitNativeValidator::canonical_attribute_types() {

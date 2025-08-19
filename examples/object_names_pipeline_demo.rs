@@ -1,7 +1,7 @@
+use git2::{ObjectType, Repository, Tree};
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
-use git2::{Repository, ObjectType, Tree};
 
 /// Git object metadata for pipeline processing
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -118,16 +118,20 @@ impl ObjectNamesResearcher {
         }
     }
 
-    pub fn analyze_tree(&self, repo: &Repository, object: &GitObject) -> Result<Analysis, Box<dyn std::error::Error>> {
+    pub fn analyze_tree(
+        &self,
+        repo: &Repository,
+        object: &GitObject,
+    ) -> Result<Analysis, Box<dyn std::error::Error>> {
         let tree = repo.find_tree(git2::Oid::from_str(&object.oid)?)?;
-        
+
         let mut entries = Vec::new();
         let mut entry_names = Vec::new();
-        
+
         for entry in tree.iter() {
             let name = entry.name().unwrap_or("").to_string();
             entry_names.push(name.clone());
-            
+
             entries.push(serde_json::json!({
                 "name": name,
                 "oid": entry.id().to_string(),
@@ -135,7 +139,7 @@ impl ObjectNamesResearcher {
                 "mode": entry.filemode(),
             }));
         }
-        
+
         let analysis_data = serde_json::json!({
             "type": "tree_analysis",
             "entry_count": entries.len(),
@@ -143,9 +147,9 @@ impl ObjectNamesResearcher {
             "entry_names": entry_names,
             "is_root": object.logical_path.as_ref().map_or(true, |p| p.to_string_lossy().is_empty()),
         });
-        
+
         let cache_key = self.compute_cache_key(&object.oid);
-        
+
         Ok(Analysis {
             tool_fingerprint: self.tool_fingerprint.clone(),
             object_oid: object.oid.clone(),
@@ -153,11 +157,17 @@ impl ObjectNamesResearcher {
             cache_key,
         })
     }
-    
+
     fn compute_cache_key(&self, object_oid: &str) -> String {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
-        hasher.update(format!("analysis-{}@{}", self.tool_fingerprint.name, self.tool_fingerprint.version).as_bytes());
+        hasher.update(
+            format!(
+                "analysis-{}@{}",
+                self.tool_fingerprint.name, self.tool_fingerprint.version
+            )
+            .as_bytes(),
+        );
         hasher.update(object_oid.as_bytes());
         format!("{:x}", hasher.finalize())
     }
@@ -176,14 +186,18 @@ impl ObjectNamesReporter {
             version: "1.0.0".to_string(),
         }
     }
-    
-    pub fn create_report(&self, object: &GitObject, analyses: &[Analysis]) -> Result<Report, Box<dyn std::error::Error>> {
+
+    pub fn create_report(
+        &self,
+        object: &GitObject,
+        analyses: &[Analysis],
+    ) -> Result<Report, Box<dyn std::error::Error>> {
         let analysis_oids: Vec<String> = analyses.iter().map(|a| a.cache_key.clone()).collect();
         let cache_key = self.compute_cache_key(&analysis_oids);
-        
+
         // Extract and normalize the analysis data
         let mut normalized_data = serde_json::Map::new();
-        
+
         for analysis in analyses {
             if let Some(entry_names) = analysis.analysis_data.get("entry_names") {
                 normalized_data.insert("entry_names".to_string(), entry_names.clone());
@@ -192,7 +206,7 @@ impl ObjectNamesReporter {
                 normalized_data.insert("is_root".to_string(), is_root.clone());
             }
         }
-        
+
         Ok(Report {
             domain: self.domain.clone(),
             version: self.version.clone(),
@@ -202,9 +216,9 @@ impl ObjectNamesReporter {
             cache_key,
         })
     }
-    
+
     fn compute_cache_key(&self, analysis_oids: &[String]) -> String {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(format!("report@{}", self.version).as_bytes());
         for oid in analysis_oids {
@@ -223,14 +237,20 @@ impl ObjectNamesMandator {
     pub fn new(contract: ObjectNamesContract) -> Self {
         Self { contract }
     }
-    
-    pub fn create_mandate(&self, object: &GitObject) -> Result<Mandate, Box<dyn std::error::Error>> {
+
+    pub fn create_mandate(
+        &self,
+        object: &GitObject,
+    ) -> Result<Mandate, Box<dyn std::error::Error>> {
         let object_selector = self.compute_object_selector(object);
         let cache_key = self.compute_cache_key(&object_selector, &object.logical_path);
-        
+
         // Determine if this is a root tree
-        let is_root = object.logical_path.as_ref().map_or(true, |p| p.to_string_lossy().is_empty());
-        
+        let is_root = object
+            .logical_path
+            .as_ref()
+            .map_or(true, |p| p.to_string_lossy().is_empty());
+
         let expectation = if is_root {
             // Root tree expectations
             serde_json::json!({
@@ -248,7 +268,7 @@ impl ObjectNamesMandator {
                 "ignored_entries": self.contract.spec.git.tree.objects.names.ignored,
             })
         };
-        
+
         Ok(Mandate {
             contract_name: self.contract.name.clone(),
             contract_oid: "contract-oid".to_string(),
@@ -259,9 +279,9 @@ impl ObjectNamesMandator {
             cache_key,
         })
     }
-    
+
     fn compute_object_selector(&self, object: &GitObject) -> String {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(format!("{:?}", object.kind).as_bytes());
         if let Some(path) = &object.logical_path {
@@ -269,9 +289,9 @@ impl ObjectNamesMandator {
         }
         format!("{:x}", hasher.finalize())
     }
-    
+
     fn compute_cache_key(&self, selector: &str, logical_path: &Option<PathBuf>) -> String {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(format!("mandate@{}", self.contract.version).as_bytes());
         hasher.update(selector.as_bytes());
@@ -295,31 +315,40 @@ impl ObjectNamesAuditor {
             version,
         }
     }
-    
-    pub fn audit(&self, report: &Report, mandate: &Mandate) -> Result<Verdict, Box<dyn std::error::Error>> {
+
+    pub fn audit(
+        &self,
+        report: &Report,
+        mandate: &Mandate,
+    ) -> Result<Verdict, Box<dyn std::error::Error>> {
         let cache_key = self.compute_cache_key(&report.cache_key, &mandate.cache_key);
-        
+
         // Extract data from report and mandate
         let entry_names = if let Some(names) = report.normalized_data.get("entry_names") {
-            names.as_array().unwrap_or(&Vec::new()).iter()
+            names
+                .as_array()
+                .unwrap_or(&Vec::new())
+                .iter()
                 .filter_map(|v| v.as_str())
                 .map(|s| s.to_string())
                 .collect::<Vec<String>>()
         } else {
             Vec::new()
         };
-        
-        let is_root = report.normalized_data.get("is_root")
+
+        let is_root = report
+            .normalized_data
+            .get("is_root")
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
-        
+
         // Perform validation
         let (pass, summary_code, diff_oid) = if is_root {
             self.validate_root_tree(&entry_names, &mandate.expectation)?
         } else {
             self.validate_sub_tree(&entry_names, &mandate.expectation)?
         };
-        
+
         Ok(Verdict {
             contract_name: self.contract_name.clone(),
             version: self.version.clone(),
@@ -331,50 +360,58 @@ impl ObjectNamesAuditor {
             cache_key,
         })
     }
-    
-    fn validate_root_tree(&self, entry_names: &[String], expectation: &serde_json::Value) -> Result<(bool, String, Option<String>), Box<dyn std::error::Error>> {
-        let required = expectation.get("required_entries")
+
+    fn validate_root_tree(
+        &self,
+        entry_names: &[String],
+        expectation: &serde_json::Value,
+    ) -> Result<(bool, String, Option<String>), Box<dyn std::error::Error>> {
+        let required = expectation
+            .get("required_entries")
             .and_then(|v| v.as_array())
             .unwrap_or(&Vec::new())
             .iter()
             .filter_map(|v| v.as_str())
             .map(|s| s.to_string())
             .collect::<HashSet<String>>();
-            
-        let allowed = expectation.get("allowed_entries")
+
+        let allowed = expectation
+            .get("allowed_entries")
             .and_then(|v| v.as_array())
             .unwrap_or(&Vec::new())
             .iter()
             .filter_map(|v| v.as_str())
             .map(|s| s.to_string())
             .collect::<HashSet<String>>();
-            
-        let rejected = expectation.get("rejected_entries")
+
+        let rejected = expectation
+            .get("rejected_entries")
             .and_then(|v| v.as_array())
             .unwrap_or(&Vec::new())
             .iter()
             .filter_map(|v| v.as_str())
             .map(|s| s.to_string())
             .collect::<HashSet<String>>();
-            
-        let ignored = expectation.get("ignored_entries")
+
+        let ignored = expectation
+            .get("ignored_entries")
             .and_then(|v| v.as_array())
             .unwrap_or(&Vec::new())
             .iter()
             .filter_map(|v| v.as_str())
             .map(|s| s.to_string())
             .collect::<HashSet<String>>();
-        
+
         let entry_set: HashSet<String> = entry_names.iter().cloned().collect();
         let mut errors = Vec::new();
-        
+
         // Check required entries
         for req in &required {
             if !entry_set.contains(req) {
                 errors.push(format!("missing required: {}", req));
             }
         }
-        
+
         // Check rejected entries (skip ignored)
         for entry in entry_names {
             if ignored.contains(entry) {
@@ -384,7 +421,7 @@ impl ObjectNamesAuditor {
                 errors.push(format!("rejected at root: {}", entry));
             }
         }
-        
+
         // Check allow-list (skip ignored)
         for entry in entry_names {
             if ignored.contains(entry) {
@@ -394,39 +431,49 @@ impl ObjectNamesAuditor {
                 errors.push(format!("not in allowed set: {}", entry));
             }
         }
-        
+
         let pass = errors.is_empty();
-        let summary_code = if pass { "PASS".to_string() } else { "FAIL".to_string() };
-        
+        let summary_code = if pass {
+            "PASS".to_string()
+        } else {
+            "FAIL".to_string()
+        };
+
         let diff_oid = if !pass {
             Some("diff-oid".to_string())
         } else {
             None
         };
-        
+
         Ok((pass, summary_code, diff_oid))
     }
-    
-    fn validate_sub_tree(&self, entry_names: &[String], expectation: &serde_json::Value) -> Result<(bool, String, Option<String>), Box<dyn std::error::Error>> {
+
+    fn validate_sub_tree(
+        &self,
+        entry_names: &[String],
+        expectation: &serde_json::Value,
+    ) -> Result<(bool, String, Option<String>), Box<dyn std::error::Error>> {
         // For sub-trees, we're more permissive - just check against allowed/ignored
-        let allowed = expectation.get("allowed_entries")
+        let allowed = expectation
+            .get("allowed_entries")
             .and_then(|v| v.as_array())
             .unwrap_or(&Vec::new())
             .iter()
             .filter_map(|v| v.as_str())
             .map(|s| s.to_string())
             .collect::<HashSet<String>>();
-            
-        let ignored = expectation.get("ignored_entries")
+
+        let ignored = expectation
+            .get("ignored_entries")
             .and_then(|v| v.as_array())
             .unwrap_or(&Vec::new())
             .iter()
             .filter_map(|v| v.as_str())
             .map(|s| s.to_string())
             .collect::<HashSet<String>>();
-        
+
         let mut errors = Vec::new();
-        
+
         // Check allow-list (skip ignored)
         for entry in entry_names {
             if ignored.contains(entry) {
@@ -436,21 +483,25 @@ impl ObjectNamesAuditor {
                 errors.push(format!("not in allowed set: {}", entry));
             }
         }
-        
+
         let pass = errors.is_empty();
-        let summary_code = if pass { "PASS".to_string() } else { "FAIL".to_string() };
-        
+        let summary_code = if pass {
+            "PASS".to_string()
+        } else {
+            "FAIL".to_string()
+        };
+
         let diff_oid = if !pass {
             Some("diff-oid".to_string())
         } else {
             None
         };
-        
+
         Ok((pass, summary_code, diff_oid))
     }
-    
+
     fn compute_cache_key(&self, report_oid: &str, mandate_oid: &str) -> String {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(format!("audit@{}", self.version).as_bytes());
         hasher.update(report_oid.as_bytes());
@@ -473,7 +524,7 @@ impl ObjectNamesValidator {
         let reporter = ObjectNamesReporter::new();
         let mandator = ObjectNamesMandator::new(contract.clone());
         let auditor = ObjectNamesAuditor::new(contract.name.clone(), contract.version.clone());
-        
+
         Self {
             researcher,
             reporter,
@@ -481,27 +532,35 @@ impl ObjectNamesValidator {
             auditor,
         }
     }
-    
-    pub fn validate_tree(&self, repo: &Repository, object: &GitObject) -> Result<Verdict, Box<dyn std::error::Error>> {
+
+    pub fn validate_tree(
+        &self,
+        repo: &Repository,
+        object: &GitObject,
+    ) -> Result<Verdict, Box<dyn std::error::Error>> {
         println!("🔬 Researcher: Analyzing tree object {}", object.oid);
         let analysis = self.researcher.analyze_tree(repo, object)?;
-        
+
         println!("📊 Reporter: Creating normalized report");
         let report = self.reporter.create_report(object, &[analysis])?;
-        
+
         println!("📋 Mandator: Creating expectation from contract");
         let mandate = self.mandator.create_mandate(object)?;
-        
+
         println!("🔍 Auditor: Comparing report vs mandate");
         let verdict = self.auditor.audit(&report, &mandate)?;
-        
+
         Ok(verdict)
     }
-    
-    pub fn validate_root_tree(&self, repo: &Repository, commit_oid: &str) -> Result<Vec<Verdict>, Box<dyn std::error::Error>> {
+
+    pub fn validate_root_tree(
+        &self,
+        repo: &Repository,
+        commit_oid: &str,
+    ) -> Result<Vec<Verdict>, Box<dyn std::error::Error>> {
         let commit = repo.find_commit(git2::Oid::from_str(commit_oid)?)?;
         let tree = commit.tree()?;
-        
+
         let object = GitObject {
             oid: tree.id().to_string(),
             kind: ObjectType::Tree,
@@ -509,14 +568,16 @@ impl ObjectNamesValidator {
             parent_tree_oid: None,
             size: tree.id().as_bytes().len(),
         };
-        
+
         let verdict = self.validate_tree(repo, &object)?;
         Ok(vec![verdict])
     }
 }
 
 /// Load contract from JSON
-pub fn load_contract(contract_json: &str) -> Result<ObjectNamesContract, Box<dyn std::error::Error>> {
+pub fn load_contract(
+    contract_json: &str,
+) -> Result<ObjectNamesContract, Box<dyn std::error::Error>> {
     let contract: ObjectNamesContract = serde_json::from_str(contract_json)?;
     Ok(contract)
 }
@@ -524,7 +585,7 @@ pub fn load_contract(contract_json: &str) -> Result<ObjectNamesContract, Box<dyn
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚀 Object Names Pipeline Demo");
     println!("==============================");
-    
+
     // Load the contract
     let contract_json = r#"
     {
@@ -546,31 +607,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     "#;
-    
+
     let contract = load_contract(contract_json)?;
-    println!("📄 Loaded contract: {} v{}", contract.name, contract.version);
-    
+    println!(
+        "📄 Loaded contract: {} v{}",
+        contract.name, contract.version
+    );
+
     // Open the repository
     let repo = Repository::open(".")?;
     println!("📁 Opened repository");
-    
+
     // Get the current HEAD
     let head = repo.head()?;
     let commit_oid = head.target().unwrap().to_string();
     println!("🎯 Target commit: {}", commit_oid);
-    
+
     // Create validator
     let validator = ObjectNamesValidator::new(contract);
-    
+
     println!("\n🔄 Running four-actor pipeline...");
     println!("==================================");
-    
+
     // Validate the root tree
     let verdicts = validator.validate_root_tree(&repo, &commit_oid)?;
-    
+
     println!("\n📋 Results:");
     println!("===========");
-    
+
     for verdict in verdicts {
         if verdict.pass {
             println!("✅ {}: {}", verdict.contract_name, verdict.summary_code);
@@ -581,8 +645,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-    
+
     println!("\n🎉 Pipeline completed!");
-    
+
     Ok(())
 }

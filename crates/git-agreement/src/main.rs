@@ -115,12 +115,16 @@ enum AgreementCommands {
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
-    
+
     // Convert our CLI args to xtask format
     let mut args = vec!["agreement".to_string()];
-    
+
     match cli.command {
-        AgreementCommands::List { active_only, fulfilled_only, verbose } => {
+        AgreementCommands::List {
+            active_only,
+            fulfilled_only,
+            verbose,
+        } => {
             args.push("list".to_string());
             if active_only {
                 args.push("--active-only".to_string());
@@ -136,7 +140,11 @@ async fn main() -> Result<()> {
             args.push("show".to_string());
             args.push(scope);
         }
-        AgreementCommands::Validate { scope, strict, check_main } => {
+        AgreementCommands::Validate {
+            scope,
+            strict,
+            check_main,
+        } => {
             args.push("validate".to_string());
             args.push(scope);
             if strict {
@@ -158,7 +166,11 @@ async fn main() -> Result<()> {
                 args.push(s);
             }
         }
-        AgreementCommands::Create { scope, contract, description } => {
+        AgreementCommands::Create {
+            scope,
+            contract,
+            description,
+        } => {
             args.push("create".to_string());
             args.push("--scope".to_string());
             args.push(scope);
@@ -169,7 +181,11 @@ async fn main() -> Result<()> {
                 args.push(desc);
             }
         }
-        AgreementCommands::CreateFromFile { contract_file, description, scope } => {
+        AgreementCommands::CreateFromFile {
+            contract_file,
+            description,
+            scope,
+        } => {
             args.push("create-from-file".to_string());
             args.push("--contract-file".to_string());
             args.push(contract_file);
@@ -182,7 +198,13 @@ async fn main() -> Result<()> {
                 args.push(s);
             }
         }
-        AgreementCommands::Honor { scope, base_branch, create_worktree, worktree_name, open_in_cursor } => {
+        AgreementCommands::Honor {
+            scope,
+            base_branch,
+            create_worktree,
+            worktree_name,
+            open_in_cursor,
+        } => {
             args.push("honor".to_string());
             args.push(scope);
             args.push("--base-branch".to_string());
@@ -218,12 +240,12 @@ async fn main() -> Result<()> {
             args.push("local".to_string());
         }
     }
-    
+
     // Call xtask with the converted arguments
     let status = Command::new("cargo")
         .args(["run", "-p", "xtask", "--"])
         .args(&args)
         .status()?;
-    
+
     std::process::exit(status.code().unwrap_or(1));
 }

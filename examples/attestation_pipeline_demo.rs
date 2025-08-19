@@ -1,9 +1,9 @@
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
-use sha2::{Sha256, Digest};
 
 // Enhanced event structure with attestation capabilities
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -14,7 +14,7 @@ pub struct AttestedEvent {
     pub actor: String,
     pub event: String,
     pub context: serde_json::Value,
-    
+
     // New attestation fields
     pub attestation: Attestation,
     pub signature: Option<DigitalSignature>,
@@ -176,14 +176,14 @@ impl AttestationEventBus {
     ) -> Result<AttestedEvent, Box<dyn std::error::Error>> {
         // Create attestation
         let attestation = self.create_attestation(event).await?;
-        
+
         // Sign if requested
         let signature = if sign {
             Some(self.signature_service.sign(&attestation).await?)
         } else {
             None
         };
-        
+
         // Create attested event
         let attested_event = AttestedEvent {
             id: event.id.clone(),
@@ -195,11 +195,14 @@ impl AttestationEventBus {
             signature,
             provenance: self.build_provenance_chain(event).await?,
         };
-        
+
         Ok(attested_event)
     }
 
-    async fn create_attestation(&self, event: &HooksmithEvent) -> Result<Attestation, Box<dyn std::error::Error>> {
+    async fn create_attestation(
+        &self,
+        event: &HooksmithEvent,
+    ) -> Result<Attestation, Box<dyn std::error::Error>> {
         // Create subject from event context
         let subject = Subject {
             name: format!("hooksmith:{}", event.id),
@@ -223,9 +226,12 @@ impl AttestationEventBus {
         })
     }
 
-    async fn create_analysis_predicate(&self, event: &HooksmithEvent) -> Result<Predicate, Box<dyn std::error::Error>> {
+    async fn create_analysis_predicate(
+        &self,
+        event: &HooksmithEvent,
+    ) -> Result<Predicate, Box<dyn std::error::Error>> {
         let context = &event.context;
-        
+
         Ok(Predicate {
             build_type: "https://hooksmith.dev/analysis/v1".to_string(),
             builder: Builder {
@@ -257,17 +263,18 @@ impl AttestationEventBus {
                 },
                 reproducible: true,
             },
-            materials: vec![
-                Material {
-                    uri: format!("git://{}", context["object_oid"].as_str().unwrap_or("")),
-                    digest: HashMap::new(),
-                    annotations: HashMap::new(),
-                }
-            ],
+            materials: vec![Material {
+                uri: format!("git://{}", context["object_oid"].as_str().unwrap_or("")),
+                digest: HashMap::new(),
+                annotations: HashMap::new(),
+            }],
         })
     }
 
-    async fn create_report_predicate(&self, event: &HooksmithEvent) -> Result<Predicate, Box<dyn std::error::Error>> {
+    async fn create_report_predicate(
+        &self,
+        event: &HooksmithEvent,
+    ) -> Result<Predicate, Box<dyn std::error::Error>> {
         Ok(Predicate {
             build_type: "https://hooksmith.dev/report/v1".to_string(),
             builder: Builder {
@@ -299,17 +306,18 @@ impl AttestationEventBus {
                 },
                 reproducible: true,
             },
-            materials: vec![
-                Material {
-                    uri: "analysis-*.json".to_string(),
-                    digest: HashMap::new(),
-                    annotations: HashMap::new(),
-                }
-            ],
+            materials: vec![Material {
+                uri: "analysis-*.json".to_string(),
+                digest: HashMap::new(),
+                annotations: HashMap::new(),
+            }],
         })
     }
 
-    async fn create_mandate_predicate(&self, event: &HooksmithEvent) -> Result<Predicate, Box<dyn std::error::Error>> {
+    async fn create_mandate_predicate(
+        &self,
+        event: &HooksmithEvent,
+    ) -> Result<Predicate, Box<dyn std::error::Error>> {
         Ok(Predicate {
             build_type: "https://hooksmith.dev/mandate/v1".to_string(),
             builder: Builder {
@@ -341,17 +349,18 @@ impl AttestationEventBus {
                 },
                 reproducible: true,
             },
-            materials: vec![
-                Material {
-                    uri: "contract-*.json".to_string(),
-                    digest: HashMap::new(),
-                    annotations: HashMap::new(),
-                }
-            ],
+            materials: vec![Material {
+                uri: "contract-*.json".to_string(),
+                digest: HashMap::new(),
+                annotations: HashMap::new(),
+            }],
         })
     }
 
-    async fn create_audit_predicate(&self, event: &HooksmithEvent) -> Result<Predicate, Box<dyn std::error::Error>> {
+    async fn create_audit_predicate(
+        &self,
+        event: &HooksmithEvent,
+    ) -> Result<Predicate, Box<dyn std::error::Error>> {
         Ok(Predicate {
             build_type: "https://hooksmith.dev/audit/v1".to_string(),
             builder: Builder {
@@ -393,12 +402,15 @@ impl AttestationEventBus {
                     uri: "mandate-*.json".to_string(),
                     digest: HashMap::new(),
                     annotations: HashMap::new(),
-                }
+                },
             ],
         })
     }
 
-    async fn create_generic_predicate(&self, event: &HooksmithEvent) -> Result<Predicate, Box<dyn std::error::Error>> {
+    async fn create_generic_predicate(
+        &self,
+        event: &HooksmithEvent,
+    ) -> Result<Predicate, Box<dyn std::error::Error>> {
         Ok(Predicate {
             build_type: "https://hooksmith.dev/generic/v1".to_string(),
             builder: Builder {
@@ -434,7 +446,10 @@ impl AttestationEventBus {
         })
     }
 
-    async fn build_provenance_chain(&self, event: &HooksmithEvent) -> Result<ProvenanceChain, Box<dyn std::error::Error>> {
+    async fn build_provenance_chain(
+        &self,
+        event: &HooksmithEvent,
+    ) -> Result<ProvenanceChain, Box<dyn std::error::Error>> {
         Ok(ProvenanceChain {
             build_id: event.id.clone(),
             build_type: "https://hooksmith.dev/provenance/v1".to_string(),
@@ -474,7 +489,7 @@ impl AttestationEventBus {
         let mut hasher = Sha256::new();
         hasher.update(serde_json::to_string(data).unwrap().as_bytes());
         let result = format!("{:x}", hasher.finalize());
-        
+
         let mut digest = HashMap::new();
         digest.insert("sha256".to_string(), result);
         digest
@@ -508,12 +523,15 @@ impl SignatureService {
         }
     }
 
-    pub async fn sign(&self, attestation: &Attestation) -> Result<DigitalSignature, Box<dyn std::error::Error>> {
+    pub async fn sign(
+        &self,
+        attestation: &Attestation,
+    ) -> Result<DigitalSignature, Box<dyn std::error::Error>> {
         // Mock signature generation
         let mut hasher = Sha256::new();
         hasher.update(serde_json::to_string(attestation)?.as_bytes());
         let signature = format!("{:x}", hasher.finalize());
-        
+
         Ok(DigitalSignature {
             key_id: "mock-key-id".to_string(),
             signature,
@@ -558,7 +576,7 @@ impl AttestedObjectNamesResearcher {
     ) -> Result<(Analysis, AttestedEvent), Box<dyn std::error::Error>> {
         // Perform analysis using existing logic
         let analysis = self.inner.analyze_tree(repo, object)?;
-        
+
         // Create attestation event
         let event = HooksmithEvent {
             id: Uuid::new_v4().to_string(),
@@ -576,10 +594,10 @@ impl AttestedObjectNamesResearcher {
             session_id: None,
             duration_ms: None,
         };
-        
+
         // Emit attested event
         let attested_event = self.event_bus.emit_attested_event(&event, true).await?;
-        
+
         Ok((analysis, attested_event))
     }
 }
@@ -618,7 +636,11 @@ impl ObjectNamesResearcher {
         Self
     }
 
-    pub fn analyze_tree(&self, _repo: &Repository, _object: &GitObject) -> Result<Analysis, Box<dyn std::error::Error>> {
+    pub fn analyze_tree(
+        &self,
+        _repo: &Repository,
+        _object: &GitObject,
+    ) -> Result<Analysis, Box<dyn std::error::Error>> {
         // Mock analysis
         Ok(Analysis {
             tool_fingerprint: ToolFingerprint {
@@ -639,7 +661,7 @@ impl ObjectNamesResearcher {
 // Demo function showing the complete attested pipeline
 pub async fn demo_attested_pipeline() -> Result<(), Box<dyn std::error::Error>> {
     println!("🚀 Starting Attested Pipeline Demo");
-    
+
     // Create repository and object
     let repo = Repository;
     let object = GitObject {
@@ -649,36 +671,63 @@ pub async fn demo_attested_pipeline() -> Result<(), Box<dyn std::error::Error>> 
         parent_tree_oid: Some("parent123".to_string()),
         size: 1024,
     };
-    
+
     // Create attested researcher
     let mut researcher = AttestedObjectNamesResearcher::new();
-    
+
     // Perform analysis with attestation
-    let (analysis, attested_event) = researcher.analyze_tree_with_attestation(&repo, &object).await?;
-    
+    let (analysis, attested_event) = researcher
+        .analyze_tree_with_attestation(&repo, &object)
+        .await?;
+
     println!("✅ Analysis completed with attestation");
     println!("📊 Analysis cache key: {}", analysis.cache_key);
     println!("🔐 Attestation ID: {}", attested_event.id);
-    println!("📝 Attestation statement type: {}", attested_event.attestation.statement_type);
+    println!(
+        "📝 Attestation statement type: {}",
+        attested_event.attestation.statement_type
+    );
     println!("🔑 Digital signature: {:?}", attested_event.signature);
-    
+
     // Print attestation details
     println!("\n📋 Attestation Details:");
-    println!("  Statement Type: {}", attested_event.attestation.statement_type);
-    println!("  Predicate Type: {}", attested_event.attestation.predicate_type);
-    println!("  Build Type: {}", attested_event.attestation.predicate.build_type);
-    println!("  Builder ID: {}", attested_event.attestation.predicate.builder.id);
-    println!("  Build Invocation ID: {}", attested_event.attestation.predicate.metadata.build_invocation_id);
-    
+    println!(
+        "  Statement Type: {}",
+        attested_event.attestation.statement_type
+    );
+    println!(
+        "  Predicate Type: {}",
+        attested_event.attestation.predicate_type
+    );
+    println!(
+        "  Build Type: {}",
+        attested_event.attestation.predicate.build_type
+    );
+    println!(
+        "  Builder ID: {}",
+        attested_event.attestation.predicate.builder.id
+    );
+    println!(
+        "  Build Invocation ID: {}",
+        attested_event
+            .attestation
+            .predicate
+            .metadata
+            .build_invocation_id
+    );
+
     // Print provenance chain
     println!("\n🔗 Provenance Chain:");
     println!("  Build ID: {}", attested_event.provenance.build_id);
     println!("  Build Type: {}", attested_event.provenance.build_type);
     println!("  Builder ID: {}", attested_event.provenance.builder.id);
-    println!("  Reproducible: {}", attested_event.provenance.metadata.reproducible);
-    
+    println!(
+        "  Reproducible: {}",
+        attested_event.provenance.metadata.reproducible
+    );
+
     println!("\n🎉 Attested Pipeline Demo Completed Successfully!");
-    
+
     Ok(())
 }
 

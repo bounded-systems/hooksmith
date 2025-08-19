@@ -1,7 +1,7 @@
-use anyhow::{Result, anyhow};
-use git2::{Repository, ObjectType, TreeWalkMode, TreeWalkResult};
+use anyhow::{anyhow, Result};
+use git2::{ObjectType, Repository, TreeWalkMode, TreeWalkResult};
 use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
 use std::cell::Cell;
 use std::process::Command;
 
@@ -9,8 +9,8 @@ use std::process::Command;
 #[serde(rename_all = "kebab-case")]
 pub struct Agreement {
     pub version: String,
-    pub mode: String,               // "tree"
-    pub policy: String,             // "allow-only"
+    pub mode: String,   // "tree"
+    pub policy: String, // "allow-only"
     pub allow_dirs: Vec<String>,
     pub allow_files: Vec<String>,
     pub subject: Subject,
@@ -18,18 +18,16 @@ pub struct Agreement {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct Subject { 
-    pub scope: String 
+pub struct Subject {
+    pub scope: String,
 } // "top-level" (for now)
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct DigestField { 
-    pub algo: String, 
-    pub value: String 
+pub struct DigestField {
+    pub algo: String,
+    pub value: String,
 }
-
-
 
 // ---------- Dispatcher (intake)
 pub struct Dispatcher;
@@ -37,13 +35,14 @@ pub struct Dispatcher;
 impl Dispatcher {
     pub fn discover(root: &std::path::Path) -> Result<Vec<std::path::PathBuf>> {
         let base = root.join(".hooksmith/agreements");
-        if !base.exists() { 
-            return Ok(vec![]); 
+        if !base.exists() {
+            return Ok(vec![]);
         }
         let mut out = vec![];
         for e in walkdir::WalkDir::new(base) {
             let e = e?;
-            if e.file_type().is_file() && e.path().extension().map(|x| x=="json").unwrap_or(false) {
+            if e.file_type().is_file() && e.path().extension().map(|x| x == "json").unwrap_or(false)
+            {
                 out.push(e.into_path());
             }
         }
@@ -54,7 +53,7 @@ impl Dispatcher {
     pub fn load(path: &std::path::Path) -> Result<Agreement> {
         let txt = std::fs::read_to_string(path)?;
         let ag: Agreement = serde_json::from_str(&txt)?;
-        
+
         // Enforce invariants
         if ag.mode != "tree" || ag.subject.scope != "top-level" {
             return Err(anyhow!("agreement not tree/top-level: {}", path.display()));
@@ -62,39 +61,41 @@ impl Dispatcher {
         if ag.policy != "allow-only" {
             return Err(anyhow!("policy must be allow-only"));
         }
-        if ag.digest.algo != "sha256" { 
-            return Err(anyhow!("unsupported digest algo")); 
+        if ag.digest.algo != "sha256" {
+            return Err(anyhow!("unsupported digest algo"));
         }
         Ok(ag)
     }
 }
 
 // ---------- Researcher (single pass, streaming)
-pub struct Researcher { 
-    repo: Repository 
+pub struct Researcher {
+    repo: Repository,
 }
 
 impl Researcher {
     pub fn new(repo_root: &std::path::Path) -> Result<Self> {
-        Ok(Self { repo: Repository::discover(repo_root)? })
+        Ok(Self {
+            repo: Repository::discover(repo_root)?,
+        })
     }
 
     pub fn validate_agreement(&self, ag: &Agreement, r#ref: &str) -> Result<ValidationResult> {
         let commit = self.repo.revparse_single(r#ref)?.peel_to_commit()?;
         let tree = commit.tree()?;
-        
+
         let mut auditor = Auditor::new();
         let mut files = 0usize;
         let mut dirs = 0usize;
         let fail_reason = Cell::new(None::<String>);
-        
+
         let result = tree.walk(TreeWalkMode::PreOrder, |root, e| {
-            if !root.is_empty() { 
-                return TreeWalkResult::Skip; 
+            if !root.is_empty() {
+                return TreeWalkResult::Skip;
             }
-            
-            let (Some(name), Some(kind)) = (e.name(), e.kind()) else { 
-                return TreeWalkResult::Ok; 
+
+            let (Some(name), Some(kind)) = (e.name(), e.kind()) else {
+                return TreeWalkResult::Ok;
             };
 
             // Mandator: fail fast
@@ -104,10 +105,10 @@ impl Researcher {
             }
 
             // Reporter (counters only)
-            match kind { 
-                ObjectType::Tree => dirs += 1, 
-                ObjectType::Blob => files += 1, 
-                _ => {} 
+            match kind {
+                ObjectType::Tree => dirs += 1,
+                ObjectType::Blob => files += 1,
+                _ => {}
             }
 
             // Auditor (streaming)
@@ -115,20 +116,20 @@ impl Researcher {
 
             TreeWalkResult::Ok
         });
-        
+
         if let Err(_) = result {
             return Err(anyhow!("tree walk failed"));
         }
-        
+
         // Check for failure reason
         if let Some(reason) = fail_reason.take() {
             return Err(anyhow!(reason));
         }
-        
+
         // Finalize digest
         let computed = auditor.finalize(&ag.allow_dirs, &ag.allow_files);
         let digest_ok = computed == ag.digest.value;
-        
+
         Ok(ValidationResult {
             files,
             dirs,
@@ -146,68 +147,68 @@ pub struct ValidationResult {
     pub computed_digest: String,
 }
 
-
-
 // ---------- Mandator (streaming, no overrides, no recursion)
 pub struct Mandator;
 
 impl Mandator {
-    pub fn check_entry(allow_dirs: &[String], allow_files: &[String], name: &str, kind: ObjectType) -> bool {
+    pub fn check_entry(
+        allow_dirs: &[String],
+        allow_files: &[String],
+        name: &str,
+        kind: ObjectType,
+    ) -> bool {
         match kind {
             ObjectType::Tree => allow_dirs.iter().any(|d| d == name),
             ObjectType::Blob => {
-                if allow_files.iter().any(|p| p == name) { 
-                    return true; 
+                if allow_files.iter().any(|p| p == name) {
+                    return true;
                 }
                 // root '*.ext' only
                 allow_files.iter().any(|p| {
-                    p.as_bytes().first() == Some(&b'*') && 
-                    !p.contains('/') && 
-                    star_match_root(p, name)
+                    p.as_bytes().first() == Some(&b'*')
+                        && !p.contains('/')
+                        && star_match_root(p, name)
                 })
             }
-            _ => false
+            _ => false,
         }
     }
 }
 
 fn star_match_root(pat: &str, name: &str) -> bool {
-    if pat.contains('/') || name.contains('/') { 
-        return false; 
+    if pat.contains('/') || name.contains('/') {
+        return false;
     }
     // simple '*' matcher (no regex crate required in prod if you prefer)
-    let mut pi = 0usize; 
-    let p = pat.as_bytes(); 
+    let mut pi = 0usize;
+    let p = pat.as_bytes();
     let s = name.as_bytes();
     let (mut si, mut star_idx, mut match_idx) = (0usize, None, 0usize);
-    
+
     while si < s.len() {
-        if pi < p.len() && (p[pi] == b'?' || p[pi] == s[si]) { 
-            pi+=1; 
-            si+=1; 
-        }
-        else if pi < p.len() && p[pi] == b'*' { 
-            star_idx = Some(pi); 
-            match_idx = si; 
-            pi+=1; 
-        }
-        else if let Some(st) = star_idx { 
-            pi = st+1; 
-            match_idx += 1; 
-            si = match_idx; 
-        }
-        else { 
-            return false; 
+        if pi < p.len() && (p[pi] == b'?' || p[pi] == s[si]) {
+            pi += 1;
+            si += 1;
+        } else if pi < p.len() && p[pi] == b'*' {
+            star_idx = Some(pi);
+            match_idx = si;
+            pi += 1;
+        } else if let Some(st) = star_idx {
+            pi = st + 1;
+            match_idx += 1;
+            si = match_idx;
+        } else {
+            return false;
         }
     }
-    while pi < p.len() && p[pi] == b'*' { 
-        pi+=1; 
+    while pi < p.len() && p[pi] == b'*' {
+        pi += 1;
     }
     pi == p.len()
 }
 
 // ---------- Auditor (order-independent digest; streaming)
-fn add256(acc: &mut [u8;32], h: [u8;32]) {
+fn add256(acc: &mut [u8; 32], h: [u8; 32]) {
     let mut carry = 0u16;
     for i in (0..32).rev() {
         let sum = acc[i] as u16 + h[i] as u16 + carry;
@@ -216,27 +217,28 @@ fn add256(acc: &mut [u8;32], h: [u8;32]) {
     }
 }
 
-pub struct Auditor { 
-    acc: [u8;32] 
+pub struct Auditor {
+    acc: [u8; 32],
 }
 
 impl Auditor {
-    pub fn new() -> Self { 
-        Self { acc: [0u8;32] } 
+    pub fn new() -> Self {
+        Self { acc: [0u8; 32] }
     }
-    
+
     pub fn ingest_name(&mut self, name: &str) {
         let h = Sha256::digest(name.as_bytes());
         add256(&mut self.acc, h.into());
     }
-    
+
     pub fn finalize(self, allow_dirs: &[String], allow_files: &[String]) -> String {
         let rules = serde_json::json!({
             "mode":"tree",
             "policy":"allow-only",
             "allow_dirs": allow_dirs,
             "allow_files": allow_files
-        }).to_string();
+        })
+        .to_string();
         let h_rules = Sha256::digest(rules.as_bytes());
         let mut outer = Sha256::new();
         outer.update(hex::encode(self.acc));
@@ -250,7 +252,7 @@ impl Auditor {
 #[derive(Serialize)]
 struct Sarif {
     version: String,
-    #[serde(rename="runs")] 
+    #[serde(rename = "runs")]
     runs: Vec<SarifRun>,
 }
 
@@ -261,97 +263,103 @@ struct SarifRun {
 }
 
 #[derive(Serialize)]
-struct SarifTool { 
-    driver: SarifDriver 
+struct SarifTool {
+    driver: SarifDriver,
 }
 
 #[derive(Serialize)]
-struct SarifDriver { 
-    name: String, 
-    information_uri: String 
+struct SarifDriver {
+    name: String,
+    information_uri: String,
 }
 
 #[derive(Serialize)]
-struct SarifResult { 
-    level: String, 
-    message: SarifMessage, 
-    locations: Vec<SarifLocation> 
+struct SarifResult {
+    level: String,
+    message: SarifMessage,
+    locations: Vec<SarifLocation>,
 }
 
 #[derive(Serialize)]
-struct SarifMessage { 
-    text: String 
+struct SarifMessage {
+    text: String,
 }
 
 #[derive(Serialize)]
-struct SarifLocation { 
-    physical_location: SarifPhysical 
+struct SarifLocation {
+    physical_location: SarifPhysical,
 }
 
 #[derive(Serialize)]
-struct SarifPhysical { 
-    artifact_location: SarifArtifact 
+struct SarifPhysical {
+    artifact_location: SarifArtifact,
 }
 
 #[derive(Serialize)]
-struct SarifArtifact { 
-    uri: String 
+struct SarifArtifact {
+    uri: String,
 }
 
-pub struct TriageOfficer<'a> { 
-    researcher: Researcher, 
-    root: &'a std::path::Path 
+pub struct TriageOfficer<'a> {
+    researcher: Researcher,
+    root: &'a std::path::Path,
 }
 
 impl<'a> TriageOfficer<'a> {
     pub fn new(root: &'a std::path::Path) -> Result<Self> {
-        Ok(Self { 
-            researcher: Researcher::new(root)?, 
-            root 
+        Ok(Self {
+            researcher: Researcher::new(root)?,
+            root,
         })
     }
 
     pub fn run(&self, refspec: &str) -> Result<i32> {
         let paths = Dispatcher::discover(self.root)?;
         let mut results = vec![];
-        
+
         for p in paths {
-            let ag = match Dispatcher::load(&p) { 
-                Ok(a) => a, 
+            let ag = match Dispatcher::load(&p) {
+                Ok(a) => a,
                 Err(e) => {
-                    results.push(sarif_err(format!("load: {}", e), &p)); 
-                    continue; 
+                    results.push(sarif_err(format!("load: {}", e), &p));
+                    continue;
                 }
             };
-            
-            let validation = match self.researcher.validate_agreement(&ag, refspec) { 
-                Ok(v) => v, 
+
+            let validation = match self.researcher.validate_agreement(&ag, refspec) {
+                Ok(v) => v,
                 Err(e) => {
-                    results.push(sarif_err(format!("validation: {}", e), &p)); 
-                    continue; 
+                    results.push(sarif_err(format!("validation: {}", e), &p));
+                    continue;
                 }
             };
-            
+
             if !validation.digest_ok {
                 results.push(sarif_err(
-                    format!("digest mismatch: computed={}, recorded={}", 
-                           validation.computed_digest, ag.digest.value), 
-                    &p
-                )); 
+                    format!(
+                        "digest mismatch: computed={}, recorded={}",
+                        validation.computed_digest, ag.digest.value
+                    ),
+                    &p,
+                ));
                 continue;
             }
-            
+
             results.push(SarifResult {
                 level: "note".into(),
-                message: SarifMessage { 
-                    text: format!("agreement ok ({} files, {} dirs)", validation.files, validation.dirs).into() 
+                message: SarifMessage {
+                    text: format!(
+                        "agreement ok ({} files, {} dirs)",
+                        validation.files, validation.dirs
+                    )
+                    .into(),
                 },
                 locations: vec![loc(&p)],
             });
         }
-        
+
         // ---------- Gitignore Validation (Five-Actor Integration)
-        
+
         // Dispatcher: Schedule gitignore validation
         let gitignore_path = self.root.join(".gitignore");
         if gitignore_path.exists() {
@@ -359,7 +367,8 @@ impl<'a> TriageOfficer<'a> {
             let tree_entries = match Command::new("git")
                 .args(["ls-tree", "--name-only", "HEAD"])
                 .current_dir(self.root)
-                .output() {
+                .output()
+            {
                 Ok(output) => String::from_utf8_lossy(&output.stdout).lines().count(),
                 Err(_) => 0,
             };
@@ -383,38 +392,40 @@ impl<'a> TriageOfficer<'a> {
                                     });
                                 } else {
                                     results.push(sarif_err(
-                                        format!("gitignore minimality violations: {}", 
-                                            violations.join(", ")), 
-                                        &gitignore_path
+                                        format!(
+                                            "gitignore minimality violations: {}",
+                                            violations.join(", ")
+                                        ),
+                                        &gitignore_path,
                                     ));
                                 }
                             }
                             Err(e) => {
                                 results.push(sarif_err(
-                                    format!("gitignore minimality check failed: {}", e), 
-                                    &gitignore_path
+                                    format!("gitignore minimality check failed: {}", e),
+                                    &gitignore_path,
                                 ));
                             }
                         }
                     } else {
-                                            results.push(sarif_err(
-                        "gitignore digest computation failed".to_string(), 
-                        &gitignore_path
-                    ));
+                        results.push(sarif_err(
+                            "gitignore digest computation failed".to_string(),
+                            &gitignore_path,
+                        ));
                     }
                 }
                 Err(e) => {
                     results.push(sarif_err(
-                        format!("gitignore validation failed: {}", e), 
-                        &gitignore_path
+                        format!("gitignore validation failed: {}", e),
+                        &gitignore_path,
                     ));
                 }
             }
         } else {
             results.push(SarifResult {
                 level: "warning".into(),
-                message: SarifMessage { 
-                    text: "No .gitignore file found".into() 
+                message: SarifMessage {
+                    text: "No .gitignore file found".into(),
                 },
                 locations: vec![loc(&gitignore_path)],
             });
@@ -423,18 +434,18 @@ impl<'a> TriageOfficer<'a> {
         let sarif = Sarif {
             version: "2.1.0".into(),
             runs: vec![SarifRun {
-                tool: SarifTool { 
+                tool: SarifTool {
                     driver: SarifDriver {
-                        name: "hooksmith-agreements".into(), 
-                        information_uri: "https://internal/hooksmith".into()
-                    }
+                        name: "hooksmith-agreements".into(),
+                        information_uri: "https://internal/hooksmith".into(),
+                    },
                 },
-                results
-            }]
+                results,
+            }],
         };
-        
+
         println!("{}", serde_json::to_string_pretty(&sarif)?);
-        
+
         // nonzero exit on any error-level results
         let fail = sarif.runs[0].results.iter().any(|r| r.level != "note");
         Ok(if fail { 1 } else { 0 })
@@ -467,7 +478,7 @@ impl GitignoreValidator {
 
     pub fn validate_all_gitignores(root: &std::path::Path) -> Result<Vec<String>> {
         let mut results = Vec::new();
-        
+
         // Check root .gitignore
         if let Err(e) = Self::validate_gitignore(root) {
             results.push(format!("Root .gitignore: {}", e));
@@ -505,7 +516,7 @@ impl GitignoreValidator {
 
     pub fn validate_minimality_invariant(root: &std::path::Path) -> Result<Vec<String>> {
         let mut violations = Vec::new();
-        
+
         // Get Git tree entries
         let output = Command::new("git")
             .args(["ls-tree", "--name-only", "HEAD"])
@@ -526,7 +537,7 @@ impl GitignoreValidator {
         }
 
         let content = std::fs::read_to_string(gitignore_path)?;
-        
+
         for line in content.lines() {
             let line = line.trim();
             if line.is_empty() || line.starts_with('#') {
@@ -540,7 +551,11 @@ impl GitignoreValidator {
             }
 
             // Check for complex globs beyond simple * suffix
-            if line.contains('*') && !line.starts_with('*') && !line.ends_with('*') && !line.contains("/*") {
+            if line.contains('*')
+                && !line.starts_with('*')
+                && !line.ends_with('*')
+                && !line.contains("/*")
+            {
                 violations.push(format!("Complex glob not allowed: {}", line));
                 continue;
             }
@@ -555,7 +570,7 @@ impl GitignoreValidator {
             let pattern_matches = entries.iter().any(|entry| {
                 if line.ends_with('/') {
                     // Directory pattern
-                    *entry == &line[..line.len()-1]
+                    *entry == &line[..line.len() - 1]
                 } else if line.starts_with('/') {
                     // Root-anchored pattern
                     *entry == &line[1..]
@@ -579,19 +594,19 @@ impl GitignoreValidator {
 }
 
 fn loc(p: &std::path::Path) -> SarifLocation {
-    SarifLocation { 
-        physical_location: SarifPhysical { 
+    SarifLocation {
+        physical_location: SarifPhysical {
             artifact_location: SarifArtifact {
-                uri: p.display().to_string()
-            } 
-        } 
+                uri: p.display().to_string(),
+            },
+        },
     }
 }
 
 fn sarif_err(msg: String, p: &std::path::Path) -> SarifResult {
-    SarifResult { 
-        level: "error".into(), 
-        message: SarifMessage { text: msg }, 
-        locations: vec![loc(p)] 
+    SarifResult {
+        level: "error".into(),
+        message: SarifMessage { text: msg },
+        locations: vec![loc(p)],
     }
 }
