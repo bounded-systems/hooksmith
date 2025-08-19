@@ -58,6 +58,21 @@
       # Build dependencies only (for faster rebuilds)
       cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
+      # Main GBA (Git Blob Analysis) package
+      gba = craneLib.buildPackage (commonArgs
+        // {
+          inherit cargoArtifacts;
+          pname = "gba";
+          cargoExtraArgs = "--package gba";
+
+          postInstall = ''
+            installShellCompletion --cmd gba \
+              --bash <($out/bin/gba completions bash) \
+              --fish <($out/bin/gba completions fish) \
+              --zsh <($out/bin/gba completions zsh)
+          '';
+        });
+
       # Main hooksmith package
       hooksmith = craneLib.buildPackage (commonArgs
         // {
@@ -216,17 +231,19 @@
           # Disable sccache in Nix environment to avoid read-only fs issues
           unset RUSTC_WRAPPER
 
-          echo "🔨 Hooksmith Development Environment"
-          echo "===================================="
+          echo "🔨 Git Blob Analysis Tools Development Environment"
+          echo "=================================================="
           echo ""
           echo "🦀 Fast inner loop (Cargo in Nix shell):"
-          echo "  just build          - Build with Cargo"
+          echo "  just build          - Build GBA meta CLI"
           echo "  just test           - Run tests"
           echo "  just check          - Quick check"
           echo "  just watch          - Watch and rebuild"
+          echo "  just run -- --help  - Show GBA commands"
           echo ""
           echo "📦 Reproducible builds & tasks (Pure Nix):"
-          echo "  nix build           - Build main package"
+          echo "  nix build           - Build GBA meta CLI"
+          echo "  nix run -- --help   - Run GBA with help"
           echo "  nix build .#analysis-tools  - Build analysis tools"
           echo "  nix build .#git-hooks       - Build git hooks"
           echo "  nix build .#dev-tools       - Build dev tools"
@@ -250,14 +267,14 @@
           echo "  Nix:  $(nix --version)"
           echo "  Just: $(just --version)"
           echo ""
-          echo "Ready for development! 🚀"
+          echo "Ready for Git blob analysis! 🚀"
         '';
       };
     in {
       # Multiple packages for different use cases
       packages = {
-        default = hooksmith;
-        inherit hooksmith analysis-tools git-hooks dev-tools;
+        default = gba;
+        inherit gba hooksmith analysis-tools git-hooks dev-tools;
       };
 
       # Development environment
@@ -265,7 +282,8 @@
 
       # CI/CD checks as Nix derivations
       checks = {
-        default = hooksmith;
+        default = gba;
+        gba-build = gba;
         hooksmith-build = hooksmith;
         inherit test-suite lint-checks security-audit license-check;
         docs-build = docs;
@@ -274,8 +292,12 @@
       # Apps for easy nix run usage
       apps = {
         default = flake-utils.lib.mkApp {
-          drv = hooksmith;
-          name = "hooksmith";
+          drv = gba;
+          name = "gba";
+        };
+        gba = flake-utils.lib.mkApp {
+          drv = gba;
+          name = "gba";
         };
         hooksmith = flake-utils.lib.mkApp {
           drv = hooksmith;

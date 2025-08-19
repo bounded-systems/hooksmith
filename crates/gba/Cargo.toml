@@ -1,0 +1,22 @@
+[package]
+name = "gba"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Git Blob Analysis Tools - Meta CLI for repository analysis and hygiene"
+license.workspace = true
+
+# Inherit workspace lints (fail on warnings)
+[lints]
+workspace = true
+
+[dependencies]
+clap.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+
+[[bin]]
+name = "gba"
+path = "src/main.rs"
