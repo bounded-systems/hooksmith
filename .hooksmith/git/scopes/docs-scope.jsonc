@@ -1,0 +1,27 @@
+{
+  "scope_id": "docs-scope",
+  "path": "docs",
+  "object_type": "tree",
+  "object_hash": "sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+  "parent_scope": "main-workspace",
+  "children": ["docs-api-scope", "docs-architecture-scope"],
+  "metadata": {
+    "created": "2024-08-19T17:11:00Z",
+    "created_by": "hooksmith-cli",
+    "description": "Documentation directory scope",
+    "tags": ["docs", "documentation", "markdown"],
+    "expires": null
+  },
+  "validation": {
+    "validated_at": "2024-08-19T17:11:00Z",
+    "validated_by": "hooksmith-validator",
+    "validation_result": "valid",
+    "errors": []
+  },
+  "permissions": {
+    "read": true,
+    "write": true,
+    "execute": false,
+    "owners": ["bobby@example.com"]
+  }
+}

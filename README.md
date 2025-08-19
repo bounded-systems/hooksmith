@@ -267,7 +267,7 @@ cargo run --bin tree_to_repo_extractor <source_path> <target_repo>
   • Total issues: 61
   • Average SHA churn: 37.1%
   • High churn files:
-    - docs/COMPREHENSIVE_FILE_POLICY_REFACTOR.md (100.0% churn)
+    - crates/docs/COMPREHENSIVE_FILE_POLICY_REFACTOR.md (100.0% churn)
 
 📦 Modular Boundary Analysis:
   • crates/xtask: 11 files with stability issues
@@ -618,7 +618,7 @@ graph TD
     A[Original Repository] --> B[Extraction Process]
     B --> C[New Repository]
     B --> D[Cleaned Repository]
-    
+
     subgraph "Extraction Details"
         E[Source Path: scripts]
         F[Target Repo: hooksmith-scripts]
@@ -682,7 +682,7 @@ graph TD
 
 🔒 Contract-Stable Files:
   • components/git-filter/src/lib.rs
-  • docs/docs/DEVELOPMENT.md
+  • crates/docs/docs/DEVELOPMENT.md
   • .gitignore
 
 💡 Recommendations:
@@ -737,7 +737,7 @@ graph TD
   1. Cargo.toml (79 commits, High, 165.9 churn score)
   2. xtask/src/main.rs (92 commits, High, 115.9 churn score)
   3. xtask/Cargo.toml (26 commits, Medium, 60.1 churn score)
-  4. docs/README.md (34 commits, Medium, 58.9 churn score)
+  4. crates/docs/README.md (34 commits, Medium, 58.9 churn score)
 
 💥 Merge Conflict Candidates:
   • Cargo.toml

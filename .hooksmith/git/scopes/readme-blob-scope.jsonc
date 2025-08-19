@@ -1,0 +1,27 @@
+{
+  "scope_id": "readme-blob-scope",
+  "path": "README.md",
+  "object_type": "blob",
+  "object_hash": "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba",
+  "parent_scope": "main-workspace",
+  "children": [],
+  "metadata": {
+    "created": "2024-08-19T17:13:00Z",
+    "created_by": "hooksmith-cli",
+    "description": "README.md file scope",
+    "tags": ["readme", "markdown", "documentation"],
+    "expires": null
+  },
+  "validation": {
+    "validated_at": "2024-08-19T17:13:00Z",
+    "validated_by": "hooksmith-validator",
+    "validation_result": "valid",
+    "errors": []
+  },
+  "permissions": {
+    "read": true,
+    "write": true,
+    "execute": false,
+    "owners": ["bobby@example.com"]
+  }
+}

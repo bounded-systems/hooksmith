@@ -16,6 +16,9 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[package.metadata.component]
+wit = ["wit"]
+
 [dependencies]
 clap.workspace = true
 anyhow.workspace = true

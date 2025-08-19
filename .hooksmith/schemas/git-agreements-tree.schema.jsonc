@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/git-agreements-tree.schema.json",
+  "title": "Hooksmith Git Agreements Directory Schema",
+  "description": "Schema for defining the structure and requirements of the .hooksmith/git/agreements directory",
+  "type": "object",
+  "properties": {
+    "agreements_directory": {
+      "type": "object",
+      "description": "Configuration for the .hooksmith/git/agreements directory",
+      "properties": {
+        "required_files": {
+          "type": "array",
+          "description": "Required agreement files",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "File name"
+              },
+              "description": {
+                "type": "string",
+                "description": "File purpose"
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this file is required",
+                "default": true
+              }
+            },
+            "required": ["name", "description"]
+          },
+          "default": [
+            {
+              "name": "top-level-tree.json",
+              "description": "Top-level tree agreement for repository structure",
+              "required": true
+            },
+            {
+              "name": "root.json",
+              "description": "Root agreement for repository root",
+              "required": true
+            }
+          ]
+        },
+        "file_requirements": {
+          "type": "object",
+          "description": "File requirements for agreements directory",
+          "properties": {
+            "allowed_formats": {
+              "type": "array",
+              "description": "Allowed file formats in agreements",
+              "items": {
+                "type": "string",
+                "enum": ["json", "jsonc"]
+              },
+              "default": ["json", "jsonc"]
+            },
+            "naming_patterns": {
+              "type": "object",
+              "properties": {
+                "agreement_files": {
+                  "type": "string",
+                  "description": "Pattern for agreement files",
+                  "default": "^[a-z][a-z0-9_-]*\\.json$"
+                }
+              }
+            }
+          }
+        },
+        "validation_rules": {
+          "type": "array",
+          "description": "Validation rules for agreements directory",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Rule name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Rule description"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["error", "warning", "info"],
+                "description": "Rule severity"
+              },
+              "check": {
+                "type": "string",
+                "description": "What to check"
+              }
+            },
+            "required": ["name", "description", "severity", "check"]
+          },
+          "default": [
+            {
+              "name": "required_agreements_exist",
+              "description": "All required agreement files must exist",
+              "severity": "error",
+              "check": "file_existence"
+            },
+            {
+              "name": "agreement_schema_validation",
+              "description": "Agreement files must validate against agreement schema",
+              "severity": "error",
+              "check": "schema_validation"
+            },
+            {
+              "name": "agreement_digest_validation",
+              "description": "Agreement digest must match content",
+              "severity": "error",
+              "check": "digest_validation"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": ["agreements_directory"],
+  "additionalProperties": false
+}

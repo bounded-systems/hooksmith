@@ -1,0 +1,17 @@
+[package]
+name = "hooksmith-tools"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+
+[[bin]]
+name = "prepare_root_cleanup"
+path = "prepare_root_cleanup.rs"
+
+[[bin]]
+name = "tree_cleanup"
+path = "tree_cleanup.rs"

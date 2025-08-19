@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/git-contracts-tree.schema.json",
+  "title": "Hooksmith Git Contracts Directory Schema",
+  "description": "Schema for defining the structure and requirements of the .hooksmith/git/contracts directory",
+  "type": "object",
+  "properties": {
+    "contracts_directory": {
+      "type": "object",
+      "description": "Configuration for the .hooksmith/git/contracts directory",
+      "properties": {
+        "required_files": {
+          "type": "array",
+          "description": "Required contract files",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "File name"
+              },
+              "description": {
+                "type": "string",
+                "description": "File purpose"
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this file is required",
+                "default": true
+              }
+            },
+            "required": ["name", "description"]
+          },
+          "default": [
+            {
+              "name": "object-names@root-minimal.json",
+              "description": "Minimal root object names contract",
+              "required": true
+            },
+            {
+              "name": "tree-scoped-gitignore.json",
+              "description": "Tree-scoped gitignore contract",
+              "required": true
+            }
+          ]
+        },
+        "file_requirements": {
+          "type": "object",
+          "description": "File requirements for contracts directory",
+          "properties": {
+            "allowed_formats": {
+              "type": "array",
+              "description": "Allowed file formats in contracts",
+              "items": {
+                "type": "string",
+                "enum": ["json", "jsonc"]
+              },
+              "default": ["json", "jsonc"]
+            },
+            "naming_patterns": {
+              "type": "object",
+              "properties": {
+                "contract_files": {
+                  "type": "string",
+                  "description": "Pattern for contract files",
+                  "default": "^[a-z][a-z0-9_-]*@[a-z0-9_-]*\\.json$"
+                }
+              }
+            }
+          }
+        },
+        "validation_rules": {
+          "type": "array",
+          "description": "Validation rules for contracts directory",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Rule name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Rule description"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["error", "warning", "info"],
+                "description": "Rule severity"
+              },
+              "check": {
+                "type": "string",
+                "description": "What to check"
+              }
+            },
+            "required": ["name", "description", "severity", "check"]
+          },
+          "default": [
+            {
+              "name": "required_contracts_exist",
+              "description": "All required contract files must exist",
+              "severity": "error",
+              "check": "file_existence"
+            },
+            {
+              "name": "contract_schema_validation",
+              "description": "Contract files must validate against contract schema",
+              "severity": "error",
+              "check": "schema_validation"
+            },
+            {
+              "name": "contract_versioning",
+              "description": "Contract files must follow versioning pattern",
+              "severity": "warning",
+              "check": "file_naming"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": ["contracts_directory"],
+  "additionalProperties": false
+}

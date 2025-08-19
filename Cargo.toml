@@ -1,37 +1,25 @@
-[package]
-name = "hooksmith"
-version = "0.1.0"
-edition = "2021"
-authors = ["Pushd Team"]
-description = "CLI tools for Git worktree management and safety"
-license = "MIT"
-build = "build.rs"
-
-# Inherit workspace lints (fail on warnings)
-[lints]
-workspace = true
-
-[features]
+# Workspace configuration only - no package configuration
 
 [workspace]
 members = [
-    ".",
+    "crates/hooksmith-app",
     "crates/components/cli-core",
     "crates/components/worktree-runner",
     "crates/components/git-proxy",
     "crates/xtask",
     "crates/git-agreement",
-    # "scripts/ensure-clean-main",  # Temporarily disabled for Docker build
-                    "crates/tree",
-                "crates/files",
-                "crates/core",
-                "crates/snapshot",
-                "crates/inspector",
-                "crates/hooks",
+    "crates/tree",
+    "crates/files",
+    "crates/core",
+    "crates/snapshot",
+    "crates/inspector",
+    "crates/hooks",
     "crates/standalone-auditor",
     "crates/hooksmith-validate",
-    "tools/migrate-to-monorepo",
-    "tools",
+    "crates/tools/migrate-to-monorepo",
+    "crates/tools",
+    "crates/scripts",
+    "crates/infra",
 ]
 
 [profile.dev]

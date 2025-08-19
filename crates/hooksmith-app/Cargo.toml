@@ -1,0 +1,54 @@
+[package]
+name = "hooksmith"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "CLI tools for Git worktree management and safety"
+license.workspace = true
+build = "build.rs"
+
+# Inherit workspace lints (fail on warnings)
+[lints]
+workspace = true
+
+[features]
+
+[dependencies]
+# CLI framework
+clap.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+console.workspace = true
+indicatif.workspace = true
+
+# File system and paths
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+toml.workspace = true
+
+# Git operations
+git2.workspace = true
+
+# Process and command execution
+which.workspace = true
+
+# Logging
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# Documentation
+rustdoc-stripper.workspace = true
+
+# Internal workspace dependencies
+hooksmith-core = { path = "../core" }
+hooksmith-hooks = { path = "../hooks" }
+hooksmith-xtask = { path = "../xtask" }
+hooksmith-git-agreement = { path = "../git-agreement" }
+hooksmith-tree = { path = "../tree" }
+hooksmith-files = { path = "../files" }
+hooksmith-snapshot = { path = "../snapshot" }
+hooksmith-inspector = { path = "../inspector" }
+hooksmith-standalone-auditor = { path = "../standalone-auditor" }
+hooksmith-hooksmith-validate = { path = "../hooksmith-validate" }
+hooksmith-tools = { path = "../tools" }
