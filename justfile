@@ -5,7 +5,7 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 # If not in a dev shell, re-enter via `nix develop` and re-run the target
 _enter_dev := '''
 if [[ -z "${IN_NIX_SHELL:-}" ]]; then
-  echo "↪ entering nix develop for {{invocation_directory}}..." >&2
+  echo "↪ entering nix develop..." >&2
   exec nix develop -c just "$@"
 fi
 '''
@@ -70,7 +70,7 @@ build +ARGS="":
 test +ARGS="":
     {{_enter_dev}}
     cargo test {{ARGS}}
-    
+
 # Quick check without building binaries
 check:
     {{_enter_dev}}
@@ -97,17 +97,80 @@ run *ARGS:
     cargo run -- {{ARGS}}
 
 # -------- Reproducible artifacts (Nix) --------
-# Build reproducible packages with Nix
+# Build main hooksmith package with Nix
 nix-build:
-    nix build .#default
+    nix build .#hooksmith
+
+# Build analysis tools with Nix
+nix-build-analysis:
+    nix build .#analysis-tools
+
+# Build git hooks with Nix
+nix-build-hooks:
+    nix build .#git-hooks
+
+# Build development tools with Nix
+nix-build-dev:
+    nix build .#dev-tools
+
+# Build all packages with Nix
+nix-build-all:
+    nix build .#hooksmith .#analysis-tools .#git-hooks .#dev-tools
 
 # Run the default package with Nix
 nix-run *ARGS:
-    nix run .#default -- {{ARGS}}
+    nix run .#hooksmith -- {{ARGS}}
+
+# Run analysis tools via Nix
+nix-analyze-size:
+    nix build .#analysis-tools && ./result/bin/repository_size_auditor
+
+nix-analyze-blobs:
+    nix build .#analysis-tools && ./result/bin/rust_blob_analyzer
+
+nix-analyze-delta:
+    nix build .#analysis-tools && ./result/bin/git_delta_analyzer
+
+nix-analyze-churn:
+    nix build .#analysis-tools && ./result/bin/file_churn_analyzer "6 months ago"
+
+# Run all analysis tools via Nix
+nix-analyze-all: nix-analyze-size nix-analyze-blobs nix-analyze-delta nix-analyze-churn
+    @echo "✅ All Nix-based analysis tools completed!"
+
+# Pure Nix testing and quality checks
+nix-test:
+    nix build .#test-suite
+
+nix-lint:
+    nix build .#lint-checks
+
+nix-docs:
+    nix build .#docs
+
+# Pure Nix security and compliance
+nix-security-audit:
+    nix build .#security-audit
+
+nix-license-check:
+    nix build .#license-check
+
+# Complete Nix-based quality pipeline
+nix-quality-pipeline:
+    @echo "🧪 Running complete Nix-based quality pipeline..."
+    nix build .#test-suite .#lint-checks .#docs .#security-audit .#license-check
+    @echo "✅ All quality checks passed!"
 
 # CI-preflight: do what CI will do
 ci:
     nix flake check
+
+# CI-full: comprehensive CI checks
+ci-full:
+    @echo "🔄 Running comprehensive CI checks..."
+    nix flake check
+    just nix-quality-pipeline
+    @echo "✅ All CI checks completed!"
 
 # -------- Build system integration --------
 # Build via xtask
