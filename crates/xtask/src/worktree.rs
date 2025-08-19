@@ -1008,7 +1008,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
         base_dir: Option<&str>,
         switch: bool,
     ) -> Result<String> {
-        let base_path = base_dir.unwrap_or(".wt/");
+        let base_path = base_dir.unwrap_or("worktrees/");
         // Ensure proper path joining with path separator
         let worktree_path = if base_path.ends_with('/') || base_path.ends_with('\\') {
             format!("{}{}", base_path, branch)

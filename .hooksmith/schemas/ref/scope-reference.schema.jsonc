@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/scope-reference.schema.json",
+  "title": "Scope Reference Schema",
+  "description": "Schema for scope references that have a path and pin to a tree or blob",
+  "type": "object",
+  "definitions": {
+    "scope-path": {
+      "type": "string",
+      "description": "Path within the scope (relative to scope root)",
+      "pattern": "^[^/].*$",
+      "minLength": 1
+    },
+    "object-hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "SHA-256 hash of the referenced object"
+    },
+    "object-type": {
+      "type": "string",
+      "enum": ["tree", "blob", "commit", "tag"],
+      "description": "Type of Git object being referenced"
+    },
+    "scope-metadata": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this scope reference was created"
+        },
+        "created_by": {
+          "type": "string",
+          "description": "User or tool that created this reference"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of this scope"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags for categorizing this scope"
+        },
+        "expires": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this scope reference expires (optional)"
+        }
+      },
+      "required": ["created", "created_by"]
+    },
+    "validation-info": {
+      "type": "object",
+      "properties": {
+        "validated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this reference was last validated"
+        },
+        "validated_by": {
+          "type": "string",
+          "description": "Tool that performed validation"
+        },
+        "validation_result": {
+          "type": "string",
+          "enum": ["valid", "invalid", "pending", "expired"],
+          "description": "Result of validation"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Validation errors found"
+        }
+      },
+      "required": ["validated_at", "validated_by", "validation_result"]
+    }
+  },
+  "properties": {
+    "scope_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+      "description": "Unique identifier for this scope"
+    },
+    "path": {
+      "$ref": "#/definitions/scope-path"
+    },
+    "object_type": {
+      "$ref": "#/definitions/object-type"
+    },
+    "object_hash": {
+      "$ref": "#/definitions/object-hash"
+    },
+    "parent_scope": {
+      "type": "string",
+      "description": "Parent scope identifier (for nested scopes)"
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Child scope identifiers"
+    },
+    "metadata": {
+      "$ref": "#/definitions/scope-metadata"
+    },
+    "validation": {
+      "$ref": "#/definitions/validation-info"
+    },
+    "permissions": {
+      "type": "object",
+      "properties": {
+        "read": {
+          "type": "boolean",
+          "description": "Whether this scope can be read"
+        },
+        "write": {
+          "type": "boolean",
+          "description": "Whether this scope can be written to"
+        },
+        "execute": {
+          "type": "boolean",
+          "description": "Whether this scope can be executed"
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Users who own this scope"
+        }
+      },
+      "required": ["read", "write", "execute"]
+    }
+  },
+  "required": ["scope_id", "path", "object_type", "object_hash", "metadata", "validation", "permissions"],
+  "additionalProperties": false
+}

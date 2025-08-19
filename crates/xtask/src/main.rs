@@ -10551,7 +10551,7 @@ Thumbs.db
 ############################
 # Git worktree helpers
 ############################
-/.wt/
+/worktrees/
 /worktree-*/
 
 ############################
@@ -10639,7 +10639,7 @@ fn generate_canonical_gitignore() -> Result<String> {
         // Timestamped/temporary blobs
         ("2025", "2025*"),
         // Git worktree helpers
-        (".wt", "/.wt/"),
+        ("worktrees", "/worktrees/"),
         ("worktree-", "worktree-*/"),
         // Rust binary files
         ("build_xtask", "build_xtask*"),

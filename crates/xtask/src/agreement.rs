@@ -2208,7 +2208,7 @@ fn create_worktree_for_branch(branch_name: &str, worktree_dir: &str) -> Result<(
     }
 
     // Create the worktree
-    let worktree_path = format!(".wt/{}", worktree_dir);
+    let worktree_path = format!("worktrees/{}", worktree_dir);
     let worktree_output = std::process::Command::new("git")
         .args(["worktree", "add", &worktree_path, branch_name])
         .output()

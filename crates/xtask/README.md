@@ -90,7 +90,7 @@ Options:
    ```bash
    # Install Lefthook (optional but recommended)
    npm install -g @evilmartians/lefthook
-   
+
    # Or using Homebrew on macOS
    brew install lefthook
    ```
@@ -104,7 +104,7 @@ Options:
    ```bash
    # Generate all code and documentation
    ./xtask.sh gen-all --overwrite
-   
+
    # Or use the build script
    ./build.sh
    ```
@@ -170,8 +170,8 @@ hooksmith/
 │   ├── cli-core/            # Core CLI functionality
 │   └── worktree-runner/     # Worktree management WASM component
 ├── wit/                     # WIT interface definitions (auto-generated)
-├── hooks/                   # Hook scripts directory
-├── tests/                   # Test files
+├── .git/hooks/             # Git hooks (automatically installed)
+├── crates/tests/            # Test files
 └── target/doc/              # Generated documentation
 ```
 

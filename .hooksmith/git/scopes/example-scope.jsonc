@@ -1,0 +1,27 @@
+{
+  "scope_id": "main-workspace",
+  "path": ".",
+  "object_type": "tree",
+  "object_hash": "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+  "parent_scope": null,
+  "children": ["docs-scope", "src-scope", "config-scope"],
+  "metadata": {
+    "created": "2024-08-19T17:10:00Z",
+    "created_by": "hooksmith-cli",
+    "description": "Main workspace scope for the Hooksmith project",
+    "tags": ["workspace", "root", "main"],
+    "expires": null
+  },
+  "validation": {
+    "validated_at": "2024-08-19T17:10:00Z",
+    "validated_by": "hooksmith-validator",
+    "validation_result": "valid",
+    "errors": []
+  },
+  "permissions": {
+    "read": true,
+    "write": true,
+    "execute": false,
+    "owners": ["bobby@example.com"]
+  }
+}

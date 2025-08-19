@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hooksmith.dev/schemas/git-scopes-tree.schema.json",
+  "title": "Hooksmith Git Scopes Directory Schema",
+  "description": "Schema for defining the structure and requirements of the .hooksmith/git/scopes directory",
+  "type": "object",
+  "properties": {
+    "scopes_directory": {
+      "type": "object",
+      "description": "Configuration for the .hooksmith/git/scopes directory",
+      "properties": {
+        "required_files": {
+          "type": "array",
+          "description": "Required scope files",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "File name"
+              },
+              "description": {
+                "type": "string",
+                "description": "File purpose"
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether this file is required",
+                "default": true
+              }
+            },
+            "required": ["name", "description"]
+          },
+          "default": [
+            {
+              "name": "example-scope.jsonc",
+              "description": "Example scope reference file",
+              "required": false
+            }
+          ]
+        },
+        "file_requirements": {
+          "type": "object",
+          "description": "File requirements for scopes directory",
+          "properties": {
+            "allowed_formats": {
+              "type": "array",
+              "description": "Allowed file formats in scopes",
+              "items": {
+                "type": "string",
+                "enum": ["json", "jsonc"]
+              },
+              "default": ["json", "jsonc"]
+            },
+            "naming_patterns": {
+              "type": "object",
+              "properties": {
+                "scope_files": {
+                  "type": "string",
+                  "description": "Pattern for scope files",
+                  "default": "^[a-z][a-z0-9_-]*(-scope)?\\.jsonc$"
+                }
+              }
+            }
+          }
+        },
+        "validation_rules": {
+          "type": "array",
+          "description": "Validation rules for scopes directory",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Rule name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Rule description"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["error", "warning", "info"],
+                "description": "Rule severity"
+              },
+              "check": {
+                "type": "string",
+                "description": "What to check"
+              }
+            },
+            "required": ["name", "description", "severity", "check"]
+          },
+          "default": [
+            {
+              "name": "scope_schema_validation",
+              "description": "Scope files must validate against scope-reference schema",
+              "severity": "error",
+              "check": "schema_validation"
+            },
+            {
+              "name": "scope_id_uniqueness",
+              "description": "Scope IDs must be unique across all scope files",
+              "severity": "error",
+              "check": "id_uniqueness"
+            },
+            {
+              "name": "scope_path_validation",
+              "description": "Scope paths must be valid relative paths",
+              "severity": "error",
+              "check": "path_validation"
+            },
+            {
+              "name": "scope_hash_validation",
+              "description": "Scope object hashes must be valid SHA-256 hashes",
+              "severity": "error",
+              "check": "hash_validation"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": ["scopes_directory"],
+  "additionalProperties": false
+}

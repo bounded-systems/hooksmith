@@ -1,0 +1,27 @@
+{
+  "scope_id": "config-scope",
+  "path": "config",
+  "object_type": "tree",
+  "object_hash": "sha256:fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321",
+  "parent_scope": "main-workspace",
+  "children": [],
+  "metadata": {
+    "created": "2024-08-19T17:12:00Z",
+    "created_by": "hooksmith-cli",
+    "description": "Configuration directory scope",
+    "tags": ["config", "configuration", "jsonc"],
+    "expires": null
+  },
+  "validation": {
+    "validated_at": "2024-08-19T17:12:00Z",
+    "validated_by": "hooksmith-validator",
+    "validation_result": "valid",
+    "errors": []
+  },
+  "permissions": {
+    "read": true,
+    "write": true,
+    "execute": false,
+    "owners": ["bobby@example.com"]
+  }
+}
