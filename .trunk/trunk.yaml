@@ -23,35 +23,32 @@ plugins:
       uri: https://github.com/trunk-io/plugins
 
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
-# Optimized for this repository's file types: Rust (.rs), Markdown (.md), JSON/JSONC (.json/.jsonc), TOML (.toml), YAML (.yml/.yaml)
+# Optimized for Hooksmith file-based triggering - only the file types we actually have
 lint:
   enabled:
-    # Rust files (755 files)
+    # Rust files (.rs) - 755 files
     - clippy@1.65.0
     - rustfmt@1.65.0
 
-    # Markdown files (270 files)
+    # Markdown files (.md) - 270 files
     - markdownlint@0.45.0
 
-    # JSON/JSONC files (1,364 files total)
+    # JSON/JSONC files (.json/.jsonc) - 1,364 files total
     - prettier@3.6.2 # Handles JSON formatting
 
-    # TOML files (42 files)
-    - taplo@0.9.3 # TOML linter and formatter
-
-    # YAML files (33 files)
+    # YAML files (.yml) - 33 files
     - yamllint@1.35.1 # YAML linter
 
-    # Git hygiene
+    # Git hygiene (for all file types)
     - git-diff-check
 
-    # Security scanning
+    # Security scanning (for all file types)
     - trufflehog@3.90.2
 
+# Disable actions that might interfere with Hooksmith's file-based triggering
 actions:
   disabled:
     - trunk-announce
     - trunk-check-pre-push
     - trunk-fmt-pre-commit
-  enabled:
     - trunk-upgrade-available

@@ -182,3 +182,4 @@ Flags always win over env.
 - Mermaid graphs for stability trees
 - Git notes for inline findings
 - Auto-apply: optional "fix-it" mode for hygiene
+# Test commit

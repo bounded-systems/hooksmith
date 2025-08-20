@@ -4,7 +4,27 @@
   "concerns": [
     "tree-file",
     "tree-executable",
-    "tree-directory"
+    "tree-directory",
+    "file-validation"
   ],
-  "bin": "hooksmith-validate-tree"
+  "bin": "hooksmith-validate-tree",
+  "file_types": [
+    ".md",
+    ".json", 
+    ".jsonc",
+    ".yml",
+    ".rs"
+  ],
+  "validation": {
+    "trunk": {
+      "enabled": true,
+      "file_patterns": [
+        "**/*.md",
+        "**/*.json",
+        "**/*.jsonc", 
+        "**/*.yml",
+        "**/*.rs"
+      ]
+    }
+  }
 }
