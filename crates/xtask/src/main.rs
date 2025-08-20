@@ -21,6 +21,7 @@ use hook_state_machine::{HookContext, HookManager, HookType};
 use workflow::{run_dev_workflow, run_macos_optimize, run_optimize, run_security_check};
 use worktree::run_worktree_command;
 use worktree_sync::run_worktree_sync_command;
+use path_mapping::run_path_mapping_command;
 
 /// CLI argument enum for hook types
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -642,6 +643,94 @@ enum WorktreeCommands {
         #[arg(long)]
         no_open: bool,
     },
+    /// Path mapping commands for Git notes-based OID-to-path mappings
+    PathMapping {
+        #[command(subcommand)]
+        command: PathMappingCommands,
+    },
+}
+
+/// Path mapping commands for Git notes-based OID-to-path mappings
+#[derive(Debug, Clone, clap::Subcommand)]
+enum PathMappingCommands {
+    /// Build a path map for a specific commit
+    Build {
+        /// Commit to build path map for (default: HEAD)
+        #[arg(long, default_value = "HEAD")]
+        commit: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+        /// Output file for the path map (optional)
+        #[arg(long)]
+        output: Option<String>,
+    },
+    /// Attach a path map as a Git note to a commit
+    Attach {
+        /// Commit to attach the note to
+        #[arg(long)]
+        commit: String,
+        /// Input file containing the path map (TSV format)
+        #[arg(long)]
+        input: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+    },
+    /// Retrieve a path map from a Git note
+    Get {
+        /// Commit to get the note from
+        #[arg(long)]
+        commit: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+        /// Output file for the path map (optional)
+        #[arg(long)]
+        output: Option<String>,
+    },
+    /// Create a bundle with commit and path mapping notes
+    Bundle {
+        /// Commit to bundle
+        #[arg(long)]
+        commit: String,
+        /// Bundle output directory
+        #[arg(long, default_value = "artifacts")]
+        bundle_dir: String,
+        /// Bundle filename
+        #[arg(long)]
+        bundle_name: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+    },
+    /// Clone a bundle and extract the path mapping
+    Extract {
+        /// Bundle file path
+        #[arg(long)]
+        bundle_path: String,
+        /// Directory to clone the bundle to
+        #[arg(long)]
+        clone_dir: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+        /// Output file for the extracted path map (optional)
+        #[arg(long)]
+        output: Option<String>,
+    },
+    /// Validate a path map against the current repository state
+    Validate {
+        /// Commit to validate against
+        #[arg(long)]
+        commit: String,
+        /// Input file containing the path map to validate
+        #[arg(long)]
+        input: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+    },
 }
 
 /// Git configuration management commands
@@ -828,6 +917,7 @@ mod workflow_contracts;
 mod worktree;
 mod worktree_contract;
 mod worktree_sync;
+mod path_mapping;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -1664,6 +1754,11 @@ enum Commands {
     Worktree {
         #[command(subcommand)]
         command: WorktreeCommands,
+    },
+    /// Path mapping commands for Git notes-based OID-to-path mappings
+    PathMapping {
+        #[command(subcommand)]
+        command: PathMappingCommands,
     },
     /// Git configuration management and conversion
     GitConfig {
@@ -2590,6 +2685,9 @@ async fn main() -> Result<()> {
         }
         Commands::Worktree { command } => {
             run_worktree_command(command).await?;
+        }
+        Commands::PathMapping { command } => {
+            run_path_mapping_command(command).await?;
         }
         Commands::Sbom { args } => {
             sbom::handle_sbom_command(&args).await?;

@@ -2103,6 +2103,10 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
 
             switch_next_worktree(&branch, &base_dir)?;
         }
+        WorktreeCommands::PathMapping { command } => {
+            // Delegate to the path mapping module
+            crate::path_mapping::run_path_mapping_command(command).await?;
+        }
     }
 
     Ok(())
