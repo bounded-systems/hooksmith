@@ -18,10 +18,10 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use hook_state_machine::{HookContext, HookManager, HookType};
+use path_mapping::run_path_mapping_command;
 use workflow::{run_dev_workflow, run_macos_optimize, run_optimize, run_security_check};
 use worktree::run_worktree_command;
 use worktree_sync::run_worktree_sync_command;
-use path_mapping::run_path_mapping_command;
 
 /// CLI argument enum for hook types
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -901,6 +901,7 @@ mod hierarchical_validation;
 mod hook_runner;
 mod hook_state_machine;
 mod jsonc;
+mod path_mapping;
 mod registry;
 mod repo_structure_validator;
 mod sarif_integration;
@@ -917,7 +918,6 @@ mod workflow_contracts;
 mod worktree;
 mod worktree_contract;
 mod worktree_sync;
-mod path_mapping;
 
 /// Xtask CLI for Hooksmith project tasks
 #[derive(Parser)]
@@ -5792,7 +5792,7 @@ async fn build_xtask_binary() -> Result<()> {
 
 /// Enhanced clean generated files with JSONC parsing
 async fn clean_generated_files_enhanced(verbose: bool) -> Result<()> {
-            let registry_path = Path::new("crates/xtask/src/config/generated-files.jsonc");
+    let registry_path = Path::new("crates/xtask/src/config/generated-files.jsonc");
 
     if !registry_path.exists() {
         if verbose {
@@ -9015,9 +9015,7 @@ async fn run_dashboard_command(
                 let validation_success_event = event_bus::HooksmithEvent::new(
                     "dashboard".to_string(),
                     "validation_passed".to_string(),
-                    serde_json::json!({
-                        "timestamp": chrono::Utc::now()
-                    }),
+                    serde_json::json!({ "timestamp": chrono::Utc::now() }),
                 );
                 let _ = event_bus::emit_event(validation_success_event);
             }
@@ -9027,9 +9025,7 @@ async fn run_dashboard_command(
                 let auto_push_event = event_bus::HooksmithEvent::new(
                     "dashboard".to_string(),
                     "auto_push_started".to_string(),
-                    serde_json::json!({
-                        "timestamp": chrono::Utc::now()
-                    }),
+                    serde_json::json!({ "timestamp": chrono::Utc::now() }),
                 );
                 let _ = event_bus::emit_event(auto_push_event);
 
@@ -9052,9 +9048,7 @@ async fn run_dashboard_command(
                     let auto_push_success_event = event_bus::HooksmithEvent::new(
                         "dashboard".to_string(),
                         "auto_push_succeeded".to_string(),
-                        serde_json::json!({
-                            "timestamp": chrono::Utc::now()
-                        }),
+                        serde_json::json!({ "timestamp": chrono::Utc::now() }),
                     );
                     let _ = event_bus::emit_event(auto_push_success_event);
                 }
@@ -9551,10 +9545,7 @@ async fn allow_manual_file(path: String, verbose: bool) -> Result<()> {
     // Check if file is already in the list
     if manual_files.iter().any(|f| f.as_str() == Some(&path)) {
         if verbose {
-            println!(
-                "ℹ️  File '{}' is already in the manual files registry",
-                path
-            );
+            println!("ℹ️  File '{}' is already in the manual files registry", path);
         }
         return Ok(());
     }

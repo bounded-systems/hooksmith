@@ -317,8 +317,8 @@ impl WorktreeContract {
         let current_path = String::from_utf8(current_dir.stdout)?.trim().to_string();
 
         // Check if we're in a worktree
-if !current_path.contains("/worktrees/") {
-    return Err(anyhow::anyhow!("❌ Not inside a worktree"));
+        if !current_path.contains("/worktrees/") {
+            return Err(anyhow::anyhow!("❌ Not inside a worktree"));
         }
 
         let current_branch = Command::new("git")
