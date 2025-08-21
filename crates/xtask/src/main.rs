@@ -18,6 +18,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use hook_state_machine::{HookContext, HookManager, HookType};
+use path_mapping::run_path_mapping_command;
 use workflow::{run_dev_workflow, run_macos_optimize, run_optimize, run_security_check};
 use worktree::run_worktree_command;
 use worktree_sync::run_worktree_sync_command;
@@ -642,6 +643,94 @@ enum WorktreeCommands {
         #[arg(long)]
         no_open: bool,
     },
+    /// Path mapping commands for Git notes-based OID-to-path mappings
+    PathMapping {
+        #[command(subcommand)]
+        command: PathMappingCommands,
+    },
+}
+
+/// Path mapping commands for Git notes-based OID-to-path mappings
+#[derive(Debug, Clone, clap::Subcommand)]
+enum PathMappingCommands {
+    /// Build a path map for a specific commit
+    Build {
+        /// Commit to build path map for (default: HEAD)
+        #[arg(long, default_value = "HEAD")]
+        commit: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+        /// Output file for the path map (optional)
+        #[arg(long)]
+        output: Option<String>,
+    },
+    /// Attach a path map as a Git note to a commit
+    Attach {
+        /// Commit to attach the note to
+        #[arg(long)]
+        commit: String,
+        /// Input file containing the path map (TSV format)
+        #[arg(long)]
+        input: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+    },
+    /// Retrieve a path map from a Git note
+    Get {
+        /// Commit to get the note from
+        #[arg(long)]
+        commit: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+        /// Output file for the path map (optional)
+        #[arg(long)]
+        output: Option<String>,
+    },
+    /// Create a bundle with commit and path mapping notes
+    Bundle {
+        /// Commit to bundle
+        #[arg(long)]
+        commit: String,
+        /// Bundle output directory
+        #[arg(long, default_value = "artifacts")]
+        bundle_dir: String,
+        /// Bundle filename
+        #[arg(long)]
+        bundle_name: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+    },
+    /// Clone a bundle and extract the path mapping
+    Extract {
+        /// Bundle file path
+        #[arg(long)]
+        bundle_path: String,
+        /// Directory to clone the bundle to
+        #[arg(long)]
+        clone_dir: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+        /// Output file for the extracted path map (optional)
+        #[arg(long)]
+        output: Option<String>,
+    },
+    /// Validate a path map against the current repository state
+    Validate {
+        /// Commit to validate against
+        #[arg(long)]
+        commit: String,
+        /// Input file containing the path map to validate
+        #[arg(long)]
+        input: String,
+        /// Notes reference to use
+        #[arg(long, default_value = "refs/notes/hooksmith-paths")]
+        notes_ref: String,
+    },
 }
 
 /// Git configuration management commands
@@ -812,6 +901,7 @@ mod hierarchical_validation;
 mod hook_runner;
 mod hook_state_machine;
 mod jsonc;
+mod path_mapping;
 mod registry;
 mod repo_structure_validator;
 mod sarif_integration;
@@ -1664,6 +1754,11 @@ enum Commands {
     Worktree {
         #[command(subcommand)]
         command: WorktreeCommands,
+    },
+    /// Path mapping commands for Git notes-based OID-to-path mappings
+    PathMapping {
+        #[command(subcommand)]
+        command: PathMappingCommands,
     },
     /// Git configuration management and conversion
     GitConfig {
@@ -2590,6 +2685,9 @@ async fn main() -> Result<()> {
         }
         Commands::Worktree { command } => {
             run_worktree_command(command).await?;
+        }
+        Commands::PathMapping { command } => {
+            run_path_mapping_command(command).await?;
         }
         Commands::Sbom { args } => {
             sbom::handle_sbom_command(&args).await?;
@@ -5694,7 +5792,7 @@ async fn build_xtask_binary() -> Result<()> {
 
 /// Enhanced clean generated files with JSONC parsing
 async fn clean_generated_files_enhanced(verbose: bool) -> Result<()> {
-            let registry_path = Path::new("crates/xtask/src/config/generated-files.jsonc");
+    let registry_path = Path::new("crates/xtask/src/config/generated-files.jsonc");
 
     if !registry_path.exists() {
         if verbose {
@@ -8917,9 +9015,7 @@ async fn run_dashboard_command(
                 let validation_success_event = event_bus::HooksmithEvent::new(
                     "dashboard".to_string(),
                     "validation_passed".to_string(),
-                    serde_json::json!({
-                        "timestamp": chrono::Utc::now()
-                    }),
+                    serde_json::json!({ "timestamp": chrono::Utc::now() }),
                 );
                 let _ = event_bus::emit_event(validation_success_event);
             }
@@ -8929,9 +9025,7 @@ async fn run_dashboard_command(
                 let auto_push_event = event_bus::HooksmithEvent::new(
                     "dashboard".to_string(),
                     "auto_push_started".to_string(),
-                    serde_json::json!({
-                        "timestamp": chrono::Utc::now()
-                    }),
+                    serde_json::json!({ "timestamp": chrono::Utc::now() }),
                 );
                 let _ = event_bus::emit_event(auto_push_event);
 
@@ -8954,9 +9048,7 @@ async fn run_dashboard_command(
                     let auto_push_success_event = event_bus::HooksmithEvent::new(
                         "dashboard".to_string(),
                         "auto_push_succeeded".to_string(),
-                        serde_json::json!({
-                            "timestamp": chrono::Utc::now()
-                        }),
+                        serde_json::json!({ "timestamp": chrono::Utc::now() }),
                     );
                     let _ = event_bus::emit_event(auto_push_success_event);
                 }
@@ -9453,10 +9545,7 @@ async fn allow_manual_file(path: String, verbose: bool) -> Result<()> {
     // Check if file is already in the list
     if manual_files.iter().any(|f| f.as_str() == Some(&path)) {
         if verbose {
-            println!(
-                "ℹ️  File '{}' is already in the manual files registry",
-                path
-            );
+            println!("ℹ️  File '{}' is already in the manual files registry", path);
         }
         return Ok(());
     }

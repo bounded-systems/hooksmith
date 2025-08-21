@@ -48,7 +48,9 @@ impl FilePolicy {
     pub fn load() -> Result<Self> {
         let config_path = Path::new(".hooksmith/git/contracts/file-policy.jsonc");
         if !config_path.exists() {
-            bail!("File policy configuration not found: .hooksmith/git/contracts/file-policy.jsonc");
+            bail!(
+                "File policy configuration not found: .hooksmith/git/contracts/file-policy.jsonc"
+            );
         }
 
         let content =
