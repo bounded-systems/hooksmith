@@ -89,7 +89,7 @@ tracing-subscriber = "0.3"
 rustdoc-stripper = "0.1"
 
 # WASM and WIT support
-wasmtime = "18.0"
+wasmtime = "24.0"
 wit-bindgen = "0.20"
 wasmtime-wasi = "18.0"
 wit-parser = "0.12"
