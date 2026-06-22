@@ -30,13 +30,13 @@ jobs:
 
       - name: Build contract validation tools
         run: |
-          cd scripts
+          cd crates/scripts
           cargo build --release
 
       - name: Detect validation scopes
         id: scope-detection
         run: |
-          cd scripts
+          cd crates/scripts
           # Run scope detection and output JSON array
           ./target/release/contract_validation_pipeline --detect-scopes origin/main HEAD > scopes.json
           echo "scopes=$(cat scopes.json)" >> $GITHUB_OUTPUT
@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: validation-scopes
-          path: scripts/scopes.json
+          path: crates/scripts/scopes.json
 
   validate-contracts:
     needs: detect-scopes
@@ -69,26 +69,26 @@ jobs:
 
       - name: Build contract validation tools
         run: |
-          cd scripts
+          cd crates/scripts
           cargo build --release
 
       - name: Validate contracts for scope
         run: |
-          cd scripts
+          cd crates/scripts
           ./target/release/contract_validation_pipeline origin/main HEAD --scope "${{ matrix.scope }}" --sarif "${{ matrix.scope }}-results.sarif"
 
       - name: Upload SARIF results
         uses: github/codeql-action/upload-sarif@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3
         with:
-          sarif_file: scripts/${{ matrix.scope }}-results.sarif
+          sarif_file: crates/scripts/${{ matrix.scope }}-results.sarif
 
       - name: Upload validation artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: validation-results-${{ matrix.scope }}
           path: |
-            scripts/${{ matrix.scope }}-results.sarif
-            scripts/.contract_cache/
+            crates/scripts/${{ matrix.scope }}-results.sarif
+            crates/scripts/.contract_cache/
 
   generate-report:
     needs: [detect-scopes, validate-contracts]

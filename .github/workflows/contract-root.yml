@@ -25,7 +25,7 @@ jobs:
 
       - name: Build four-actor pipeline
         run: |
-          cd scripts
+          cd crates/scripts
           cargo build --release --bin four_actor_pipeline
 
       - name: Create output directory
@@ -34,7 +34,7 @@ jobs:
       - name: Run researcher → reporter → mandator → auditor
         run: |
           T="${{ steps.tree.outputs.tree }}"
-          cd scripts
+          cd crates/scripts
           
           # Run the four-actor pipeline
           ./target/release/four_actor_pipeline \

@@ -20,12 +20,12 @@ jobs:
 
       - name: Build dircheck tool
         run: |
-          cd scripts
+          cd crates/scripts
           cargo build --release --bin dircheck
 
       - name: Validate tree-only agreement
         run: |
-          cd scripts
+          cd crates/scripts
           ./target/release/dircheck \
             --agreement ../agreement.json \
             --ref ${{ github.sha }} \

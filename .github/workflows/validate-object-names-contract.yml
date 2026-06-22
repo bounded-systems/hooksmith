@@ -34,7 +34,7 @@ jobs:
 
       - name: Validate object-names contract
         run: |
-          cd scripts
+          cd crates/scripts
           cargo run --bin validate_object_names_contract
 
       - name: Report validation results
