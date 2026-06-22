@@ -17,12 +17,12 @@ jobs:
       scopes: ${{ steps.scope-detection.outputs.scopes }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
 
       - name: Fetch base branch
         run: |
@@ -42,7 +42,7 @@ jobs:
           echo "scopes=$(cat scopes.json)" >> $GITHUB_OUTPUT
 
       - name: Upload scopes artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: validation-scopes
           path: scripts/scopes.json
@@ -56,12 +56,12 @@ jobs:
         scope: ${{ fromJson(needs.detect-scopes.outputs.scopes) }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
 
       - name: Fetch base branch
         run: |
@@ -78,12 +78,12 @@ jobs:
           ./target/release/contract_validation_pipeline origin/main HEAD --scope "${{ matrix.scope }}" --sarif "${{ matrix.scope }}-results.sarif"
 
       - name: Upload SARIF results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3
         with:
           sarif_file: scripts/${{ matrix.scope }}-results.sarif
 
       - name: Upload validation artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: validation-results-${{ matrix.scope }}
           path: |
@@ -96,10 +96,10 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Download validation artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: validation-results-*
 
@@ -134,7 +134,7 @@ jobs:
           echo "- **Total execution time**: See individual job logs" >> $GITHUB_STEP_SUMMARY
 
       - name: Comment on PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             const { data: comments } = await github.rest.issues.listComments({

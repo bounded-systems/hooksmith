@@ -18,15 +18,15 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Setup Cachix
-        uses: cachix/cachix-action@v15
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: hooksmith
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
@@ -56,10 +56,10 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         
       - name: Test DevContainer build
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3
         with:
           imageName: hooksmith-devcontainer
           runCmd: |
@@ -72,15 +72,15 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Setup Cachix
-        uses: cachix/cachix-action@v15
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: hooksmith
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
@@ -108,15 +108,15 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Setup Cachix
-        uses: cachix/cachix-action@v15
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: hooksmith
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
@@ -135,15 +135,15 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Setup Cachix
-        uses: cachix/cachix-action@v15
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: hooksmith
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
@@ -168,15 +168,15 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Setup Cachix
-        uses: cachix/cachix-action@v15
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: hooksmith
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
@@ -266,7 +266,7 @@ jobs:
           fi
           
       - name: Upload security reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: security-reports
@@ -307,15 +307,15 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Setup Cachix
-        uses: cachix/cachix-action@v15
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: hooksmith
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
