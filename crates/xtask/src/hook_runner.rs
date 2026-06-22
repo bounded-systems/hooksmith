@@ -367,7 +367,7 @@ impl HookRunner {
 
     /// Print final summary
     fn print_final_summary(&self, results: &[HookResult], total_duration: Duration) {
-        let passed = results
+        let _passed = results
             .iter()
             .filter(|r| r.status == HookStatus::Passed)
             .count();

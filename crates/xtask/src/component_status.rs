@@ -13,7 +13,7 @@ use anyhow::{Context, Result};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use tracing::{debug, error, info, warn};
+use tracing::{info, warn};
 
 /// Component registry structure
 #[derive(Debug, Deserialize)]

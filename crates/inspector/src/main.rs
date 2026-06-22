@@ -1,10 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use hooksmith_core::git_inspector::{
-    format_inspection_report_markdown, GitInspectionReport, GitInspector,
-};
+use hooksmith_core::git_inspector::{format_inspection_report_markdown, GitInspector};
 use std::fs;
-use std::path::Path;
 
 #[derive(Parser)]
 #[command(name = "git-inspector")]

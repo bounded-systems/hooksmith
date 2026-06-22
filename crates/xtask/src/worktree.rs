@@ -402,7 +402,7 @@ impl WorktreeManager {
         // Load metadata.json if it exists
         let metadata_file = metadata_dir.join("metadata.json");
         if metadata_file.exists() {
-            let content = fs::read_to_string(&metadata_file).await?;
+            let _content = fs::read_to_string(&metadata_file).await?;
             // Parse metadata (could be used for enhanced worktree info)
             println!("{}", style("  - Loaded worktree metadata").dim());
         }
@@ -410,7 +410,7 @@ impl WorktreeManager {
         // Load labels.toml if it exists
         let labels_file = metadata_dir.join("labels.toml");
         if labels_file.exists() {
-            let content = fs::read_to_string(&labels_file).await?;
+            let _content = fs::read_to_string(&labels_file).await?;
             // Parse labels configuration
             println!("{}", style("  - Loaded semantic labels").dim());
         }
@@ -418,7 +418,7 @@ impl WorktreeManager {
         // Load status.json if it exists
         let status_file = metadata_dir.join("status.json");
         if status_file.exists() {
-            let content = fs::read_to_string(&status_file).await?;
+            let _content = fs::read_to_string(&status_file).await?;
             // Parse status information
             println!("{}", style("  - Loaded worktree status").dim());
         }
@@ -830,7 +830,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
 
         // Create Cursor integration configuration
         if let Some(cursor_config) = &self.config.cursor_integration {
-            if let Some(config_template) = &cursor_config.project_config {
+            if let Some(_config_template) = &cursor_config.project_config {
                 let cursor_dir = PathBuf::from(".cursor");
                 fs::create_dir_all(&cursor_dir).await?;
 
@@ -899,7 +899,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
         }
 
         // Setup shell aliases for Cursor integration
-        if let Some(cursor_config) = &self.config.cursor_integration {
+        if let Some(_cursor_config) = &self.config.cursor_integration {
             println!("{}", style("Cursor integration aliases:").bold());
             // Note: shell_aliases are not available in WorkbloomCursorConfig
             // This would need to be handled differently for workbloom integration
@@ -923,7 +923,7 @@ refactor = ["cleanup", "improvement", "technical-debt"]
             .context("Failed to run workbloom cleanup --status")?;
 
         if output.status.success() {
-            let output_str = String::from_utf8_lossy(&output.stdout);
+            let _output_str = String::from_utf8_lossy(&output.stdout);
             // Workbloom status shows merge status, not worktree paths
             // So we'll use git worktree list for actual worktree information
             self.list_with_git(detailed).await
@@ -1226,12 +1226,12 @@ refactor = ["cleanup", "improvement", "technical-debt"]
 
     async fn parse_workbloom_status_output(
         &self,
-        output: &str,
-        detailed: bool,
+        _output: &str,
+        _detailed: bool,
     ) -> Result<Vec<WorktreeInfo>> {
         // Parse workbloom cleanup --status output format
         // This will show merge status of branches, so we'll combine it with git worktree list
-        let mut worktrees = Vec::new();
+        let worktrees = Vec::new();
 
         // For now, we'll fall back to git worktree list since workbloom status
         // shows different information (merge status rather than worktree paths)
@@ -1929,9 +1929,9 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
         WorktreeCommands::Sync {
             all,
             worktree,
-            force,
-            pull,
-            push,
+            force: _,
+            pull: _,
+            push: _,
         } => {
             println!("{}", style("Syncing worktrees...").bold());
 
@@ -1951,8 +1951,8 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
         WorktreeCommands::Pull {
             all,
             branch,
-            create_worktrees,
-            base_dir,
+            create_worktrees: _,
+            base_dir: _,
         } => {
             println!("{}", style("Pulling remote branches...").bold());
 
@@ -2061,7 +2061,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             branch_name,
             auto_lock,
         } => {
-            use crate::worktree_contract::{create_pr_for_worktree, WorktreeContract};
+            use crate::worktree_contract::WorktreeContract;
 
             let mut contract = WorktreeContract::default();
             contract.set_auto_lock_worktree(auto_lock);
@@ -2075,7 +2075,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
             branch_name,
             worktree_path,
         } => {
-            use crate::worktree_contract::{merge_pr_and_cleanup, WorktreeContract};
+            use crate::worktree_contract::WorktreeContract;
 
             let contract = WorktreeContract::default();
 
@@ -2091,7 +2091,7 @@ pub async fn run_worktree_command(command: WorktreeCommands) -> Result<()> {
         } => {
             use crate::worktree_contract::{switch_next_worktree, WorktreeContract};
 
-            let mut contract = WorktreeContract::default();
+            let _contract = WorktreeContract::default();
 
             // If no_open is specified, we'll modify the contract to skip opening
             if no_open {

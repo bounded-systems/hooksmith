@@ -325,7 +325,7 @@ impl SarifIntegration {
             .ok_or_else(|| anyhow::anyhow!("CodeQL configuration not set"))?;
 
         // Check if CodeQL CLI is available
-        let codeql_cmd = self.get_codeql_command()?;
+        let _codeql_cmd = self.get_codeql_command()?;
 
         // Create database directory
         if !config.db_dir.exists() {

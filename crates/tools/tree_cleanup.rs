@@ -151,7 +151,7 @@ impl TreeCleaner {
         println!("📋 Consolidating reports...");
 
         // Move summary and complete reports
-        let report_patterns = vec!["*_SUMMARY.md", "*_COMPLETE*.md", "README_20*.md"];
+        let _report_patterns = vec!["*_SUMMARY.md", "*_COMPLETE*.md", "README_20*.md"];
 
         if let Ok(entries) = fs::read_dir(".") {
             for entry in entries {
@@ -218,7 +218,7 @@ impl TreeCleaner {
         println!("🧪 Organizing test fixtures...");
 
         // Move test files to fixtures
-        let test_files = vec!["test-*.txt", "test_files.txt", "test-agreement.txt"];
+        let _test_files = vec!["test-*.txt", "test_files.txt", "test-agreement.txt"];
 
         if let Ok(entries) = fs::read_dir(".") {
             for entry in entries {

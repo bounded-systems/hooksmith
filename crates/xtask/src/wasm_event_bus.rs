@@ -115,7 +115,7 @@ impl WasmEventBusHost {
         // Then, dispatch to WASM components (simplified for now)
         let handlers = self.handlers.lock().unwrap();
 
-        for (handler_id, handler) in handlers.iter() {
+        for (_handler_id, handler) in handlers.iter() {
             // Check if handler supports this event type
             if !handler.supported_events.is_empty()
                 && !handler.supported_events.contains(&event.event)

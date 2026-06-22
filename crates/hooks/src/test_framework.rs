@@ -1,7 +1,7 @@
-use crate::schema::{GitHook, HookContext, HookError, HookMetadata, ValidationCapability};
+use crate::schema::{GitHook, HookContext, HookMetadata};
 use anyhow::Result;
 use std::collections::HashMap;
-use std::process::{Command, Stdio};
+use std::process::Command;
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
 
@@ -147,7 +147,7 @@ impl HookTestFramework {
         for _ in 0..iterations {
             let start = Instant::now();
 
-            let output = Command::new(format!(
+            let _output = Command::new(format!(
                 "{}/target/debug/{}",
                 self.project_root,
                 hook.name()

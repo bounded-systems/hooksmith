@@ -11,7 +11,6 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use git2::{Repository, Signature};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::Path;
 
 /// Canonical agreement schema - minimal structure stored in Git notes
@@ -57,7 +56,7 @@ impl AgreementManager {
         &self,
         scope: &str,
         contract: &str,
-        description: Option<&str>,
+        _description: Option<&str>,
     ) -> Result<String> {
         let agreement = Agreement {
             scope: scope.to_string(),
@@ -173,7 +172,7 @@ impl AgreementManager {
     }
 
     /// Update agreement status
-    pub fn update_agreement_status(&self, scope: &str, status: &str) -> Result<()> {
+    pub fn update_agreement_status(&self, scope: &str, _status: &str) -> Result<()> {
         let scope_oid = git2::Oid::from_str(scope)?;
 
         // Get the current agreement
@@ -856,7 +855,7 @@ impl AgreementManager {
         let resolution = self.resolve_tree_path(scope)?;
 
         // Check if the contract blob exists in current HEAD
-        let contract_exists = self.validate_contract_exists(scope)?;
+        let _contract_exists = self.validate_contract_exists(scope)?;
 
         // Determine validity based on resolution
         let is_valid = match resolution.resolution_type {

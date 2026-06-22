@@ -456,7 +456,7 @@ pub trait EventHandler {
     /// Get handler name
     fn name(&self) -> &str;
     /// Check if handler should process this event
-    fn should_handle(&self, event: &Event) -> bool {
+    fn should_handle(&self, _event: &Event) -> bool {
         true
     }
 }

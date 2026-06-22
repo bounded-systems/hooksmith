@@ -4,7 +4,7 @@
 //! in multiple formats including CycloneDX, SPDX, and raw Cargo metadata.
 
 use anyhow::{anyhow, Result};
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::path::Path;
 use std::process::Command;
 use tokio::fs;
