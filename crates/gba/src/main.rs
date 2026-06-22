@@ -132,25 +132,23 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::RepoAudit { fail_on, format, args } => {
-            run_tool("repository_size_auditor", fail_on, format, args)
-        }
-        Commands::RustBlob { format, args } => {
-            run_tool("rust_blob_analyzer", None, format, args)
-        }
-        Commands::Delta { format, args } => {
-            run_tool("git_delta_analyzer", None, format, args)
-        }
-        Commands::Hygiene { format, args } => {
-            run_tool("git_hygiene_reporter", None, format, args)
-        }
-        Commands::Lfs { format, args } => {
-            run_tool("git_lfs_auto_tracker", None, format, args)
-        }
+        Commands::RepoAudit {
+            fail_on,
+            format,
+            args,
+        } => run_tool("repository_size_auditor", fail_on, format, args),
+        Commands::RustBlob { format, args } => run_tool("rust_blob_analyzer", None, format, args),
+        Commands::Delta { format, args } => run_tool("git_delta_analyzer", None, format, args),
+        Commands::Hygiene { format, args } => run_tool("git_hygiene_reporter", None, format, args),
+        Commands::Lfs { format, args } => run_tool("git_lfs_auto_tracker", None, format, args),
         Commands::Packfile { format, args } => {
             run_tool("packfile_delta_analyzer", None, format, args)
         }
-        Commands::Churn { since, format, args } => {
+        Commands::Churn {
+            since,
+            format,
+            args,
+        } => {
             let mut all_args = vec![since];
             all_args.extend(args);
             run_tool("file_churn_analyzer", None, format, all_args)
@@ -158,10 +156,19 @@ fn main() -> anyhow::Result<()> {
         Commands::TreeStability { format, args } => {
             run_tool("tree_object_stability_auditor", None, format, args)
         }
-        Commands::Extract { source, target, args } => {
+        Commands::Extract {
+            source,
+            target,
+            args,
+        } => {
             let mut all_args = vec![source, target];
             all_args.extend(args);
-            run_tool("tree_to_repo_extractor", None, OutputFormat::Table, all_args)
+            run_tool(
+                "tree_to_repo_extractor",
+                None,
+                OutputFormat::Table,
+                all_args,
+            )
         }
     }
 }
@@ -174,7 +181,7 @@ fn run_tool(
 ) -> anyhow::Result<()> {
     // Add format argument
     args.extend_from_slice(&["--format".to_string(), format.to_string()]);
-    
+
     // Add fail-on argument if provided
     if let Some(n) = fail_on {
         args.extend_from_slice(&["--fail-on".to_string(), n.to_string()]);

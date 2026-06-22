@@ -1,8 +1,9 @@
 # Hooksmith Cargo Configuration
 # This config applies to all builds unless overridden
 
-# Include local config for machine-specific tweaks (gitignored)
-include = ["config.local.toml"]
+# Machine-specific tweaks: copy config.local.toml.example → config.local.toml
+# (gitignored) and add `include = ["config.local.toml"]` here locally if you want
+# them. Not hard-required, so fresh clones and CI build without it.
 
 [build]
 # Let Nix/CI set CARGO_TARGET_DIR; don't hardcode here

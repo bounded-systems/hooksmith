@@ -9545,7 +9545,10 @@ async fn allow_manual_file(path: String, verbose: bool) -> Result<()> {
     // Check if file is already in the list
     if manual_files.iter().any(|f| f.as_str() == Some(&path)) {
         if verbose {
-            println!("ℹ️  File '{}' is already in the manual files registry", path);
+            println!(
+                "ℹ️  File '{}' is already in the manual files registry",
+                path
+            );
         }
         return Ok(());
     }

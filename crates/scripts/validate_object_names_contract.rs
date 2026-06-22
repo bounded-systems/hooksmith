@@ -27,7 +27,10 @@ fn get_root_tree_entries() -> Result<Vec<String>> {
         .context("Failed to execute git ls-tree")?;
 
     if !output.status.success() {
-        anyhow::bail!("git ls-tree failed: {}", String::from_utf8_lossy(&output.stderr));
+        anyhow::bail!(
+            "git ls-tree failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
 
     let entries = String::from_utf8(output.stdout)
@@ -42,12 +45,12 @@ fn get_root_tree_entries() -> Result<Vec<String>> {
 fn load_contract() -> Result<RuleSet> {
     let contract_content = std::fs::read_to_string("../contracts/object-names@v1.json")
         .context("Failed to read contract file")?;
-    
-    let contract: Value = serde_json::from_str(&contract_content)
-        .context("Failed to parse contract JSON")?;
+
+    let contract: Value =
+        serde_json::from_str(&contract_content).context("Failed to parse contract JSON")?;
 
     let spec = &contract["spec"]["git"]["tree"]["objects"]["names"];
-    
+
     let required = spec["required"]
         .as_array()
         .context("Missing or invalid 'required' field")?
@@ -89,7 +92,7 @@ fn load_contract() -> Result<RuleSet> {
 
 fn validate_root(rules: &RuleSet, root_entries: &[String]) -> Result<Vec<String>> {
     let mut errors = Vec::new();
-    
+
     // Build allowed glob set
     let allowed_globs = build_globs(&rules.allowed)?;
 
@@ -125,7 +128,7 @@ fn validate_root(rules: &RuleSet, root_entries: &[String]) -> Result<Vec<String>
 
 fn main() -> Result<()> {
     println!("🔍 Validating object-names contract against origin/main root tree...");
-    
+
     // Fetch latest origin/main
     let fetch_status = Command::new("git")
         .arg("fetch")

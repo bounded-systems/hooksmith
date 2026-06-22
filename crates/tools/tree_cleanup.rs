@@ -272,7 +272,7 @@ fn main() -> Result<()> {
     println!("   git diff --cached");
 
     println!("\n🔍 Next steps:");
-            println!("   1. Run: cargo run --bin tree_dircheck .hooksmith/git/contracts/dircheck.tree.yml");
+    println!("   1. Run: cargo run --bin tree_dircheck .hooksmith/git/contracts/dircheck.tree.yml");
     println!("   2. Review and commit changes");
     println!("   3. Update .gitignore to include .cache/ and generated/");
 

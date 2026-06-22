@@ -37,7 +37,7 @@ impl ContractValidator {
     fn new() -> Result<Self> {
         let cache_dir = ".contract_cache".to_string();
         fs::create_dir_all(&cache_dir)?;
-        
+
         Ok(ContractValidator {
             cache_dir,
             tree_cache: HashMap::new(),
@@ -80,22 +80,22 @@ impl ContractValidator {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         let cached_result = json!({
             "timestamp": timestamp,
             "result": result
         });
-        
+
         fs::write(cache_path, serde_json::to_string_pretty(&cached_result)?)?;
         Ok(())
     }
 
     fn detect_scopes(&self, base_ref: &str, head_ref: &str) -> Result<Vec<ValidationScope>> {
         let mut scopes = Vec::new();
-        
+
         // Get the merge tree SHA
         let merge_tree = self.get_merge_tree_sha(base_ref, head_ref)?;
-        
+
         // Root scope (always check object-names contract)
         let root_scope = ValidationScope {
             tree_sha: merge_tree.clone(),
@@ -104,7 +104,7 @@ impl ContractValidator {
             cache_key: self.compute_cache_key(&merge_tree, "object-names@v1", "v1"),
         };
         scopes.push(root_scope);
-        
+
         // Detect changed directories
         let changed_dirs = self.get_changed_directories(base_ref, head_ref)?;
         for dir in changed_dirs {
@@ -117,7 +117,7 @@ impl ContractValidator {
             };
             scopes.push(scope);
         }
-        
+
         Ok(scopes)
     }
 
@@ -126,11 +126,14 @@ impl ContractValidator {
             .args(["merge-tree", base_ref, head_ref])
             .output()
             .context("Failed to create merge tree")?;
-        
+
         if !output.status.success() {
-            anyhow::bail!("git merge-tree failed: {}", String::from_utf8_lossy(&output.stderr));
+            anyhow::bail!(
+                "git merge-tree failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
-        
+
         // Extract tree SHA from merge-tree output
         let output_str = String::from_utf8_lossy(&output.stdout);
         for line in output_str.lines() {
@@ -142,7 +145,7 @@ impl ContractValidator {
                 }
             }
         }
-        
+
         anyhow::bail!("Could not extract tree SHA from merge-tree output")
     }
 
@@ -151,16 +154,19 @@ impl ContractValidator {
             .args(["diff", "--name-only", base_ref, head_ref])
             .output()
             .context("Failed to get changed files")?;
-        
+
         if !output.status.success() {
-            anyhow::bail!("git diff failed: {}", String::from_utf8_lossy(&output.stderr));
+            anyhow::bail!(
+                "git diff failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
-        
+
         let files = String::from_utf8_lossy(&output.stdout)
             .lines()
             .map(|s| s.to_string())
             .collect::<Vec<_>>();
-        
+
         let mut dirs = std::collections::HashSet::new();
         for file in files {
             if let Some(first_slash) = file.find('/') {
@@ -168,7 +174,7 @@ impl ContractValidator {
                 dirs.insert(dir);
             }
         }
-        
+
         Ok(dirs.into_iter().collect())
     }
 
@@ -177,18 +183,21 @@ impl ContractValidator {
             .args(["ls-tree", root_tree, path])
             .output()
             .context("Failed to get tree SHA for path")?;
-        
+
         if !output.status.success() {
-            anyhow::bail!("git ls-tree failed: {}", String::from_utf8_lossy(&output.stderr));
+            anyhow::bail!(
+                "git ls-tree failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
-        
+
         let output_str = String::from_utf8_lossy(&output.stdout);
         if let Some(line) = output_str.lines().next() {
             if let Some(sha) = line.split_whitespace().nth(2) {
                 return Ok(sha.to_string());
             }
         }
-        
+
         anyhow::bail!("Could not extract tree SHA for path: {}", path)
     }
 
@@ -205,7 +214,7 @@ impl ContractValidator {
 
     fn validate_scope(&self, scope: &ValidationScope) -> Result<ValidationResult> {
         let start_time = SystemTime::now();
-        
+
         // Check cache first
         if let Some(cached) = self.load_cached_result(&scope.cache_key) {
             let cached_result = &cached["result"];
@@ -219,26 +228,28 @@ impl ContractValidator {
                     .map(|v| v.as_str().unwrap_or("").to_string())
                     .collect(),
                 sarif: cached_result["sarif"].clone(),
-                fix_plan: if cached_result["fix_plan"].is_null() { None } else { Some(cached_result["fix_plan"].clone()) },
+                fix_plan: if cached_result["fix_plan"].is_null() {
+                    None
+                } else {
+                    Some(cached_result["fix_plan"].clone())
+                },
                 cache_hit: true,
-                execution_time_ms: start_time
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_millis() as u64,
+                execution_time_ms: start_time.duration_since(UNIX_EPOCH).unwrap().as_millis()
+                    as u64,
             });
         }
-        
+
         // Run validation
         let (success, violations, sarif, fix_plan) = match scope.scope_type.as_str() {
             "root" => self.validate_root_contract(scope)?,
             _ => self.validate_subtree_contract(scope)?,
         };
-        
+
         let execution_time = SystemTime::now()
             .duration_since(start_time)
             .unwrap()
             .as_millis() as u64;
-        
+
         let result = ValidationResult {
             scope: scope.clone(),
             success,
@@ -248,7 +259,7 @@ impl ContractValidator {
             cache_hit: false,
             execution_time_ms: execution_time,
         };
-        
+
         // Cache the result
         let cache_value = json!({
             "success": success,
@@ -258,19 +269,22 @@ impl ContractValidator {
             "execution_time_ms": execution_time,
         });
         self.save_cached_result(&scope.cache_key, &cache_value)?;
-        
+
         Ok(result)
     }
 
-    fn validate_root_contract(&self, scope: &ValidationScope) -> Result<(bool, Vec<String>, Value, Option<Value>)> {
+    fn validate_root_contract(
+        &self,
+        scope: &ValidationScope,
+    ) -> Result<(bool, Vec<String>, Value, Option<Value>)> {
         // Use the existing object-names validation logic
         let contract_path = "contracts/object-names@v1.json";
-        let contract_content = fs::read_to_string(contract_path)
-            .context("Failed to read contract file")?;
-        
-        let contract: Value = serde_json::from_str(&contract_content)
-            .context("Failed to parse contract JSON")?;
-        
+        let contract_content =
+            fs::read_to_string(contract_path).context("Failed to read contract file")?;
+
+        let contract: Value =
+            serde_json::from_str(&contract_content).context("Failed to parse contract JSON")?;
+
         let spec = &contract["spec"]["git"]["tree"]["objects"]["names"];
         let required: Vec<String> = spec["required"]
             .as_array()
@@ -278,56 +292,59 @@ impl ContractValidator {
             .iter()
             .map(|v| v.as_str().unwrap().to_string())
             .collect();
-        
+
         let allowed: Vec<String> = spec["allowed"]
             .as_array()
             .unwrap_or(&vec![])
             .iter()
             .map(|v| v.as_str().unwrap().to_string())
             .collect();
-        
+
         let rejected_patterns: Vec<String> = spec["rejected"]
             .as_array()
             .unwrap_or(&vec![])
             .iter()
             .map(|v| v.as_str().unwrap().to_string())
             .collect();
-        
+
         let ignored_patterns: Vec<String> = spec["ignored"]
             .as_array()
             .unwrap_or(&vec![])
             .iter()
             .map(|v| v.as_str().unwrap().to_string())
             .collect();
-        
+
         let rejected = build_globs(&rejected_patterns)?;
         let ignored = build_globs(&ignored_patterns)?;
         let allowed_globs = build_globs(&allowed)?;
-        
+
         // Get root tree entries
         let output = Command::new("git")
             .args(["ls-tree", "--name-only", &scope.tree_sha])
             .output()
             .context("Failed to get root tree entries")?;
-        
+
         if !output.status.success() {
-            anyhow::bail!("git ls-tree failed: {}", String::from_utf8_lossy(&output.stderr));
+            anyhow::bail!(
+                "git ls-tree failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
-        
+
         let root_entries: Vec<String> = String::from_utf8(output.stdout)?
             .lines()
             .map(|s| s.to_string())
             .collect();
-        
+
         let mut violations = Vec::new();
-        
+
         // Check required entries
         for req in &required {
             if !root_entries.iter().any(|entry| entry == req) {
                 violations.push(format!("missing required: {}", req));
             }
         }
-        
+
         // Check rejected entries (skip ignored)
         for entry in &root_entries {
             if ignored.is_match(entry) {
@@ -337,7 +354,7 @@ impl ContractValidator {
                 violations.push(format!("rejected at root: {}", entry));
             }
         }
-        
+
         // Check allow-list (skip ignored)
         for entry in &root_entries {
             if ignored.is_match(entry) {
@@ -347,9 +364,9 @@ impl ContractValidator {
                 violations.push(format!("not in allowed set: {}", entry));
             }
         }
-        
+
         let success = violations.is_empty();
-        
+
         // Generate SARIF
         let sarif = json!({
             "version": "2.1.0",
@@ -376,7 +393,7 @@ impl ContractValidator {
                 })).collect::<Vec<_>>()
             }]
         });
-        
+
         // Generate fix plan
         let fix_plan = if !violations.is_empty() {
             Some(json!({
@@ -387,11 +404,14 @@ impl ContractValidator {
         } else {
             None
         };
-        
+
         Ok((success, violations, sarif, fix_plan))
     }
 
-    fn validate_subtree_contract(&self, _scope: &ValidationScope) -> Result<(bool, Vec<String>, Value, Option<Value>)> {
+    fn validate_subtree_contract(
+        &self,
+        _scope: &ValidationScope,
+    ) -> Result<(bool, Vec<String>, Value, Option<Value>)> {
         // Placeholder for subtree validation
         // This would implement specific contract validation for different subtrees
         Ok((true, vec![], json!({}), None))
@@ -400,49 +420,58 @@ impl ContractValidator {
     fn run_pipeline(&self, base_ref: &str, head_ref: &str) -> Result<Vec<ValidationResult>> {
         println!("🔍 Detecting validation scopes...");
         let scopes = self.detect_scopes(base_ref, head_ref)?;
-        
+
         println!("📋 Found {} scopes to validate:", scopes.len());
         for scope in &scopes {
-            println!("  - {} (contracts: {:?})", scope.scope_type, scope.contract_ids);
+            println!(
+                "  - {} (contracts: {:?})",
+                scope.scope_type, scope.contract_ids
+            );
         }
         println!();
-        
+
         let mut results = Vec::new();
         let mut cache_hits = 0;
         let mut total_time = 0;
-        
+
         for scope in &scopes {
             println!("🔍 Validating {}...", scope.scope_type);
             let result = self.validate_scope(&scope)?;
-            
+
             if result.cache_hit {
                 cache_hits += 1;
                 println!("  ✅ Cache hit ({}ms)", result.execution_time_ms);
             } else {
                 println!("  ⚡ Fresh validation ({}ms)", result.execution_time_ms);
             }
-            
+
             total_time += result.execution_time_ms;
-            
+
             if result.success {
                 println!("  ✅ Validation passed");
             } else {
-                println!("  ❌ Validation failed ({} violations)", result.violations.len());
+                println!(
+                    "  ❌ Validation failed ({} violations)",
+                    result.violations.len()
+                );
                 for violation in &result.violations {
                     println!("    - {}", violation);
                 }
             }
             println!();
-            
+
             results.push(result);
         }
-        
+
         println!("📊 Pipeline Summary:");
         println!("  - Total scopes: {}", scopes.len());
         println!("  - Cache hits: {}", cache_hits);
         println!("  - Total execution time: {}ms", total_time);
-        println!("  - Failed validations: {}", results.iter().filter(|r| !r.success).count());
-        
+        println!(
+            "  - Failed validations: {}",
+            results.iter().filter(|r| !r.success).count()
+        );
+
         Ok(results)
     }
 }
@@ -457,7 +486,7 @@ fn build_globs(patterns: &[String]) -> Result<GlobSet> {
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() < 3 {
         println!("Usage: cargo run --bin contract_validation_pipeline <base_ref> <head_ref>");
         println!();
@@ -466,30 +495,37 @@ fn main() -> Result<()> {
         println!("  cargo run --bin contract_validation_pipeline main feature-branch");
         std::process::exit(1);
     }
-    
+
     let base_ref = &args[1];
     let head_ref = &args[2];
-    
+
     println!("🚀 Contract Validation Pipeline");
     println!("Base: {}", base_ref);
     println!("Head: {}", head_ref);
     println!();
-    
+
     let validator = ContractValidator::new()?;
     let results = validator.run_pipeline(base_ref, head_ref)?;
-    
+
     // Generate overall report
     let failed_results: Vec<_> = results.iter().filter(|r| !r.success).collect();
-    
+
     if failed_results.is_empty() {
         println!("🎉 All contract validations passed!");
         std::process::exit(0);
     } else {
-        println!("❌ Contract validation failed for {} scopes:", failed_results.len());
+        println!(
+            "❌ Contract validation failed for {} scopes:",
+            failed_results.len()
+        );
         for result in failed_results {
-            println!("  - {}: {} violations", result.scope.scope_type, result.violations.len());
+            println!(
+                "  - {}: {} violations",
+                result.scope.scope_type,
+                result.violations.len()
+            );
         }
-        
+
         // Save SARIF report
         let sarif_path = "contract-validation-results.sarif";
         let sarif_results: Vec<Value> = results.iter().map(|r| r.sarif.clone()).collect();
@@ -498,10 +534,10 @@ fn main() -> Result<()> {
             "$schema": "https://json.schemastore.org/sarif-2.1.0-rtm.5.json",
             "runs": sarif_results
         });
-        
+
         fs::write(sarif_path, serde_json::to_string_pretty(&sarif_report)?)?;
         println!("📄 SARIF report saved to: {}", sarif_path);
-        
+
         std::process::exit(1);
     }
 }
