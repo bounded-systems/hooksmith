@@ -33,12 +33,12 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0  # Full history for reproducible builds
           
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           extra_nix_config: |
@@ -47,7 +47,7 @@ jobs:
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hooksmith.cachix.org-1:YOUR_CACHE_KEY_HERE
             
       - name: Setup Cachix
-        uses: cachix/cachix-action@v15
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: hooksmith
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
@@ -106,8 +106,13 @@ jobs:
           cd release
           tar czf ../hooksmith-${{ env.RELEASE_VERSION }}-linux-x86_64.tar.gz *
           
+      - name: Attest build provenance (SLSA, GitHub-native)
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-path: 'hooksmith-${{ env.RELEASE_VERSION }}-linux-x86_64.tar.gz'
+
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-artifacts
           path: |
@@ -141,36 +146,23 @@ jobs:
           grype dir:. -o json > release/vulnerability-report.json || true
           grype dir:. -o table > release/vulnerability-report.txt || true
 
-  # SLSA Provenance Generation
-  provenance:
-    name: Generate SLSA Provenance
-    needs: [slsa-build]
-    permissions:
-      actions: read
-      id-token: write
-      contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
-    with:
-      base64-subjects: "${{ needs.slsa-build.outputs.hashes }}"
-      upload-assets: true
-
   # Code signing with Sigstore
   sign-artifacts:
     name: Sign Artifacts
-    needs: [slsa-build, provenance]
+    needs: [slsa-build]
     permissions:
       id-token: write
       contents: write
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: release-artifacts
           
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3
         
       - name: Sign artifacts with Sigstore
         run: |
@@ -182,7 +174,7 @@ jobs:
           done
           
       - name: Upload signed artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: signed-artifacts
           path: |
@@ -218,17 +210,17 @@ jobs:
       
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
           
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Setup Cachix
-        uses: cachix/cachix-action@v15
+        uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15
         with:
           name: hooksmith
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
@@ -245,7 +237,7 @@ jobs:
           tar czf ${{ matrix.archive-name }}.tar.gz -C dist .
           
       - name: Upload cross-platform artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ matrix.archive-name }}
           path: ${{ matrix.archive-name }}.tar.gz
@@ -253,7 +245,7 @@ jobs:
   # Final release publication
   publish-release:
     name: Publish Release
-    needs: [slsa-build, provenance, sign-artifacts, build-cross-platform]
+    needs: [slsa-build, sign-artifacts, build-cross-platform]
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -261,7 +253,7 @@ jobs:
     
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         
       - name: Prepare release assets
         run: |
@@ -303,7 +295,7 @@ jobs:
           EOF
           
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: release-final/*
