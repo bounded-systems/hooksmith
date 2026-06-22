@@ -1064,7 +1064,7 @@ pub fn create_contract_violation(
     let id = Uuid::new_v4().to_string();
     let fingerprint = format!("{}-{}-{}", rule_id, file, line.unwrap_or(0));
 
-    let sarif_result = SarifResult {
+    let _sarif_result = SarifResult {
         rule_id: rule_id.to_string(),
         level: match severity {
             ViolationSeverity::Info => "note".to_string(),

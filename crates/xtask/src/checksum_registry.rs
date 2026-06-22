@@ -1,9 +1,8 @@
 use crate::checksum::compute_file_checksum;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// Registry entry for a generated file
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -53,7 +52,7 @@ impl ChecksumRegistry {
     /// Save the checksum registry to config/generated-files.jsonc
     pub fn save(&self) -> Result<()> {
         let registry_path = Path::new("config/generated-files.jsonc");
-        let json_content =
+        let _json_content =
             serde_json::to_string_pretty(self).context("Failed to serialize checksum registry")?;
 
         // Convert to JSONC format with comments

@@ -27,7 +27,10 @@ fn get_root_tree_entries() -> Result<Vec<String>> {
         .context("Failed to execute git ls-tree")?;
 
     if !output.status.success() {
-        anyhow::bail!("git ls-tree failed: {}", String::from_utf8_lossy(&output.stderr));
+        anyhow::bail!(
+            "git ls-tree failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
 
     let entries = String::from_utf8(output.stdout)
@@ -42,12 +45,12 @@ fn get_root_tree_entries() -> Result<Vec<String>> {
 fn load_contract() -> Result<RuleSet> {
     let contract_content = std::fs::read_to_string("../contracts/object-names@v1.json")
         .context("Failed to read contract file")?;
-    
-    let contract: Value = serde_json::from_str(&contract_content)
-        .context("Failed to parse contract JSON")?;
+
+    let contract: Value =
+        serde_json::from_str(&contract_content).context("Failed to parse contract JSON")?;
 
     let spec = &contract["spec"]["git"]["tree"]["objects"]["names"];
-    
+
     let required = spec["required"]
         .as_array()
         .context("Missing or invalid 'required' field")?
@@ -132,7 +135,8 @@ fn analyze_migration(rules: &RuleSet, root_entries: &[String]) -> MigrationPlan 
             "Cargo.toml" | "*.toml" => "projects/hooksmith/",
             _ => "projects/hooksmith/",
         };
-        plan.suggested_moves.push((entry.clone(), suggested_dest.to_string()));
+        plan.suggested_moves
+            .push((entry.clone(), suggested_dest.to_string()));
     }
 
     for entry in &plan.unexpected_files {
@@ -145,7 +149,8 @@ fn analyze_migration(rules: &RuleSet, root_entries: &[String]) -> MigrationPlan 
         } else {
             "projects/hooksmith/"
         };
-        plan.suggested_moves.push((entry.clone(), suggested_dest.to_string()));
+        plan.suggested_moves
+            .push((entry.clone(), suggested_dest.to_string()));
     }
 
     plan
@@ -153,7 +158,7 @@ fn analyze_migration(rules: &RuleSet, root_entries: &[String]) -> MigrationPlan 
 
 fn main() -> Result<()> {
     println!("🔍 Analyzing object-names contract migration requirements...");
-    
+
     let rules = load_contract()?;
     let root_entries = get_root_tree_entries()?;
 
@@ -206,7 +211,10 @@ fn main() -> Result<()> {
     println!("  - Unexpected files: {}", plan.unexpected_files.len());
     println!("  - Total files to move: {}", plan.suggested_moves.len());
 
-    if plan.missing_required.is_empty() && plan.rejected_files.is_empty() && plan.unexpected_files.is_empty() {
+    if plan.missing_required.is_empty()
+        && plan.rejected_files.is_empty()
+        && plan.unexpected_files.is_empty()
+    {
         println!("\n✅ No migration needed - contract is satisfied!");
     } else {
         println!("\n📝 Next steps:");

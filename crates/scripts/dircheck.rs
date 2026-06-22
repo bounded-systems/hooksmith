@@ -26,11 +26,11 @@ struct Args {
 #[serde(rename_all = "kebab-case")]
 struct Agreement {
     version: String,
-    mode: String,                // "tree"
-    precedence: String,          // "allow-overrides-reject" (required behavior)
-    default_action: String,      // "reject"
-    allow_dirs: Vec<String>,     // literal names only
-    allow_files: Vec<String>,    // literal or root-glob "*.ext"
+    mode: String,             // "tree"
+    precedence: String,       // "allow-overrides-reject" (required behavior)
+    default_action: String,   // "reject"
+    allow_dirs: Vec<String>,  // literal names only
+    allow_files: Vec<String>, // literal or root-glob "*.ext"
     subject: Subject,
     digest: DigestField,
     #[serde(default)]
@@ -68,13 +68,20 @@ fn main() -> Result<()> {
 
     // 3) Sanity on required fields
     if agreement.mode != "tree" || agreement.subject.scope != "top-level" {
-        return Err(anyhow!("agreement must be tree-only (mode=tree, scope=top-level)"));
+        return Err(anyhow!(
+            "agreement must be tree-only (mode=tree, scope=top-level)"
+        ));
     }
     if agreement.precedence != "allow-overrides-reject" || agreement.default_action != "reject" {
-        return Err(anyhow!("agreement must specify precedence=allow-overrides-reject and defaultAction=reject"));
+        return Err(anyhow!(
+            "agreement must specify precedence=allow-overrides-reject and defaultAction=reject"
+        ));
     }
     if agreement.digest.algo != "sha256" {
-        return Err(anyhow!("unsupported digest algo: {}", agreement.digest.algo));
+        return Err(anyhow!(
+            "unsupported digest algo: {}",
+            agreement.digest.algo
+        ));
     }
 
     // 4) Materialize subject (top-level names via libgit2, no recursion)
@@ -86,7 +93,9 @@ fn main() -> Result<()> {
     let (names, files, dirs) = top_level_entries(&tree)?;
     // No slashes in names by construction; assert for safety.
     if names.iter().any(|n| n.contains('/')) {
-        return Err(anyhow!("top-level names contained a slash; tree-only invariant broken"));
+        return Err(anyhow!(
+            "top-level names contained a slash; tree-only invariant broken"
+        ));
     }
 
     // 5) Decision check (allow-overrides-reject, no recursion)
@@ -104,7 +113,10 @@ fn main() -> Result<()> {
 
     // 7) Optional signature (stub hook)
     if let Some(sig) = &agreement.signature {
-        eprintln!("(info) signature present type={} – verification not implemented in this binary", sig.r#type);
+        eprintln!(
+            "(info) signature present type={} – verification not implemented in this binary",
+            sig.r#type
+        );
         // Implement GPG/Minisign verification here if you want hard guarantees in CI.
     }
 
@@ -112,7 +124,9 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn top_level_entries(tree: &Tree) -> Result<(BTreeSet<String>, BTreeSet<String>, BTreeSet<String>)> {
+fn top_level_entries(
+    tree: &Tree,
+) -> Result<(BTreeSet<String>, BTreeSet<String>, BTreeSet<String>)> {
     let mut names = BTreeSet::new();
     let mut files = BTreeSet::new();
     let mut dirs = BTreeSet::new();
@@ -127,8 +141,12 @@ fn top_level_entries(tree: &Tree) -> Result<(BTreeSet<String>, BTreeSet<String>,
             .unwrap_or_else(|| "<invalid>".into());
         names.insert(name.clone());
         match entry.kind() {
-            Some(ObjectType::Blob) => { files.insert(name); }
-            Some(ObjectType::Tree) => { dirs.insert(name); }
+            Some(ObjectType::Blob) => {
+                files.insert(name);
+            }
+            Some(ObjectType::Tree) => {
+                dirs.insert(name);
+            }
             _ => {}
         }
         TreeWalkResult::Ok
@@ -137,7 +155,12 @@ fn top_level_entries(tree: &Tree) -> Result<(BTreeSet<String>, BTreeSet<String>,
     Ok((names, files, dirs))
 }
 
-fn validate_decisions(ag: &Agreement, files: &BTreeSet<String>, dirs: &BTreeSet<String>, ci: bool) -> Result<()> {
+fn validate_decisions(
+    ag: &Agreement,
+    files: &BTreeSet<String>,
+    dirs: &BTreeSet<String>,
+    ci: bool,
+) -> Result<()> {
     // Build allow sets
     let allow_dirs: BTreeSet<&str> = ag.allow_dirs.iter().map(|s| s.as_str()).collect();
     let allow_file_pats: Vec<&str> = ag.allow_files.iter().map(|s| s.as_str()).collect();
@@ -146,7 +169,11 @@ fn validate_decisions(ag: &Agreement, files: &BTreeSet<String>, dirs: &BTreeSet<
     for d in dirs {
         if !allow_dirs.contains(d.as_str()) {
             let msg = format!("REJECT dir: {}", d);
-            if ci { return Err(anyhow!(msg)); } else { eprintln!("{}", msg); }
+            if ci {
+                return Err(anyhow!(msg));
+            } else {
+                eprintln!("{}", msg);
+            }
         }
     }
 
@@ -163,7 +190,11 @@ fn validate_decisions(ag: &Agreement, files: &BTreeSet<String>, dirs: &BTreeSet<
             }
         }
         let msg = format!("REJECT file: {}", f);
-        if ci { return Err(anyhow!(msg)); } else { eprintln!("{}", msg); }
+        if ci {
+            return Err(anyhow!(msg));
+        } else {
+            eprintln!("{}", msg);
+        }
     }
 
     Ok(())
@@ -172,7 +203,9 @@ fn validate_decisions(ag: &Agreement, files: &BTreeSet<String>, dirs: &BTreeSet<
 /// Root-glob matcher: supports a single or multiple '*' wildcards; no '/' allowed in either side.
 /// Translates '*' -> ".*" for a full-string match.
 fn star_match_root(pat: &str, name: &str) -> bool {
-    if pat.contains('/') || name.contains('/') { return false; }
+    if pat.contains('/') || name.contains('/') {
+        return false;
+    }
     // Escape regex meta except '*'
     let mut re = String::from("^");
     for ch in pat.chars() {
@@ -182,13 +215,16 @@ fn star_match_root(pat: &str, name: &str) -> bool {
             '?' => re.push_str(r"\?"),
             '+' => re.push_str(r"\+"),
             '(' | ')' | '[' | ']' | '{' | '}' | '^' | '$' | '|' => {
-                re.push('\\'); re.push(ch);
+                re.push('\\');
+                re.push(ch);
             }
             other => re.push(other),
         }
     }
     re.push('$');
-    regex::Regex::new(&re).map(|r| r.is_match(name)).unwrap_or(false)
+    regex::Regex::new(&re)
+        .map(|r| r.is_match(name))
+        .unwrap_or(false)
 }
 
 fn compute_digest(ag: &Agreement, names: &BTreeSet<String>) -> Result<String> {
@@ -219,5 +255,3 @@ fn compute_digest(ag: &Agreement, names: &BTreeSet<String>) -> Result<String> {
     outer.update(hex::encode(sha_rules));
     Ok(format!("{:x}", outer.finalize()))
 }
-
-

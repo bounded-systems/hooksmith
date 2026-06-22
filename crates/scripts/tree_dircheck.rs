@@ -1,8 +1,8 @@
+use anyhow::{Context, Result};
+use globset::{Glob, GlobSet, GlobSetBuilder};
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::process::Command;
-use anyhow::{Result, Context};
-use serde::{Deserialize, Serialize};
-use globset::{Glob, GlobSet, GlobSetBuilder};
 
 #[derive(Debug, Deserialize)]
 struct TreeConfig {
@@ -38,13 +38,11 @@ impl TreeDirChecker {
     fn new(config: TreeConfig) -> Result<Self> {
         let mut builder = GlobSetBuilder::new();
         for pattern in &config.allow_files {
-            let glob = Glob::new(pattern)
-                .context(format!("Invalid glob pattern: {}", pattern))?;
+            let glob = Glob::new(pattern).context(format!("Invalid glob pattern: {}", pattern))?;
             builder.add(glob);
         }
-        let allow_file_patterns = builder.build()
-            .context("Failed to build glob set")?;
-        
+        let allow_file_patterns = builder.build().context("Failed to build glob set")?;
+
         Ok(Self {
             config,
             allow_file_patterns,
@@ -136,7 +134,8 @@ impl TreeDirChecker {
         // Check assertions
         let (missing_required, duplicate_files) = self.check_assertions(&entries)?;
 
-        let valid = violations.is_empty() && missing_required.is_empty() && duplicate_files.is_empty();
+        let valid =
+            violations.is_empty() && missing_required.is_empty() && duplicate_files.is_empty();
 
         Ok(ValidationResult {
             valid,
@@ -149,14 +148,15 @@ impl TreeDirChecker {
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    let config_path = args.get(1)
+    let config_path = args
+        .get(1)
         .ok_or_else(|| anyhow::anyhow!("Usage: tree_dircheck <config.yml>"))?;
 
     let config_content = std::fs::read_to_string(config_path)
         .context(format!("Failed to read config file: {}", config_path))?;
 
-    let config: TreeConfig = serde_yaml::from_str(&config_content)
-        .context("Failed to parse config YAML")?;
+    let config: TreeConfig =
+        serde_yaml::from_str(&config_content).context("Failed to parse config YAML")?;
 
     if config.mode != "tree" {
         anyhow::bail!("Config mode must be 'tree'");
@@ -170,7 +170,7 @@ fn main() -> Result<()> {
         println!("✅ Tree validation passed!");
     } else {
         println!("❌ Tree validation failed!");
-        
+
         if !result.violations.is_empty() {
             println!("\n🚫 Violations:");
             for violation in &result.violations {

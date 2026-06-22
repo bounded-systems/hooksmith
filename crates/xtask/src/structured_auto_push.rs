@@ -116,7 +116,7 @@ impl StructuredAutoPush {
         let duration = start_time.elapsed().unwrap_or(Duration::from_secs(0));
 
         // Emit completion event
-        let completion_details = serde_json::json!({
+        let _completion_details = serde_json::json!({
             "duration_ms": duration.as_millis(),
             "commit_hash": commit_hash,
             "push_result": push_result,
@@ -207,7 +207,7 @@ impl StructuredAutoPush {
     async fn add_changes(&self) -> Result<()> {
         use std::process::Command;
 
-        let output = Command::new("git")
+        let _output = Command::new("git")
             .args(["add", "."])
             .output()
             .context("Failed to run git add")?;
@@ -252,7 +252,7 @@ impl StructuredAutoPush {
 
         use std::process::Command;
 
-        let output = Command::new("git")
+        let _output = Command::new("git")
             .args(&commit_args)
             .output()
             .context("Failed to run git commit")?;
@@ -297,7 +297,7 @@ impl StructuredAutoPush {
             push_args.push("--force");
         }
 
-        let output = Command::new("git")
+        let _output = Command::new("git")
             .args(push_args)
             .output()
             .context("Failed to run git push")?;

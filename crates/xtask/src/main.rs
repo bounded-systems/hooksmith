@@ -6,7 +6,7 @@
 //! that replace shell scripts and raw echo statements.
 
 use anyhow::{Context, Result};
-use clap::{arg, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 use heck::ToTitleCase;
 use json_comments::StripComments;
 use serde::{Deserialize, Serialize};
@@ -21,7 +21,6 @@ use hook_state_machine::{HookContext, HookManager, HookType};
 use path_mapping::run_path_mapping_command;
 use workflow::{run_dev_workflow, run_macos_optimize, run_optimize, run_security_check};
 use worktree::run_worktree_command;
-use worktree_sync::run_worktree_sync_command;
 
 /// CLI argument enum for hook types
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -2010,9 +2009,9 @@ async fn main() -> Result<()> {
 
     // Initialize global structured logger
     // Default to JSONL output unless explicitly disabled
-    let jsonl_output = true; // We want structured output by default
-    let event_bus_integration = true; // Enable event bus integration
-    let session_id = Some(uuid::Uuid::new_v4().to_string());
+    let _jsonl_output = true; // We want structured output by default
+    let _event_bus_integration = true; // Enable event bus integration
+    let _session_id = Some(uuid::Uuid::new_v4().to_string());
 
     // Removed init_global_logger - not implemented
 
@@ -2952,7 +2951,7 @@ async fn main() -> Result<()> {
             }
         },
         Commands::GitHooks { command } => match command {
-            GitHooksCommands::Validate { strict, verbose } => {
+            GitHooksCommands::Validate { strict, verbose: _ } => {
                 println!("Git hooks validation not yet implemented");
                 if strict {
                     anyhow::bail!("Git hooks validation failed");
@@ -9545,7 +9544,10 @@ async fn allow_manual_file(path: String, verbose: bool) -> Result<()> {
     // Check if file is already in the list
     if manual_files.iter().any(|f| f.as_str() == Some(&path)) {
         if verbose {
-            println!("ℹ️  File '{}' is already in the manual files registry", path);
+            println!(
+                "ℹ️  File '{}' is already in the manual files registry",
+                path
+            );
         }
         return Ok(());
     }
@@ -9579,10 +9581,6 @@ async fn allow_manual_file(path: String, verbose: bool) -> Result<()> {
 
 /// Run regeneration check: delete all generated files, regenerate, and compare
 async fn run_regen_check(strict: bool, verbose: bool) -> Result<()> {
-    use std::collections::HashMap;
-    use std::fs;
-    use std::path::Path;
-
     println!("🔄 Running regeneration consistency check...");
 
     // Step 1: Get current state
@@ -10458,7 +10456,7 @@ async fn run_test_workflow_contracts_command(
                 .flat_map(|r| &r.act_test_results)
                 .filter(|r| r.success)
                 .count();
-            let failed_act_tests = total_act_tests - passed_act_tests;
+            let _failed_act_tests = total_act_tests - passed_act_tests;
 
             println!(
                 "✅ Valid Workflows: {}/{}",
@@ -10748,7 +10746,7 @@ fn generate_canonical_gitignore() -> Result<String> {
     ];
 
     // Only include patterns for entries that actually exist in the tree
-    for (entry_name, pattern) in ignorable_patterns {
+    for (_entry_name, pattern) in ignorable_patterns {
         // Check if this pattern would actually match any top-level entry
         let should_include = entries.iter().any(|entry| {
             if pattern.ends_with('/') {
@@ -11011,7 +11009,7 @@ fn generate_tree_gitignore(
 
 fn generate_gitignore_for_directory(
     dir_path: &Path,
-    local_only: bool,
+    _local_only: bool,
     max_patterns: usize,
     dry_run: bool,
 ) -> Result<bool> {

@@ -1,7 +1,6 @@
 use clap::{Parser, Subcommand};
 use hooksmith_core::git_snapshot::{format_snapshot_line_based, GitSnapshotCollector};
 use std::fs;
-use std::path::Path;
 
 #[derive(Parser)]
 #[command(name = "git-snapshot")]

@@ -1,7 +1,7 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
+use sha2::Digest;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -373,7 +373,7 @@ fn parse_item_declaration(line: &str) -> Option<(&str, &str)> {
     None
 }
 
-fn generate_markdown(doc_file: &DocFile, template: &str) -> Result<String> {
+fn generate_markdown(doc_file: &DocFile, _template: &str) -> Result<String> {
     let mut markdown = String::new();
 
     // File header

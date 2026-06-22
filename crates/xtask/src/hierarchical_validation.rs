@@ -235,7 +235,7 @@ async fn diff_operation(file: Option<&PathBuf>) -> Result<()> {
 }
 
 /// Validate changes in a commit range
-async fn validate_changes(range: &str, repo: &Path) -> Result<()> {
+async fn validate_changes(range: &str, _repo: &Path) -> Result<()> {
     println!("🔍 Detecting changes in range: {range}");
 
     // Temporarily disabled due to circular dependency
@@ -302,7 +302,7 @@ async fn validate_changes(range: &str, repo: &Path) -> Result<()> {
 }
 
 /// Verify validation chain integrity
-async fn verify_validation_chain(commit: &str, repo: &Path) -> Result<()> {
+async fn verify_validation_chain(commit: &str, _repo: &Path) -> Result<()> {
     println!("🔍 Verifying validation chain for commit: {commit}");
 
     // Temporarily disabled due to circular dependency
@@ -325,7 +325,7 @@ async fn verify_validation_chain(commit: &str, repo: &Path) -> Result<()> {
 }
 
 /// Show validation notes for a commit
-async fn show_validation_notes(commit: &str, repo: &Path) -> Result<()> {
+async fn show_validation_notes(commit: &str, _repo: &Path) -> Result<()> {
     println!("📝 Validation notes for commit: {commit}");
 
     // Temporarily disabled due to circular dependency
@@ -513,7 +513,7 @@ async fn post_commit_hook(repo: &PathBuf) -> Result<()> {
 }
 
 /// Validate file extensions against whitelist
-async fn validate_extensions(repo: &Path, _staged_only: bool) -> Result<()> {
+async fn validate_extensions(_repo: &Path, _staged_only: bool) -> Result<()> {
     println!("🔍 Validating file extensions...");
 
     // Temporarily disabled due to circular dependency

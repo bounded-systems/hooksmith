@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::process::Command;
 
 /// Git attribute entry with pattern and attributes
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -341,7 +340,7 @@ impl GitAttributes {
             }
 
             // Check for valid attributes
-            for (key, value) in &attr.attributes {
+            for (key, _value) in &attr.attributes {
                 if key.is_empty() {
                     errors.push(format!(
                         "Empty attribute key for pattern {} at line {}",
@@ -616,13 +615,13 @@ impl GitAttributesManager {
 }
 
 /// Parse Git attributes file
-pub fn parse_git_attributes(input: &str) -> anyhow::Result<serde_json::Value> {
+pub fn parse_git_attributes(_input: &str) -> anyhow::Result<serde_json::Value> {
     // Stub implementation
     Ok(serde_json::json!({}))
 }
 
 /// Convert Git attributes to JSONC format
-pub fn convert_to_jsonc(attributes: &serde_json::Value) -> anyhow::Result<String> {
+pub fn convert_to_jsonc(_attributes: &serde_json::Value) -> anyhow::Result<String> {
     // Stub implementation
     Ok("{}".to_string())
 }
@@ -634,7 +633,7 @@ pub fn load_schema() -> anyhow::Result<serde_json::Value> {
 }
 
 /// Validate JSONC against schema
-pub fn validate_jsonc(output: &str, schema: &serde_json::Value) -> anyhow::Result<bool> {
+pub fn validate_jsonc(_output: &str, _schema: &serde_json::Value) -> anyhow::Result<bool> {
     // Stub implementation
     Ok(true)
 }
@@ -653,36 +652,39 @@ pub fn generate_template() -> anyhow::Result<String> {
 
 /// Analyze Git attributes
 pub fn analyze_attributes(
-    attributes: &serde_json::Value,
-    detailed: bool,
+    _attributes: &serde_json::Value,
+    _detailed: bool,
 ) -> anyhow::Result<serde_json::Value> {
     // Stub implementation
     Ok(serde_json::json!({}))
 }
 
 /// Summarize analysis
-pub fn summarize_analysis(analysis: &serde_json::Value) -> anyhow::Result<String> {
+pub fn summarize_analysis(_analysis: &serde_json::Value) -> anyhow::Result<String> {
     // Stub implementation
     Ok("Analysis summary".to_string())
 }
 
 /// Convert to gitattributes format
-pub fn convert_to_gitattributes(attributes: &serde_json::Value) -> anyhow::Result<String> {
+pub fn convert_to_gitattributes(_attributes: &serde_json::Value) -> anyhow::Result<String> {
     // Stub implementation
     Ok("* text=auto".to_string())
 }
 
 /// Validate attributes structure
 pub fn validate_attributes(
-    attributes: &serde_json::Value,
-    schema: &serde_json::Value,
+    _attributes: &serde_json::Value,
+    _schema: &serde_json::Value,
 ) -> anyhow::Result<bool> {
     // Stub implementation
     Ok(true)
 }
 
 /// Match attributes for files
-pub fn match_attributes(attributes: &serde_json::Value, file: &str) -> anyhow::Result<Vec<String>> {
+pub fn match_attributes(
+    _attributes: &serde_json::Value,
+    _file: &str,
+) -> anyhow::Result<Vec<String>> {
     // Stub implementation
     Ok(vec![])
 }

@@ -294,7 +294,7 @@ impl GitNotesManager {
     }
 
     /// Get or create notes tree
-    fn get_or_create_notes_tree(&self, ref_name: &str) -> Result<git2::Tree> {
+    fn get_or_create_notes_tree(&self, ref_name: &str) -> Result<git2::Tree<'_>> {
         match self.get_notes_tree(ref_name)? {
             Some(tree) => Ok(tree),
             None => {
@@ -314,7 +314,7 @@ impl GitNotesManager {
     }
 
     /// Get notes tree
-    fn get_notes_tree(&self, ref_name: &str) -> Result<Option<git2::Tree>> {
+    fn get_notes_tree(&self, ref_name: &str) -> Result<Option<git2::Tree<'_>>> {
         match self.repo.find_reference(ref_name) {
             Ok(reference) => {
                 let commit = reference
@@ -328,7 +328,7 @@ impl GitNotesManager {
     }
 
     /// Get or create notes commit
-    fn get_or_create_notes_commit(&self, ref_name: &str) -> Result<git2::Commit> {
+    fn get_or_create_notes_commit(&self, ref_name: &str) -> Result<git2::Commit<'_>> {
         match self.repo.find_reference(ref_name) {
             Ok(reference) => reference
                 .peel_to_commit()
@@ -389,7 +389,7 @@ impl GitNotesManager {
     }
 
     /// Get signature for commits
-    fn get_signature(&self) -> Result<Signature> {
+    fn get_signature(&self) -> Result<Signature<'_>> {
         // Try to get user info from Git config
         let config = self
             .repo

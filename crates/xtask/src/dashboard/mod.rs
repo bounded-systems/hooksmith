@@ -147,7 +147,7 @@ impl Dashboard {
         };
 
         // Start heartbeat events for periodic updates
-        let heartbeat_handle = {
+        let _heartbeat_handle = {
             let config = self.config.clone();
             let state_manager = self.state_manager.clone();
             tokio::spawn(async move { Self::heartbeat_loop(config, state_manager).await })

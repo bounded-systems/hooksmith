@@ -307,7 +307,7 @@ impl GitHubActionsGenerator {
     /// Validate GitHub Actions specific structure
     fn validate_github_actions_structure(&self, yaml: &str) -> Result<()> {
         // Check for valid event types
-        let valid_events = [
+        let _valid_events = [
             "push",
             "pull_request",
             "workflow_dispatch",

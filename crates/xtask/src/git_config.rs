@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::process::Command;
 
 /// Git configuration section with subsections and key-value pairs
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -442,13 +441,13 @@ impl GitConfigManager {
 }
 
 /// Parse Git config file
-pub fn parse_git_config(input: &str) -> anyhow::Result<serde_json::Value> {
+pub fn parse_git_config(_input: &str) -> anyhow::Result<serde_json::Value> {
     // Stub implementation
     Ok(serde_json::json!({}))
 }
 
 /// Convert Git config to JSONC format
-pub fn convert_to_jsonc(config: &serde_json::Value) -> anyhow::Result<String> {
+pub fn convert_to_jsonc(_config: &serde_json::Value) -> anyhow::Result<String> {
     // Stub implementation
     Ok("{}".to_string())
 }
@@ -460,7 +459,7 @@ pub fn load_schema() -> anyhow::Result<serde_json::Value> {
 }
 
 /// Validate JSONC against schema
-pub fn validate_jsonc(output: &str, schema: &serde_json::Value) -> anyhow::Result<bool> {
+pub fn validate_jsonc(_output: &str, _schema: &serde_json::Value) -> anyhow::Result<bool> {
     // Stub implementation
     Ok(true)
 }
@@ -479,23 +478,23 @@ pub fn generate_template() -> anyhow::Result<String> {
 
 /// Analyze Git config
 pub fn analyze_config(
-    config: &serde_json::Value,
-    detailed: bool,
+    _config: &serde_json::Value,
+    _detailed: bool,
 ) -> anyhow::Result<serde_json::Value> {
     // Stub implementation
     Ok(serde_json::json!({}))
 }
 
 /// Summarize analysis
-pub fn summarize_analysis(analysis: &serde_json::Value) -> anyhow::Result<String> {
+pub fn summarize_analysis(_analysis: &serde_json::Value) -> anyhow::Result<String> {
     // Stub implementation
     Ok("Analysis summary".to_string())
 }
 
 /// Validate config structure
 pub fn validate_config(
-    config: &serde_json::Value,
-    schema: &serde_json::Value,
+    _config: &serde_json::Value,
+    _schema: &serde_json::Value,
 ) -> anyhow::Result<bool> {
     // Stub implementation
     Ok(true)

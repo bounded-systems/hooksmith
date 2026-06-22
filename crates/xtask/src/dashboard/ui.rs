@@ -348,7 +348,7 @@ fn render_event_type_stats(frame: &mut Frame, area: Rect, state: &DashboardState
     }
 
     // Create table rows for event types
-    let event_type_rows: Vec<Row> = state
+    let _event_type_rows: Vec<Row> = state
         .event_stats
         .events_by_type
         .iter()

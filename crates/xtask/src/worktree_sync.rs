@@ -17,7 +17,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use tokio::fs;
 
 /// Worktree sync state tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -200,7 +199,11 @@ impl WorktreeSyncManager {
         if current_branch == "main" {
             println!(
                 "{}",
-                style(&format!("⚠️  Worktree is on main branch: {}", worktree_path)).yellow()
+                style(&format!(
+                    "⚠️  Worktree is on main branch: {}",
+                    worktree_path
+                ))
+                .yellow()
             );
             return Ok(());
         }

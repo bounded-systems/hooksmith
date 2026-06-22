@@ -5,7 +5,7 @@ use std::path::Path;
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() != 2 {
         println!("Usage: cargo run --bin switch_object_names_contract <variant>");
         println!();
@@ -21,10 +21,13 @@ fn main() -> Result<()> {
 
     let variant = &args[1];
     let contract_dir = Path::new("../contracts");
-    
+
     let (source_file, description) = match variant.as_str() {
         "strict" => ("object-names@v1-strict.json", "Strict compliance contract"),
-        "rust" => ("object-names@v1-rust-workspace-fixed.json", "Rust workspace contract"),
+        "rust" => (
+            "object-names@v1-rust-workspace-fixed.json",
+            "Rust workspace contract",
+        ),
         _ => {
             eprintln!("❌ Unknown variant: {}", variant);
             eprintln!("Available variants: strict, rust");
@@ -36,7 +39,10 @@ fn main() -> Result<()> {
     let target_path = contract_dir.join("object-names@v1.json");
 
     if !source_path.exists() {
-        eprintln!("❌ Source contract file not found: {}", source_path.display());
+        eprintln!(
+            "❌ Source contract file not found: {}",
+            source_path.display()
+        );
         std::process::exit(1);
     }
 
@@ -49,8 +55,7 @@ fn main() -> Result<()> {
     }
 
     // Copy the selected variant
-    fs::copy(&source_path, &target_path)
-        .context("Failed to copy contract file")?;
+    fs::copy(&source_path, &target_path).context("Failed to copy contract file")?;
 
     println!("✅ Switched to {} contract", description);
     println!("📄 Active contract: {}", target_path.display());

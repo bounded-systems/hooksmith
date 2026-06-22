@@ -7,7 +7,10 @@ fn wildcard(pat: &str, s: &str) -> bool {
         match ch {
             '*' => rx.push_str(".*"),
             '.' => rx.push_str(r"\."),
-            c @ ('+'| '?'| '('|')'|'['|']'|'{'|'}'|'|'|'^'|'$') => { rx.push('\\'); rx.push(c); }
+            c @ ('+' | '?' | '(' | ')' | '[' | ']' | '{' | '}' | '|' | '^' | '$') => {
+                rx.push('\\');
+                rx.push(c);
+            }
             c => rx.push(c),
         }
     }
@@ -17,7 +20,10 @@ fn wildcard(pat: &str, s: &str) -> bool {
 }
 
 fn star_match_basename(pat: &str, path: &str) -> bool {
-    let base = std::path::Path::new(path).file_name().and_then(|s| s.to_str()).unwrap_or("");
+    let base = std::path::Path::new(path)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
     println!("Path: '{}' -> Basename: '{}'", path, base);
     wildcard(pat, base)
 }

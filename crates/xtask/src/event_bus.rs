@@ -102,7 +102,7 @@ pub trait EventHandler: Send + Sync {
     /// Get handler name
     fn name(&self) -> &str;
     /// Check if handler should process this event
-    fn should_handle(&self, event: &HooksmithEvent) -> bool {
+    fn should_handle(&self, _event: &HooksmithEvent) -> bool {
         true
     }
 }

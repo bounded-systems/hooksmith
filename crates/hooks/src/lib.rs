@@ -2,10 +2,10 @@ pub mod schema;
 pub mod test_framework;
 
 use anyhow::Result;
-use schema::{GitHook, HookContext, HookError};
+use schema::{GitHook, HookContext};
 
 /// Main hook execution function
-pub fn execute_hook(hook_name: &str, args: Vec<String>) -> Result<()> {
+pub fn execute_hook(_hook_name: &str, args: Vec<String>) -> Result<()> {
     let context = HookContext::from_args(args)?;
 
     // Validate the hook context
@@ -182,7 +182,7 @@ pub async fn run_hook_tests() -> Result<()> {
 
 /// Get hook metadata for a specific hook
 pub fn get_hook_metadata(hook_name: &str) -> Result<schema::HookMetadata> {
-    let hook = GitHook::from_name(hook_name)?;
+    let _hook = GitHook::from_name(hook_name)?;
     let context = HookContext::from_args(vec![hook_name.to_string()])?;
     Ok(context.metadata())
 }

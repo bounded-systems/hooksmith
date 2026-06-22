@@ -668,7 +668,7 @@ impl HookStateMachine {
         };
 
         // Emit event completion
-        let duration = start_time.elapsed();
+        let _duration = start_time.elapsed();
         if result.is_ok() {
             emit_info(
                 EventCategory::HookStateMachine,
