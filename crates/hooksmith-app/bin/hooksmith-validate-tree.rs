@@ -1,3 +1,4 @@
+#![allow(unused)]
 use anyhow::{bail, Result};
 use itertools::Itertools;
 use std::collections::HashMap;
@@ -107,6 +108,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_blob(hash: &str) -> Result<()> {
     // Basic blob validation - check if it can be read
     let output = Command::new("git")
@@ -126,6 +128,7 @@ fn validate_blob(hash: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_tree(hash: &str) -> Result<()> {
     // Basic tree validation - check if it can be read
     let output = Command::new("git")
@@ -155,6 +158,7 @@ fn validate_tree(hash: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_tree_entry(mode: &str, object_type: &str, name: &str) -> Result<()> {
     // Validate mode (should be a valid Git mode)
     if !mode.chars().all(|c| c.is_ascii_digit()) {
@@ -179,6 +183,7 @@ fn validate_tree_entry(mode: &str, object_type: &str, name: &str) -> Result<()> 
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_commit(hash: &str) -> Result<()> {
     // Basic commit validation - check if it can be read
     let output = Command::new("git")
@@ -231,6 +236,7 @@ fn validate_commit(hash: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_tag(hash: &str) -> Result<()> {
     // Basic tag validation - check if it can be read
     let output = Command::new("git")

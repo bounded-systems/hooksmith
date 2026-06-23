@@ -4,10 +4,7 @@
 resolver = "2"
 members = [
     "crates/gba",
-    # crates/hooksmith-app — QUARANTINED: 180-file kitchen-sink whose layout is
-    # broken (sources at crate root, Cargo.toml points at src/). It's the target
-    # of the message-stream redesign; excluded from the build until then so the
-    # rest of the workspace compiles. Re-add once the redesign fixes its layout.
+    "crates/hooksmith-app",
     "crates/components/cli-core",
     "crates/components/worktree-runner",
     "crates/components/contract-validator",
