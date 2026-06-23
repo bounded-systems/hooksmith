@@ -424,7 +424,10 @@ mod tests {
             &rules(&["src"], &["src"], &[]),
         );
         assert!(r.passed); // warns don't block
-        assert!(r.findings.iter().any(|f| f.rule == "uncatalogued-name" && f.level == "warn"));
+        assert!(r
+            .findings
+            .iter()
+            .any(|f| f.rule == "uncatalogued-name" && f.level == "warn"));
     }
 
     #[test]
@@ -437,7 +440,12 @@ mod tests {
 
     #[test]
     fn drift_clean_copy_is_empty() {
-        let v = vocab(&["catalog", "store"], &[("store", &["fs", "cas"])], &["hooksmith"], &["validate"]);
+        let v = vocab(
+            &["catalog", "store"],
+            &[("store", &["fs", "cas"])],
+            &["hooksmith"],
+            &["validate"],
+        );
         let r = check_copy_drift_impl("Run the validator.", "body", &v);
         assert!(r.is_empty());
     }
@@ -451,24 +459,14 @@ mod tests {
 
     #[test]
     fn drift_invalid_enum_value_is_error() {
-        let v = vocab(
-            &["store"],
-            &[("store", &["fs", "cas"])],
-            &[],
-            &[],
-        );
+        let v = vocab(&["store"], &[("store", &["fs", "cas"])], &[], &[]);
         let r = check_copy_drift_impl("Use STORE=redis for caching.", "body", &v);
         assert!(r.iter().any(|f| f.message.contains("redis")));
     }
 
     #[test]
     fn drift_valid_enum_value_is_clean() {
-        let v = vocab(
-            &["store"],
-            &[("store", &["fs", "cas"])],
-            &[],
-            &[],
-        );
+        let v = vocab(&["store"], &[("store", &["fs", "cas"])], &[], &[]);
         let r = check_copy_drift_impl("Use STORE=cas for caching.", "body", &v);
         assert!(r.is_empty());
     }
