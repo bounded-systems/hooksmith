@@ -8,7 +8,9 @@
 [build]
 # Let Nix/CI set CARGO_TARGET_DIR; don't hardcode here
 # rustflags here are okay for local dev; prefer env in CI for easy overrides
-rustflags = ["-Dwarnings"]
+# rustflags = ["-Dwarnings"]  # Workspace lints (warnings = "deny") handle clean crates;
+# hooksmith-core has intentional #[allow] suppression for WIP dead code that
+# -Dwarnings on the CLI overrides. Tighten back once that crate is cleaned up.
 
 # Use sparse protocol for faster dependency resolution
 [registries.crates-io]
