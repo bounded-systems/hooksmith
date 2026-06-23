@@ -195,7 +195,14 @@ impl ScopeRefManager {
 
             let note_oid = self
                 .repo
-                .note(Some(&note_ref), &signature, &signature, oid, &note_message, true)
+                .note(
+                    Some(&note_ref),
+                    &signature,
+                    &signature,
+                    oid,
+                    &note_message,
+                    true,
+                )
                 .context("Failed to create/update note")?;
 
             println!("📝 Set metadata for scope {}: {}", scope_name, note_oid);
