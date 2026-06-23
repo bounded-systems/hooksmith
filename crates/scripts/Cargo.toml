@@ -18,6 +18,9 @@ jsonschema = "0.18"
 regex = "1.10"
 walkdir = "2.5"
 
+[lib]
+path = "lib.rs"
+
 [[bin]]
 name = "validate_object_names_contract"
 path = "validate_object_names_contract.rs"

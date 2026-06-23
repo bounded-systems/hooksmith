@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use globset::{Glob, GlobSet, GlobSetBuilder};
-use scope_ref_manager::{HooksmithScopeManager, ScopeRefManager};
+use validate_object_names_contract::{HooksmithScopeManager, ScopeRefManager};
 use serde_json::{json, Value};
 use std::env;
 use std::fs;

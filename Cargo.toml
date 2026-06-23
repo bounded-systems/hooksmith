@@ -12,7 +12,7 @@ members = [
     "crates/components/worktree-runner",
     # crates/components/git-proxy — QUARANTINED: 19 compile errors (git2 Send/Sync, async-trait mismatches). WIP.
     "crates/xtask",
-    # crates/git-agreement — QUARANTINED: gutted (lib refs a missing agreement module). WIP.
+    "crates/git-agreement",
     "crates/tree",
     "crates/files",
     "crates/core",
@@ -23,7 +23,7 @@ members = [
     "crates/hooksmith-validate",
     "crates/tools/migrate-to-monorepo",
     "crates/tools",
-    # crates/scripts — QUARANTINED: validate-object-names-contract bins fail to compile (9 errors). WIP.
+    "crates/scripts",
 ]
 default-members = ["crates/gba"]
 

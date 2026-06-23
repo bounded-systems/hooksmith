@@ -8,10 +8,7 @@
 [build]
 # Let Nix/CI set CARGO_TARGET_DIR; don't hardcode here
 # rustflags here are okay for local dev; prefer env in CI for easy overrides
-# rustflags = ["-Dwarnings"]  # TODO: re-enable after a warning-cleanup pass.
-# Relaxed so the clean-foundation build is green; the WIP crates still emit
-# warnings (cargo fix cleared the auto-fixable ones). Tighten back to -Dwarnings
-# once the remaining unused-import/dead-code warnings are cleared.
+rustflags = ["-Dwarnings"]
 
 # Use sparse protocol for faster dependency resolution
 [registries.crates-io]
