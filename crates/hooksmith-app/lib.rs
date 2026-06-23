@@ -853,18 +853,9 @@ pub fn cleanup_merged_worktree(worktree_path: &str, branch_name: &str) -> Result
     }
 }
 
-/// Command implementations for the CLI
-pub mod commands;
-/// Core modules for CLI functionality
-pub mod modules;
-/// Orchestrator for WASM component management
-pub mod orchestrator;
-
-// Re-export main types
-pub use orchestrator::{
-    BuildConfig, BuildResult, CommandResult, HooksmithOrchestrator, LefthookConfig, LefthookResult,
-    ValidationConfig, ValidationResult, WorktreeOperation, WorktreeResult,
-};
+// commands/, modules/, and orchestrator/ are preserved as reference material
+// for the message-stream redesign (issue #82). They are not compiled until
+// rebuilt around the new event-stream contract.
 
 /// Result type for CLI operations
 pub type CliResult<T> = anyhow::Result<T>;

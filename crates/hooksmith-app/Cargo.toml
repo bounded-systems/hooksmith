@@ -40,6 +40,8 @@ tracing-subscriber.workspace = true
 # Documentation
 rustdoc-stripper.workspace = true
 
+itertools.workspace = true
+
 # Internal workspace dependencies
 hooksmith-core = { path = "../core" }
 git-hooks = { path = "../hooks" }
