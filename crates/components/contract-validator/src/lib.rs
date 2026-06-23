@@ -40,10 +40,7 @@ pub fn validate_names_impl(entries: &[(String, String)], rules: &NamingRules) ->
                 findings.push(Finding {
                     level: "error".into(),
                     rule: "rejected-name".into(),
-                    message: format!(
-                        "\"{}\" matches rejected pattern \"{}\"",
-                        name, pat
-                    ),
+                    message: format!("\"{}\" matches rejected pattern \"{}\"", name, pat),
                     path: Some((*name).to_string()),
                 });
             }
@@ -124,7 +121,8 @@ pub fn check_copy_drift_impl(value: &str, copy_type: &str, vocab: &VocabSpec) ->
     let mut out: Vec<DriftFinding> = Vec::new();
     let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
 
-    let flag_set: std::collections::HashSet<&str> = vocab.flags.iter().map(|s| s.as_str()).collect();
+    let flag_set: std::collections::HashSet<&str> =
+        vocab.flags.iter().map(|s| s.as_str()).collect();
     let bin_set: std::collections::HashSet<&str> = vocab.bins.iter().map(|s| s.as_str()).collect();
     let verb_set: std::collections::HashSet<&str> =
         vocab.verb_ids.iter().map(|s| s.as_str()).collect();
@@ -135,8 +133,8 @@ pub fn check_copy_drift_impl(value: &str, copy_type: &str, vocab: &VocabSpec) ->
     while i + 1 < bytes.len() {
         if bytes[i] == b'-' && bytes[i + 1] == b'-' {
             // Make sure it's not mid-word (preceded by alphanumeric).
-            let preceded_by_word = i > 0
-                && (bytes[i - 1].is_ascii_alphanumeric() || bytes[i - 1] == b'-');
+            let preceded_by_word =
+                i > 0 && (bytes[i - 1].is_ascii_alphanumeric() || bytes[i - 1] == b'-');
             if !preceded_by_word {
                 // Collect the flag name.
                 let start = i + 2;
@@ -217,18 +215,12 @@ pub fn check_copy_drift_impl(value: &str, copy_type: &str, vocab: &VocabSpec) ->
                 if !bin_set.contains(bin) {
                     out.push(DriftFinding {
                         level: "error".into(),
-                        message: format!(
-                            "registry-drift: `{}` — unknown bin",
-                            bin
-                        ),
+                        message: format!("registry-drift: `{}` — unknown bin", bin),
                     });
                 } else if !verb_set.contains(verb) {
                     out.push(DriftFinding {
                         level: "error".into(),
-                        message: format!(
-                            "registry-drift: `{}` — verb not in registry",
-                            verb
-                        ),
+                        message: format!("registry-drift: `{}` — verb not in registry", verb),
                     });
                 }
             }
@@ -374,7 +366,12 @@ mod tests {
             .collect()
     }
 
-    fn vocab(flags: &[&str], enums: &[(&str, &[&str])], bins: &[&str], verbs: &[&str]) -> VocabSpec {
+    fn vocab(
+        flags: &[&str],
+        enums: &[(&str, &[&str])],
+        bins: &[&str],
+        verbs: &[&str],
+    ) -> VocabSpec {
         VocabSpec {
             flags: flags.iter().map(|s| s.to_string()).collect(),
             enums: enums
