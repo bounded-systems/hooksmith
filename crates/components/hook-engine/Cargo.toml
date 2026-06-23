@@ -16,4 +16,4 @@ host = ["wit-bindgen"]
 wit-bindgen = { version = "0.20", optional = true }
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
