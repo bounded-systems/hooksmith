@@ -66,7 +66,7 @@ impl ScopeRefManager {
                     .to_string();
                 Ok(Some(commit_sha))
             }
-            Err(git2::Error::from_str("reference not found")) => Ok(None),
+            Err(e) if e.code() == git2::ErrorCode::NotFound => Ok(None),
             Err(e) => Err(anyhow::anyhow!(
                 "Failed to find reference {}: {}",
                 ref_name,
@@ -169,7 +169,7 @@ impl ScopeRefManager {
                 println!("🗑️  Deleted scope ref: {}", ref_name);
                 Ok(())
             }
-            Err(git2::Error::from_str("reference not found")) => {
+            Err(e) if e.code() == git2::ErrorCode::NotFound => {
                 println!("⚠️  Scope ref not found: {}", ref_name);
                 Ok(())
             }
@@ -195,7 +195,7 @@ impl ScopeRefManager {
 
             let note_oid = self
                 .repo
-                .note(&note_ref, oid, &signature, &signature, &note_message)
+                .note(Some(&note_ref), &signature, &signature, oid, &note_message, true)
                 .context("Failed to create/update note")?;
 
             println!("📝 Set metadata for scope {}: {}", scope_name, note_oid);
@@ -213,12 +213,12 @@ impl ScopeRefManager {
 
             let note_ref = "refs/notes/hooksmith-scopes".to_string();
 
-            match self.repo.find_note(&note_ref, oid) {
+            match self.repo.find_note(Some(&note_ref), oid) {
                 Ok(note) => {
                     let message = note.message().context("Note has no message")?;
                     serde_json::from_str(message).context("Failed to parse note as JSON")
                 }
-                Err(git2::Error::from_str("note not found")) => Ok(json!({})),
+                Err(e) if e.code() == git2::ErrorCode::NotFound => Ok(json!({})),
                 Err(e) => Err(anyhow::anyhow!("Failed to find note: {}", e)),
             }
         } else {
