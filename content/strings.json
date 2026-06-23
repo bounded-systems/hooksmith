@@ -5,6 +5,6 @@
   },
   "description": {
     "type": "meta",
-    "value": "Fast, workspace-style Rust tools for inspecting Git storage, performance, and repo hygiene. Built for large monorepos and CI."
+    "value": "Fast, workspace-style Rust tools for inspecting Git storage, performance, and repo hygiene.  Built for large monorepos and CI."
   }
 }
