@@ -1,3 +1,4 @@
+#![allow(unused)]
 use anyhow::{bail, Result};
 use itertools::Itertools;
 use std::collections::HashMap;

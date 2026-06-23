@@ -1,3 +1,4 @@
+#![allow(unused)]
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
