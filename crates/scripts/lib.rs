@@ -162,7 +162,7 @@ impl ScopeRefManager {
         let ref_name = format!("{}/{}", self.namespace, scope_name);
 
         match self.repo.find_reference(&ref_name) {
-            Ok(reference) => {
+            Ok(mut reference) => {
                 reference
                     .delete()
                     .context(format!("Failed to delete ref: {}", ref_name))?;
@@ -196,9 +196,9 @@ impl ScopeRefManager {
             let note_oid = self
                 .repo
                 .note(
-                    Some(&note_ref),
                     &signature,
                     &signature,
+                    Some(note_ref.as_str()),
                     oid,
                     &note_message,
                     true,
@@ -220,7 +220,7 @@ impl ScopeRefManager {
 
             let note_ref = "refs/notes/hooksmith-scopes".to_string();
 
-            match self.repo.find_note(Some(&note_ref), oid) {
+            match self.repo.find_note(Some(note_ref.as_str()), oid) {
                 Ok(note) => {
                     let message = note.message().context("Note has no message")?;
                     serde_json::from_str(message).context("Failed to parse note as JSON")
