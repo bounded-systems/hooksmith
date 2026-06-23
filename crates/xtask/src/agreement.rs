@@ -2306,6 +2306,8 @@ mod tests {
             scope: "test-scope".to_string(),
             contract: "test-contract".to_string(),
             description: Some("Test agreement".to_string()),
+            path: None,
+            anchored: false,
         };
 
         let list_cmd = AgreementCommands::List {
@@ -2337,6 +2339,7 @@ mod tests {
         let create_from_file_cmd = AgreementCommands::CreateFromFile {
             contract_file: "contracts/test.jsonc".to_string(),
             description: Some("Test agreement from file".to_string()),
+            scope: None,
         };
 
         // Just verify the commands can be created

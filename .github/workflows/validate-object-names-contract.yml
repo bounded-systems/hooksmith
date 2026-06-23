@@ -1,0 +1,33 @@
+name: validate-object-names-contract
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-root:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+
+      - name: System deps (git2 → openssl/zlib)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config libssl-dev zlib1g-dev
+
+      - name: Validate object-names contract
+        run: cargo run -p scripts --bin validate_object_names_contract
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "## Object Names Contract Validation Failed" >> $GITHUB_STEP_SUMMARY
+          echo "The root tree structure violates the object-names contract." >> $GITHUB_STEP_SUMMARY
+          echo "See \`contracts/object-names@v1.json\` for the contract definition." >> $GITHUB_STEP_SUMMARY
