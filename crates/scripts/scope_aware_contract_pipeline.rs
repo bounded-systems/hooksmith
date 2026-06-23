@@ -31,7 +31,6 @@ struct ValidationResult {
     stability_metrics: Option<Value>,
 }
 
-#[derive(Debug)]
 struct ScopeAwareContractValidator {
     cache_dir: String,
     scope_manager: HooksmithScopeManager,
@@ -566,7 +565,7 @@ fn main() -> Result<()> {
     match command.as_str() {
         "validate" => {
             let current_commit = if args.len() > 2 {
-                &args[2]
+                args[2].clone()
             } else {
                 // Get current HEAD
                 let output = Command::new("git")
