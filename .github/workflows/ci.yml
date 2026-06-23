@@ -1,9 +1,6 @@
 name: ci
 
-# Minimal, honest CI for the clean-foundation workspace: format + build + test on
-# the crates that actually compile. (The contract-validation / hook-engine workflows
-# are parked in .github/workflows-disabled until the message-stream redesign rebuilds
-# those crates — see the quarantine notes in Cargo.toml.)
+# Minimal, honest CI for the clean-foundation workspace: format + build + test.
 on:
   push:
     branches: [main]
@@ -26,9 +23,5 @@ jobs:
         run: cargo fmt --all --check
       - name: Build
         run: cargo check --workspace
-      # Non-blocking: some test code is stale (e.g. xtask tests reference an old
-      # AgreementCommands shape). Build + fmt gate the foundation; tests run and
-      # report but don't block until the test-code cleanup. Re-make blocking then.
-      - name: Test (non-blocking — WIP test code)
+      - name: Test
         run: cargo test --workspace
-        continue-on-error: true
