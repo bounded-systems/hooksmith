@@ -1,11 +1,11 @@
 use anyhow::{Context, Result};
 use globset::{Glob, GlobSet, GlobSetBuilder};
-use validate_object_names_contract::{HooksmithScopeManager, ScopeRefManager};
 use serde_json::{json, Value};
 use std::env;
 use std::fs;
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
+use validate_object_names_contract::{HooksmithScopeManager, ScopeRefManager};
 
 #[derive(Debug, Clone)]
 struct ValidationScope {
