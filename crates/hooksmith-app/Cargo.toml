@@ -53,26 +53,29 @@ object-names-auditor = { path = "../standalone-auditor" }
 hooksmith-validate = { path = "../hooksmith-validate" }
 hooksmith-tools = { path = "../tools" }
 
+[lib]
+path = "lib.rs"
+
 [[bin]]
 name = "hooksmith"
-path = "src/main.rs"
+path = "main.rs"
 
 [[bin]]
 name = "dircheck-tree"
-path = "src/bin/dircheck-tree.rs"
+path = "bin/dircheck-tree.rs"
 
 [[bin]]
 name = "dircheck-files"
-path = "src/bin/dircheck-files.rs"
+path = "bin/dircheck-files.rs"
 
 [[bin]]
 name = "dircheck"
-path = "src/bin/dircheck.rs"
+path = "bin/dircheck.rs"
 
 [[bin]]
 name = "hooksmith-validate-tree"
-path = "src/bin/hooksmith-validate-tree.rs"
+path = "bin/hooksmith-validate-tree.rs"
 
 [[bin]]
 name = "hooksmith-validate-push"
-path = "src/bin/hooksmith-validate-push.rs"
+path = "bin/hooksmith-validate-push.rs"
