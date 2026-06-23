@@ -559,6 +559,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "contract-validator"
+version = "0.1.0"
+dependencies = [
+ "wit-bindgen",
+]
+
+[[package]]
 name = "convert_case"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1485,6 +1492,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589533453244b0995c858700322199b2becb13b627df2851f64a2775d024abcf"
 dependencies = [
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "hooksmith"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "console",
+ "dircheck-files",
+ "dircheck-tree",
+ "git-agreement",
+ "git-hooks",
+ "git-inspector",
+ "git-snapshot",
+ "git2",
+ "hooksmith-core",
+ "hooksmith-tools",
+ "hooksmith-validate",
+ "indicatif",
+ "object-names-auditor",
+ "rustdoc-stripper",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tokio",
+ "toml 0.8.23",
+ "tracing",
+ "tracing-subscriber",
+ "which",
+ "xtask",
 ]
 
 [[package]]
