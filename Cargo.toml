@@ -8,6 +8,7 @@ members = [
     "crates/components/cli-core",
     "crates/components/worktree-runner",
     "crates/components/contract-validator",
+    "crates/components/hook-engine",
     # crates/components/git-proxy — QUARANTINED: 19 compile errors (git2 Send/Sync, async-trait mismatches). WIP.
     "crates/xtask",
     "crates/git-agreement",
