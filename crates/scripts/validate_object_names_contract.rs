@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use serde_json::Value;
-use std::collections::HashSet;
 use std::process::Command;
 
 #[derive(Debug)]

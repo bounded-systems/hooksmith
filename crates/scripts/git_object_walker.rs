@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use git2::{ObjectType, Repository, Tree, TreeEntry, TreeWalkMode, TreeWalkResult};
+use git2::{ObjectType, Repository, Tree, TreeWalkMode, TreeWalkResult};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::path::Path;

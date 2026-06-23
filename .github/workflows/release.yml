@@ -44,7 +44,7 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
             substituters = https://cache.nixos.org/ https://hooksmith.cachix.org
-            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hooksmith.cachix.org-1:YOUR_CACHE_KEY_HERE
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             
       - name: Setup Cachix
         uses: cachix/cachix-action@ad2ddac53f961de1989924296a1f236fcfbaa4fc # v15

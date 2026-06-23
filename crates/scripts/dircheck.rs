@@ -1,7 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use git2::{ObjectType, Repository, Tree, TreeWalkMode, TreeWalkResult};
-use jsonschema::{Draft, JSONSchema};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};

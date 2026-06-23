@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 use serde_json::Value;
-use std::collections::HashSet;
 use std::process::Command;
 
 fn main() -> Result<()> {
