@@ -1,0 +1,19 @@
+[package]
+name = "hook-engine"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[package.metadata.component]
+
+[features]
+default = []
+# Enable for host-native builds and testing.
+host = ["wit-bindgen"]
+
+[dependencies]
+wit-bindgen = { version = "0.20", optional = true }
+
+[lib]
+crate-type = ["cdylib"]

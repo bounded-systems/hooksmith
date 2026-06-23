@@ -40,6 +40,9 @@ rustdoc-stripper.workspace = true
 
 itertools.workspace = true
 
+# Hook engine — pure policy evaluator
+hook-engine = { path = "../components/hook-engine", features = ["host"] }
+
 # Internal workspace dependencies
 hooksmith-core = { path = "../core" }
 git-hooks = { path = "../hooks" }
