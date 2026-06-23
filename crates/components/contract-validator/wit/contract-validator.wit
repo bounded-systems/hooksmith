@@ -1,0 +1,100 @@
+package hooksmith:contract-validator@0.1.0;
+
+/// Pure contract validation — no git I/O.
+///
+/// The host reads tree entries from git and passes them in. The component
+/// does the rule matching and drift checking. This split means the component
+/// compiles to WASM (no git2/libgit2), while the host retains git access.
+interface contract-validator {
+
+  /// A single entry in a git tree (file or subtree).
+  record tree-entry {
+    /// Filename or directory name (not a full path — one level only).
+    name: string,
+    /// "blob" | "tree"
+    kind: string,
+  }
+
+  /// A named set of naming rules derived from a contract JSON.
+  record naming-rules {
+    /// Names (or glob patterns) that MUST be present.
+    required: list<string>,
+    /// Names (or glob patterns) that are permitted.
+    allowed: list<string>,
+    /// Names (or glob patterns) that are explicitly forbidden.
+    rejected: list<string>,
+  }
+
+  /// One problem found during validation.
+  record finding {
+    /// "error" | "warn" | "info"
+    level: string,
+    /// Short machine-readable rule identifier.
+    rule: string,
+    /// Human-readable explanation.
+    message: string,
+    /// The path/name that triggered the finding (if applicable).
+    path: option<string>,
+  }
+
+  /// Output of validate-names.
+  record validation-result {
+    /// True iff no error-level findings.
+    passed: bool,
+    /// 0–10 (10 = fully compliant).
+    score: u8,
+    findings: list<finding>,
+  }
+
+  /// Vocabulary built from a verbspec registry — the host constructs this
+  /// from its JS/TS registry so the Rust component doesn't import verbspec.
+  record vocab-spec {
+    /// All flag names that are valid (e.g. "catalog", "store").
+    flags: list<string>,
+    /// Enum-valued flags and their allowed values.
+    enums: list<enum-entry>,
+    /// Known binary names (e.g. "hooksmith", "hooksmith-validate").
+    bins: list<string>,
+    /// Known verb IDs (e.g. "validate", "check", "report").
+    verb-ids: list<string>,
+  }
+
+  /// One enum-valued flag and its allowed values.
+  record enum-entry {
+    flag: string,
+    values: list<string>,
+  }
+
+  /// One drift finding from check-copy-drift.
+  record drift-finding {
+    level: string,
+    message: string,
+  }
+
+  /// Validate tree entry names against a set of naming rules.
+  ///
+  /// The host reads the git tree (e.g. via git2 or gitoxide) and passes the
+  /// flat entry list here. The component applies required/allowed/rejected
+  /// pattern matching and returns findings.
+  validate-names: func(
+    entries: list<tree-entry>,
+    rules: naming-rules,
+  ) -> validation-result;
+
+  /// Check a prose string for references that have drifted from the
+  /// verbspec registry — unknown --flags, invalid ENUM=value pairs, or
+  /// unrecognised `bin verb` backtick tokens.
+  ///
+  /// Mirrors string-audit's registryDrift but runs in WASM so it can be
+  /// called from any surface (MCP, CLI, CI) without a Node.js verbspec import.
+  check-copy-drift: func(
+    value: string,
+    /// "headline" | "body" | "subhead" | "title" (other types are skipped).
+    copy-type: string,
+    vocab: vocab-spec,
+  ) -> list<drift-finding>;
+}
+
+world contract-validator-world {
+  export contract-validator;
+}

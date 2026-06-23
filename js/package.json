@@ -1,0 +1,23 @@
+{
+  "name": "@hooksmith/contract-verbs",
+  "version": "0.1.0",
+  "description": "VerbSpec surface for hooksmith contract validation — CLI + MCP from one typed contract.",
+  "type": "module",
+  "bin": {
+    "hooksmith-validate": "cli.mjs"
+  },
+  "scripts": {
+    "build:wasm": "cargo build --target wasm32-wasip2 -p contract-validator --release --manifest-path ../Cargo.toml",
+    "build:jco": "jco transpile ../target/wasm32-wasip2/release/contract_validator.wasm --wit ../crates/components/contract-validator/wit/ -o dist/contract-validator/ --map 'hooksmith:contract-validator/contract-validator=./contract-validator.js'",
+    "build": "npm run build:wasm && npm run build:jco",
+    "test": "node test.mjs",
+    "mcp": "node mcp.mjs"
+  },
+  "dependencies": {
+    "@bounded-systems/verbspec": "npm:@jsr/bounded-systems__verbspec@^0.3.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@bytecodealliance/jco": "^1.0.0"
+  }
+}
