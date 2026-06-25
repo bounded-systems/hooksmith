@@ -93,7 +93,7 @@ rustdoc-stripper = "0.1"
 # WASM and WIT support
 wasmtime = "18.0"
 wit-bindgen = "0.20"
-wasmtime-wasi = "18.0"
+wasmtime-wasi = "24.0"
 wit-parser = "0.12"
 wit-component = "0.236"
 wat = "1.0"
