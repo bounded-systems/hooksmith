@@ -1,185 +1,179 @@
-# Git Blob Analysis Tools
+# hooksmith
 
-Fast, workspace-style Rust tools for inspecting Git storage, performance, and repo hygiene. Built for large monorepos and CI.
+**A stream-driven Git hook engine.** A hook is a capability that reacts to a git
+event stream:
+
+```
+git → hook-event → policy engine → hook-result → exit
+```
+
+Hook binaries are thin wrappers that forward the git event (args, stdin, `GIT_*`
+env) to a pure policy engine and exit with its verdict. The policy engine lives
+in `crates/components/hook-engine` as a host-native build today and as a
+[WebAssembly component](#wasm-components) (`wasm32-wasip2`) for portable,
+sandboxed, language-agnostic embedding (including JS/MCP via `jco`).
 
 ## Quick start
 
 ```bash
-# Run a tool directly (Cargo)
-cargo run --bin repository_size_auditor
+# Status
+cargo run -p hooksmith -- status
 
-# Or use the meta CLI (recommended)
-cargo run -p gba -- --help
+# Evaluate a hook event (what an installed hook binary calls)
+cargo run -p hooksmith -- evaluate --hook pre-commit
+echo "<old> <new> refs/heads/main" | cargo run -p hooksmith -- evaluate --hook pre-push
 
 # Reproducible (Nix)
-nix run .#gba -- --help
+nix run .#hooksmith -- status
 ```
 
-## Tool matrix
+`evaluate` exits `0` when all policies pass and non-zero when an `error`-level
+finding blocks the event. Findings print to stderr as `[level] rule — message`.
 
-| Binary | What it answers | Typical use | Example |
-|--------|----------------|-------------|---------|
-| `repository_size_auditor` | "Is this repo within healthy size limits?" | CI gate | `cargo run --bin repository_size_auditor -- --fail-on 1` |
-| `rust_blob_analyzer` | "Which .rs files are biggest/hottest?" | Dev focus | `cargo run --bin rust_blob_analyzer` |
-| `git_delta_analyzer` | "Where can delta compression save space?" | Storage tuning | `cargo run --bin git_delta_analyzer` |
-| `git_hygiene_reporter` | "What should be ignored / moved to LFS?" | Hygiene | `cargo run --bin git_hygiene_reporter --format md` |
-| `git_lfs_analyzer` / `git_lfs_auto_tracker` | "What should be LFS?" | LFS migration | `cargo run --bin git_lfs_auto_tracker` |
-| `packfile_delta_analyzer` | "What's actually in .pack?" | Low-level audit | `cargo run --bin packfile_delta_analyzer` |
-| `file_churn_analyzer` | "What files churn the most?" | Extraction picks | `cargo run --bin file_churn_analyzer "6 months ago"` |
-| `tree_object_stability_auditor` | "Which trees are unstable?" | Boundaries | `cargo run --bin tree_object_stability_auditor` |
-| `tree_to_repo_extractor` | "Split a dir into a repo (with history)?" | Extraction | `cargo run --bin tree_to_repo_extractor scripts ../new-repo` |
+## How it works
 
-Many tools support `--format table|json|md` and `--fail-on <N>` to fail CI when thresholds are exceeded.
+A hook binary installed in `.git/hooks/` does nothing but call back into the
+engine:
 
-## Installation
+```sh
+#!/bin/sh
+exec hooksmith evaluate --hook pre-commit "$@"
+```
 
-- **Rust**: 1.88+ (stable).
-- **Optional (recommended)**: Nix flakes for hermetic builds and caching.
+`hooksmith evaluate` collects the git context (trailing args, stdin, `GIT_*`
+env, repo root) and hands it to `hook_engine`, which is pure — no I/O, no `git2`
+— so policy logic is deterministic and testable in isolation.
+
+### Built-in policies
+
+| Hook | Policy | What it enforces |
+|------|--------|------------------|
+| `pre-commit` | object naming | Top-level tree entries follow the bounded-systems naming convention (kebab-case, known names) |
+| `pre-push` | push safety | Refuses deleting a protected branch; warns when pushing to one |
+| `commit-msg` | conventional-commits | **Stubbed** — emits an `info` finding; format enforcement not yet wired |
+
+## WASM components
+
+The reusable pieces are [WebAssembly Interface Types (WIT)] components under
+`crates/components/`, built with `cargo build --target wasm32-wasip2` and
+transpiled to JS/MCP via [`jco`] (see `js/`):
+
+| Component | Role | Status |
+|-----------|------|--------|
+| `hook-engine` | Pure policy evaluator (the engine above) | ✅ wired |
+| `contract-validator` | Validates tree entries + copy drift against declarative rules | ✅ wired |
+| `git-filter` | Filters/validates git objects (blob, tree, commit, tag) | ✅ wired |
+| `worktree-runner` | Worktree creation / listing | ✅ wired |
+| `hook-builder` | Hook source validation + binary build/optimization | ✅ wired |
+| `validation-handler` | Validation dispatch surface | ✅ wired |
+| `git-proxy` | Git operation proxy | ⚠️ quarantined (WIP — excluded from the workspace) |
+
+Build the WASM + JS surface:
 
 ```bash
-# Dev shell with pinned toolchain
-nix develop
-# Then use Cargo normally
-cargo build
+cd js
+npm install
+npm run build      # cargo build (wasm32-wasip2) → jco transpile
+npm run mcp        # serve the contract/hook verbs over MCP
 ```
 
-## Project Structure
+The JS package (`@hooksmith/verbs`) exposes the engine as both a CLI
+(`hooksmith-validate`, `hooksmith-hooks`) and an MCP server from one typed
+[VerbSpec] contract.
+
+## Configuration: `.hooksmith/`
+
+The declarative policy store lives at the repo root:
+
+```
+.hooksmith/
+├── schemas/        # JSON Schemas for hooks, contracts, worktrees, validation
+│   ├── hooksmith/  # hook-builder, lefthook-generator, static-hook, worktree-*, …
+│   ├── git/  blob/  tree/  ref/
+├── git/            # agreements, contracts, scopes
+└── hooks/          # git/ and github/ hook definitions
+```
+
+Contracts and agreements declare *what* must hold; the engine and
+`contract-validator` enforce it.
+
+## Bundled tools: git blob analysis (`gba`)
+
+The repo also ships a set of git storage / hygiene auditors behind the `gba`
+meta CLI. These are independent of the hook engine and useful on their own for
+large monorepos and CI gates:
+
+```bash
+cargo run -p gba -- --help
+cargo run -p gba -- repo-audit --fail-on 1 --format json
+nix run .#gba -- rust-blob
+```
+
+| Subcommand | Answers |
+|------------|---------|
+| `repo-audit` | Is this repo within healthy size limits? (`--fail-on N`) |
+| `rust-blob` | Which `.rs` files are biggest/hottest? |
+| `delta` | Where can delta compression save space? |
+| `hygiene` | What should be ignored / moved to LFS? |
+| `lfs` | What should be tracked with Git LFS? |
+| `packfile` | What's actually in the `.pack`? |
+| `churn "<since>"` | Which files churn the most? |
+| `tree-stability` | Which trees are unstable (extraction boundaries)? |
+| `extract <src> <target>` | Split a directory into its own repo, with history |
+
+Most subcommands accept `--format table|json|md`.
+
+> Note: `gba` is currently the workspace `default-members` and the default Nix
+> app (`nix run` with no attribute), a holdover from this repo's origin. Use the
+> explicit `-p hooksmith` / `.#hooksmith` targets for the hook engine.
+
+## Install & build
+
+- **Rust**: 1.88.0 (pinned in `rust-toolchain.toml`).
+- **Nix** (recommended): hermetic builds + caching.
+
+```bash
+# Dev shell with the pinned toolchain
+nix develop
+
+# Cargo
+cargo build --workspace
+cargo test --workspace
+
+# Nix packages: hooksmith | gba | analysis-tools | git-hooks | dev-tools
+nix build .#hooksmith
+```
+
+A `justfile` provides developer shortcuts (`just build`, `just run`, `just ci`).
+
+## Project structure
 
 ```
 hooksmith/
-├── .config/                    # Real configuration files
-│   ├── .editorconfig          # Editor configuration
-│   ├── lefthook.yml           # Git hooks configuration
-│   └── lefthook-example.yml   # Example hooks configuration
-├── crates/                    # Rust crates
-│   ├── gba/                   # Git Blob Analysis meta CLI
-│   ├── xtask/                 # Build system and tools
-│   │   └── src/config/        # Xtask configuration files
-│   │       ├── component-registry.jsonc
-│   │       ├── event-registry.jsonc
-│   │       ├── github-actions.jsonc
-│   │       └── ...
-│   └── ...                    # Other crates
-├── data/                      # Large data files
-│   └── languages.yml          # Language definitions
-├── docs/                      # Documentation
-│   └── examples/              # Example outputs
-│       └── enhanced-contract-validation-results.sarif
-└── .github/                   # GitHub-specific files
-    └── inputs/                # Test input files for workflows
+├── crates/
+│   ├── hooksmith-app/        # `hooksmith` CLI — the hook engine host
+│   ├── components/           # WASM components (hook-engine, contract-validator, …)
+│   ├── gba/                  # bundled git-blob-analysis meta CLI
+│   ├── git-agreement/        # contract/agreement model
+│   ├── tree/ files/ snapshot/ inspector/ standalone-auditor/   # analysis crates
+│   ├── xtask/                # build/codegen tasks (generates config + toolchain)
+│   └── docs/                 # design notes, guides, generated docs
+├── js/                       # WASM→JS/MCP surface (@hooksmith/verbs)
+├── .hooksmith/               # declarative policy store (schemas, contracts, hooks)
+└── flake.nix                 # Nix packages, apps, dev shell
 ```
 
-## Workspace layout & defaults
+## Status & roadmap
 
-Make one crate your default target (meta CLI `gba`):
+The engine and core components are wired and evaluated end-to-end; some policies
+are still being filled in.
 
-```toml
-# Cargo.toml (root)
-[workspace]
-members = [
-  "crates/gba",                # meta CLI (recommended)
-  "crates/repository_size_auditor",
-  "crates/rust_blob_analyzer",
-  "crates/git_delta_analyzer",
-  # ...others
-]
-default-members = ["crates/gba"]
-resolver = "2"
-```
+- [ ] Wire the `commit-msg` conventional-commits policy (currently stubbed)
+- [ ] Un-quarantine `git-proxy` (resolve `git2` `Send`/`Sync` + async-trait issues)
+- [ ] Run the engine via `wasmtime` (WASM) in the host rather than the native build
+- [ ] Make `hooksmith` the workspace/Nix default once parity with `gba` tooling lands
+- [ ] SARIF export for findings; richer contract-drift diagnostics
 
-## Meta CLI (optional but nice)
-
-Create `crates/gba` that re-exports subcommands (clap) so users can run:
-
-```bash
-cargo run -p gba -- rust-blob
-cargo run -p gba -- repo-audit --fail-on 1
-```
-
-## Justfile (developer ergonomics)
-
-```makefile
-MAIN_PKG := gba
-
-default: build
-
-build:
-    cargo build -p {{MAIN_PKG}}
-
-run *ARGS:
-    cargo run -p {{MAIN_PKG}} -- {{ARGS}}
-
-test:
-    cargo test --workspace
-
-clippy:
-    cargo clippy --workspace --all-targets -- -D warnings
-
-nix-build:
-    nix build .#{{MAIN_PKG}}
-```
-
-## Nix flake (default package/app)
-
-Point Nix defaults to the meta CLI (or your chosen main crate):
-
-```nix
-# flake.nix (excerpt)
-packages.${system}.gba = craneLib.buildPackage {
-  pname = "gba";
-  src = craneLib.cleanCargoSource (craneLib.path ./.);
-  cargoExtraArgs = "--package gba";
-};
-packages.${system}.default = packages.${system}.gba;
-apps.${system}.default = flake-utils.lib.mkApp {
-  drv = packages.${system}.gba;
-  exePath = "/bin/gba";
-};
-```
-
-## Configuration (env overrides)
-
-All tools read sensible defaults and accept flags. You can also override via env:
-
-- **Repo/paths**
-  - `GBA_REPO_PATH` (default: `.`)
-  - `GBA_GIT_ARGS` (extra args for internal git calls)
-- **Thresholds**
-  - `GBA_RUST_FILE_WARN_KB` (default: 100)
-  - `GBA_LFS_MIN_MB` (default: 50)
-  - `GBA_MAX_REPO_SIZE_MB` (for repository_size_auditor)
-  - `GBA_CHURN_SINCE` (e.g., `3 months ago`)
-- **Output/behavior**
-  - `GBA_OUTPUT = table|json|md`
-  - `GBA_FAIL_ON = integer` → non-zero exit if findings ≥ N
-
-Flags always win over env.
-
-## CI usage
-
-```yaml
-# .github/workflows/ci.yml (snippet)
-- name: Build
-  run: cargo build --workspace --locked
-
-- name: Lints (fail on warnings)
-  run: cargo clippy --workspace --all-targets -- -D warnings
-
-- name: Repo audit (CI gate)
-  run: cargo run -p repository_size_auditor -- --fail-on 1 --format json
-```
-
-## Tips & best practices
-
-- Keep `.rs` files < ~100KB where possible; split hot `main.rs`.
-- Track big binaries with LFS; mark truly binary types `-delta` in `.gitattributes`.
-- Repack periodically: `git repack -Ad --window=250 --depth=50`.
-- Use `--fail-on` in CI to keep things green and fast.
-
-## Roadmap
-
-- SARIF export for code scanning
-- Mermaid graphs for stability trees
-- Git notes for inline findings
-- Auto-apply: optional "fix-it" mode for hygiene
-# Test commit
+[WebAssembly Interface Types (WIT)]: https://component-model.bytecodealliance.org/design/wit.html
+[`jco`]: https://github.com/bytecodealliance/jco
+[VerbSpec]: https://jsr.io/@bounded-systems/verbspec
