@@ -47,7 +47,9 @@ pub struct GitNotesManager {
 impl GitNotesManager {
     /// Create a new Git notes manager
     pub fn new(repo_path: &Path) -> Result<Self> {
-        let repo = Repository::open(repo_path)
+        // `discover` walks upward to the enclosing repository, so this works
+        // whether `repo_path` is the work-tree root or a subdirectory.
+        let repo = Repository::discover(repo_path)
             .with_context(|| format!("Failed to open repository at {repo_path:?}"))?;
 
         Ok(GitNotesManager {
@@ -443,7 +445,12 @@ mod tests {
         let _repo = git2::Repository::init(temp_dir.path()).unwrap();
 
         let manager = GitNotesManager::new(temp_dir.path()).unwrap();
-        assert_eq!(manager.repo_path(), temp_dir.path());
+        // Canonicalize both sides: git2 resolves symlinks (e.g. macOS
+        // /tmp → /private/tmp), so a raw path compare would spuriously fail.
+        assert_eq!(
+            manager.repo_path().canonicalize().unwrap(),
+            temp_dir.path().canonicalize().unwrap()
+        );
     }
 
     #[test]

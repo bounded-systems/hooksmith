@@ -430,9 +430,10 @@ fn strip_jsonc_comments(content: &str) -> String {
             stripped_line.push(ch);
         }
 
-        // Only add non-empty lines
+        // Only add non-empty lines; trim trailing whitespace left behind by
+        // removed trailing comments.
         if !stripped_line.trim().is_empty() {
-            result.push_str(&stripped_line);
+            result.push_str(stripped_line.trim_end());
             result.push('\n');
         }
     }
