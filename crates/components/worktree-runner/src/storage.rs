@@ -120,17 +120,19 @@ impl WorktreeStorage {
 
     /// Get the filename for a CRD
     fn get_crd_filename(&self, branch_name: &str) -> String {
-        // Sanitize branch name for filename
-        let sanitized = branch_name
-            .replace('/', "_")
-            .replace('\\', "_")
-            .replace(':', "_")
-            .replace('*', "_")
-            .replace('?', "_")
-            .replace('"', "_")
-            .replace('<', "_")
-            .replace('>', "_")
-            .replace('|', "_");
+        // Sanitize branch name for filename: keep alphanumerics, '-' and '_';
+        // replace every other character (path separators, shell metachars, etc.)
+        // with '_'.
+        let sanitized: String = branch_name
+            .chars()
+            .map(|c| {
+                if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                    c
+                } else {
+                    '_'
+                }
+            })
+            .collect();
 
         format!("{}.json", sanitized)
     }
