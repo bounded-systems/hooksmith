@@ -171,7 +171,8 @@ fn run_commit_msg_policy(msg_path: &str, findings: &mut Vec<PolicyFinding>) {
         rule: "commit-msg/conventional-commits",
         message: "commit-msg policy not yet wired — skipping".to_string(),
         suggestion: Some(
-            "Pass commit message content via stdin to enable Conventional Commits check".to_string(),
+            "Pass commit message content via stdin to enable Conventional Commits check"
+                .to_string(),
         ),
         path: None,
     });
@@ -291,7 +292,14 @@ fn hook_kind_to_str(kind: &HookKind) -> &'static str {
 mod tests {
     use super::*;
 
-    fn evt(hook: &str) -> (&str, Vec<String>, Option<&'static str>, Vec<(String, String)>) {
+    fn evt(
+        hook: &str,
+    ) -> (
+        &str,
+        Vec<String>,
+        Option<&'static str>,
+        Vec<(String, String)>,
+    ) {
         (hook, vec![], None, vec![])
     }
 
@@ -316,15 +324,15 @@ mod tests {
         assert!(
             r.findings
                 .iter()
-                .any(|f| f.level == FindingLevel::Info
-                    && f.rule.contains("conventional-commits")),
+                .any(|f| f.level == FindingLevel::Info && f.rule.contains("conventional-commits")),
             "should emit info finding"
         );
     }
 
     #[test]
     fn pre_push_blocks_main_delete() {
-        let stdin = "refs/heads/main 0000000000000000000000000000000000000000 refs/heads/main abc123\n";
+        let stdin =
+            "refs/heads/main 0000000000000000000000000000000000000000 refs/heads/main abc123\n";
         let r = evaluate_impl_raw("pre-push", &[], Some(stdin), &[], "/repo");
         assert!(!r.allow, "should block delete of main");
         assert_eq!(r.exit_code, 1);

@@ -12,7 +12,11 @@ fn main() -> Result<()> {
     // git writes ref-lines to the hook's stdin.
     let mut stdin_buf = String::new();
     let _ = std::io::stdin().read_to_string(&mut stdin_buf);
-    let stdin = if stdin_buf.is_empty() { None } else { Some(stdin_buf.as_str()) };
+    let stdin = if stdin_buf.is_empty() {
+        None
+    } else {
+        Some(stdin_buf.as_str())
+    };
 
     let env_vars: Vec<(String, String)> = std::env::vars()
         .filter(|(k, _)| k.starts_with("GIT_") || k == "HOME")
@@ -22,8 +26,7 @@ fn main() -> Result<()> {
         .or_else(|_| std::env::var("PWD"))
         .unwrap_or_else(|_| ".".to_string());
 
-    let result =
-        hook_engine::evaluate_impl_raw("pre-push", &args, stdin, &env_vars, &repo_root);
+    let result = hook_engine::evaluate_impl_raw("pre-push", &args, stdin, &env_vars, &repo_root);
     print_findings(&result);
 
     process::exit(result.exit_code as i32);

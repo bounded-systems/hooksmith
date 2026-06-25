@@ -56,15 +56,17 @@ async fn main() -> Result<()> {
             let stdin_content = {
                 let mut buf = String::new();
                 let _ = std::io::stdin().read_to_string(&mut buf);
-                if buf.is_empty() { None } else { Some(buf) }
+                if buf.is_empty() {
+                    None
+                } else {
+                    Some(buf)
+                }
             };
 
             // Collect relevant env vars
             let env_vars: Vec<(String, String)> = std::env::vars()
                 .filter(|(k, _)| {
-                    k.starts_with("GIT_")
-                        || k == "HOME"
-                        || k == "HOOKSMITH_TREE_ENTRIES"
+                    k.starts_with("GIT_") || k == "HOME" || k == "HOOKSMITH_TREE_ENTRIES"
                 })
                 .collect();
 
@@ -86,8 +88,8 @@ async fn main() -> Result<()> {
             for f in &result.findings {
                 let prefix = match f.level {
                     hook_engine::FindingLevel::Error => "error",
-                    hook_engine::FindingLevel::Warn  => "warn ",
-                    hook_engine::FindingLevel::Info  => "info ",
+                    hook_engine::FindingLevel::Warn => "warn ",
+                    hook_engine::FindingLevel::Info => "info ",
                 };
                 eprintln!("[{}] {} — {}", prefix, f.rule, f.message);
                 if let Some(s) = &f.suggestion {
