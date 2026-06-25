@@ -56,7 +56,6 @@ impl GitConfig {
         let mut sections = Vec::new();
         let mut global_comments = Vec::new();
         let mut current_section: Option<GitConfigSection> = None;
-        let mut current_comments = Vec::new();
 
         for line in content.lines() {
             let trimmed = line.trim();
@@ -69,10 +68,12 @@ impl GitConfig {
             // Handle comments
             if trimmed.starts_with('#') || trimmed.starts_with(';') {
                 let comment = trimmed[1..].trim().to_string();
-                if current_section.is_none() {
-                    global_comments.push(comment);
+                // Comments before any section header are global; comments inside
+                // an open section belong to that section.
+                if let Some(section) = &mut current_section {
+                    section.comments.push(comment);
                 } else {
-                    current_comments.push(comment);
+                    global_comments.push(comment);
                 }
                 continue;
             }
@@ -100,9 +101,8 @@ impl GitConfig {
                     name,
                     subsection,
                     values: HashMap::new(),
-                    comments: current_comments.clone(),
+                    comments: Vec::new(),
                 });
-                current_comments.clear();
                 continue;
             }
 

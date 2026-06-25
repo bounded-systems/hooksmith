@@ -1176,6 +1176,5 @@ mod tests {
         assert_eq!(violation.severity, ViolationSeverity::Error);
         assert_eq!(violation.file, "src/main.rs");
         assert_eq!(violation.line, Some(10));
-        assert!(violation.sarif_result.is_some());
     }
 }

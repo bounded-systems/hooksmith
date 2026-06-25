@@ -752,10 +752,12 @@ mod tests {
         // Test that the CLI can parse contract commands
         use clap::Parser;
 
-        // This should not panic
-        let _cli = ContractCli::parse_from(["xtask", "contract", "build"]);
-        let _cli = ContractCli::parse_from(["xtask", "contract", "check"]);
-        let _cli = ContractCli::parse_from(["xtask", "contract", "build", "--commit"]);
-        let _cli = ContractCli::parse_from(["xtask", "contract", "check", "--strict"]);
+        // ContractCli is the standalone `contract` parser (clap treats argv[0]
+        // as the bin name), so its subcommands are `build`/`check` directly —
+        // not nested under another `contract` token.
+        let _cli = ContractCli::parse_from(["xtask", "build"]);
+        let _cli = ContractCli::parse_from(["xtask", "check"]);
+        let _cli = ContractCli::parse_from(["xtask", "build", "--commit"]);
+        let _cli = ContractCli::parse_from(["xtask", "check", "--strict"]);
     }
 }

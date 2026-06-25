@@ -125,7 +125,7 @@ pub fn evaluate_impl_raw(
 // The host passes tree entries via env or stdin; for now we enforce the
 // bounded-systems naming convention (kebab-case, known top-level names).
 
-fn run_naming_policy(repo_root: &str, findings: &mut Vec<PolicyFinding>) {
+fn run_naming_policy(repo_root: &str, _findings: &mut Vec<PolicyFinding>) {
     // Known-good top-level names for a bounded-systems workspace.
     // This list is the policy: anything else is warned.
     let allowed = [
@@ -168,10 +168,11 @@ fn run_commit_msg_policy(msg_path: &str, findings: &mut Vec<PolicyFinding>) {
 
     findings.push(PolicyFinding {
         level: FindingLevel::Info,
-        rule: "commit-msg/conventional-commits",
+        rule: "commit-msg/conventional-commits".to_string(),
         message: "commit-msg policy not yet wired — skipping".to_string(),
         suggestion: Some(
-            "Pass commit message content via stdin to enable Conventional Commits check".to_string(),
+            "Pass commit message content via stdin to enable Conventional Commits check"
+                .to_string(),
         ),
         path: None,
     });
@@ -200,7 +201,7 @@ fn run_push_safety_policy(stdin: Option<&str>, findings: &mut Vec<PolicyFinding>
         if is_delete && protected.contains(&remote_ref) {
             findings.push(PolicyFinding {
                 level: FindingLevel::Error,
-                rule: "pre-push/no-delete-protected",
+                rule: "pre-push/no-delete-protected".to_string(),
                 message: format!("refusing to delete protected branch {}", remote_ref),
                 suggestion: Some("Use a PR to remove the branch via GitHub".to_string()),
                 path: Some(remote_ref.to_string()),
@@ -210,7 +211,7 @@ fn run_push_safety_policy(stdin: Option<&str>, findings: &mut Vec<PolicyFinding>
             // which needs git history. Mark as info for now.
             findings.push(PolicyFinding {
                 level: FindingLevel::Info,
-                rule: "pre-push/protected-branch-push",
+                rule: "pre-push/protected-branch-push".to_string(),
                 message: format!("pushing to protected branch {}", remote_ref),
                 suggestion: Some("Ensure this is a fast-forward push".to_string()),
                 path: Some(remote_ref.to_string()),
@@ -291,7 +292,14 @@ fn hook_kind_to_str(kind: &HookKind) -> &'static str {
 mod tests {
     use super::*;
 
-    fn evt(hook: &str) -> (&str, Vec<String>, Option<&'static str>, Vec<(String, String)>) {
+    fn evt(
+        hook: &str,
+    ) -> (
+        &str,
+        Vec<String>,
+        Option<&'static str>,
+        Vec<(String, String)>,
+    ) {
         (hook, vec![], None, vec![])
     }
 
@@ -316,15 +324,15 @@ mod tests {
         assert!(
             r.findings
                 .iter()
-                .any(|f| f.level == FindingLevel::Info
-                    && f.rule.contains("conventional-commits")),
+                .any(|f| f.level == FindingLevel::Info && f.rule.contains("conventional-commits")),
             "should emit info finding"
         );
     }
 
     #[test]
     fn pre_push_blocks_main_delete() {
-        let stdin = "refs/heads/main 0000000000000000000000000000000000000000 refs/heads/main abc123\n";
+        let stdin =
+            "refs/heads/main 0000000000000000000000000000000000000000 refs/heads/main abc123\n";
         let r = evaluate_impl_raw("pre-push", &[], Some(stdin), &[], "/repo");
         assert!(!r.allow, "should block delete of main");
         assert_eq!(r.exit_code, 1);

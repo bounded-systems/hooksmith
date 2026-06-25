@@ -156,8 +156,12 @@ pub fn generate_schema() -> Result<String, serde_json::Error> {
 
 /// Validate JSON against the AutoPushEvent schema
 pub fn validate_json(json_str: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    // For now, just validate that it's valid JSON and has required fields
-    let value: serde_json::Value = serde_json::from_str(json_str)?;
+    // For now, just validate that it's valid JSON and has required fields.
+    // Unparseable input is "invalid" (Ok(false)), not an error.
+    let value: serde_json::Value = match serde_json::from_str(json_str) {
+        Ok(value) => value,
+        Err(_) => return Ok(false),
+    };
 
     // Check required fields
     if !value.is_object() {

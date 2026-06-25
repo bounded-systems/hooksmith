@@ -1349,6 +1349,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "hook-engine",
  "hooksmith-core",
  "serde",
  "serde_json",
@@ -1495,6 +1496,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "hook-engine"
+version = "0.1.0"
+dependencies = [
+ "wit-bindgen",
+]
+
+[[package]]
 name = "hooksmith"
 version = "0.1.0"
 dependencies = [
@@ -1508,10 +1516,12 @@ dependencies = [
  "git-inspector",
  "git-snapshot",
  "git2",
+ "hook-engine",
  "hooksmith-core",
  "hooksmith-tools",
  "hooksmith-validate",
  "indicatif",
+ "itertools 0.12.1",
  "object-names-auditor",
  "rustdoc-stripper",
  "serde",

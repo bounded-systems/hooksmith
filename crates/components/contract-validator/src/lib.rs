@@ -95,6 +95,9 @@ fn glob_match(pattern: &str, name: &str) -> bool {
     if let Some(prefix) = pattern.strip_suffix("/*") {
         // "dir/*" → matches anything inside `dir/`
         name.starts_with(&format!("{}/", prefix))
+    } else if let Some(suffix) = pattern.strip_prefix('*') {
+        // "*.md" → matches anything ending with `.md`
+        name.ends_with(suffix)
     } else if pattern.ends_with('*') {
         let prefix = &pattern[..pattern.len() - 1];
         name.starts_with(prefix)

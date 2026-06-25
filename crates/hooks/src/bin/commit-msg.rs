@@ -9,7 +9,9 @@ fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
 
     // Read the commit message file that git provided as the first arg.
-    let stdin = args.first().and_then(|path| std::fs::read_to_string(path).ok());
+    let stdin = args
+        .first()
+        .and_then(|path| std::fs::read_to_string(path).ok());
 
     let env_vars: Vec<(String, String)> = std::env::vars()
         .filter(|(k, _)| k.starts_with("GIT_") || k == "HOME")

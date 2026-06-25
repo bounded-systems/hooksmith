@@ -429,8 +429,10 @@ impl GitAttributes {
     fn pattern_matches(pattern: &str, file_path: &str) -> bool {
         // Simple glob pattern matching
         // This is a basic implementation - could be enhanced with proper glob matching
-        if pattern.contains('*') {
-            let pattern_parts: Vec<&str> = pattern.split('*').collect();
+        if pattern.contains("**") {
+            // Recursive pattern — check before single `*` since `**` also
+            // contains `*`.
+            let pattern_parts: Vec<&str> = pattern.split("**").collect();
             if pattern_parts.len() == 2 {
                 let prefix = pattern_parts[0];
                 let suffix = pattern_parts[1];
@@ -438,9 +440,8 @@ impl GitAttributes {
             } else {
                 false
             }
-        } else if pattern.contains("**") {
-            // Recursive pattern
-            let pattern_parts: Vec<&str> = pattern.split("**").collect();
+        } else if pattern.contains('*') {
+            let pattern_parts: Vec<&str> = pattern.split('*').collect();
             if pattern_parts.len() == 2 {
                 let prefix = pattern_parts[0];
                 let suffix = pattern_parts[1];
@@ -719,7 +720,10 @@ mod tests {
 
         let attributes = GitAttributes::from_string(content).unwrap();
         assert_eq!(attributes.global_comments.len(), 1);
-        assert_eq!(attributes.attributes[0].comments.len(), 1);
+        // "# Shell scripts" precedes *.bat (attributes[1]); the leading
+        // "# Global comment" is captured as a global comment, so *.sh
+        // (attributes[0]) has none.
+        assert_eq!(attributes.attributes[1].comments.len(), 1);
     }
 
     #[test]

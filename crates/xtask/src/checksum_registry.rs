@@ -328,7 +328,13 @@ fn strip_jsonc_comments(content: &str) -> String {
         i += 1;
     }
 
+    // Drop lines that are now blank (e.g. former comment-only lines), while
+    // preserving trailing whitespace on lines that still have content.
     result
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 #[cfg(test)]
