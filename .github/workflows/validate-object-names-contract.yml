@@ -23,7 +23,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config libssl-dev zlib1g-dev
 
       - name: Validate object-names contract
-        run: cargo run -p scripts --bin validate_object_names_contract
+        run: cargo run -p validate-object-names-contract --bin validate_object_names_contract
 
       - name: Report failure
         if: failure()
