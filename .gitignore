@@ -4,7 +4,6 @@
 
 # Global build artifacts
 target/
-Cargo.lock
 
 # Global temporary and log files
 *.tmp

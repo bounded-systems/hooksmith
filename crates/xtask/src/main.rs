@@ -10547,7 +10547,6 @@ fn generate_full_gitignore() -> Result<String> {
 # Rust build artifacts
 ############################
 /target/
-Cargo.lock
 
 ############################
 # IDE & editor
@@ -10676,9 +10675,13 @@ fn generate_canonical_gitignore() -> Result<String> {
 
     // Define known ignorable patterns that should be included if they exist in the tree
     let ignorable_patterns = vec![
-        // Rust build artifacts
+        // Rust build artifacts. Cargo.lock is deliberately absent: this is a
+        // workspace with a COMMITTED lockfile, and ignoring a tracked file is
+        // inert for git but not for tools that match .gitignore patterns
+        // directly — osv-scanner skipped it and reported green having scanned
+        // nothing for months (#108). The entry was a default carried over from
+        // the library case, where Cargo.lock genuinely is not committed.
         ("target", "/target/"),
-        ("Cargo.lock", "Cargo.lock"),
         // IDE & editor
         (".vscode", ".vscode/"),
         (".idea", ".idea/"),
