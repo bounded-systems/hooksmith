@@ -10547,7 +10547,6 @@ fn generate_full_gitignore() -> Result<String> {
 # Rust build artifacts
 ############################
 /target/
-Cargo.lock
 
 ############################
 # IDE & editor
@@ -10678,7 +10677,11 @@ fn generate_canonical_gitignore() -> Result<String> {
     let ignorable_patterns = vec![
         // Rust build artifacts
         ("target", "/target/"),
-        ("Cargo.lock", "Cargo.lock"),
+        // NOT Cargo.lock: this workspace commits it. Listing a TRACKED file is
+        // inert for git (tracked files are exempt), so nothing looks wrong —
+        // but osv-scanner applies .gitignore patterns literally and skips it,
+        // which left the deps lane reporting `0 Extract calls` / "No package
+        // sources found" and passing via --allow-no-lockfiles. See #108.
         // IDE & editor
         (".vscode", ".vscode/"),
         (".idea", ".idea/"),

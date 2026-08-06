@@ -44,9 +44,7 @@ tracing-subscriber.workspace = true
 rustdoc-stripper.workspace = true
 
 # WASM and WIT support
-wasmtime.workspace = true
 wit-bindgen.workspace = true
-wasmtime-wasi.workspace = true
 wit-parser.workspace = true
 wit-component.workspace = true
 wat.workspace = true
