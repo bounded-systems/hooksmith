@@ -182,7 +182,7 @@ fn materialize_top_level(tree: &Tree) -> Result<BTreeMap<String, ObjectType>> {
         if !root.is_empty() {
             return TreeWalkResult::Skip;
         }
-        if let Some(name) = entry.name() {
+        if let Ok(name) = entry.name() {
             if let Some(kind) = entry.kind() {
                 map.insert(name.to_string(), kind);
             }

@@ -183,7 +183,7 @@ impl GitObjectWalker {
         let mut blobs = Vec::new();
 
         for entry in tree.iter() {
-            if let Some(name) = entry.name() {
+            if let Ok(name) = entry.name() {
                 entry_names.push(name.to_string());
             }
 
@@ -239,7 +239,7 @@ impl GitObjectWalker {
         let mut blobs = Vec::new();
 
         for entry in target_tree.iter() {
-            if let Some(name) = entry.name() {
+            if let Ok(name) = entry.name() {
                 entry_names.push(name.to_string());
             }
 
