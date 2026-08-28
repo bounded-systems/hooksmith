@@ -37,18 +37,18 @@ tempfile = "3.8"
 clap = { version = "4.0", features = ["derive"] }
 
 # Kubernetes CRD support
-kube = { version = "0.91", features = ["runtime", "derive"] }
-kube-derive = "0.91"
-kube-runtime = "0.91"
+kube = { version = "3.1", features = ["runtime", "derive"] }
+kube-derive = "3.1"
+kube-runtime = "3.1"
 k8s-openapi = { version = "0.22", features = ["v1_28"] }
-schemars = { version = "0.8", features = ["derive"] }
+schemars = { version = "1.2", features = ["derive"] }
 futures = "0.3"
 futures-util = "0.3"
 
 # Remove which dependency for WASM compatibility
 # which.workspace = true
 # wit-bindgen is optional and only used for host builds
-wit-bindgen = { version = "0.20", optional = true }
+wit-bindgen = { version = "0.52", optional = true }
 
 [[bin]]
 name = "crd-cli"
