@@ -308,7 +308,13 @@ impl ScopeRefManager {
             use sha2::{Digest, Sha256};
             let mut hasher = Sha256::new();
             hasher.update(format!("{}:{}:{}", tree_sha, contract_id, fix_hash).as_bytes());
-            Ok(Some(format!("{:x}", hasher.finalize())))
+            Ok(Some(
+                hasher
+                    .finalize()
+                    .iter()
+                    .map(|b| format!("{b:02x}"))
+                    .collect::<String>(),
+            ))
         } else {
             Ok(None)
         }

@@ -378,7 +378,7 @@ impl GitPipeline {
 
         for entry in tree.iter() {
             entries.push(serde_json::json!({
-                "name": entry.name(),
+                "name": entry.name().ok(),
                 "oid": entry.id().to_string(),
                 "kind": format!("{:?}", entry.kind()),
                 "mode": entry.filemode(),
@@ -488,14 +488,22 @@ impl GitPipeline {
     fn compute_selector_hash(&self, tree: &Tree) -> String {
         let mut hasher = Sha256::new();
         hasher.update(tree.id().as_bytes());
-        format!("{:x}", hasher.finalize())
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 
     fn compute_analysis_cache_key(&self, tool: &ToolFingerprint, object_oid: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(format!("analysis-{}@{}", tool.name, tool.version).as_bytes());
         hasher.update(object_oid.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 
     fn compute_report_cache_key(
@@ -509,7 +517,11 @@ impl GitPipeline {
         for oid in analysis_oids {
             hasher.update(oid.as_bytes());
         }
-        format!("{:x}", hasher.finalize())
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 
     fn compute_mandate_cache_key(
@@ -526,7 +538,11 @@ impl GitPipeline {
         if let Some(path) = logical_path {
             hasher.update(path.to_string_lossy().as_bytes());
         }
-        format!("{:x}", hasher.finalize())
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 
     fn compute_audit_cache_key(
@@ -539,14 +555,22 @@ impl GitPipeline {
         hasher.update(format!("audit@{}", version).as_bytes());
         hasher.update(report_oid.as_bytes());
         hasher.update(mandate_oid.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 
     fn compute_diff_cache_key(&self, contract_name: &str, version: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(format!("diff@{}", version).as_bytes());
         hasher.update(contract_name.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 
     fn compute_object_selector(&self, object: &GitObject) -> String {
@@ -555,7 +579,11 @@ impl GitPipeline {
         if let Some(path) = &object.logical_path {
             hasher.update(path.to_string_lossy().as_bytes());
         }
-        format!("{:x}", hasher.finalize())
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 
     // Cache storage and retrieval methods (simplified for now)

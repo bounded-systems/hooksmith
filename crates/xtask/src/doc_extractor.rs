@@ -250,7 +250,11 @@ fn extract_file_docs(file_path: &Path) -> Result<DocFile> {
     // Compute checksum
     let mut hasher = sha2::Sha256::new();
     hasher.update(content.as_bytes());
-    let checksum = format!("{:x}", hasher.finalize());
+    let checksum = hasher
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect::<String>();
 
     // Extract file-level documentation
     let file_docs = extract_file_level_docs(&lines);

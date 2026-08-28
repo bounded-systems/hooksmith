@@ -94,7 +94,7 @@ impl Researcher {
                 return TreeWalkResult::Skip;
             }
 
-            let (Some(name), Some(kind)) = (e.name(), e.kind()) else {
+            let (Some(name), Some(kind)) = (e.name().ok(), e.kind()) else {
                 return TreeWalkResult::Ok;
             };
 
@@ -243,8 +243,17 @@ impl Auditor {
         let mut outer = Sha256::new();
         outer.update(hex::encode(self.acc));
         outer.update(b"\n");
-        outer.update(format!("{:x}", h_rules));
-        format!("{:x}", outer.finalize())
+        outer.update(
+            h_rules
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>(),
+        );
+        outer
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 }
 
@@ -514,7 +523,10 @@ impl GitignoreValidator {
 
         let content = std::fs::read_to_string(gitignore_path)?;
         let digest = Sha256::digest(content.as_bytes());
-        Ok(format!("{:x}", digest))
+        Ok(digest
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>())
     }
 
     pub fn validate_minimality_invariant(root: &std::path::Path) -> Result<Vec<String>> {

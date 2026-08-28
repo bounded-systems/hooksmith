@@ -11,7 +11,11 @@ pub fn compute_file_checksum(content: &str) -> String {
     let result = hasher.finalize();
 
     // Return first 8 characters of hex string
-    format!("{:x}", result)[..8].to_string()
+    result
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect::<String>()[..8]
+        .to_string()
 }
 
 /// Extract content without header lines for checksum computation

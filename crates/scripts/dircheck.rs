@@ -137,7 +137,7 @@ fn top_level_entries(
         let name = entry
             .name()
             .map(|s| s.to_string())
-            .unwrap_or_else(|| "<invalid>".into());
+            .unwrap_or_else(|_| "<invalid>".into());
         names.insert(name.clone());
         match entry.kind() {
             Some(ObjectType::Blob) => {
@@ -252,5 +252,9 @@ fn compute_digest(ag: &Agreement, names: &BTreeSet<String>) -> Result<String> {
     outer.update(hex::encode(sha_subject));
     outer.update(b"\n");
     outer.update(hex::encode(sha_rules));
-    Ok(format!("{:x}", outer.finalize()))
+    Ok(outer
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect::<String>())
 }

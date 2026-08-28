@@ -48,7 +48,7 @@ futures-util = "0.3"
 # Remove which dependency for WASM compatibility
 # which.workspace = true
 # wit-bindgen is optional and only used for host builds
-wit-bindgen = { version = "0.20", optional = true }
+wit-bindgen = { version = "0.52", optional = true }
 
 [[bin]]
 name = "crd-cli"

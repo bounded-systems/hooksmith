@@ -595,7 +595,7 @@ impl HierarchicalValidator {
             );
         }
 
-        format!("sha256:{:x}", hasher.finalize())
+        format!("sha256:{}", hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>())
     }
 
     /// Get current commit hash

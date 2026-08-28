@@ -171,7 +171,7 @@ fn compute_cache_key(tool: &ToolFingerprint, object_oid: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(format!("analysis-{}@{}", tool.name, tool.version).as_bytes());
     hasher.update(object_oid.as_bytes());
-    format!("{:x}", hasher.finalize())
+    hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
 }
 
 fn get_cached_analysis(

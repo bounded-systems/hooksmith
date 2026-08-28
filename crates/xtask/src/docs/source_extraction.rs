@@ -68,7 +68,7 @@ pub fn extract_project_data() -> Result<ProjectData> {
     let license = extract_license()?;
 
     Ok(ProjectData {
-        name: root_package.name.clone(),
+        name: root_package.name.to_string(),
         description: root_package.description.clone().unwrap_or_default(),
         version: root_package.version.to_string(),
         authors: root_package.authors.clone(),

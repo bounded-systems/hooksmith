@@ -166,7 +166,7 @@ fn compute_cache_key(domain: &str, version: &str, analysis_oids: &[String]) -> S
     for oid in analysis_oids {
         hasher.update(oid.as_bytes());
     }
-    format!("{:x}", hasher.finalize())
+    hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
 }
 
 fn get_cached_report(

@@ -205,7 +205,7 @@ fn compute_object_selector(object: &ObjectDescriptor) -> String {
     if let Some(path) = &object.logical_path {
         hasher.update(path.as_bytes());
     }
-    format!("{:x}", hasher.finalize())
+    hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
 }
 
 fn compute_cache_key(
@@ -221,7 +221,7 @@ fn compute_cache_key(
     if let Some(path) = logical_path {
         hasher.update(path.as_bytes());
     }
-    format!("{:x}", hasher.finalize())
+    hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
 }
 
 fn get_cached_mandate(
