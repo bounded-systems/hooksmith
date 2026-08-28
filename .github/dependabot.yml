@@ -137,6 +137,40 @@ updates:
           - "kube*"
           - "k8s-openapi"
           - "schemars"
+    # A TEMPORARY HOLD ON THE KUBE CLUSTER, not a permanent mute (#126).
+    #
+    # The group above puts these five crates in one PR. It does NOT make
+    # Dependabot move them to versions COMPATIBLE WITH EACH OTHER, and that
+    # distinction is the whole problem: a group controls which PR an update
+    # lands in, while Dependabot still resolves every dependency's latest
+    # version independently. #125 claimed grouping by name avoided the
+    # two-copy k8s-openapi break. It does not, and #126 proved it within
+    # minutes of that merge by reproducing the identical panic mirrored:
+    #
+    #   #123  kube 0.91 -> 3.1, k8s-openapi left at 0.22  ->  0.27.1 has no feature
+    #   #126  k8s-openapi 0.22 -> 0.24, kube left at 0.91  ->  0.22.0 has no feature
+    #
+    # WHY NO CONFIG CAN FIX THIS. k8s-openapi permits exactly ONE version of
+    # itself in the graph, and which Kubernetes API it targets is chosen by a
+    # mutually-exclusive `v1_*` feature on the DIRECT dependency. `kube` pins a
+    # k8s-openapi major (0.91 <-> 0.22, 3.1 <-> 0.27), so the two are a single
+    # atomic edit forever. `ignore` is the only lever dependabot.yml has here.
+    #
+    # THE COST IS NEAR ZERO, which is why this is the right interim trade. Every
+    # advisory this repo carries is in git2, h2, lru, backoff, derivative,
+    # instant, number_prefix, paste or rustls-pemfile. NONE is kube,
+    # k8s-openapi or schemars. Holding these three mutes crates with no
+    # findings; the `cargo` group above keeps proposing the ones that have them.
+    #
+    # LIFTING THIS IS THE DEFINITION OF DONE for the kube migration: bump
+    # kube 0.91 -> 3.1, k8s-openapi 0.22 -> 0.27 with a `v1_*` feature that
+    # exists in 0.27, and schemars 0.8 -> 1.2 in ONE commit, port
+    # worktree-runner's six kube files, then delete this block. The group above
+    # is deliberately left in place so it resumes working the moment this goes.
+    ignore:
+      - dependency-name: "kube*"
+      - dependency-name: "k8s-openapi"
+      - dependency-name: "schemars"
     commit-message:
       prefix: "chore"
       include: "scope"
