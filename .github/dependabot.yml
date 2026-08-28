@@ -80,16 +80,63 @@ updates:
   # osv-scanner.toml acceptance; this entry is what makes the ones that ARE
   # fixable get proposed instead of sitting unnoticed.
   #
-  # Grouped and weekly, matching the actions entry above.
+  # Weekly, matching the actions entry above, but TWO GROUPS rather than one.
+  #
+  # WHY NOT A SINGLE `patterns: ["*"]` GROUP (#123)
+  # -----------------------------------------------
+  # The first PR this ecosystem produced (#123, "bump the cargo group with 37
+  # updates") cleared six fixable RUSTSEC advisories and could not be merged,
+  # because the same PR also carried three major API breaks. It moved
+  # `kube` 0.91 -> 3.1 while leaving `k8s-openapi` pinned at 0.22, and
+  # `kube` 3.1 requires `k8s-openapi` 0.27 -- so the lockfile ended up with TWO
+  # copies of that crate:
+  #
+  #   0.22.0  from the direct dependency, with its `v1_28` feature enabled
+  #   0.27.1  pulled in by kube 3.1, with NO `v1_*` feature at all
+  #
+  # `k8s-openapi` requires exactly one `v1_*` feature and panics in its build
+  # script without one, so `standard / test` failed on a crate nobody had
+  # deliberately touched. Un-breaking it means porting worktree-runner's CRD
+  # controller across kube 1.x/2.x/3.x AND the schemars 0.8 -> 1.2 `JsonSchema`
+  # rewrite -- a migration, six files deep, that should be reviewed as one.
+  # Holding the routine git2/h2/lru security bumps hostage to that review is
+  # the failure this split fixes.
+  #
+  # SPLITTING BY UPDATE-TYPE WOULD NOT HAVE WORKED, and the reason is worth
+  # recording: Dependabot classifies by semver field position, so
+  # `k8s-openapi` 0.22 -> 0.27 is a MINOR update while `kube` 0.91 -> 3.1 is a
+  # MAJOR one. A `update-types: ["minor", "patch"]` group would therefore move
+  # k8s-openapi while holding kube back -- reproducing the identical two-copy
+  # panic from the opposite direction. These crates are coupled by version, not
+  # by update size, so they have to be grouped by NAME.
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
     groups:
+      # The Kubernetes cluster, moved as ONE reviewable migration PR. `kube*`
+      # covers kube, kube-derive and kube-runtime, which are released in
+      # lockstep; `k8s-openapi` is version-locked to whichever kube is in use;
+      # `schemars` supplies the `JsonSchema` derive that kube's CustomResource
+      # macro emits, so a kube major generally drags a schemars major with it.
+      kube:
+        patterns:
+          - "kube*"
+          - "k8s-openapi"
+          - "schemars"
+      # Everything else. This is the group that should stay mergeable week to
+      # week -- the one that carries the security-relevant bumps (git2, and the
+      # parents that move h2 and lru transitively). The exclusions must mirror
+      # the kube group above exactly: a name matched by both would land in only
+      # one of them, and silently re-couple the two PRs.
       cargo:
         patterns:
           - "*"
+        exclude-patterns:
+          - "kube*"
+          - "k8s-openapi"
+          - "schemars"
     commit-message:
       prefix: "chore"
       include: "scope"
