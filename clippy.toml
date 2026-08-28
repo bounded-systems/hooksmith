@@ -9,7 +9,7 @@
 # Minimal configuration for compatibility
 
 # MSRV (Minimum Supported Rust Version)
-msrv = "1.88.0"
+msrv = "1.91.0"
 
 # Allow specific lints that might be too strict for our use case
 allow-comparison-to-zero = true
