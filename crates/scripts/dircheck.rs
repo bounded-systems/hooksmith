@@ -137,7 +137,7 @@ fn top_level_entries(
         let name = entry
             .name()
             .map(|s| s.to_string())
-            .unwrap_or_else(|| "<invalid>".into());
+            .unwrap_or_else(|_| "<invalid>".into());
         names.insert(name.clone());
         match entry.kind() {
             Some(ObjectType::Blob) => {
