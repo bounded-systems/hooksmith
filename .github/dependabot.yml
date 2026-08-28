@@ -62,3 +62,34 @@ updates:
           - "*"
     commit-message:
       prefix: "ci"
+
+  # Rust dependencies (Cargo.toml + Cargo.lock).
+  #
+  # ADDED because this repo took the shared template WHOLESALE instead of
+  # appending the github-actions entry to a config carrying its own cargo
+  # ecosystem — which is what that template's "ADOPTING THIS FILE" note directs:
+  # "Repo already has one (other ecosystems — npm, cargo, pip): APPEND the
+  # single github-actions entry below to its updates: list instead."
+  # keycard, which has the same shape, merged its config correctly and is the
+  # reference for what this should have looked like.
+  #
+  # The consequence was silent. With no cargo entry there are no Rust version
+  # updates, so the RUSTSEC advisories the osv lane reports against Cargo.lock
+  # (git2, h2, lru, and others) have never had a PR proposed for them. Several
+  # of those advisories have no fixed version published and will still need an
+  # osv-scanner.toml acceptance; this entry is what makes the ones that ARE
+  # fixable get proposed instead of sitting unnoticed.
+  #
+  # Grouped and weekly, matching the actions entry above.
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      cargo:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
