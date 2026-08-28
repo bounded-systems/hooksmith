@@ -109,7 +109,11 @@ impl ObjectNamesResearcher {
             .as_bytes(),
         );
         hasher.update(object_oid.as_bytes());
-        hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 }
 
@@ -164,7 +168,11 @@ impl ObjectNamesReporter {
         for oid in analysis_oids {
             hasher.update(oid.as_bytes());
         }
-        hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 }
 
@@ -227,7 +235,11 @@ impl ObjectNamesMandator {
         if let Some(path) = &object.logical_path {
             hasher.update(path.to_string_lossy().as_bytes());
         }
-        hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 
     fn compute_cache_key(&self, selector: &str, logical_path: &Option<PathBuf>) -> String {
@@ -238,7 +250,11 @@ impl ObjectNamesMandator {
         if let Some(path) = logical_path {
             hasher.update(path.to_string_lossy().as_bytes());
         }
-        hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 }
 
@@ -458,7 +474,11 @@ impl ObjectNamesAuditor {
         hasher.update(format!("audit@{}", self.version).as_bytes());
         hasher.update(report_oid.as_bytes());
         hasher.update(mandate_oid.as_bytes());
-        hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
+        hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
     }
 }
 

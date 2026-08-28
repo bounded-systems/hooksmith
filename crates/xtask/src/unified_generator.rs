@@ -179,7 +179,11 @@ impl UnifiedGenerator {
         let mut hasher = Sha256::new();
         hasher.update(content.as_bytes());
         let result = hasher.finalize();
-        result.iter().map(|b| format!("{b:02x}")).collect::<String>()[..8].to_string() // First 8 characters
+        result
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()[..8]
+            .to_string() // First 8 characters
     }
 
     /// Get file extension from path

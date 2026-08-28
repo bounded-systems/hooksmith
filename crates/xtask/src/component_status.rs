@@ -467,7 +467,10 @@ impl ComponentStatusChecker {
 
         let content = tokio::fs::read(&wasm_path).await?;
         let checksum = Sha256::digest(&content);
-        Ok(checksum.iter().map(|b| format!("{b:02x}")).collect::<String>())
+        Ok(checksum
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>())
     }
 
     /// Get crate checksum
@@ -482,7 +485,10 @@ impl ComponentStatusChecker {
         let mut hasher = Sha256::new();
         self.hash_directory(&crate_path, &mut hasher).await?;
         let checksum = hasher.finalize();
-        Ok(checksum.iter().map(|b| format!("{b:02x}")).collect::<String>())
+        Ok(checksum
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>())
     }
 
     /// Hash a directory recursively

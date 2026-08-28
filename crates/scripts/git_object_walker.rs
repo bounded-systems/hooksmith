@@ -372,7 +372,11 @@ impl GitObjectWalker {
         use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(format!("{}:{}:{}", tree_sha, contract_id, fix_hash).as_bytes());
-        Ok(hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>())
+        Ok(hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>())
     }
 
     pub fn export_object_graph(&self, object_graph: &ObjectGraph) -> Result<Value> {

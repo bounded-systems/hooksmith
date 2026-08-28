@@ -28,7 +28,11 @@ pub fn normalize_error(err: &str) -> String {
 pub fn hash_error(normalized: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(normalized.as_bytes());
-    hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
+    hasher
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect::<String>()
 }
 
 /// Record an error and return whether it's new
