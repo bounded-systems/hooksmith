@@ -201,7 +201,7 @@ impl WorktreeStorage {
             // Note: Kubernetes CRD doesn't have last_modified field
             // We'll use creation_timestamp instead
             if let Some(creation_timestamp) = &crd.metadata.creation_timestamp {
-                if creation_timestamp.0 < cutoff {
+                if creation_timestamp.0.as_second() < cutoff.timestamp() {
                     if self.delete_crd(&branch_name).await? {
                         deleted_count += 1;
                         info!("Cleaned up old CRD: {}", branch_name);
@@ -243,7 +243,7 @@ impl WorktreeStorage {
                         .metadata
                         .creation_timestamp
                         .as_ref()
-                        .map(|dt| dt.0.format("%Y-%m-%d %H:%M:%S").to_string())
+                        .map(|dt| dt.0.strftime("%Y-%m-%d %H:%M:%S").to_string())
                         .unwrap_or_else(|| "unknown".to_string());
 
                     csv.push_str(&format!(
