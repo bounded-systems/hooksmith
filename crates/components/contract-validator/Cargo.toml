@@ -13,7 +13,7 @@ default = []
 host = ["wit-bindgen"]
 
 [dependencies]
-wit-bindgen = { version = "0.20", optional = true }
+wit-bindgen = { version = "0.52", optional = true }
 
 [lib]
 crate-type = ["cdylib"]
