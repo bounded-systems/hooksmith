@@ -53,7 +53,7 @@ impl HashComputer {
         let metadata_string = serde_json::to_string(&concern.metadata).unwrap_or_default();
         hasher.update(metadata_string.as_bytes());
 
-        format!("{:x}", hasher.finalize())
+        hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
     }
 
     /// Compute hash of expected snapshot
@@ -76,14 +76,14 @@ impl HashComputer {
         let metadata_string = serde_json::to_string(&expectation.metadata).unwrap_or_default();
         hasher.update(metadata_string.as_bytes());
 
-        format!("{:x}", hasher.finalize())
+        hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
     }
 
     /// Compute hash of contract symbol
     pub fn hash_contract(contract: &ContractSymbol) -> String {
         let mut hasher = Sha256::new();
         hasher.update(contract.name().as_bytes());
-        format!("{:x}", hasher.finalize())
+        hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
     }
 
     /// Compute hash of data with salt
@@ -92,7 +92,7 @@ impl HashComputer {
         let data_string = serde_json::to_string(data).unwrap_or_default();
         hasher.update(data_string.as_bytes());
         hasher.update(salt.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
     }
 }
 

@@ -717,7 +717,7 @@ fn compute_analysis_cache_key(tool: &ToolFingerprint, object_oid: &str) -> Strin
     let mut hasher = Sha256::new();
     hasher.update(format!("analysis-{}@{}", tool.name, tool.version).as_bytes());
     hasher.update(object_oid.as_bytes());
-    format!("{:x}", hasher.finalize())
+    hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
 }
 
 fn compute_report_cache_key(domain: &str, version: &str, analysis_oids: &[String]) -> String {
@@ -727,7 +727,7 @@ fn compute_report_cache_key(domain: &str, version: &str, analysis_oids: &[String
     for oid in analysis_oids {
         hasher.update(oid.as_bytes());
     }
-    format!("{:x}", hasher.finalize())
+    hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
 }
 
 fn compute_object_selector(object: &ObjectDescriptor) -> String {
@@ -737,7 +737,7 @@ fn compute_object_selector(object: &ObjectDescriptor) -> String {
     if let Some(path) = &object.logical_path {
         hasher.update(path.as_bytes());
     }
-    format!("{:x}", hasher.finalize())
+    hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
 }
 
 fn compute_mandate_cache_key(
@@ -754,7 +754,7 @@ fn compute_mandate_cache_key(
     if let Some(path) = logical_path {
         hasher.update(path.as_bytes());
     }
-    format!("{:x}", hasher.finalize())
+    hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
 }
 
 fn compute_audit_cache_key(version: &str, report_oid: &str, mandate_oid: &str) -> String {
@@ -763,7 +763,7 @@ fn compute_audit_cache_key(version: &str, report_oid: &str, mandate_oid: &str) -
     hasher.update(format!("audit@{}", version).as_bytes());
     hasher.update(report_oid.as_bytes());
     hasher.update(mandate_oid.as_bytes());
-    format!("{:x}", hasher.finalize())
+    hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>()
 }
 
 // Cache lookup functions (stubs for now)

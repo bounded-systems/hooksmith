@@ -252,5 +252,5 @@ fn compute_digest(ag: &Agreement, names: &BTreeSet<String>) -> Result<String> {
     outer.update(hex::encode(sha_subject));
     outer.update(b"\n");
     outer.update(hex::encode(sha_rules));
-    Ok(format!("{:x}", outer.finalize()))
+    Ok(outer.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>())
 }

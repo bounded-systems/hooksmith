@@ -488,7 +488,7 @@ impl AttestationEventBus {
     fn compute_digest(&self, data: &serde_json::Value) -> HashMap<String, String> {
         let mut hasher = Sha256::new();
         hasher.update(serde_json::to_string(data).unwrap().as_bytes());
-        let result = format!("{:x}", hasher.finalize());
+        let result = hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>();
 
         let mut digest = HashMap::new();
         digest.insert("sha256".to_string(), result);
@@ -530,7 +530,7 @@ impl SignatureService {
         // Mock signature generation
         let mut hasher = Sha256::new();
         hasher.update(serde_json::to_string(attestation)?.as_bytes());
-        let signature = format!("{:x}", hasher.finalize());
+        let signature = hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>();
 
         Ok(DigitalSignature {
             key_id: "mock-key-id".to_string(),

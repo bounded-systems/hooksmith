@@ -336,7 +336,7 @@ fn compute_digest(
     h.update(hex::encode(a));
     h.update(b"\n");
     h.update(hex::encode(b));
-    Ok(format!("{:x}", h.finalize()))
+    Ok(h.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>())
 }
 
 fn validate_schema(doc: &str) -> Result<()> {
