@@ -105,7 +105,7 @@ chrono = { version = "0.4", features = ["serde"] }
 
 # JSON Schema validation
 jsonschema = "0.18"
-schemars = "0.8"
+schemars = "1.2"
 reqwest = { version = "0.12", features = ["json", "blocking"] }
 
 # JSONC parsing
