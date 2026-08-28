@@ -378,7 +378,7 @@ impl GitPipeline {
 
         for entry in tree.iter() {
             entries.push(serde_json::json!({
-                "name": entry.name(),
+                "name": entry.name().ok(),
                 "oid": entry.id().to_string(),
                 "kind": format!("{:?}", entry.kind()),
                 "mode": entry.filemode(),

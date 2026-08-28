@@ -94,7 +94,7 @@ impl Researcher {
                 return TreeWalkResult::Skip;
             }
 
-            let (Some(name), Some(kind)) = (e.name(), e.kind()) else {
+            let (Some(name), Some(kind)) = (e.name().ok(), e.kind()) else {
                 return TreeWalkResult::Ok;
             };
 

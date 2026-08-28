@@ -197,7 +197,7 @@ impl GitNotesManager {
         match self.get_notes_tree(&self.contracts_ref)? {
             Some(tree) => {
                 for entry in tree.iter() {
-                    if let Some(name) = entry.name() {
+                    if let Ok(name) = entry.name() {
                         if let Some(content) = self.get_note_content(&self.contracts_ref, name)? {
                             if let Ok(state) = serde_json::from_str::<ContractStateNote>(&content) {
                                 states.insert(state.file.clone(), state);
@@ -222,7 +222,7 @@ impl GitNotesManager {
         match self.get_notes_tree(&self.transitions_ref)? {
             Some(tree) => {
                 for entry in tree.iter() {
-                    if let Some(name) = entry.name() {
+                    if let Ok(name) = entry.name() {
                         if name.contains(&self.sanitize_note_name(file_path)) {
                             if let Some(content) =
                                 self.get_note_content(&self.transitions_ref, name)?
