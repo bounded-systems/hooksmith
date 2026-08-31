@@ -74,7 +74,7 @@ regex.workspace = true
 futures-io.workspace = true
 
 # Additional dependencies for xtask
-itertools = "0.13"
+itertools = "0.14"
 rayon = "1.8"
 uuid.workspace = true
 
