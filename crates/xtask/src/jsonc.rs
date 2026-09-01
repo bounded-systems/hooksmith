@@ -157,21 +157,34 @@ impl JsoncManager {
         jsonc_file: &JsoncFile,
         schema: &serde_json::Value,
     ) -> Result<()> {
-        use jsonschema::JSONSchema;
+        // jsonschema 0.20 renamed `JSONSchema` to `Validator` and replaced
+        // `JSONSchema::compile` with the free function `validator_for`, which
+        // borrows the schema and owns its compiled form. That retires the
+        // `Box::leak` this replaces, which was not merely ceremony: it leaked one
+        // clone of the schema per call, for the lifetime of the process.
+        let validator = jsonschema::validator_for(schema)
+            .map_err(|e| anyhow::anyhow!("Failed to compile JSON schema: {e}"))?;
 
-        // Leak the schema to get a 'static reference for JSONSchema::compile
-        let static_schema: &'static serde_json::Value = Box::leak(Box::new(schema.clone()));
-        let compiled_schema =
-            JSONSchema::compile(static_schema).context("Failed to compile JSON schema")?;
+        // `iter_errors`, NOT `validate`. In 0.20+ `Validator::validate` returns
+        // only the FIRST error ("Returns the first ValidationError describing
+        // why `instance` does not satisfy the schema"), while the 0.18 call this
+        // replaces yielded an iterator over ALL of them. Using `validate` here
+        // would compile, pass CI, and quietly truncate every multi-error report
+        // to one line.
+        //
+        // `instance_path` stays a public FIELD at 0.33.0 (error.rs:59,
+        // `pub instance_path: Location`). Upstream `master` has since moved
+        // ValidationError behind a private `repr` box with accessor methods, so
+        // reading HEAD rather than the released tag says `instance_path()` --
+        // which is wrong for the version this bump actually resolves.
+        let error_messages: Vec<String> = validator
+            .iter_errors(&jsonc_file.content)
+            .map(|e| format!("{}: {}", e.instance_path, e))
+            .collect();
 
-        compiled_schema
-            .validate(&jsonc_file.content)
-            .map_err(|errors| {
-                let error_messages: Vec<String> = errors
-                    .map(|e| format!("{}: {}", e.instance_path, e))
-                    .collect();
-                anyhow::anyhow!("JSONC validation failed: {}", error_messages.join(", "))
-            })?;
+        if !error_messages.is_empty() {
+            anyhow::bail!("JSONC validation failed: {}", error_messages.join(", "));
+        }
 
         Ok(())
     }

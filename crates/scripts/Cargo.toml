@@ -14,7 +14,7 @@ sha2 = "0.11"
 hex = "0.4"
 git2 = "0.21"
 chrono = { version = "0.4", features = ["serde"] }
-jsonschema = "0.18"
+jsonschema = "0.33"
 regex = "1.10"
 walkdir = "2.5"
 
