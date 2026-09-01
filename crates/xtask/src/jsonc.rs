@@ -172,11 +172,14 @@ impl JsoncManager {
         // would compile, pass CI, and quietly truncate every multi-error report
         // to one line.
         //
-        // `instance_path` is a METHOD now, not a field -- the struct is a single
-        // private `repr` box -- so `e.instance_path` no longer compiles.
+        // `instance_path` stays a public FIELD at 0.33.0 (error.rs:59,
+        // `pub instance_path: Location`). Upstream `master` has since moved
+        // ValidationError behind a private `repr` box with accessor methods, so
+        // reading HEAD rather than the released tag says `instance_path()` --
+        // which is wrong for the version this bump actually resolves.
         let error_messages: Vec<String> = validator
             .iter_errors(&jsonc_file.content)
-            .map(|e| format!("{}: {}", e.instance_path(), e))
+            .map(|e| format!("{}: {}", e.instance_path, e))
             .collect();
 
         if !error_messages.is_empty() {
