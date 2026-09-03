@@ -200,8 +200,11 @@ impl WorktreeStorage {
         for (branch_name, crd) in crds {
             // Note: Kubernetes CRD doesn't have last_modified field
             // We'll use creation_timestamp instead
+            // `.0.as_second()` reached into k8s-openapi's `Time` newtype; the
+            // field is a chrono DateTime now that kube is gone (#139). Same
+            // comparison, one less dependency.
             if let Some(creation_timestamp) = &crd.metadata.creation_timestamp {
-                if creation_timestamp.0.as_second() < cutoff.timestamp() {
+                if creation_timestamp.timestamp() < cutoff.timestamp() {
                     if self.delete_crd(&branch_name).await? {
                         deleted_count += 1;
                         info!("Cleaned up old CRD: {}", branch_name);
@@ -243,7 +246,9 @@ impl WorktreeStorage {
                         .metadata
                         .creation_timestamp
                         .as_ref()
-                        .map(|dt| dt.0.strftime("%Y-%m-%d %H:%M:%S").to_string())
+                        // Second `Time`-newtype access (#139). chrono spells it
+                        // `format`, not `strftime`, and needs no `.0`.
+                        .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
                         .unwrap_or_else(|| "unknown".to_string());
 
                     csv.push_str(&format!(

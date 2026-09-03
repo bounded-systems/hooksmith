@@ -36,24 +36,14 @@ tokio = { version = "1.0", features = ["fs", "macros", "rt", "rt-multi-thread", 
 tempfile = "3.8"
 clap = { version = "4.0", features = ["derive"] }
 
-# Kubernetes CRD support
-kube = { version = "4.2", features = ["runtime", "derive"] }
-kube-derive = "4.2"
-kube-runtime = "4.2"
-# MUST track the k8s-openapi that `kube` pulls (#135). Cargo treats 0.27 and
-# 0.28 as incompatible, so a stale pin here does not lose a race -- it puts BOTH
-# in the tree, and the copy kube pulled has no v1_* feature enabled, so
-# k8s-openapi's build script panics: "None of the v1_* features are enabled".
-#
-# THE SUPPORTED KUBERNETES VERSION MOVES 1.31 -> 1.32, AND THAT IS NOT INCIDENTAL.
-# k8s-openapi 0.28 DROPPED the v1_31 feature; v1_32 is the lowest it offers. So
-# taking kube 4.2 is not a version bump that happens to touch a feature name --
-# it RAISES THE MINIMUM API SERVER this binary supports. A cluster on 1.31 is no
-# longer a target.
-#
-# v1_32 is chosen as the LOWEST feature 0.28 still offers, so the floor rises by
-# exactly one minor and no further.
-k8s-openapi = { version = "0.28", features = ["v1_32"] }
+# Kubernetes: REMOVED (#139). The operator path was answered dead on 2026-09-03
+# — controller.rs had never been declared in lib.rs and so had never compiled,
+# k8s_openapi appeared nowhere in this crate's source, and `crd-cli kube
+# controller` was a stub. The dependency's only real contribution was one
+# `CustomResource` derive, and it was setting a Kubernetes >= 1.32 floor (via
+# k8s-openapi 0.28 dropping v1_31) for a cluster that was never going to exist.
+# The reconciliation MODEL is kept; see src/kube_crd.rs for the hand-written
+# wrapper that replaced the derive. schemars stays — it was always direct.
 schemars = { version = "1.2", features = ["derive"] }
 futures = "0.3"
 futures-util = "0.3"
