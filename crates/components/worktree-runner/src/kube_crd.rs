@@ -1,15 +1,76 @@
-use kube::{CustomResource, CustomResourceExt};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// WorktreeChangeRequest CRD using kube-derive
-#[derive(CustomResource, Serialize, Deserialize, JsonSchema, Debug, Clone)]
-#[kube(
-    group = "hooksmith.dev",
-    version = "v1",
-    kind = "WorktreeChangeRequest",
-    namespaced
-)]
+// WAS a kube `CustomResource` derive; the Kubernetes dependency is gone (#139).
+//
+// The operator path was answered DEAD on 2026-09-03: `controller.rs` had never
+// been declared in `lib.rs` and so had never compiled, `k8s_openapi` appeared
+// nowhere in this crate's source, and `crd-cli kube controller` was a stub that
+// printed "Controller mode requires a Kubernetes cluster" and returned. The
+// dependency's only real contribution was this derive — and it was setting a
+// Kubernetes version floor (>= 1.32, via k8s-openapi 0.28 dropping v1_31) for a
+// cluster that was never going to exist.
+//
+// WHAT IS KEPT, AND WHY THIS IS NOT A REWRITE. The reconciliation MODEL is good
+// and is not what was questioned: desired vs observed state across Local Branch,
+// Remote Branch, Worktree and PR. Every type below is unchanged, still
+// `Serialize + Deserialize + JsonSchema` — `schemars` is a direct dependency of
+// this crate and never came from kube, so the schema derives are untouched.
+//
+// What the derive generated, and is now written out here, is the wrapper:
+// `apiVersion`, `kind`, `metadata` and `spec`. Written by hand so the SERIALIZED
+// SHAPE IS IDENTICAL — records already on disk (storage.rs) must still read.
+// The one field that could not be kept as-was is `creation_timestamp`: kube's
+// `ObjectMeta` typed it as a k8s-openapi `Time` newtype, which is exactly the
+// dependency being removed, so it becomes a chrono `DateTime<Utc>` — chrono is
+// already a direct dependency and already serializes RFC 3339, which is what
+// `Time` emitted too.
+
+/// The subset of Kubernetes `ObjectMeta` this crate ever touched.
+///
+/// Deliberately not the full type: `save_crd` reads `name`, `create` sets `name`
+/// and `namespace`, and `cleanup_old_crds` reads `creation_timestamp`. Nothing
+/// else was used, and carrying fields nothing reads would be re-importing the
+/// shape without the dependency.
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, Default)]
+pub struct ObjectMeta {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub namespace: Option<String>,
+    #[serde(
+        default,
+        rename = "creationTimestamp",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub creation_timestamp: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+fn default_api_version() -> String {
+    "hooksmith.dev/v1".to_string()
+}
+
+fn default_kind() -> String {
+    "WorktreeChangeRequest".to_string()
+}
+
+/// The object the derive used to generate.
+///
+/// `api_version` and `kind` are carried as real fields with defaults rather than
+/// being implied, so a record round-trips through `serde_json` byte-identically
+/// to what the derive produced — which is what keeps stored CRDs readable.
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
+pub struct WorktreeChangeRequest {
+    #[serde(rename = "apiVersion", default = "default_api_version")]
+    pub api_version: String,
+    #[serde(default = "default_kind")]
+    pub kind: String,
+    #[serde(default)]
+    pub metadata: ObjectMeta,
+    pub spec: WorktreeChangeRequestSpec,
+}
+
+#[derive(Serialize, Deserialize, JsonSchema, Debug, Clone)]
 pub struct WorktreeChangeRequestSpec {
     /// Git branch name
     pub branch: String,
@@ -363,10 +424,16 @@ impl WorktreeChangeRequest {
         let _now = chrono::Utc::now().to_rfc3339();
 
         Self {
-            metadata: kube::api::ObjectMeta {
+            api_version: default_api_version(),
+            kind: default_kind(),
+            metadata: ObjectMeta {
                 name: Some(branch_name.to_string()),
                 namespace: Some("default".to_string()),
-                ..Default::default()
+                // Set explicitly now: the derive left this to the API server,
+                // and nothing in this crate ever populated it. cleanup_old_crds
+                // reads it, so a record created here with None was invisible to
+                // the cleanup it is supposed to age out (#139).
+                creation_timestamp: Some(chrono::Utc::now()),
             },
             spec: WorktreeChangeRequestSpec {
                 branch: branch_name.to_string(),
@@ -545,10 +612,13 @@ impl WorktreeChangeRequest {
     }
 }
 
-/// Generate CRD YAML
-pub fn generate_crd_yaml() -> String {
-    serde_yaml::to_string(&WorktreeChangeRequest::crd()).expect("Failed to serialize CRD")
-}
+// `generate_crd_yaml()` WAS HERE and is deliberately gone (#139).
+//
+// It called `CustomResourceExt::crd()`, which only the kube derive provided.
+// Emitting a Kubernetes CRD manifest is precisely the capability the "operator
+// path is dead" answer retires, so it is removed rather than reimplemented: a
+// hand-written CRD manifest for a cluster nobody runs would be a file that
+// looks like a contract and is checked by nothing.
 
 #[cfg(test)]
 mod tests {
@@ -573,9 +643,33 @@ mod tests {
     }
 
     #[test]
-    fn test_crd_yaml_generation() {
-        let yaml = generate_crd_yaml();
-        assert!(yaml.contains("WorktreeChangeRequest"));
-        assert!(yaml.contains("hooksmith.dev"));
+    fn round_trips_through_serde_byte_identically() {
+        // REPLACES test_crd_yaml_generation, which asserted the removed CRD
+        // manifest. This asserts the property that actually matters now: the
+        // hand-written wrapper serializes to the same shape the derive did, so
+        // records already written by storage.rs still deserialize (#139).
+        let crd = WorktreeChangeRequest::create("feature/test");
+        let json = serde_json::to_string(&crd).expect("serialize");
+        assert!(json.contains(r#""apiVersion":"hooksmith.dev/v1""#));
+        assert!(json.contains(r#""kind":"WorktreeChangeRequest""#));
+
+        let back: WorktreeChangeRequest = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.spec.branch, crd.spec.branch);
+        assert_eq!(back.api_version, "hooksmith.dev/v1");
+        assert_eq!(back.metadata.name.as_deref(), Some("feature/test"));
+    }
+
+    #[test]
+    fn a_stored_record_without_the_wrapper_fields_still_reads() {
+        // The derive omitted apiVersion/kind on some paths; defaults mean an
+        // older file on disk is not a parse error. Without this, the migration
+        // would be silently lossy for exactly the records it must not lose.
+        let crd = WorktreeChangeRequest::create("feature/old");
+        let spec = serde_json::to_string(&crd.spec).expect("serialize spec");
+        let minimal = format!(r#"{{"spec":{spec}}}"#);
+        let back: WorktreeChangeRequest = serde_json::from_str(&minimal).expect("deserialize minimal");
+        assert_eq!(back.api_version, "hooksmith.dev/v1");
+        assert_eq!(back.kind, "WorktreeChangeRequest");
+        assert!(back.metadata.name.is_none());
     }
 }

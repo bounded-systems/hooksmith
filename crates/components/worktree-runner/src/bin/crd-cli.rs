@@ -84,12 +84,6 @@ enum Commands {
         #[command(subcommand)]
         bulk_command: BulkCommands,
     },
-
-    /// Kubernetes CRD operations
-    Kube {
-        #[command(subcommand)]
-        kube_command: KubeCommands,
-    },
 }
 
 #[tokio::main]
@@ -430,62 +424,6 @@ async fn main() -> Result<()> {
             }
         }
 
-        Commands::Kube { kube_command } => {
-            match kube_command {
-                KubeCommands::GenerateCrd => {
-                    println!("Generating WorktreeChangeRequest CRD YAML...");
-                    let yaml = worktree_runner::kube_crd::generate_crd_yaml();
-                    println!("{}", yaml);
-                }
-
-                KubeCommands::Controller => {
-                    println!("Starting Kubernetes controller...");
-                    // This would require a real Kubernetes cluster
-                    // For now, just show that the command is recognized
-                    println!("Controller mode requires a Kubernetes cluster");
-                    println!("Use 'cargo run --bin crd-cli -- kube generate-crd' to generate the CRD first");
-                }
-
-                KubeCommands::Create { branch, namespace } => {
-                    println!(
-                        "Creating WorktreeChangeRequest for branch: {} in namespace: {}",
-                        branch, namespace
-                    );
-
-                    let crd = worktree_runner::kube_crd::WorktreeChangeRequest::create(&branch);
-                    let _yaml = serde_yaml::to_string(&crd).expect("Failed to serialize CRD");
-
-                    println!("---");
-                    println!("apiVersion: hooksmith.dev/v1");
-                    println!("kind: WorktreeChangeRequest");
-                    println!("metadata:");
-                    println!("  name: {}", branch);
-                    println!("  namespace: {}", namespace);
-                    println!("spec:");
-                    println!("  branch: {}", branch);
-                    println!("  state: Created");
-                    println!("  priority: 5");
-                    println!("  retry_count: 0");
-                    println!("  max_retries: 3");
-                    println!("  domains:");
-                    println!("    local:");
-                    println!("      exists: false");
-                    println!("      current: false");
-                    println!("      ahead: 0");
-                    println!("      behind: 0");
-                    println!("    remote:");
-                    println!("      exists: false");
-                    println!("    worktree:");
-                    println!("      exists: false");
-                    println!("      dirty: false");
-                    println!("      conflicted: false");
-                    println!("      rebase_in_progress: false");
-                    println!("    pr:");
-                    println!("      exists: false");
-                    println!("      labels: []");
-                }
-            }
-        }
     }
 
     Ok(())
@@ -553,22 +491,3 @@ enum DevspaceCommands {
     },
 }
 
-#[derive(Subcommand)]
-enum KubeCommands {
-    /// Generate CRD YAML
-    GenerateCrd,
-
-    /// Start Kubernetes controller
-    Controller,
-
-    /// Create a WorktreeChangeRequest
-    Create {
-        /// Branch name
-        #[arg(long)]
-        branch: String,
-
-        /// Namespace
-        #[arg(long, default_value = "default")]
-        namespace: String,
-    },
-}
