@@ -667,7 +667,8 @@ mod tests {
         let crd = WorktreeChangeRequest::create("feature/old");
         let spec = serde_json::to_string(&crd.spec).expect("serialize spec");
         let minimal = format!(r#"{{"spec":{spec}}}"#);
-        let back: WorktreeChangeRequest = serde_json::from_str(&minimal).expect("deserialize minimal");
+        let back: WorktreeChangeRequest =
+            serde_json::from_str(&minimal).expect("deserialize minimal");
         assert_eq!(back.api_version, "hooksmith.dev/v1");
         assert_eq!(back.kind, "WorktreeChangeRequest");
         assert!(back.metadata.name.is_none());

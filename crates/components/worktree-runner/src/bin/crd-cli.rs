@@ -423,7 +423,6 @@ async fn main() -> Result<()> {
                 }
             }
         }
-
     }
 
     Ok(())
@@ -490,4 +489,3 @@ enum DevspaceCommands {
         branch: String,
     },
 }
-
