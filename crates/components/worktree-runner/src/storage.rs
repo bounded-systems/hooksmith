@@ -246,7 +246,9 @@ impl WorktreeStorage {
                         .metadata
                         .creation_timestamp
                         .as_ref()
-                        .map(|dt| dt.0.strftime("%Y-%m-%d %H:%M:%S").to_string())
+                        // Second `Time`-newtype access (#139). chrono spells it
+                        // `format`, not `strftime`, and needs no `.0`.
+                        .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
                         .unwrap_or_else(|| "unknown".to_string());
 
                     csv.push_str(&format!(

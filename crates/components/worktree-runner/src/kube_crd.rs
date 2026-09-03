@@ -38,11 +38,17 @@ pub struct ObjectMeta {
     pub name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub namespace: Option<String>,
+    // `schemars` does not implement JsonSchema for chrono types without its
+    // `chrono04` feature, and enabling a feature to describe one field would be
+    // a wider change than the field deserves. The wire form IS an RFC 3339
+    // string — which is what k8s-openapi's `Time` emitted too — so describing it
+    // as one is accurate rather than a workaround (#139).
     #[serde(
         default,
         rename = "creationTimestamp",
         skip_serializing_if = "Option::is_none"
     )]
+    #[schemars(with = "Option<String>")]
     pub creation_timestamp: Option<chrono::DateTime<chrono::Utc>>,
 }
 
